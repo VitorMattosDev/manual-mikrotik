@@ -1,0 +1,238 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Manual de MikroTik",
+    "section": "",
+    "text": "Apresentação\nBem-vindo ao Manual de MikroTik, um livro aberto da série Manuais de Ciências. Este manual leva você do zero absoluto — “o que é um roteador MikroTik?” — até a operação do backbone de um provedor de internet real, com fibra óptica e enlaces de rádio em área rural.",
+    "crumbs": [
+      "Apresentação"
+    ]
+  },
+  {
+    "objectID": "index.html#para-quem-é-este-manual",
+    "href": "index.html#para-quem-é-este-manual",
+    "title": "Manual de MikroTik",
+    "section": "Para quem é este manual",
+    "text": "Para quem é este manual\nPara quem está começando em redes e quer chegar ao nível de operar a rede de um provedor (ISP): técnicos de campo que querem migrar para o NOC, donos de pequenos provedores, estudantes e curiosos. Não pressupomos conhecimento prévio de RouterOS; cada conceito é explicado antes de ser usado, e a ordem dos capítulos respeita os pré-requisitos entre eles.\nSe você quiser reforçar a teoria de redes por trás dos capítulos (modelo OSI, endereçamento IP, fibra óptica, rádio), o Manual de Redes de Computadores da mesma série é o companheiro ideal deste livro.",
+    "crumbs": [
+      "Apresentação"
+    ]
+  },
+  {
+    "objectID": "index.html#como-este-manual-funciona",
+    "href": "index.html#como-este-manual-funciona",
+    "title": "Manual de MikroTik",
+    "section": "Como este manual funciona",
+    "text": "Como este manual funciona\n\nProgressão gradual: os volumes formam três fases — fundamentos, provedor na prática e operação avançada. Cada capítulo declara o que você precisa ter visto antes.\n🧪 Laboratório em todo capítulo: você pratica enquanto estuda, usando o MikroTik CHR (RouterOS em máquina virtual) — sem precisar comprar hardware. O 5  Montando o laboratório com CHR ensina a montar o ambiente uma única vez; os demais capítulos apenas indicam a topologia necessária.\nComandos reais: todos os blocos de código são RouterOS de verdade, prontos para copiar e colar no terminal, sempre explicados linha a linha.\nDesafios com solução: cada laboratório termina com exercícios; as soluções ficam escondidas em caixas colapsáveis para você tentar antes de olhar.",
+    "crumbs": [
+      "Apresentação"
+    ]
+  },
+  {
+    "objectID": "index.html#mapa-de-pré-requisitos",
+    "href": "index.html#mapa-de-pré-requisitos",
+    "title": "Manual de MikroTik",
+    "section": "Mapa de pré-requisitos",
+    "text": "Mapa de pré-requisitos\nO grafo abaixo mostra a dependência entre os volumes: siga as setas para saber o que estudar antes de cada assunto.\n\n\n\n\n\nflowchart TD\n  V1[\"Vol. 1&lt;br&gt;Primeiros passos\"] --&gt; V2[\"Vol. 2&lt;br&gt;CLI e configuração essencial\"]\n  V2 --&gt; V3[\"Vol. 3&lt;br&gt;Firewall\"]\n  V2 --&gt; V4[\"Vol. 4&lt;br&gt;Bridge e VLANs\"]\n  V3 --&gt; V5[\"Vol. 5&lt;br&gt;Wireless e enlaces de rádio\"]\n  V3 --&gt; V6[\"Vol. 6&lt;br&gt;PPPoE e autenticação\"]\n  V4 --&gt; V6\n  V6 --&gt; V7[\"Vol. 7&lt;br&gt;QoS e controle de banda\"]\n  V3 --&gt; V8[\"Vol. 8&lt;br&gt;Roteamento\"]\n  V8 --&gt; V9[\"Vol. 9&lt;br&gt;CGNAT e IPv6\"]\n  V6 --&gt; V9\n  V8 --&gt; V10[\"Vol. 10&lt;br&gt;Túneis e VPN\"]\n  V10 --&gt; V11[\"Vol. 11&lt;br&gt;MPLS\"]\n  V8 --&gt; V11\n  V2 --&gt; V12[\"Vol. 12&lt;br&gt;Scripts e automação\"]\n  V3 --&gt; V13[\"Vol. 13&lt;br&gt;Monitoramento e diagnóstico\"]\n  V8 --&gt; V14[\"Vol. 14&lt;br&gt;Alta disponibilidade\"]\n  V11 --&gt; V15[\"Vol. 15&lt;br&gt;Operação de ISP ponta a ponta\"]\n  V9 --&gt; V15\n  V14 --&gt; V15\n  V5 --&gt; V15\n  V7 --&gt; V15\n  V13 --&gt; V15\n\n\n Grafo de pré-requisitos entre os volumes do manual.",
+    "crumbs": [
+      "Apresentação"
+    ]
+  },
+  {
+    "objectID": "index.html#as-três-fases",
+    "href": "index.html#as-três-fases",
+    "title": "Manual de MikroTik",
+    "section": "As três fases",
+    "text": "As três fases\nFase 1 — Fundamentos e operação básica (Volumes 1–4): o que é o RouterOS, como acessá-lo e operá-lo com segurança; a linha de comando; endereçamento, DHCP, DNS e NAT; firewall completo; bridges, switching e VLANs. Ao final desta fase você configura, do zero, um roteador de borda seguro e segmentado.\nFase 2 — Provedor na prática (Volumes 5–9): os pilares do dia a dia de um ISP — enlaces de rádio PtP/PtMP, PPPoE com RADIUS, planos de velocidade com QoS, roteamento OSPF/BGP, CGNAT e IPv6.\nFase 3 — Avançado e operação (Volumes 10–15): túneis e VPN entre POPs, MPLS no backbone, automação com scripts, monitoramento, alta disponibilidade e, fechando o livro, o desenho ponta a ponta da rede de um provedor real de fibra e rádio.",
+    "crumbs": [
+      "Apresentação"
+    ]
+  },
+  {
+    "objectID": "index.html#convenções-usadas-no-livro",
+    "href": "index.html#convenções-usadas-no-livro",
+    "title": "Manual de MikroTik",
+    "section": "Convenções usadas no livro",
+    "text": "Convenções usadas no livro\n\nBlocos de código routeros contêm comandos prontos para colar no terminal. O prompt [admin@MikroTik] &gt; só aparece quando ilustramos uma sessão interativa com a saída do equipamento.\nCaixas de aviso (⚠️) antecedem todo comando destrutivo (reset, Netinstall, remoção de regras).\nReferências bibliográficas seguem o padrão ABNT e estão listadas ao final de cada capítulo.\n\nBons estudos — e boas configurações!",
+    "crumbs": [
+      "Apresentação"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html",
+    "href": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html",
+    "title": "1  O que é MikroTik e RouterOS",
+    "section": "",
+    "text": "1.1 A empresa e o sistema\nMikroTik é uma empresa da Letônia, fundada em 1996 na capital Riga, que faz duas coisas: um sistema operacional de rede chamado RouterOS e o hardware que roda esse sistema, a linha RouterBOARD. Essa dupla — software poderoso e hardware barato — transformou a MikroTik numa das marcas mais usadas por provedores de internet do mundo, especialmente em países como o Brasil, onde milhares de ISPs regionais construíram suas redes sobre ela.\nAqui vale uma analogia. Pense num computador comum: ele tem um hardware (a máquina física) e um sistema operacional (Windows, Linux) que faz o hardware ser útil. Com o MikroTik é igual:\nO detalhe importante — e que explica boa parte da fama da marca — é que o RouterOS é o mesmo em todos os equipamentos. O sistema que roda num roteadorzinho de R$ 300 é o mesmo que roda no roteador de rack que segura o BGP de um provedor com dezenas de milhares de clientes. Muda o desempenho do hardware; não muda a linguagem, os menus nem os conceitos. É por isso que tudo o que você aprender neste manual num laboratório virtual gratuito vale, sem tradução, para qualquer equipamento físico da marca.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>O que é MikroTik e RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#a-empresa-e-o-sistema",
+    "href": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#a-empresa-e-o-sistema",
+    "title": "1  O que é MikroTik e RouterOS",
+    "section": "",
+    "text": "O RouterOS é o sistema operacional. É ele que roteia pacotes, filtra tráfego no firewall, autentica assinantes por PPPoE, fala OSPF e BGP com outros roteadores — tudo o que este manual ensina é, no fundo, “como operar o RouterOS”.\nA RouterBOARD é a família de hardware: roteadores de mesa, roteadores de rack com dezenas de núcleos, switches, antenas e rádios. Todos saem de fábrica com o RouterOS instalado.\n\n\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nRouterOS está para a RouterBOARD assim como o Android está para um celular: o mesmo sistema, em aparelhos de tamanhos e preços muito diferentes. Aprenda o sistema uma vez e você sabe operar todos.\n\n\n\n1.1.1 Um pouco de história\nA MikroTik nasceu vendendo software: no fim dos anos 1990, o RouterOS era instalado em PCs comuns para transformá-los em roteadores — uma alternativa muito mais barata que os grandes roteadores comerciais da época. Em 2002 a empresa passou a fabricar o próprio hardware (a RouterBOARD), e o conjunto decolou entre provedores pequenos e médios: preço de equipamento doméstico, recursos de equipamento de operadora.\nDuas versões do sistema importam para você hoje:\n\nRouterOS v6 — dominou as redes por mais de uma década; você ainda vai encontrá-lo em muito equipamento antigo em campo.\nRouterOS v7 — a geração atual, com motor de roteamento reescrito (OSPF/BGP), WireGuard, suporte a hardware novo e melhorias contínuas. Este manual ensina RouterOS v7; quando uma diferença do v6 for relevante na vida real do provedor, ela será apontada explicitamente.\n\n\n\n1.1.2 RouterOS ou SwOS?\nAlguns equipamentos MikroTik — em especial os switches da linha CRS — podem inicializar com um segundo sistema, o SwOS: um firmware minimalista que só faz switching (camada 2) e é configurado por uma página web simples. Ele existe porque, quando um switch só precisa comutar quadros, um sistema enxuto dedicado a isso é mais simples de operar.\nA regra prática deste manual: usamos RouterOS em tudo. O RouterOS também faz switching (e o faz em hardware, como você verá no Volume 4), e manter um único sistema em todo o parque simplifica a operação, os backups e a automação. Saiba que o SwOS existe para não se confundir ao encontrá-lo, mas nosso caminho é o RouterOS.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>O que é MikroTik e RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#por-que-os-provedores-escolhem-mikrotik",
+    "href": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#por-que-os-provedores-escolhem-mikrotik",
+    "title": "1  O que é MikroTik e RouterOS",
+    "section": "1.2 Por que os provedores escolhem MikroTik?",
+    "text": "1.2 Por que os provedores escolhem MikroTik?\nQuatro razões aparecem em praticamente toda rede de ISP construída com a marca:\n\nCusto: um roteador capaz de concentrar centenas de assinantes PPPoE custa uma fração do equivalente das marcas tradicionais de operadora.\nCompletude: firewall com estado, NAT e CGNAT, PPPoE com RADIUS, QoS, OSPF, BGP, MPLS, VPNs, scripts — tudo incluso no sistema, sem licenças adicionais por recurso.\nVersatilidade: o mesmo sistema opera na borda (BGP com a operadora), no concentrador de assinantes, no switch do POP, no rádio da torre e na casa do cliente.\nComunidade: fóruns, documentação aberta (MikroTik, 2026a), treinamentos e uma enorme base de conhecimento acumulada por provedores do mundo todo.\n\nHá também um ponto de atenção honesto: todo esse poder vem com muita responsabilidade de configuração. O RouterOS entrega as ferramentas; quem decide se a rede será segura e estável é quem a configura. É exatamente essa a lacuna que este manual fecha — inclusive dedicando um volume inteiro a firewall e proteção (Volume 3).",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>O que é MikroTik e RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#onde-o-mikrotik-se-encaixa-na-rede-de-um-provedor",
+    "href": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#onde-o-mikrotik-se-encaixa-na-rede-de-um-provedor",
+    "title": "1  O que é MikroTik e RouterOS",
+    "section": "1.3 Onde o MikroTik se encaixa na rede de um provedor",
+    "text": "1.3 Onde o MikroTik se encaixa na rede de um provedor\nPara entender o que você vai construir ao longo do livro, veja o caminho que os dados percorrem num provedor típico do interior, que atende clientes por fibra óptica na cidade e por rádio na zona rural (Figura 1.1):\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFigura 1.1: Onde os equipamentos MikroTik (em azul) trabalham na rede de um provedor típico de fibra e rádio.\n\n\n\nAcompanhe o diagrama da esquerda para a direita:\n\nRoteador de borda: um CCR conversa via BGP com a operadora que vende trânsito ao provedor (Volume 8). É a porta de entrada e saída de toda a rede.\nSwitch do POP: um CRS distribui o tráfego dentro do ponto de presença, separando os serviços em VLANs (Volume 4).\nConcentrador PPPoE (BNG): um CCR — ou um CHR virtualizado — autentica cada assinante, entrega IP e aplica o plano de velocidade contratado (Volumes 6 e 7).\nRamo fibra: a OLT e as ONUs dos clientes são, em geral, de outros fabricantes — mas quem roteia, autentica e controla a banda desses clientes continua sendo o MikroTik (Volume 15 detalha essa integração).\nRamo rádio: enlaces PtP levam a internet até torres na zona rural; lá, antenas setoriais atendem em PtMP os rádios na casa de cada cliente — tudo MikroTik, das linhas LHG, SXT e afins (Volume 5).\n\nGuarde esta imagem: os quinze volumes deste manual são, essencialmente, um tour guiado por esse diagrama, do centro para as pontas.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nUm único sistema — o RouterOS — opera todos os papéis azuis do diagrama. Aprender RouterOS não é aprender “um roteador”: é aprender a operar a rede inteira do provedor.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>O que é MikroTik e RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#o-chr-seu-laboratório-gratuito",
+    "href": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#o-chr-seu-laboratório-gratuito",
+    "title": "1  O que é MikroTik e RouterOS",
+    "section": "1.4 O CHR: seu laboratório gratuito",
+    "text": "1.4 O CHR: seu laboratório gratuito\nComo praticar tudo isso sem gastar um centavo em equipamento? A resposta é o CHR — Cloud Hosted Router (MikroTik, 2026b): uma versão do RouterOS empacotada como máquina virtual, feita pela própria MikroTik para rodar em VirtualBox, VMware, Proxmox, GNS3, EVE-NG e afins.\nO CHR é um RouterOS completo: mesma linha de comando, mesmo firewall, mesmo OSPF e BGP. Sem licença, ele funciona para sempre com uma única limitação — cada interface fica limitada a 1 Mbps de velocidade, o que não atrapalha em nada o estudo. É nele que rodam todos os laboratórios deste livro.\nNeste capítulo você fará o primeiro contato: baixar o CHR, dar o boot e entrar no sistema. A montagem completa do ambiente de estudos — com várias máquinas virtuais interligadas em topologias — é o assunto do Capítulo 5, que você montará uma única vez e reutilizará no livro inteiro.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>O que é MikroTik e RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#laboratório",
+    "href": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#laboratório",
+    "title": "1  O que é MikroTik e RouterOS",
+    "section": "1.5 🧪 Laboratório",
+    "text": "1.5 🧪 Laboratório\n\n1.5.1 Ambiente\nNeste primeiro laboratório você precisa apenas de um computador com o VirtualBox instalado (gratuito, disponível para Windows, Linux e macOS em virtualbox.org). Nada de topologias ainda: uma única máquina virtual basta.\n\nAcesse mikrotik.com/download e, na seção Cloud Hosted Router, baixe a imagem VDI da versão estável mais recente (7.x).\nNo VirtualBox, crie uma máquina virtual nova: tipo Linux, versão Other Linux (64-bit), com 256 MB de RAM.\nNa etapa de disco, escolha usar um disco existente e aponte para o arquivo .vdi baixado (não crie disco novo).\nInicie a máquina virtual.\n\nAo final do boot aparece o prompt de login do RouterOS na janela da VM.\n\n\n1.5.2 Comandos passo a passo\nFaça login com o usuário padrão de fábrica — usuário admin, senha em branco (só pressionar Enter):\nMikroTik Login: admin\nPassword:\nNas versões atuais, o RouterOS pede imediatamente uma senha nova — escolha uma e anote. Em seguida ele mostra a licença e o banner com o logotipo, e você cai no prompt do terminal:\n[admin@MikroTik] &gt;\nEsse prompt diz duas coisas: quem você é (admin) e o nome do equipamento (MikroTik, a identidade de fábrica). Vamos fazer o RouterOS se apresentar. O comando abaixo mostra o “RG” do sistema — versão, tempo ligado, memória, CPU e placa:\n/system resource print\nA saída esperada é parecida com esta (os números variam conforme sua máquina):\n[admin@MikroTik] &gt; /system resource print\n                   uptime: 4m12s\n                  version: 7.15.3 (stable)\n               build-time: 2024-07-24 10:39:01\n              free-memory: 190.1MiB\n             total-memory: 224.0MiB\n                      cpu: QEMU\n                 cpu-count: 1\n                 cpu-load: 1%\n          free-hdd-space: 43.1MiB\n         total-hdd-space: 61.4MiB\n         board-name: CHR\n                 platform: MikroTik\nRepare em version: 7.x (estamos no RouterOS v7) e board-name: CHR (é a versão virtual). Agora veja as interfaces de rede que a VM enxerga:\n/interface print\n[admin@MikroTik] &gt; /interface print\nFlags: R - RUNNING\nColumns: NAME, TYPE, ACTUAL-MTU, MAC-ADDRESS\n#   NAME     TYPE    ACTUAL-MTU  MAC-ADDRESS\n0 R ether1   ether         1500  08:00:27:6A:2B:1C\nUma única ether1: é a placa de rede virtual do VirtualBox. Nos próximos capítulos adicionaremos mais. Por fim, dê um nome ao seu roteador — boa prática que você levará para a vida de provedor, onde cada equipamento do parque precisa de identidade única:\n/system identity set name=lab-r1\nO prompt muda na hora, confirmando a alteração:\n[admin@lab-r1] &gt;\n\n\n1.5.3 Verificação\nConfirme os três resultados do laboratório:\n\n/system resource print mostra version começando com 7. e board-name: CHR;\n/interface print lista ao menos ether1 com a flag R (running);\nO prompt exibe [admin@lab-r1] — a identidade foi gravada.\n\nSe a VM não deu boot, verifique se você apontou o disco existente (o .vdi baixado) em vez de criar um disco vazio — esse é o erro mais comum.\n\n\n1.5.4 Desafios\n\nDescubra, usando apenas a tecla ? no terminal, o que faz o comando /system clock print — e execute-o. O horário está certo?\nO RouterOS organiza os comandos em menus, como pastas. Entre no menu /system (digite /system e Enter) e liste o que há dentro dele com ?. Depois volte à raiz com /.\nSem consultar a internet: qual comando você usaria para trocar a identidade do roteador para chr-teste? Execute-o e desfaça em seguida, voltando para lab-r1.\nDesligue o roteador pelo terminal (não feche a janela da VM no X!). Dica: explore o menu /system do desafio 2.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Digite /system clock print ? (ou apenas execute o comando). Ele mostra data, hora e fuso configurados:\n/system clock print\nNo CHR recém-instalado o fuso costuma vir errado (gmt ou detectado pela VM); você aprenderá a ajustá-lo no capítulo de primeiro acesso.\n2. Sessão esperada:\n[admin@lab-r1] &gt; /system\n[admin@lab-r1] /system&gt; ?\nO ? lista submenus como clock, identity, resource, reboot, shutdown… Para voltar à raiz:\n[admin@lab-r1] /system&gt; /\n[admin@lab-r1] &gt;\n3. O mesmo comando do corpo do capítulo, com outro valor:\n/system identity set name=chr-teste\n/system identity set name=lab-r1\n4. O comando é /system shutdown. Ele pede confirmação — responda y:\n[admin@lab-r1] &gt; /system shutdown\nShutdown, yes? [y/N]:\nDesligar pelo sistema (em vez de fechar a VM “no cabo”) evita corromper o armazenamento — nos equipamentos físicos de produção, vale a mesma regra.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>O que é MikroTik e RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#resumo",
+    "href": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#resumo",
+    "title": "1  O que é MikroTik e RouterOS",
+    "section": "1.6 Resumo",
+    "text": "1.6 Resumo\n\nMikroTik é a empresa (Letônia, 1996); RouterOS é o sistema operacional de rede; RouterBOARD é a linha de hardware que o roda.\nO RouterOS é o mesmo do equipamento mais barato ao mais caro — o que você aprende no laboratório vale para todo o parque.\nSwOS é um firmware alternativo minimalista para switches; neste manual, operamos tudo com RouterOS.\nProvedores escolhem MikroTik por custo, completude, versatilidade e comunidade — e assumem a responsabilidade de configurar bem.\nNa rede de um ISP, o MikroTik aparece da borda BGP ao rádio do cliente, passando por switch, concentrador PPPoE e enlaces PtP/PtMP (Figura 1.1).\nO CHR é o RouterOS em máquina virtual, gratuito (limitado a 1 Mbps por interface) — o laboratório perfeito, usado no livro inteiro.\nVocê já fez o primeiro login, leu /system resource print e batizou seu roteador com /system identity set.\n\nNo próximo capítulo, conheceremos as linhas de hardware — hEX, hAP, CRS, CCR, LHG/SXT — e como escolher o equipamento certo para cada papel do diagrama.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>O que é MikroTik e RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#bibliografia-do-capítulo",
+    "href": "volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html#bibliografia-do-capítulo",
+    "title": "1  O que é MikroTik e RouterOS",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\nPara aprofundar o que vimos aqui: a documentação oficial do RouterOS (MikroTik, 2026a) e a página do CHR (MikroTik, 2026b) são as fontes primárias que acompanharão todo o livro; Discher (2016) e Burgess (2011) são bons livros introdutórios em inglês; e Tanenbaum; Feamster; Wetherall (2021) cobre a teoria de redes por trás de tudo. As referências completas, em ABNT, estão no apêndice Referências.\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, a2026.\n\n\nMIKROTIK. Cloud Hosted Router (CHR) Documentation. https://help.mikrotik.com/docs/display/ROS/Cloud+Hosted+Router,+CHR, b2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>O que é MikroTik e RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/02-hardware-linhas-produto.html",
+    "href": "volumes/v01-primeiros-passos/02-hardware-linhas-produto.html",
+    "title": "2  Linhas de hardware MikroTik",
+    "section": "",
+    "text": "NotaEm construção\n\n\n\nEste capítulo ainda não foi escrito. Ele apresentará as linhas de produto MikroTik — hEX, hAP, CRS, CCR, LHG/SXT — e como escolher o equipamento certo para cada função na rede do provedor (borda, concentrador, switch, rádio). Consulte o ROADMAP.md para acompanhar o progresso.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Linhas de hardware MikroTik</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/03-licencas-routerboot.html",
+    "href": "volumes/v01-primeiros-passos/03-licencas-routerboot.html",
+    "title": "3  Licenças RouterOS e RouterBOOT",
+    "section": "",
+    "text": "NotaEm construção\n\n\n\nEste capítulo ainda não foi escrito. Ele explicará os níveis de licença do RouterOS (0–6 e as licenças do CHR) e o RouterBOOT, o bootloader dos equipamentos MikroTik. Consulte o ROADMAP.md para acompanhar o progresso.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Licenças RouterOS e RouterBOOT</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/04-formas-de-acesso.html",
+    "href": "volumes/v01-primeiros-passos/04-formas-de-acesso.html",
+    "title": "4  Formas de acesso ao RouterOS",
+    "section": "",
+    "text": "NotaEm construção\n\n\n\nEste capítulo ainda não foi escrito. Ele apresentará as formas de acessar um equipamento MikroTik — WinBox, WebFig, SSH, console serial e MAC-Telnet — e quando usar cada uma. Consulte o ROADMAP.md para acompanhar o progresso.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Formas de acesso ao RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/05-laboratorio-chr.html",
+    "href": "volumes/v01-primeiros-passos/05-laboratorio-chr.html",
+    "title": "5  Montando o laboratório com CHR",
+    "section": "",
+    "text": "NotaEm construção\n\n\n\nEste capítulo ainda não foi escrito. É o capítulo-chave do laboratório: ensinará a montar, uma única vez, o ambiente de prática com o MikroTik CHR (Cloud Hosted Router) no VirtualBox, GNS3 ou EVE-NG — a topologia-base que todos os laboratórios do livro reutilizam. Consulte o ROADMAP.md para acompanhar o progresso.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Montando o laboratório com CHR</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html",
+    "href": "volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html",
+    "title": "6  Primeiro acesso, usuários e segurança inicial",
+    "section": "",
+    "text": "NotaEm construção\n\n\n\nEste capítulo ainda não foi escrito. Ele cobrirá o primeiro acesso ao RouterOS, a configuração padrão de fábrica, criação de usuários e grupos, senhas fortes e as primeiras medidas de segurança (desabilitar serviços não usados, restringir por endereço). Consulte o ROADMAP.md para acompanhar o progresso.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Primeiro acesso, usuários e segurança inicial</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/07-backup-export-reset.html",
+    "href": "volumes/v01-primeiros-passos/07-backup-export-reset.html",
+    "title": "7  Backup, export e reset",
+    "section": "",
+    "text": "NotaEm construção\n\n\n\nEste capítulo ainda não foi escrito. Ele explicará a diferença entre backup binário e export, como restaurar configurações e como resetar um equipamento com segurança. Consulte o ROADMAP.md para acompanhar o progresso.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Backup, export e reset</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v01-primeiros-passos/08-netinstall.html",
+    "href": "volumes/v01-primeiros-passos/08-netinstall.html",
+    "title": "8  Netinstall",
+    "section": "",
+    "text": "NotaEm construção\n\n\n\nEste capítulo ainda não foi escrito. Ele ensinará a usar o Netinstall para reinstalar o RouterOS e recuperar equipamentos que não inicializam. Consulte o ROADMAP.md para acompanhar o progresso.",
+    "crumbs": [
+      "Volume 1 — Primeiros passos",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Netinstall</span>"
+    ]
+  },
+  {
+    "objectID": "referencias.html",
+    "href": "referencias.html",
+    "title": "Referências",
+    "section": "",
+    "text": "Obras e documentos citados ao longo do manual, em formato ABNT.\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu\nPress, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed.\nCollege Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, b2026.\n\n\nMIKROTIK. Cloud Hosted Router (CHR)\nDocumentation. https://help.mikrotik.com/docs/display/ROS/Cloud+Hosted+Router,+CHR,\na2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes\nde Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Apêndices",
+      "Referências"
+    ]
+  }
+]

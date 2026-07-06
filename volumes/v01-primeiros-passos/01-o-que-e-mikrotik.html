@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>1&nbsp; O que é MikroTik e RouterOS – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" rel="next">
+<link href="../../index.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html">Volume 1 — Primeiros passos</a></li><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#a-empresa-e-o-sistema" id="toc-a-empresa-e-o-sistema" class="nav-link active" data-scroll-target="#a-empresa-e-o-sistema"><span class="header-section-number">1.1</span> A empresa e o sistema</a>
+  <ul class="collapse">
+  <li><a href="#um-pouco-de-história" id="toc-um-pouco-de-história" class="nav-link" data-scroll-target="#um-pouco-de-história"><span class="header-section-number">1.1.1</span> Um pouco de história</a></li>
+  <li><a href="#routeros-ou-swos" id="toc-routeros-ou-swos" class="nav-link" data-scroll-target="#routeros-ou-swos"><span class="header-section-number">1.1.2</span> RouterOS ou SwOS?</a></li>
+  </ul></li>
+  <li><a href="#por-que-os-provedores-escolhem-mikrotik" id="toc-por-que-os-provedores-escolhem-mikrotik" class="nav-link" data-scroll-target="#por-que-os-provedores-escolhem-mikrotik"><span class="header-section-number">1.2</span> Por que os provedores escolhem MikroTik?</a></li>
+  <li><a href="#onde-o-mikrotik-se-encaixa-na-rede-de-um-provedor" id="toc-onde-o-mikrotik-se-encaixa-na-rede-de-um-provedor" class="nav-link" data-scroll-target="#onde-o-mikrotik-se-encaixa-na-rede-de-um-provedor"><span class="header-section-number">1.3</span> Onde o MikroTik se encaixa na rede de um provedor</a></li>
+  <li><a href="#o-chr-seu-laboratório-gratuito" id="toc-o-chr-seu-laboratório-gratuito" class="nav-link" data-scroll-target="#o-chr-seu-laboratório-gratuito"><span class="header-section-number">1.4</span> O CHR: seu laboratório gratuito</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">1.5</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">1.5.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">1.5.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">1.5.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">1.5.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">1.6</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/01-o-que-e-mikrotik.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html">Volume 1 — Primeiros passos</a></li><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-o-que-e-mikrotik" class="quarto-section-identifier"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Explicar o que é a MikroTik (a empresa) e o que é o RouterOS (o sistema);</li>
+<li>Diferenciar RouterOS de SwOS e entender por que essa distinção importa;</li>
+<li>Reconhecer o que torna o MikroTik tão popular entre provedores de internet;</li>
+<li>Localizar, num diagrama de rede de provedor (fibra + rádio), os pontos onde equipamentos MikroTik costumam trabalhar;</li>
+<li>Dar o primeiro passo prático: baixar o CHR (RouterOS em máquina virtual) e fazer o primeiro login.</li>
+</ul>
+</div>
+</div>
+<section id="a-empresa-e-o-sistema" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="a-empresa-e-o-sistema"><span class="header-section-number">1.1</span> A empresa e o sistema</h2>
+<p><strong>MikroTik</strong> é uma empresa da Letônia, fundada em 1996 na capital Riga, que faz duas coisas: um sistema operacional de rede chamado <strong>RouterOS</strong> e o hardware que roda esse sistema, a linha <strong>RouterBOARD</strong>. Essa dupla — software poderoso e hardware barato — transformou a MikroTik numa das marcas mais usadas por provedores de internet do mundo, especialmente em países como o Brasil, onde milhares de ISPs regionais construíram suas redes sobre ela.</p>
+<p>Aqui vale uma analogia. Pense num computador comum: ele tem um hardware (a máquina física) e um sistema operacional (Windows, Linux) que faz o hardware ser útil. Com o MikroTik é igual:</p>
+<ul>
+<li>O <strong>RouterOS</strong> é o sistema operacional. É ele que roteia pacotes, filtra tráfego no firewall, autentica assinantes por PPPoE, fala OSPF e BGP com outros roteadores — tudo o que este manual ensina é, no fundo, “como operar o RouterOS”.</li>
+<li>A <strong>RouterBOARD</strong> é a família de hardware: roteadores de mesa, roteadores de rack com dezenas de núcleos, switches, antenas e rádios. Todos saem de fábrica com o RouterOS instalado.</li>
+</ul>
+<p>O detalhe importante — e que explica boa parte da fama da marca — é que <strong>o RouterOS é o mesmo em todos os equipamentos</strong>. O sistema que roda num roteadorzinho de R$ 300 é o mesmo que roda no roteador de rack que segura o BGP de um provedor com dezenas de milhares de clientes. Muda o desempenho do hardware; não muda a linguagem, os menus nem os conceitos. É por isso que tudo o que você aprender neste manual num laboratório virtual gratuito vale, sem tradução, para qualquer equipamento físico da marca.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Analogia para guardar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>RouterOS está para a RouterBOARD assim como o Android está para um celular: o mesmo sistema, em aparelhos de tamanhos e preços muito diferentes. Aprenda o sistema uma vez e você sabe operar todos.</p>
+</div>
+</div>
+<section id="um-pouco-de-história" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" class="anchored" data-anchor-id="um-pouco-de-história"><span class="header-section-number">1.1.1</span> Um pouco de história</h3>
+<p>A MikroTik nasceu vendendo software: no fim dos anos 1990, o RouterOS era instalado em PCs comuns para transformá-los em roteadores — uma alternativa muito mais barata que os grandes roteadores comerciais da época. Em 2002 a empresa passou a fabricar o próprio hardware (a RouterBOARD), e o conjunto decolou entre provedores pequenos e médios: preço de equipamento doméstico, recursos de equipamento de operadora.</p>
+<p>Duas versões do sistema importam para você hoje:</p>
+<ul>
+<li><strong>RouterOS v6</strong> — dominou as redes por mais de uma década; você ainda vai encontrá-lo em muito equipamento antigo em campo.</li>
+<li><strong>RouterOS v7</strong> — a geração atual, com motor de roteamento reescrito (OSPF/BGP), WireGuard, suporte a hardware novo e melhorias contínuas. <strong>Este manual ensina RouterOS v7</strong>; quando uma diferença do v6 for relevante na vida real do provedor, ela será apontada explicitamente.</li>
+</ul>
+</section>
+<section id="routeros-ou-swos" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" class="anchored" data-anchor-id="routeros-ou-swos"><span class="header-section-number">1.1.2</span> RouterOS ou SwOS?</h3>
+<p>Alguns equipamentos MikroTik — em especial os switches da linha CRS — podem inicializar com um segundo sistema, o <strong>SwOS</strong>: um firmware minimalista que só faz switching (camada 2) e é configurado por uma página web simples. Ele existe porque, quando um switch só precisa comutar quadros, um sistema enxuto dedicado a isso é mais simples de operar.</p>
+<p>A regra prática deste manual: <strong>usamos RouterOS em tudo</strong>. O RouterOS também faz switching (e o faz em hardware, como você verá no Volume 4), e manter um único sistema em todo o parque simplifica a operação, os backups e a automação. Saiba que o SwOS existe para não se confundir ao encontrá-lo, mas nosso caminho é o RouterOS.</p>
+</section>
+</section>
+<section id="por-que-os-provedores-escolhem-mikrotik" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="por-que-os-provedores-escolhem-mikrotik"><span class="header-section-number">1.2</span> Por que os provedores escolhem MikroTik?</h2>
+<p>Quatro razões aparecem em praticamente toda rede de ISP construída com a marca:</p>
+<ol type="1">
+<li><strong>Custo</strong>: um roteador capaz de concentrar centenas de assinantes PPPoE custa uma fração do equivalente das marcas tradicionais de operadora.</li>
+<li><strong>Completude</strong>: firewall com estado, NAT e CGNAT, PPPoE com RADIUS, QoS, OSPF, BGP, MPLS, VPNs, scripts — tudo incluso no sistema, sem licenças adicionais por recurso.</li>
+<li><strong>Versatilidade</strong>: o mesmo sistema opera na borda (BGP com a operadora), no concentrador de assinantes, no switch do POP, no rádio da torre e na casa do cliente.</li>
+<li><strong>Comunidade</strong>: fóruns, documentação aberta <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026a</a>)</span>, treinamentos e uma enorme base de conhecimento acumulada por provedores do mundo todo.</li>
+</ol>
+<p>Há também um ponto de atenção honesto: todo esse poder vem com <strong>muita responsabilidade de configuração</strong>. O RouterOS entrega as ferramentas; quem decide se a rede será segura e estável é quem a configura. É exatamente essa a lacuna que este manual fecha — inclusive dedicando um volume inteiro a firewall e proteção (Volume 3).</p>
+</section>
+<section id="onde-o-mikrotik-se-encaixa-na-rede-de-um-provedor" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="onde-o-mikrotik-se-encaixa-na-rede-de-um-provedor"><span class="header-section-number">1.3</span> Onde o MikroTik se encaixa na rede de um provedor</h2>
+<p>Para entender o que você vai construir ao longo do livro, veja o caminho que os dados percorrem num provedor típico do interior, que atende clientes por fibra óptica na cidade e por rádio na zona rural (<a href="#fig-rede-provedor" class="quarto-xref">Figura&nbsp;<span>1.1</span></a>):</p>
+<div id="fig-rede-provedor" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rede-provedor-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="624.888339pt" height="197.81596pt" viewbox="-68.014948 -68.014948 624.888339 197.81596">
+<defs>
+<path id="tz_fig_rede_provedor_g0-12" d="M3.38929-4.846824H2.761644V-4.219178H3.38929V-4.846824ZM3.368369-3.096389H2.782565V0H3.368369V-3.096389ZM1.325031-2.657036H2.182814V-3.096389H1.30411V-3.912329C1.30411-4.358655 1.569116-4.449315 1.736488-4.449315C1.855044-4.449315 2.02939-4.42142 2.182814-4.316812V-4.839851C2.161893-4.846824 1.966625-4.909589 1.736488-4.909589C1.199502-4.909589 .739228-4.428394 .739228-3.710087V-3.096389H.202242V-2.657036H.739228V0H1.325031V-2.657036Z"></path>
+<path id="tz_fig_rede_provedor_g0-65" d="M2.803487-4.839851H2.127024L.209215 0H.781071L1.325031-1.380822H3.445081L3.989041 0H4.721295L2.803487-4.839851ZM2.39203-4.309838L3.270735-1.792279H1.499377L2.39203-4.309838Z"></path>
+<path id="tz_fig_rede_provedor_g0-76" d="M1.380822-4.839851H.676463V0H3.717061V-.495143C3.054545-.495143 2.39203-.481196 1.729514-.481196H1.380822V-4.839851Z"></path>
+<path id="tz_fig_rede_provedor_g0-77" d="M3.884433-2.419925C3.800747-2.21071 3.29863-.983313 3.228892-.690411H3.221918C3.173101-.892653 2.852304-1.694645 2.782565-1.875965L1.583064-4.839851H.732254V0H1.318057V-4.281943H1.325031C1.380822-4.037858 1.743462-3.11731 1.778331-3.040598L2.942964-.146451H3.493898L4.533001-2.712827C4.533001-2.719801 5.014197-3.905355 5.132752-4.288917H5.139726V0H5.725529V-4.839851H4.867746L3.884433-2.419925Z"></path>
+<path id="tz_fig_rede_provedor_g0-78" d="M1.645828-4.839851H.697385V0H1.283188V-4.288917H1.290162L3.577584 0H4.526027V-4.839851H3.940224V-.550934H3.93325L1.645828-4.839851Z"></path>
+<path id="tz_fig_rede_provedor_g0-80" d="M2.615193-1.987547C3.514819-1.987547 4.316812-2.622167 4.316812-3.424159C4.316812-4.170361 3.577584-4.839851 2.566376-4.839851H.683437V0H1.387796V-1.987547H2.615193ZM2.39203-4.428394C3.180075-4.428394 3.682192-4.009963 3.682192-3.424159C3.682192-2.852304 3.20797-2.419925 2.39203-2.419925H1.366874V-4.428394H2.39203Z"></path>
+<path id="tz_fig_rede_provedor_g0-84" d="M2.880199-4.309838H3.535741C3.619427-4.309838 3.703113-4.302864 3.7868-4.302864H4.791034V-4.791034H.265006V-4.302864H1.26924C1.352927-4.302864 1.436613-4.309838 1.520299-4.309838H2.175841V0H2.880199V-4.309838Z"></path>
+<path id="tz_fig_rede_provedor_g0-86" d="M4.825903-4.839851H4.219178L3.340473-2.698879C3.291656-2.580324 2.601245-.899626 2.538481-.550934H2.531507C2.461768-.9066 1.764384-2.594271 1.736488-2.66401L.843836-4.839851H.104608L2.113076 0H2.817435L4.825903-4.839851Z"></path>
+<path id="tz_fig_rede_provedor_g0-94" d="M2.092154-4.839851H1.603985L.585803-3.675218H1.046077L1.84807-4.519054L2.650062-3.675218H3.110336L2.092154-4.839851Z"></path>
+<path id="tz_fig_rede_provedor_g0-97" d="M2.970859-2.008468C2.970859-2.719801 2.426899-3.200996 1.736488-3.200996C1.297136-3.200996 .962391-3.110336 .571856-2.901121L.613699-2.39203C.843836-2.545455 1.185554-2.75467 1.736488-2.75467C2.043337-2.75467 2.364134-2.524533 2.364134-2.001494V-1.72254C1.332005-1.687671 .313823-1.471482 .313823-.822914C.313823-.474222 .550934 .069738 1.164633 .069738C1.464508 .069738 2.015442 .006974 2.385056-.265006V0H2.970859V-2.008468ZM2.364134-.990286C2.364134-.850809 2.364134-.669489 2.12005-.523039C1.896887-.397509 1.624907-.390535 1.548194-.390535C1.164633-.390535 .871731-.564882 .871731-.829888C.871731-1.276214 2.050311-1.318057 2.364134-1.332005V-.990286Z"></path>
+<path id="tz_fig_rede_provedor_g0-98" d="M1.17858-4.839851H.592777V0H1.199502V-.327771C1.352927-.195268 1.687671 .069738 2.196762 .069738C2.956912 .069738 3.57061-.641594 3.57061-1.555168C3.57061-2.399004 3.089415-3.166127 2.39203-3.166127C1.952677-3.166127 1.527273-3.02665 1.17858-2.768618V-4.839851ZM1.199502-2.196762C1.199502-2.308344 1.199502-2.39203 1.443587-2.552428C1.548194-2.615193 1.736488-2.705853 1.973599-2.705853C2.440847-2.705853 2.963885-2.39203 2.963885-1.555168C2.963885-.704359 2.385056-.390535 1.896887-.390535C1.638854-.390535 1.39477-.509091 1.199502-.822914V-2.196762Z"></path>
+<path id="tz_fig_rede_provedor_g0-99" d="M3.033624-.760149C2.684932-.536986 2.308344-.411457 1.875965-.411457C1.234371-.411457 .857783-.927522 .857783-1.555168C.857783-2.092154 1.136737-2.719801 1.896887-2.719801C2.371108-2.719801 2.594271-2.622167 2.949938-2.399004L3.040598-2.901121C2.622167-3.110336 2.440847-3.200996 1.896887-3.200996C.850809-3.200996 .251059-2.357161 .251059-1.548194C.251059-.697385 .920548 .069738 1.868991 .069738C2.357161 .069738 2.775592-.076712 3.075467-.251059L3.033624-.760149Z"></path>
+<path id="tz_fig_rede_provedor_g0-101" d="M2.998755-.760149C2.608219-.481196 2.168867-.390535 1.868991-.390535C1.262267-.390535 .801993-.885679 .781071-1.527273H3.068493C3.068493-1.84807 3.033624-2.315318 2.761644-2.712827C2.510585-3.068493 2.092154-3.200996 1.750436-3.200996C.899626-3.200996 .244085-2.454795 .244085-1.569116C.244085-.676463 .941469 .069738 1.862017 .069738C2.266501 .069738 2.684932-.048817 3.040598-.265006L2.998755-.760149ZM.829888-1.945704C.990286-2.503611 1.401743-2.740722 1.750436-2.740722C2.057285-2.740722 2.510585-2.594271 2.643088-1.945704H.829888Z"></path>
+<path id="tz_fig_rede_provedor_g0-102" d="M1.325031-2.657036H2.12005V-3.096389H1.30411V-3.898381C1.30411-4.379577 1.743462-4.449315 1.973599-4.449315C2.12005-4.449315 2.308344-4.428394 2.566376-4.33076V-4.839851C2.385056-4.881694 2.168867-4.909589 1.980573-4.909589C1.262267-4.909589 .739228-4.393524 .739228-3.703113V-3.096389H.202242V-2.657036H.739228V0H1.325031V-2.657036Z"></path>
+<path id="tz_fig_rede_provedor_g0-105" d="M1.227397-4.78406H.523039V-4.079701H1.227397V-4.78406ZM1.171606-3.096389H.585803V0H1.171606V-3.096389Z"></path>
+<path id="tz_fig_rede_provedor_g0-107" d="M2.085181-1.896887L3.326526-3.096389H2.650062L1.157659-1.652802V-4.839851H.613699V0H1.129763V-.976339L1.72254-1.548194L2.873225 0H3.486924L2.085181-1.896887Z"></path>
+<path id="tz_fig_rede_provedor_g0-108" d="M1.171606-4.839851H.585803V0H1.171606V-4.839851Z"></path>
+<path id="tz_fig_rede_provedor_g0-110" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_rede_provedor_g0-111" d="M3.486924-1.527273C3.486924-2.447821 2.75467-3.200996 1.84807-3.200996S.209215-2.440847 .209215-1.527273C.209215-.641594 .948443 .069738 1.84807 .069738C2.75467 .069738 3.486924-.641594 3.486924-1.527273ZM1.84807-.411457C1.297136-.411457 .81594-.81594 .81594-1.603985S1.332005-2.740722 1.84807-2.740722C2.371108-2.740722 2.880199-2.378082 2.880199-1.603985C2.880199-.808966 2.385056-.411457 1.84807-.411457Z"></path>
+<path id="tz_fig_rede_provedor_g0-114" d="M1.17858-1.48543C1.17858-2.238605 1.806227-2.643088 2.419925-2.650062V-3.166127C1.834122-3.159153 1.408717-2.873225 1.129763-2.503611V-3.145205H.592777V0H1.17858V-1.48543Z"></path>
+<path id="tz_fig_rede_provedor_g0-115" d="M2.545455-2.984807C2.071233-3.180075 1.72254-3.200996 1.471482-3.200996C1.297136-3.200996 .244085-3.200996 .244085-2.273474C.244085-1.945704 .425405-1.764384 .516065-1.680697C.760149-1.436613 1.053051-1.380822 1.422665-1.311083C1.750436-1.248319 2.127024-1.17858 2.127024-.843836C2.127024-.404483 1.548194-.404483 1.45056-.404483C1.004234-.404483 .585803-.564882 .306849-.760149L.209215-.237111C.446326-.118555 .871731 .069738 1.45056 .069738C1.764384 .069738 2.071233 .020922 2.329265-.167372C2.587298-.36264 2.670984-.669489 2.670984-.9066C2.670984-1.03213 2.657036-1.30411 2.364134-1.569116C2.106102-1.799253 1.855044-1.84807 1.520299-1.910834C1.108842-1.987547 .788045-2.050311 .788045-2.357161C.788045-2.75467 1.297136-2.75467 1.401743-2.75467C1.799253-2.75467 2.106102-2.670984 2.454795-2.489664L2.545455-2.984807Z"></path>
+<path id="tz_fig_rede_provedor_g0-116" d="M1.311083-2.657036H2.343213V-3.096389H1.311083V-3.982067H.774097V-3.096389H.139477V-2.657036H.753176V-.892653C.753176-.425405 .871731 .069738 1.373848 .069738S2.259527-.09066 2.468742-.188294L2.350187-.63462C2.12005-.467248 1.875965-.411457 1.680697-.411457C1.387796-.411457 1.311083-.697385 1.311083-1.018182V-2.657036Z"></path>
+<path id="tz_fig_rede_provedor_g0-117" d="M3.242839-3.096389H2.636115V-1.073973C2.636115-.516065 2.161893-.341719 1.75741-.341719C1.241345-.341719 1.185554-.481196 1.185554-.801993V-3.096389H.578829V-.760149C.578829-.139477 .850809 .069738 1.338979 .069738C1.624907 .069738 2.238605 .013948 2.657036-.320797V0H3.242839V-3.096389Z"></path>
+<path id="tz_fig_rede_provedor_g1-47" d="M4.321793-6.141968C4.375592-6.276463 4.375592-6.28543 4.375592-6.348194C4.375592-6.545455 4.214197-6.724782 3.999004-6.724782C3.738979-6.724782 3.649315-6.500623 3.622416-6.419925L.600747 1.65878C.546949 1.793275 .546949 1.802242 .546949 1.865006C.546949 2.062267 .708344 2.241594 .923537 2.241594C1.183562 2.241594 1.273225 2.017435 1.300125 1.936737L4.321793-6.141968Z"></path>
+<path id="tz_fig_rede_provedor_g1-67" d="M5.738481-1.282192C5.738481-1.353923 5.675716-1.389788 5.639851-1.389788C5.424658-1.389788 5.164633-.806974 3.900374-.806974C2.322291-.806974 1.873973-1.775342 1.873973-3.120299C1.873973-4.456289 2.358157-5.424658 3.828643-5.424658C4.62665-5.424658 5.04807-5.110834 5.290162-4.913574C5.34396-4.868742 5.370859-4.832877 5.433624-4.832877C5.469489-4.832877 5.514321-4.877709 5.523288-4.913574L5.702615-5.908842C5.711582-5.944707 5.702615-5.980573 5.630884-6.007472C5.101868-6.204732 4.554919-6.330262 3.855542-6.330262C1.667746-6.330262 .546949-5.263263 .546949-3.129265C.546949-.932503 1.685679 .089664 3.864508 .089664C4.62665 .089664 5.101868-.017933 5.756413-.42142C5.828144-.466252 5.810212-.529016 5.810212-.529016L5.738481-1.282192Z"></path>
+<path id="tz_fig_rede_provedor_g1-71" d="M5.917808-2.788543C5.917808-2.824408 5.890909-2.905106 5.810212-2.905106H3.972105C3.900374-2.905106 3.837609-2.887173 3.837609-2.779577V-2.142964C3.837609-2.089166 3.882441-2.0533 3.936239-2.0533H4.689415V-.905604C4.608717-.851806 4.00797-.798007 3.873474-.798007C2.367123-.798007 1.873973-1.739477 1.873973-3.120299C1.873973-4.456289 2.358157-5.424658 3.819676-5.424658C4.581818-5.424658 4.94944-5.236364 5.478456-4.743213C5.505355-4.716314 5.532254-4.707347 5.559153-4.707347C5.603985-4.707347 5.648817-4.743213 5.66675-4.82391L5.828144-5.738481C5.837111-5.783313 5.846077-5.837111 5.76538-5.881943C5.496389-6.025405 4.832877-6.321295 3.873474-6.321295C1.497385-6.321295 .555915-5.110834 .555915-3.120299C.555915-.905604 1.730511 .089664 3.819676 .089664C4.770112 .089664 5.66675-.206227 5.917808-.412453V-2.788543Z"></path>
+<path id="tz_fig_rede_provedor_g1-72" d="M6.294396-5.792279C6.294396-6.079203 6.231631-6.222665 5.86401-6.222665H5.406725C5.066002-6.222665 4.976339-6.106102 4.976339-5.792279V-3.658281H2.133998V-5.792279C2.133998-6.079203 2.071233-6.222665 1.703611-6.222665H1.246326C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H1.703611C2.044334 0 2.133998-.116563 2.133998-.430386V-2.815442H4.976339V-.430386C4.976339-.143462 5.039103 0 5.406725 0H5.86401C6.204732 0 6.294396-.116563 6.294396-.430386V-5.792279Z"></path>
+<path id="tz_fig_rede_provedor_g1-76" d="M2.133998-.905604V-5.792279C2.133998-6.079203 2.071233-6.222665 1.703611-6.222665H1.246326C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H4.357659C4.698381 0 4.788045-.116563 4.788045-.430386V-.511083C4.788045-.71731 4.779078-.941469 4.366625-.941469L2.133998-.905604Z"></path>
+<path id="tz_fig_rede_provedor_g1-82" d="M4.33076-2.86924C4.895641-3.003736 5.747447-3.344458 5.747447-4.456289C5.747447-6.222665 3.801743-6.222665 3.398257-6.222665H1.246326C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H1.676712C2.017435 0 2.107098-.116563 2.107098-.430386V-2.788543H3.102366L4.572852-.215193C4.698381 0 4.797011 0 4.994271 0H5.523288C5.702615 0 5.855044 0 5.855044-.268991L4.33076-2.86924ZM2.107098-3.434122V-5.451557H3.272727C4.312827-5.451557 4.501121-5.039103 4.501121-4.447323C4.501121-3.918306 4.375592-3.434122 3.272727-3.434122H2.107098Z"></path>
+<path id="tz_fig_rede_provedor_g1-83" d="M2.420922-3.954172C2.223661-3.999004 1.667746-4.20523 1.667746-4.716314C1.667746-5.478456 2.429888-5.496389 2.734745-5.496389C3.236862-5.496389 3.685181-5.379826 4.124533-4.94944C4.267995-4.814944 4.276961-4.805978 4.312827-4.805978C4.366625-4.805978 4.411457-4.832877 4.438356-4.967372L4.572852-5.747447C4.590785-5.819178 4.590785-5.837111 4.590785-5.86401C4.590785-5.935741 4.581818-5.944707 4.357659-6.06127C3.721046-6.375093 3.19203-6.419925 2.734745-6.419925C1.936737-6.419925 .546949-6.231631 .546949-4.554919C.546949-3.918306 .878705-3.505853 1.049066-3.326526C1.506351-2.860274 1.927771-2.77061 2.627148-2.609215C3.129265-2.492653 3.326526-2.447821 3.523786-2.268493C3.61345-2.178829 3.801743-1.990535 3.801743-1.649813C3.801743-.806974 3.030635-.780075 2.734745-.780075C1.981569-.780075 1.327024-1.084932 .878705-1.488418C.771108-1.596015 .753176-1.596015 .71731-1.596015C.663512-1.596015 .61868-1.569116 .591781-1.43462L.457285-.654545C.439352-.582814 .439352-.564882 .439352-.537983C.439352-.349689 1.371856-.026899 1.416687-.008966C2.017435 .179328 2.501619 .19726 2.734745 .19726C4.079701 .19726 4.92254-.403487 4.92254-1.793275C4.92254-2.797509 4.178331-3.550685 3.281694-3.756912L2.420922-3.954172Z"></path>
+<path id="tz_fig_rede_provedor_g1-84" d="M2.627148-5.263263V-.430386C2.627148-.107597 2.725778 0 3.057534 0H3.514819C3.855542 0 3.945205-.116563 3.945205-.430386V-5.263263C4.339726-5.263263 5.34396-5.236364 5.738481-5.236364C5.989539-5.236364 6.204732-5.236364 6.204732-5.66675V-5.738481C6.204732-6.025405 6.141968-6.168867 5.774346-6.168867H.789041C.466252-6.168867 .358655-6.070237 .358655-5.738481V-5.66675C.358655-5.236364 .573848-5.236364 .824907-5.236364L2.627148-5.263263Z"></path>
+<path id="tz_fig_rede_provedor_g1-87" d="M9.05604-5.792279C9.091905-5.917808 9.091905-5.953674 9.091905-5.96264C9.091905-6.222665 8.849813-6.222665 8.724284-6.222665H8.53599C8.356663-6.222665 8.105604-6.222665 7.998007-5.828144L7.047572-2.295392C6.922042-1.838107 6.841345-1.542217 6.760648-1.147696H6.751681C6.706849-1.389788 6.706849-1.407721 6.491656-2.196762L5.523288-5.828144C5.424658-6.177833 5.24533-6.222665 4.985305-6.222665H4.393524C4.20523-6.222665 3.954172-6.222665 3.846575-5.828144L3.057534-2.887173L2.833375-1.999502C2.734745-1.578082 2.663014-1.291158 2.645081-1.147696H2.636115C2.564384-1.613948 2.349191-2.402989 2.196762-2.96787L1.425654-5.837111C1.318057-6.222665 1.058032-6.222665 .887671-6.222665H.582814C.457285-6.222665 .215193-6.222665 .215193-5.96264C.215193-5.953674 .215193-5.917808 .251059-5.792279L1.721544-.376588C1.820174 0 2.071233 0 2.259527 0H2.851308C3.039601 0 3.29066 0 3.398257-.412453L4.339726-3.918306C4.474222-4.402491 4.536986-4.653549 4.62665-5.083935H4.635616C4.743213-4.563885 4.797011-4.339726 4.958406-3.756912L5.872976-.376588C5.971606 0 6.222665 0 6.401993 0H7.047572C7.235866 0 7.486924 0 7.585554-.376588L9.05604-5.792279Z"></path>
+<path id="tz_fig_rede_provedor_g1-88" d="M3.882441-3.299626L5.729514-5.837111C5.810212-5.944707 5.819178-5.953674 5.819178-6.016438C5.819178-6.222665 5.621918-6.222665 5.496389-6.222665H4.82391C4.671482-6.222665 4.519054-6.222665 4.384558-6.034371L3.209963-4.357659L1.999502-6.016438C1.847073-6.222665 1.730511-6.222665 1.542217-6.222665H.798007C.672478-6.222665 .484184-6.222665 .484184-6.025405C.484184-5.971606 .484184-5.953674 .573848-5.846077L2.537484-3.299626L.42142-.385554C.340722-.277958 .331756-.268991 .331756-.206227C.331756 0 .529016 0 .654545 0H1.327024C1.622914 0 1.65878-.053798 1.766376-.215193L3.209963-2.349191L4.707347-.19726C4.841843 0 4.985305 0 5.155666 0H5.899875C6.016438 0 6.222665 0 6.222665-.19726C6.222665-.260025 6.177833-.331756 6.141968-.376588L3.882441-3.299626Z"></path>
+<path id="tz_fig_rede_provedor_g1-97" d="M4.160399-2.833375C4.160399-4.250062 2.797509-4.259029 2.349191-4.259029C1.927771-4.259029 1.479452-4.223163 .878705-3.972105C.690411-3.891407 .645579-3.864508 .645579-3.765878C.645579-3.703113 .699377-3.183064 .708344-3.111333C.71731-3.057534 .762142-3.012702 .824907-3.012702C.869738-3.012702 .896638-3.039601 .923537-3.066501C1.309091-3.469988 1.75741-3.667248 2.313325-3.667248C2.797509-3.667248 2.940971-3.371357 2.940971-2.842341V-2.528518C2.627148-2.528518 .277958-2.510585 .277958-1.192528C.277958-.564882 .780075 .09863 1.569116 .09863C1.873973 .09863 2.546451 .008966 2.96787-.609714V-.430386C2.96787-.143462 3.030635 0 3.398257 0H3.730012C4.070735 0 4.160399-.116563 4.160399-.430386V-2.833375ZM2.940971-1.380822C2.940971-.546949 2.089166-.546949 2.062267-.546949C1.685679-.546949 1.443587-.869738 1.443587-1.210461C1.443587-2.089166 2.689913-2.15193 2.940971-2.160897V-1.380822Z"></path>
+<path id="tz_fig_rede_provedor_g1-101" d="M3.864508-1.918804C4.070735-1.918804 4.294894-1.927771 4.294894-2.331258C4.294894-3.48792 3.756912-4.259029 2.420922-4.259029C.986301-4.259029 .277958-3.452055 .277958-2.089166C.277958-.61868 1.129763 .09863 2.537484 .09863C2.878207 .09863 3.38929 .053798 3.981071-.242092C4.178331-.340722 4.241096-.367621 4.241096-.475218C4.241096-.537983 4.214197-.798007 4.20523-.869738C4.169365-1.147696 4.160399-1.156663 4.079701-1.156663C4.043836-1.156663 4.025903-1.156663 3.927273-1.066999C3.398257-.609714 2.860274-.546949 2.57335-.546949C1.560149-.546949 1.452553-1.344956 1.425654-1.918804H3.864508ZM1.43462-2.394022C1.461519-2.940971 1.640847-3.61345 2.420922-3.61345C3.138232-3.61345 3.272727-3.0934 3.299626-2.394022H1.43462Z"></path>
+<path id="tz_fig_rede_provedor_g1-105" d="M.91457-6.231631C.627646-6.231631 .484184-6.177833 .484184-5.819178V-5.406725C.484184-5.119801 .573848-5.003238 .905604-5.003238H1.371856C1.802242-5.003238 1.802242-5.191532 1.802242-5.612951C1.802242-6.043337 1.802242-6.231631 1.371856-6.231631H.91457ZM1.739477-3.676214C1.739477-3.963138 1.676712-4.1066 1.309091-4.1066H.977335C.654545-4.1066 .546949-4.00797 .546949-3.676214V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-3.676214Z"></path>
+<path id="tz_fig_rede_provedor_g1-108" d="M1.739477-5.792279C1.739477-6.079203 1.676712-6.222665 1.309091-6.222665H.977335C.654545-6.222665 .546949-6.124035 .546949-5.792279V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-5.792279Z"></path>
+<path id="tz_fig_rede_provedor_g1-111" d="M4.644583-2.017435C4.644583-3.48792 3.927273-4.259029 2.465753-4.259029C.968369-4.259029 .277958-3.461021 .277958-2.017435C.277958-.555915 1.049066 .09863 2.456787 .09863S4.644583-.546949 4.644583-2.017435ZM2.465753-.600747C1.497385-.600747 1.497385-1.407721 1.497385-2.125031C1.497385-2.815442 1.497385-3.61345 2.456787-3.61345C3.425156-3.61345 3.425156-2.824408 3.425156-2.125031C3.425156-1.416687 3.425156-.600747 2.465753-.600747Z"></path>
+<path id="tz_fig_rede_provedor_g1-114" d="M1.739477-2.062267C1.739477-2.914072 2.447821-3.263761 3.012702-3.299626C3.174097-3.308593 3.19203-3.308593 3.19203-3.541719V-3.963138C3.19203-4.142466 3.19203-4.20523 3.030635-4.20523C2.779577-4.20523 2.125031-4.115567 1.703611-3.147198H1.694645V-3.730012C1.694645-4.016936 1.63188-4.160399 1.264259-4.160399H.977335C.654545-4.160399 .546949-4.061768 .546949-3.730012V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-2.062267Z"></path>
+<path id="tz_fig_rede_provedor_g1-116" d="M1.95467-3.461021H2.752677C2.860274-3.461021 3.183064-3.461021 3.183064-3.783811S2.860274-4.1066 2.752677-4.1066H1.95467V-4.850809C1.95467-5.137733 1.891905-5.281196 1.524284-5.281196H1.246326C.923537-5.281196 .81594-5.182565 .81594-4.850809V-4.1066H.609714C.511083-4.1066 .179328-4.1066 .179328-3.783811S.502117-3.461021 .609714-3.461021H.789041V-1.192528C.789041-.286924 1.111831 .09863 1.730511 .09863C1.811208 .09863 2.205729 .09863 2.67198-.044832C2.824408-.089664 3.344458-.251059 3.344458-.42142C3.344458-.448319 3.326526-.511083 3.272727-.699377C3.227895-.878705 3.209963-.932503 3.129265-.932503C3.084433-.932503 3.075467-.923537 3.021669-.869738C2.923039-.798007 2.680946-.600747 2.304359-.600747C2.089166-.600747 1.95467-.753176 1.95467-1.344956V-3.461021Z"></path>
+<path id="tz_fig_rede_provedor_g2-12" d="M4.214197-6.231631H3.443088V-5.460523H4.214197V-6.231631ZM4.187298-3.981071H3.469988V0H4.187298V-3.981071ZM1.640847-3.425156H2.716812V-3.981071H1.613948V-5.039103C1.613948-5.612951 1.945704-5.738481 2.160897-5.738481C2.322291-5.738481 2.528518-5.702615 2.716812-5.56812V-6.222665C2.645081-6.249564 2.420922-6.321295 2.160897-6.321295C1.479452-6.321295 .923537-5.684682 .923537-4.779078V-3.981071H.251059V-3.425156H.923537V0H1.640847V-3.425156Z"></path>
+<path id="tz_fig_rede_provedor_g2-19" d="M3.828643-6.222665H3.084433L1.882939-4.72528H2.465753L3.828643-6.222665Z"></path>
+<path id="tz_fig_rede_provedor_g2-40" d="M2.483686-6.724782C1.425654-5.837111 .726276-4.303861 .726276-2.25056C.726276-.116563 1.470486 1.380822 2.483686 2.232628H3.066501C2.582316 1.739477 1.470486 .591781 1.470486-2.241594C1.470486-5.083935 2.582316-6.222665 3.066501-6.724782H2.483686Z"></path>
+<path id="tz_fig_rede_provedor_g2-41" d="M1.093898 2.232628C2.15193 1.344956 2.851308-.188294 2.851308-2.241594C2.851308-4.375592 2.107098-5.872976 1.093898-6.724782H.511083C.995268-6.231631 2.107098-5.083935 2.107098-2.25056C2.107098 .591781 .995268 1.730511 .511083 2.232628H1.093898Z"></path>
+<path id="tz_fig_rede_provedor_g2-66" d="M.878705-6.222665V0H3.335492C4.680448 0 5.630884-.824907 5.630884-1.685679C5.630884-2.483686 4.814944-3.111333 3.855542-3.254795C4.743213-3.478954 5.370859-4.00797 5.370859-4.662516C5.370859-5.487422 4.375592-6.222665 3.0934-6.222665H.878705ZM1.685679-3.523786V-5.693649H2.833375C3.747945-5.693649 4.617684-5.272229 4.617684-4.644583C4.617684-4.124533 3.981071-3.523786 2.734745-3.523786H1.685679ZM1.685679-.529016V-2.940971H3.003736C3.954172-2.940971 4.850809-2.402989 4.850809-1.694645C4.850809-1.058032 4.070735-.529016 3.075467-.529016H1.685679Z"></path>
+<path id="tz_fig_rede_provedor_g2-67" d="M5.361893-1.066999C4.832877-.654545 4.33076-.52005 3.58655-.52005C2.25056-.52005 1.452553-1.891905 1.452553-3.0934C1.452553-4.420423 2.286426-5.711582 3.58655-5.711582C4.20523-5.711582 4.752179-5.550187 5.182565-5.227397L5.326027-6.016438C4.859776-6.213699 4.276961-6.321295 3.658281-6.321295C1.882939-6.321295 .591781-4.877709 .591781-3.111333C.591781-1.398755 1.847073 .09863 3.649315 .09863C4.483188 .09863 4.814944-.035866 5.424658-.403487L5.361893-1.066999Z"></path>
+<path id="tz_fig_rede_provedor_g2-69" d="M4.752179-2.932005V-3.514819H1.712578V-5.586052H2.0533C2.779577-5.586052 3.514819-5.56812 4.241096-5.56812H5.012204V-6.195766H.851806V0H5.137733V-.681445H4.241096C3.398257-.681445 2.555417-.663512 1.712578-.663512V-2.932005H4.752179Z"></path>
+<path id="tz_fig_rede_provedor_g2-71" d="M5.523288-2.680946H3.58655V-2.089166H4.770112V-.690411C4.393524-.609714 4.00797-.52005 3.61345-.52005C2.241594-.52005 1.452553-1.882939 1.452553-3.120299C1.452553-4.384558 2.25056-5.711582 3.631382-5.711582C4.276961-5.711582 4.904608-5.469489 5.308095-5.101868L5.451557-5.881943C5.039103-6.133001 4.366625-6.321295 3.568618-6.321295C1.838107-6.321295 .591781-4.779078 .591781-3.120299C.591781-1.443587 1.838107 .09863 3.568618 .09863C4.276961 .09863 4.886675-.062765 5.523288-.340722V-2.680946Z"></path>
+<path id="tz_fig_rede_provedor_g2-73" d="M1.712578-6.222665H.851806V0H1.712578V-6.222665Z"></path>
+<path id="tz_fig_rede_provedor_g2-76" d="M1.712578-6.222665H.851806V0H4.62665V-.627646H4.23213C3.505853-.627646 2.779577-.609714 2.0533-.609714H1.712578V-6.222665Z"></path>
+<path id="tz_fig_rede_provedor_g2-77" d="M4.850809-3.156164C4.617684-2.555417 4.133499-1.318057 4.025903-.878705H4.016936C3.927273-1.246326 3.514819-2.331258 3.344458-2.761644L2.15193-5.819178L1.990535-6.222665H.91457V0H1.649813V-5.523288H1.65878C1.766376-5.066002 2.286426-3.730012 2.385056-3.478954L3.371357-.950436C3.443088-.771108 3.61345-.32279 3.667248-.19726H4.348692L5.586052-3.353425C5.720548-3.685181 6.267497-5.101868 6.38406-5.523288H6.393026V0H7.128269V-6.222665H6.052304L4.850809-3.156164Z"></path>
+<path id="tz_fig_rede_provedor_g2-78" d="M2.519552-5.334994C2.447821-5.478456 2.340224-5.693649 2.295392-5.756413C2.241594-5.86401 2.116065-6.124035 2.062267-6.222665H.878705V0H1.613948V-5.523288H1.622914L3.990037-.887671C4.061768-.744209 4.169365-.529016 4.214197-.466252C4.267995-.358655 4.393524-.09863 4.447323 0H5.630884V-6.222665H4.895641V-.699377H4.886675L2.519552-5.334994Z"></path>
+<path id="tz_fig_rede_provedor_g2-79" d="M6.28543-3.084433C6.28543-4.976339 4.94944-6.419925 3.398257-6.419925S.511083-4.976339 .511083-3.084433C.511083-1.219427 1.85604 .19726 3.398257 .19726C4.94944 .19726 6.28543-1.219427 6.28543-3.084433ZM3.398257-.430386C2.331258-.430386 1.371856-1.53325 1.371856-3.218929C1.371856-4.859776 2.37609-5.810212 3.398257-5.810212S5.424658-4.850809 5.424658-3.218929C5.424658-1.53325 4.465255-.430386 3.398257-.430386Z"></path>
+<path id="tz_fig_rede_provedor_g2-80" d="M3.19203-2.555417C4.456289-2.555417 5.370859-3.425156 5.370859-4.402491C5.370859-5.352927 4.465255-6.222665 3.19203-6.222665H.869738V0H1.730511V-2.555417H3.19203ZM2.976837-5.693649C4.00797-5.693649 4.590785-5.119801 4.590785-4.402491S4.016936-3.111333 2.976837-3.111333H1.703611V-5.693649H2.976837Z"></path>
+<path id="tz_fig_rede_provedor_g2-84" d="M3.577584-5.559153C4.187298-5.559153 4.805978-5.54122 5.415691-5.54122H5.953674V-6.168867H.331756V-5.54122H.878705C1.488418-5.54122 2.107098-5.559153 2.716812-5.559153V0H3.577584V-5.559153Z"></path>
+<path id="tz_fig_rede_provedor_g2-85" d="M5.478456-6.222665H4.734247V-2.089166C4.734247-.887671 3.954172-.331756 3.200996-.331756C2.456787-.331756 1.712578-.887671 1.712578-2.080199V-6.222665H.851806V-2.098132C.851806-.762142 1.95467 .19726 3.19203 .19726S5.478456-.789041 5.478456-2.089166V-6.222665Z"></path>
+<path id="tz_fig_rede_provedor_g2-97" d="M3.694147-2.591283C3.694147-3.478954 3.039601-4.133499 2.15193-4.133499C1.569116-4.133499 1.13873-3.981071 .708344-3.738979L.762142-3.102366C1.210461-3.434122 1.649813-3.568618 2.142964-3.568618C2.645081-3.568618 2.949938-3.165131 2.949938-2.582316V-2.205729C1.407721-2.169863 .394521-1.766376 .394521-1.0401C.394521-.61868 .672478 .09863 1.452553 .09863C1.63188 .09863 2.411955 .080697 2.976837-.340722V0H3.694147V-2.591283ZM2.949938-1.255293C2.949938-1.066999 2.949938-.842839 2.627148-.654545C2.402989-.52005 2.107098-.484184 1.927771-.484184C1.470486-.484184 1.084932-.699377 1.084932-1.058032C1.084932-1.694645 2.833375-1.721544 2.949938-1.721544V-1.255293Z"></path>
+<path id="tz_fig_rede_provedor_g2-98" d="M1.461519-6.222665H.744209V0H1.488418V-.42142C1.604981-.29589 2.062267 .09863 2.725778 .09863C3.658281 .09863 4.42939-.806974 4.42939-1.999502C4.42939-3.084433 3.837609-4.079701 2.958904-4.079701C2.716812-4.079701 2.071233-4.034869 1.461519-3.559651V-6.222665ZM1.488418-2.99477C1.622914-3.183064 1.945704-3.496887 2.456787-3.496887C2.99477-3.496887 3.685181-3.120299 3.685181-1.999502C3.685181-.842839 2.914072-.484184 2.367123-.484184C1.793275-.484184 1.53325-.959402 1.488418-1.0401V-2.99477Z"></path>
+<path id="tz_fig_rede_provedor_g2-99" d="M3.774844-.968369C3.344458-.672478 2.86924-.511083 2.331258-.511083C1.569116-.511083 1.066999-1.147696 1.066999-1.999502C1.066999-2.689913 1.407721-3.523786 2.367123-3.523786C2.932005-3.523786 3.218929-3.416189 3.667248-3.111333L3.783811-3.738979C3.281694-4.025903 3.003736-4.133499 2.358157-4.133499C1.084932-4.133499 .32279-3.057534 .32279-1.990535C.32279-.878705 1.156663 .09863 2.322291 .09863C2.949938 .09863 3.425156-.089664 3.828643-.331756L3.774844-.968369Z"></path>
+<path id="tz_fig_rede_provedor_g2-100" d="M4.00797-6.222665H3.29066V-3.58655C2.788543-4.00797 2.214695-4.079701 1.927771-4.079701C1.022167-4.079701 .32279-3.138232 .32279-1.990535C.32279-.833873 1.0132 .09863 1.891905 .09863C2.160897 .09863 2.725778 .035866 3.263761-.466252V0H4.00797V-6.222665ZM3.263761-1.264259C3.263761-1.093898 3.263761-1.075965 3.165131-.950436C2.923039-.627646 2.618182-.484184 2.295392-.484184C1.712578-.484184 1.066999-.905604 1.066999-1.981569C1.066999-3.129265 1.829141-3.496887 2.394022-3.496887C2.806476-3.496887 3.0934-3.263761 3.263761-3.030635V-1.264259Z"></path>
+<path id="tz_fig_rede_provedor_g2-101" d="M3.828643-1.963636C3.828643-2.241594 3.819676-2.923039 3.469988-3.461021C3.0934-4.025903 2.519552-4.133499 2.178829-4.133499C1.13873-4.133499 .313823-3.174097 .313823-2.026401C.313823-.842839 1.192528 .09863 2.313325 .09863C2.743711 .09863 3.263761-.008966 3.783811-.340722L3.730012-.959402C3.165131-.555915 2.636115-.484184 2.322291-.484184C1.578082-.484184 1.004234-1.13873 .977335-1.963636H3.828643ZM1.031133-2.492653C1.174595-3.066501 1.613948-3.550685 2.178829-3.550685C2.510585-3.550685 3.120299-3.398257 3.29066-2.492653H1.031133Z"></path>
+<path id="tz_fig_rede_provedor_g2-104" d="M4.025903-2.663014C4.025903-3.326526 3.846575-4.079701 2.761644-4.079701C2.25056-4.079701 1.766376-3.837609 1.443587-3.434122V-6.222665H.726276V0H1.470486V-2.187796C1.470486-2.779577 1.703611-3.496887 2.385056-3.496887C3.281694-3.496887 3.281694-2.860274 3.281694-2.600249V0H4.025903V-2.663014Z"></path>
+<path id="tz_fig_rede_provedor_g2-105" d="M1.524284-6.133001H.663512V-5.272229H1.524284V-6.133001ZM1.452553-3.981071H.735243V0H1.452553V-3.981071Z"></path>
+<path id="tz_fig_rede_provedor_g2-108" d="M1.452553-6.222665H.735243V0H1.452553V-6.222665Z"></path>
+<path id="tz_fig_rede_provedor_g2-110" d="M4.025903-2.663014C4.025903-3.326526 3.846575-4.079701 2.761644-4.079701C2.0533-4.079701 1.622914-3.667248 1.416687-3.398257V-4.034869H.726276V0H1.470486V-2.187796C1.470486-2.779577 1.703611-3.496887 2.385056-3.496887C3.281694-3.496887 3.281694-2.860274 3.281694-2.600249V0H4.025903V-2.663014Z"></path>
+<path id="tz_fig_rede_provedor_g2-111" d="M4.33076-1.972603C4.33076-3.147198 3.434122-4.133499 2.295392-4.133499C1.183562-4.133499 .268991-3.165131 .268991-1.972603C.268991-.789041 1.210461 .09863 2.295392 .09863C3.407223 .09863 4.33076-.806974 4.33076-1.972603ZM2.304359-.511083C1.613948-.511083 1.0132-1.049066 1.0132-2.062267C1.0132-3.111333 1.685679-3.550685 2.295392-3.550685C2.940971-3.550685 3.58655-3.0934 3.58655-2.062267C3.58655-1.022167 2.958904-.511083 2.304359-.511083Z"></path>
+<path id="tz_fig_rede_provedor_g2-112" d="M1.488418-.412453C1.820174-.09863 2.268493 .09863 2.734745 .09863C3.640349 .09863 4.42939-.789041 4.42939-1.999502C4.42939-3.075467 3.864508-4.079701 2.99477-4.079701C2.743711-4.079701 2.080199-4.034869 1.461519-3.550685V-3.981071H.744209V1.739477H1.488418V-.412453ZM1.488418-2.976837C1.604981-3.138232 1.936737-3.469988 2.447821-3.469988C3.120299-3.469988 3.685181-2.833375 3.685181-1.990535C3.685181-1.129763 3.057534-.484184 2.358157-.484184C2.071233-.484184 1.748443-.600747 1.488418-1.0401V-2.976837Z"></path>
+<path id="tz_fig_rede_provedor_g2-114" d="M1.461519-1.909838C1.461519-2.851308 2.196762-3.425156 3.012702-3.434122V-4.079701C2.367123-4.070735 1.775342-3.747945 1.407721-3.218929V-4.034869H.744209V0H1.461519V-1.909838Z"></path>
+<path id="tz_fig_rede_provedor_g2-115" d="M3.165131-3.846575C2.609215-4.097634 2.196762-4.133499 1.829141-4.133499C1.622914-4.133499 .304857-4.133499 .304857-2.949938C.304857-2.519552 .564882-2.25056 .663512-2.15193C1.004234-1.85604 1.23736-1.811208 1.847073-1.694645C2.133998-1.640847 2.645081-1.542217 2.645081-1.084932C2.645081-.502117 1.918804-.502117 1.802242-.502117C1.273225-.502117 .762142-.681445 .376588-.950436L.260025-.29589C.798007-.008966 1.344956 .09863 1.802242 .09863C2.385056 .09863 3.317559-.089664 3.317559-1.156663C3.317559-1.470486 3.19203-1.784309 2.878207-2.0533C2.57335-2.313325 2.304359-2.367123 1.748443-2.47472C1.425654-2.537484 .977335-2.618182 .977335-3.039601C.977335-3.568618 1.613948-3.568618 1.748443-3.568618C2.402989-3.568618 2.788543-3.362391 3.048568-3.218929L3.165131-3.846575Z"></path>
+<path id="tz_fig_rede_provedor_g2-116" d="M1.622914-3.425156H2.914072V-3.981071H1.622914V-5.119801H.959402V-3.981071H.170361V-3.425156H.932503V-1.129763C.932503-.600747 1.049066 .09863 1.703611 .09863C2.098132 .09863 2.564384 .017933 3.066501-.233126L2.914072-.798007C2.680946-.61868 2.367123-.511083 2.089166-.511083C1.739477-.511083 1.622914-.824907 1.622914-1.291158V-3.425156Z"></path>
+<path id="tz_fig_rede_provedor_g2-117" d="M4.025903-3.981071H3.281694V-1.389788C3.281694-.672478 2.716812-.430386 2.178829-.430386C1.53325-.430386 1.470486-.636613 1.470486-1.022167V-3.981071H.726276V-.977335C.726276-.215193 1.031133 .09863 1.667746 .09863C2.187796 .09863 2.887173-.053798 3.308593-.430386V0H4.025903V-3.981071Z"></path>
+<path id="tz_fig_rede_provedor_g2-119" d="M6.1599-3.981071H5.469489C5.263263-3.335492 4.52802-1.0401 4.465255-.502117H4.456289C4.402491-.878705 4.214197-1.488418 4.061768-1.990535L3.443088-3.981071H2.779577C2.492653-3.102366 1.85604-1.093898 1.820174-.529016H1.811208C1.784309-.860772 1.551183-1.676712 1.380822-2.232628L.842839-3.981071H.125529L1.389788 0H2.133998C2.286426-.493151 2.618182-1.524284 2.67198-1.730511C2.860274-2.367123 3.075467-3.084433 3.102366-3.469988H3.111333C3.129265-3.299626 3.209963-2.949938 3.227895-2.860274C3.326526-2.465753 3.326526-2.447821 3.398257-2.214695L4.079701 0H4.895641L6.1599-3.981071Z"></path>
+</defs>
+<g id="tz_fig_rede_provedor_page1">
+<g stroke-miterlimit="10" transform="translate(-33.114833,.670627)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M-34.631-17.07164H34.631V17.07164H-34.631Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-31.29802,3.5)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-16.977898" y=".670627" href="#tz_fig_rede_provedor_g2-73"></use>
+<use x="-14.404234" y=".670627" href="#tz_fig_rede_provedor_g2-110"></use>
+<use x="-9.644344" y=".670627" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="-6.316568" y=".670627" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="-2.220826" y=".670627" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x=".927072" y=".670627" href="#tz_fig_rede_provedor_g2-110"></use>
+<use x="5.686962" y=".670627" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="9.782704" y=".670627" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="-24.508633" y="11.629531" href="#tz_fig_rede_provedor_g2-40"></use>
+<use x="-20.924873" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="-16.317183" y="11.629531" href="#tz_fig_rede_provedor_g2-112"></use>
+<use x="-11.30131" y="11.629531" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="-7.205568" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="-4.05767" y="11.629531" href="#tz_fig_rede_provedor_g2-97"></use>
+<use x=".370142" y="11.629531" href="#tz_fig_rede_provedor_g2-100"></use>
+<use x="5.130031" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="9.481739" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="12.629637" y="11.629531" href="#tz_fig_rede_provedor_g2-97"></use>
+<use x="17.057449" y="11.629531" href="#tz_fig_rede_provedor_g2-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M164.48903 18.58298H78.46483C76.80795 18.58298 75.46483 17.23985 75.46483 15.58298V-15.58298C75.46483-17.23985 76.80795-18.58298 78.46483-18.58298H164.48903C166.1459-18.58298 167.48903-17.23985 167.48903-15.58298V15.58298C167.48903 17.23985 166.1459 18.58298 164.48903 18.58298ZM75.46483-18.58298"></path>
+</g>
+</g>
+</g>
+<g transform="translate(78.7978,9.0)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-.047247" y=".670627" href="#tz_fig_rede_provedor_g1-67"></use>
+<use x="6.254158" y=".670627" href="#tz_fig_rede_provedor_g1-67"></use>
+<use x="12.555563" y=".670627" href="#tz_fig_rede_provedor_g1-82"></use>
+<use x="-12.491882" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="-9.343985" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="-4.736294" y="11.629531" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="-1.408517" y="11.629531" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="2.687225" y="11.629531" href="#tz_fig_rede_provedor_g2-97"></use>
+<use x="7.115037" y="11.629531" href="#tz_fig_rede_provedor_g2-100"></use>
+<use x="11.874926" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="16.226634" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="22.445991" y="11.629531" href="#tz_fig_rede_provedor_g2-100"></use>
+<use x="27.205881" y="11.629531" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="-15.660511" y="22.588435" href="#tz_fig_rede_provedor_g2-98"></use>
+<use x="-10.644639" y="22.588435" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="-6.292931" y="22.588435" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="-3.145033" y="22.588435" href="#tz_fig_rede_provedor_g2-100"></use>
+<use x="1.614857" y="22.588435" href="#tz_fig_rede_provedor_g2-97"></use>
+<use x="9.114128" y="22.588435" href="#tz_fig_rede_provedor_g2-40"></use>
+<use x="12.697887" y="22.588435" href="#tz_fig_rede_provedor_g2-66"></use>
+<use x="18.848393" y="22.588435" href="#tz_fig_rede_provedor_g2-71"></use>
+<use x="24.99198" y="22.588435" href="#tz_fig_rede_provedor_g2-80"></use>
+<use x="30.886503" y="22.588435" href="#tz_fig_rede_provedor_g2-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M291.8565 12.80373H205.8323C204.17543 12.80373 202.8323 11.4606 202.8323 9.80373V-9.80373C202.8323-11.4606 204.17543-12.80373 205.8323-12.80373H291.8565C293.51338-12.80373 294.8565-11.4606 294.8565-9.80373V9.80373C294.8565 11.4606 293.51338 12.80373 291.8565 12.80373ZM202.8323-12.80373"></path>
+</g>
+</g>
+</g>
+<g transform="translate(206.16528,2.375)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x=".363718" y=".670627" href="#tz_fig_rede_provedor_g1-67"></use>
+<use x="6.665123" y=".670627" href="#tz_fig_rede_provedor_g1-82"></use>
+<use x="12.966527" y=".670627" href="#tz_fig_rede_provedor_g1-83"></use>
+<use x="-19.754655" y="11.629531" href="#tz_fig_rede_provedor_g2-115"></use>
+<use x="-16.222082" y="11.629531" href="#tz_fig_rede_provedor_g2-119"></use>
+<use x="-9.926295" y="11.629531" href="#tz_fig_rede_provedor_g2-105"></use>
+<use x="-7.726234" y="11.629531" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="-4.398457" y="11.629531" href="#tz_fig_rede_provedor_g2-99"></use>
+<use x="-.302732" y="11.629531" href="#tz_fig_rede_provedor_g2-104"></use>
+<use x="7.528617" y="11.629531" href="#tz_fig_rede_provedor_g2-100"></use>
+<use x="12.288507" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="19.967657" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+<use x="25.86218" y="11.629531" href="#tz_fig_rede_provedor_g2-79"></use>
+<use x="32.669932" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M368.00905-42.45645H281.98485C280.32797-42.45645 278.98485-43.79958 278.98485-45.45645V-65.0639C278.98485-66.72078 280.32797-68.0639 281.98485-68.0639H368.00905C369.66592-68.0639 371.00905-66.72078 371.00905-65.0639V-45.45645C371.00905-43.79958 369.66592-42.45645 368.00905-42.45645ZM278.98485-68.0639"></path>
+</g>
+</g>
+</g>
+<g transform="translate(282.31783,-53.13518)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-12.376075" y=".670627" href="#tz_fig_rede_provedor_g1-67"></use>
+<use x="-6.07467" y=".670627" href="#tz_fig_rede_provedor_g1-67"></use>
+<use x=".226735" y=".670627" href="#tz_fig_rede_provedor_g1-82"></use>
+<use x="6.528139" y=".670627" href="#tz_fig_rede_provedor_g1-47"></use>
+<use x="11.459674" y=".670627" href="#tz_fig_rede_provedor_g1-67"></use>
+<use x="17.761078" y=".670627" href="#tz_fig_rede_provedor_g1-72"></use>
+<use x="24.884406" y=".670627" href="#tz_fig_rede_provedor_g1-82"></use>
+<use x="-30.704697" y="11.629531" href="#tz_fig_rede_provedor_g2-99"></use>
+<use x="-26.608972" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="-22.001281" y="11.629531" href="#tz_fig_rede_provedor_g2-110"></use>
+<use x="-17.241391" y="11.629531" href="#tz_fig_rede_provedor_g2-99"></use>
+<use x="-13.145666" y="11.629531" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="-9.049924" y="11.629531" href="#tz_fig_rede_provedor_g2-110"></use>
+<use x="-4.290034" y="11.629531" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="-.962258" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="2.18564" y="11.629531" href="#tz_fig_rede_provedor_g2-97"></use>
+<use x="6.613452" y="11.629531" href="#tz_fig_rede_provedor_g2-100"></use>
+<use x="11.373342" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="15.72505" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="21.944407" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+<use x="27.838929" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+<use x="33.733452" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+<use x="39.371991" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="43.979682" y="11.629531" href="#tz_fig_rede_provedor_g2-69"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M478.10487-42.1772H403.46178C401.8049-42.1772 400.46178-43.52032 400.46178-45.1772V-65.34315C400.46178-67.00003 401.8049-68.34315 403.46178-68.34315H478.10487C479.76175-68.34315 481.10487-67.00003 481.10487-65.34315V-45.1772C481.10487-43.52032 479.76175-42.1772 478.10487-42.1772ZM400.46178-68.34315"></path>
+</g>
+</g>
+</g>
+<g transform="translate(403.79475,-51.76018)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-4.94362" y=".670627" href="#tz_fig_rede_provedor_g2-79"></use>
+<use x="1.864133" y=".670627" href="#tz_fig_rede_provedor_g2-76"></use>
+<use x="6.118975" y=".670627" href="#tz_fig_rede_provedor_g2-84"></use>
+<use x="-19.043273" y="11.629531" href="#tz_fig_rede_provedor_g2-40"></use>
+<use x="-15.459513" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="-12.311616" y="11.629531" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="-8.215874" y="11.629531" href="#tz_fig_rede_provedor_g2-100"></use>
+<use x="-3.455984" y="11.629531" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="3.711218" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+<use x="9.60574" y="11.629531" href="#tz_fig_rede_provedor_g2-79"></use>
+<use x="16.413493" y="11.629531" href="#tz_fig_rede_provedor_g2-78"></use>
+<use x="22.930682" y="11.629531" href="#tz_fig_rede_provedor_g2-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M582.31015-42.1772H507.66705C506.01018-42.1772 504.66705-43.52032 504.66705-45.1772V-65.34315C504.66705-67.00003 506.01018-68.34315 507.66705-68.34315H582.31015C583.96703-68.34315 585.31015-67.00003 585.31015-65.34315V-45.1772C585.31015-43.52032 583.96703-42.1772 582.31015-42.1772ZM504.66705-68.34315"></path>
+</g>
+</g>
+</g>
+<g transform="translate(508.00003,-51.76018)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-21.359553" y=".670627" href="#tz_fig_rede_provedor_g2-67"></use>
+<use x="-15.471948" y=".670627" href="#tz_fig_rede_provedor_g2-108"></use>
+<use x="-13.271887" y=".670627" href="#tz_fig_rede_provedor_g2-105"></use>
+<use x="-11.071825" y=".670627" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="-6.976083" y=".670627" href="#tz_fig_rede_provedor_g2-110"></use>
+<use x="-2.216193" y=".670627" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="1.111584" y=".670627" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="5.207326" y=".670627" href="#tz_fig_rede_provedor_g2-115"></use>
+<use x="11.811358" y=".670627" href="#tz_fig_rede_provedor_g2-12"></use>
+<use x="16.751136" y=".670627" href="#tz_fig_rede_provedor_g2-98"></use>
+<use x="21.255043" y=".670627" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="24.40294" y=".670627" href="#tz_fig_rede_provedor_g2-97"></use>
+<use x="-9.679309" y="11.629531" href="#tz_fig_rede_provedor_g2-40"></use>
+<use x="-6.09555" y="11.629531" href="#tz_fig_rede_provedor_g2-79"></use>
+<use x=".712203" y="11.629531" href="#tz_fig_rede_provedor_g2-78"></use>
+<use x="7.229392" y="11.629531" href="#tz_fig_rede_provedor_g2-85"></use>
+<use x="13.566694" y="11.629531" href="#tz_fig_rede_provedor_g2-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M368.00905 68.0639H281.98485C280.32797 68.0639 278.98485 66.72078 278.98485 65.0639V45.45645C278.98485 43.79958 280.32797 42.45645 281.98485 42.45645H368.00905C369.66592 42.45645 371.00905 43.79958 371.00905 45.45645V65.0639C371.00905 66.72078 369.66592 68.0639 368.00905 68.0639ZM278.98485 42.45645"></path>
+</g>
+</g>
+</g>
+<g transform="translate(282.31783,57.38518)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-12.276458" y=".670627" href="#tz_fig_rede_provedor_g1-76"></use>
+<use x="-7.070949" y=".670627" href="#tz_fig_rede_provedor_g1-72"></use>
+<use x=".052378" y=".670627" href="#tz_fig_rede_provedor_g1-71"></use>
+<use x="6.627757" y=".670627" href="#tz_fig_rede_provedor_g1-47"></use>
+<use x="11.559291" y=".670627" href="#tz_fig_rede_provedor_g1-87"></use>
+<use x="20.874411" y=".670627" href="#tz_fig_rede_provedor_g1-105"></use>
+<use x="23.165832" y=".670627" href="#tz_fig_rede_provedor_g1-114"></use>
+<use x="26.503339" y=".670627" href="#tz_fig_rede_provedor_g1-101"></use>
+<use x="-9.260941" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="-6.202992" y="11.629531" href="#tz_fig_rede_provedor_g2-19"></use>
+<use x="-6.113043" y="11.629531" href="#tz_fig_rede_provedor_g2-97"></use>
+<use x="-1.685232" y="11.629531" href="#tz_fig_rede_provedor_g2-100"></use>
+<use x="3.074658" y="11.629531" href="#tz_fig_rede_provedor_g2-105"></use>
+<use x="5.27472" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="12.95387" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+<use x="18.848393" y="11.629531" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="22.176169" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M489.68597 68.34315H403.66177C402.0049 68.34315 400.66177 67.00003 400.66177 65.34315V45.1772C400.66177 43.52032 402.0049 42.1772 403.66177 42.1772H489.68597C491.34285 42.1772 492.68597 43.52032 492.68597 45.1772V65.34315C492.68597 67.00003 491.34285 68.34315 489.68597 68.34315ZM400.66177 42.1772"></path>
+</g>
+</g>
+</g>
+<g transform="translate(403.99475,58.76018)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-6.080895" y=".670627" href="#tz_fig_rede_provedor_g1-83"></use>
+<use x="-.601413" y=".670627" href="#tz_fig_rede_provedor_g1-101"></use>
+<use x="3.981429" y=".670627" href="#tz_fig_rede_provedor_g1-116"></use>
+<use x="7.605361" y=".670627" href="#tz_fig_rede_provedor_g1-111"></use>
+<use x="12.262913" y=".670627" href="#tz_fig_rede_provedor_g1-114"></use>
+<use x="15.600421" y=".670627" href="#tz_fig_rede_provedor_g1-105"></use>
+<use x="17.891841" y=".670627" href="#tz_fig_rede_provedor_g1-97"></use>
+<use x="22.59922" y=".670627" href="#tz_fig_rede_provedor_g1-108"></use>
+<use x="-26.712587" y="11.629531" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="-23.384811" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+<use x="-19.033103" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="-15.885205" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="-12.737307" y="11.629531" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="-5.570106" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="-2.422208" y="11.629531" href="#tz_fig_rede_provedor_g2-117"></use>
+<use x="2.337682" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="5.485579" y="11.629531" href="#tz_fig_rede_provedor_g2-97"></use>
+<use x="9.913391" y="11.629531" href="#tz_fig_rede_provedor_g2-108"></use>
+<use x="15.184912" y="11.629531" href="#tz_fig_rede_provedor_g2-40"></use>
+<use x="18.768672" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+<use x="24.663194" y="11.629531" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="27.990971" y="11.629531" href="#tz_fig_rede_provedor_g2-77"></use>
+<use x="36.044057" y="11.629531" href="#tz_fig_rede_provedor_g2-80"></use>
+<use x="41.938579" y="11.629531" href="#tz_fig_rede_provedor_g2-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M588.6007 68.0639H519.64815C517.99127 68.0639 516.64815 66.72078 516.64815 65.0639V45.45645C516.64815 43.79958 517.99127 42.45645 519.64815 42.45645H588.6007C590.25757 42.45645 591.6007 43.79958 591.6007 45.45645V65.0639C591.6007 66.72078 590.25757 68.0639 588.6007 68.0639ZM516.64815 42.45645"></path>
+</g>
+</g>
+</g>
+<g transform="translate(519.98112,57.38518)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-20.33208" y=".670627" href="#tz_fig_rede_provedor_g1-83"></use>
+<use x="-14.852597" y=".670627" href="#tz_fig_rede_provedor_g1-88"></use>
+<use x="-8.277218" y=".670627" href="#tz_fig_rede_provedor_g1-84"></use>
+<use x="-1.70184" y=".670627" href="#tz_fig_rede_provedor_g1-47"></use>
+<use x="3.229695" y=".670627" href="#tz_fig_rede_provedor_g1-76"></use>
+<use x="8.435203" y=".670627" href="#tz_fig_rede_provedor_g1-72"></use>
+<use x="15.55853" y=".670627" href="#tz_fig_rede_provedor_g1-71"></use>
+<use x="-24.360233" y="11.629531" href="#tz_fig_rede_provedor_g2-99"></use>
+<use x="-20.264508" y="11.629531" href="#tz_fig_rede_provedor_g2-108"></use>
+<use x="-18.064446" y="11.629531" href="#tz_fig_rede_provedor_g2-105"></use>
+<use x="-15.864384" y="11.629531" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x="-11.768642" y="11.629531" href="#tz_fig_rede_provedor_g2-110"></use>
+<use x="-7.008752" y="11.629531" href="#tz_fig_rede_provedor_g2-116"></use>
+<use x="-3.680976" y="11.629531" href="#tz_fig_rede_provedor_g2-101"></use>
+<use x=".414766" y="11.629531" href="#tz_fig_rede_provedor_g2-115"></use>
+<use x="7.018799" y="11.629531" href="#tz_fig_rede_provedor_g2-114"></use>
+<use x="10.076748" y="11.629531" href="#tz_fig_rede_provedor_g2-19"></use>
+<use x="10.166696" y="11.629531" href="#tz_fig_rede_provedor_g2-97"></use>
+<use x="14.594508" y="11.629531" href="#tz_fig_rede_provedor_g2-100"></use>
+<use x="19.354398" y="11.629531" href="#tz_fig_rede_provedor_g2-105"></use>
+<use x="21.55446" y="11.629531" href="#tz_fig_rede_provedor_g2-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M35.03099 0H74.86484" fill="none"></path>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(43.1134,3.93297)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-33.114833" y=".670627" href="#tz_fig_rede_provedor_g0-116"></use>
+<use x="-30.439065" y=".670627" href="#tz_fig_rede_provedor_g0-114"></use>
+<use x="-27.981239" y=".670627" href="#tz_fig_rede_provedor_g0-94"></use>
+<use x="-27.908582" y=".670627" href="#tz_fig_rede_provedor_g0-97"></use>
+<use x="-24.348965" y=".670627" href="#tz_fig_rede_provedor_g0-110"></use>
+<use x="-20.522984" y=".670627" href="#tz_fig_rede_provedor_g0-115"></use>
+<use x="-17.682556" y=".670627" href="#tz_fig_rede_provedor_g0-105"></use>
+<use x="-15.914858" y=".670627" href="#tz_fig_rede_provedor_g0-116"></use>
+<use x="-13.23909" y=".670627" href="#tz_fig_rede_provedor_g0-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M168.08902 0H202.23232" fill="none"></path>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M248.8444-13.40372V-55.26018H278.38486" fill="none"></path>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M371.60904-55.26018H400.06178" fill="none"></path>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(374.80296,-51.32721)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-33.114833" y=".670627" href="#tz_fig_rede_provedor_g0-86"></use>
+<use x="-28.174953" y=".670627" href="#tz_fig_rede_provedor_g0-76"></use>
+<use x="-24.143131" y=".670627" href="#tz_fig_rede_provedor_g0-65"></use>
+<use x="-19.203251" y=".670627" href="#tz_fig_rede_provedor_g0-78"></use>
+<use x="-13.972798" y=".670627" href="#tz_fig_rede_provedor_g0-115"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M481.50487-55.26018H504.26706" fill="none"></path>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(486.01956,-51.32721)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-33.114833" y=".670627" href="#tz_fig_rede_provedor_g0-12"></use>
+<use x="-29.143559" y=".670627" href="#tz_fig_rede_provedor_g0-98"></use>
+<use x="-25.523411" y=".670627" href="#tz_fig_rede_provedor_g0-114"></use>
+<use x="-22.992935" y=".670627" href="#tz_fig_rede_provedor_g0-97"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M248.8444 13.40372V55.26018H278.38486" fill="none"></path>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#ff7518" stroke="#ff7518">
+<g stroke-dasharray="3.0,3.0" stroke-dashoffset="0.0">
+<path d="M371.60904 55.26018H400.06178" fill="none"></path>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(368.94891,59.19315)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-33.114833" y=".670627" href="#tz_fig_rede_provedor_g0-101"></use>
+<use x="-29.82158" y=".670627" href="#tz_fig_rede_provedor_g0-110"></use>
+<use x="-25.995599" y=".670627" href="#tz_fig_rede_provedor_g0-108"></use>
+<use x="-24.227901" y=".670627" href="#tz_fig_rede_provedor_g0-97"></use>
+<use x="-20.668284" y=".670627" href="#tz_fig_rede_provedor_g0-99"></use>
+<use x="-17.375031" y=".670627" href="#tz_fig_rede_provedor_g0-101"></use>
+<use x="-11.611838" y=".670627" href="#tz_fig_rede_provedor_g0-80"></use>
+<use x="-6.877786" y=".670627" href="#tz_fig_rede_provedor_g0-116"></use>
+<use x="-4.202018" y=".670627" href="#tz_fig_rede_provedor_g0-80"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#ff7518" stroke="#ff7518">
+<g stroke-dasharray="3.0,3.0" stroke-dashoffset="0.0">
+<path d="M493.28596 55.26018H516.04816" fill="none"></path>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(495.32753,59.19315)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-33.114833" y=".670627" href="#tz_fig_rede_provedor_g0-80"></use>
+<use x="-28.380781" y=".670627" href="#tz_fig_rede_provedor_g0-116"></use>
+<use x="-25.705013" y=".670627" href="#tz_fig_rede_provedor_g0-77"></use>
+<use x="-19.239591" y=".670627" href="#tz_fig_rede_provedor_g0-80"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M339.55629-114.78828H281.98485C280.32797-114.78828 278.98485-116.13141 278.98485-117.78828V-126.01463C278.98485-127.67151 280.32797-129.01463 281.98485-129.01463H339.55629C341.21317-129.01463 342.55629-127.67151 342.55629-126.01463V-117.78828C342.55629-116.13141 341.21317-114.78828 339.55629-114.78828ZM278.98485-129.01463"></path>
+</g>
+</g>
+</g>
+<g transform="translate(282.31783,-124.332)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-19.037101" y=".670627" href="#tz_fig_rede_provedor_g0-77"></use>
+<use x="-12.571678" y=".670627" href="#tz_fig_rede_provedor_g0-105"></use>
+<use x="-10.803981" y=".670627" href="#tz_fig_rede_provedor_g0-107"></use>
+<use x="-7.183828" y=".670627" href="#tz_fig_rede_provedor_g0-114"></use>
+<use x="-4.653353" y=".670627" href="#tz_fig_rede_provedor_g0-111"></use>
+<use x="-.948443" y=".670627" href="#tz_fig_rede_provedor_g0-84"></use>
+<use x="4.112521" y=".670627" href="#tz_fig_rede_provedor_g0-105"></use>
+<use x="5.880219" y=".670627" href="#tz_fig_rede_provedor_g0-107"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M438.27101-114.78828H363.62791C361.97104-114.78828 360.62791-116.13141 360.62791-117.78828V-126.01463C360.62791-127.67151 361.97104-129.01463 363.62791-129.01463H438.27101C439.92789-129.01463 441.27101-127.67151 441.27101-126.01463V-117.78828C441.27101-116.13141 439.92789-114.78828 438.27101-114.78828ZM360.62791-129.01463"></path>
+</g>
+</g>
+</g>
+<g transform="translate(363.96089,-124.332)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-33.114833,.670627)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-23.755628" y=".670627" href="#tz_fig_rede_provedor_g0-111"></use>
+<use x="-20.050718" y=".670627" href="#tz_fig_rede_provedor_g0-117"></use>
+<use x="-16.224737" y=".670627" href="#tz_fig_rede_provedor_g0-116"></use>
+<use x="-13.548969" y=".670627" href="#tz_fig_rede_provedor_g0-114"></use>
+<use x="-11.018493" y=".670627" href="#tz_fig_rede_provedor_g0-111"></use>
+<use x="-7.313583" y=".670627" href="#tz_fig_rede_provedor_g0-115"></use>
+<use x="-2.003489" y=".670627" href="#tz_fig_rede_provedor_g0-102"></use>
+<use x=".260623" y=".670627" href="#tz_fig_rede_provedor_g0-97"></use>
+<use x="3.82024" y=".670627" href="#tz_fig_rede_provedor_g0-98"></use>
+<use x="7.440389" y=".670627" href="#tz_fig_rede_provedor_g0-114"></use>
+<use x="9.970864" y=".670627" href="#tz_fig_rede_provedor_g0-105"></use>
+<use x="11.738562" y=".670627" href="#tz_fig_rede_provedor_g0-99"></use>
+<use x="15.031815" y=".670627" href="#tz_fig_rede_provedor_g0-97"></use>
+<use x="18.591432" y=".670627" href="#tz_fig_rede_provedor_g0-110"></use>
+<use x="22.417413" y=".670627" href="#tz_fig_rede_provedor_g0-116"></use>
+<use x="25.093181" y=".670627" href="#tz_fig_rede_provedor_g0-101"></use>
+<use x="28.386435" y=".670627" href="#tz_fig_rede_provedor_g0-115"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rede-provedor-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;1.1: Onde os equipamentos MikroTik (em azul) trabalham na rede de um provedor típico de fibra e rádio.
+</figcaption>
+</figure>
+</div>
+<p>Acompanhe o diagrama da esquerda para a direita:</p>
+<ul>
+<li><strong>Roteador de borda</strong>: um CCR conversa via <strong>BGP</strong> com a operadora que vende trânsito ao provedor (Volume 8). É a porta de entrada e saída de toda a rede.</li>
+<li><strong>Switch do POP</strong>: um CRS distribui o tráfego dentro do ponto de presença, separando os serviços em <strong>VLANs</strong> (Volume 4).</li>
+<li><strong>Concentrador PPPoE (BNG)</strong>: um CCR — ou um CHR virtualizado — autentica cada assinante, entrega IP e aplica o plano de velocidade contratado (Volumes 6 e 7).</li>
+<li><strong>Ramo fibra</strong>: a OLT e as ONUs dos clientes são, em geral, de outros fabricantes — mas quem roteia, autentica e controla a banda desses clientes continua sendo o MikroTik (Volume 15 detalha essa integração).</li>
+<li><strong>Ramo rádio</strong>: enlaces <strong>PtP</strong> levam a internet até torres na zona rural; lá, antenas setoriais atendem em <strong>PtMP</strong> os rádios na casa de cada cliente — tudo MikroTik, das linhas LHG, SXT e afins (Volume 5).</li>
+</ul>
+<p>Guarde esta imagem: os quinze volumes deste manual são, essencialmente, um tour guiado por esse diagrama, do centro para as pontas.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Um único sistema — o RouterOS — opera todos os papéis azuis do diagrama. Aprender RouterOS não é aprender “um roteador”: é aprender a operar <strong>a rede inteira do provedor</strong>.</p>
+</div>
+</div>
+</section>
+<section id="o-chr-seu-laboratório-gratuito" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="o-chr-seu-laboratório-gratuito"><span class="header-section-number">1.4</span> O CHR: seu laboratório gratuito</h2>
+<p>Como praticar tudo isso sem gastar um centavo em equipamento? A resposta é o <strong>CHR — Cloud Hosted Router</strong> <span class="citation" data-cites="mikrotik-chr">(<a href="../../referencias.html#ref-mikrotik-chr" role="doc-biblioref">MikroTik, 2026b</a>)</span>: uma versão do RouterOS empacotada como <strong>máquina virtual</strong>, feita pela própria MikroTik para rodar em VirtualBox, VMware, Proxmox, GNS3, EVE-NG e afins.</p>
+<p>O CHR é um RouterOS completo: mesma linha de comando, mesmo firewall, mesmo OSPF e BGP. Sem licença, ele funciona para sempre com uma única limitação — cada interface fica limitada a <strong>1 Mbps</strong> de velocidade, o que não atrapalha em nada o estudo. É nele que rodam todos os laboratórios deste livro.</p>
+<p>Neste capítulo você fará o primeiro contato: baixar o CHR, dar o boot e entrar no sistema. A montagem completa do ambiente de estudos — com várias máquinas virtuais interligadas em topologias — é o assunto do <a href="05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>, que você montará uma única vez e reutilizará no livro inteiro.</p>
+</section>
+<section id="laboratório" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">1.5</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="1.5.1">
+<h3 data-number="1.5.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">1.5.1</span> Ambiente</h3>
+<p>Neste primeiro laboratório você precisa apenas de um computador com o <strong>VirtualBox</strong> instalado (gratuito, disponível para Windows, Linux e macOS em <code>virtualbox.org</code>). Nada de topologias ainda: uma única máquina virtual basta.</p>
+<ol type="1">
+<li>Acesse <code>mikrotik.com/download</code> e, na seção <strong>Cloud Hosted Router</strong>, baixe a imagem <strong>VDI</strong> da versão estável mais recente (7.x).</li>
+<li>No VirtualBox, crie uma máquina virtual nova: tipo <strong>Linux</strong>, versão <strong>Other Linux (64-bit)</strong>, com <strong>256 MB</strong> de RAM.</li>
+<li>Na etapa de disco, escolha <strong>usar um disco existente</strong> e aponte para o arquivo <code>.vdi</code> baixado (não crie disco novo).</li>
+<li>Inicie a máquina virtual.</li>
+</ol>
+<p>Ao final do boot aparece o prompt de login do RouterOS na janela da VM.</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="1.5.2">
+<h3 data-number="1.5.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">1.5.2</span> Comandos passo a passo</h3>
+<p>Faça login com o usuário padrão de fábrica — usuário <code>admin</code>, senha em branco (só pressionar Enter):</p>
+<pre class="routeros"><code>MikroTik Login: admin
+Password:</code></pre>
+<p>Nas versões atuais, o RouterOS pede imediatamente uma senha nova — escolha uma e anote. Em seguida ele mostra a licença e o banner com o logotipo, e você cai no prompt do terminal:</p>
+<pre class="routeros"><code>[admin@MikroTik] &gt;</code></pre>
+<p>Esse prompt diz duas coisas: quem você é (<code>admin</code>) e o nome do equipamento (<code>MikroTik</code>, a identidade de fábrica). Vamos fazer o RouterOS se apresentar. O comando abaixo mostra o “RG” do sistema — versão, tempo ligado, memória, CPU e placa:</p>
+<pre class="routeros"><code>/system resource print</code></pre>
+<p>A saída esperada é parecida com esta (os números variam conforme sua máquina):</p>
+<pre class="routeros"><code>[admin@MikroTik] &gt; /system resource print
+                   uptime: 4m12s
+                  version: 7.15.3 (stable)
+               build-time: 2024-07-24 10:39:01
+              free-memory: 190.1MiB
+             total-memory: 224.0MiB
+                      cpu: QEMU
+                 cpu-count: 1
+                 cpu-load: 1%
+          free-hdd-space: 43.1MiB
+         total-hdd-space: 61.4MiB
+         board-name: CHR
+                 platform: MikroTik</code></pre>
+<p>Repare em <code>version: 7.x</code> (estamos no RouterOS v7) e <code>board-name: CHR</code> (é a versão virtual). Agora veja as interfaces de rede que a VM enxerga:</p>
+<pre class="routeros"><code>/interface print</code></pre>
+<pre class="routeros"><code>[admin@MikroTik] &gt; /interface print
+Flags: R - RUNNING
+Columns: NAME, TYPE, ACTUAL-MTU, MAC-ADDRESS
+#   NAME     TYPE    ACTUAL-MTU  MAC-ADDRESS
+0 R ether1   ether         1500  08:00:27:6A:2B:1C</code></pre>
+<p>Uma única <code>ether1</code>: é a placa de rede virtual do VirtualBox. Nos próximos capítulos adicionaremos mais. Por fim, dê um nome ao seu roteador — boa prática que você levará para a vida de provedor, onde cada equipamento do parque precisa de identidade única:</p>
+<pre class="routeros"><code>/system identity set name=lab-r1</code></pre>
+<p>O prompt muda na hora, confirmando a alteração:</p>
+<pre class="routeros"><code>[admin@lab-r1] &gt;</code></pre>
+</section>
+<section id="verificação" class="level3" data-number="1.5.3">
+<h3 data-number="1.5.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">1.5.3</span> Verificação</h3>
+<p>Confirme os três resultados do laboratório:</p>
+<ol type="1">
+<li><code>/system resource print</code> mostra <code>version</code> começando com <code>7.</code> e <code>board-name: CHR</code>;</li>
+<li><code>/interface print</code> lista ao menos <code>ether1</code> com a flag <code>R</code> (running);</li>
+<li>O prompt exibe <code>[admin@lab-r1]</code> — a identidade foi gravada.</li>
+</ol>
+<p>Se a VM não deu boot, verifique se você <strong>apontou o disco existente</strong> (o <code>.vdi</code> baixado) em vez de criar um disco vazio — esse é o erro mais comum.</p>
+</section>
+<section id="desafios" class="level3" data-number="1.5.4">
+<h3 data-number="1.5.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">1.5.4</span> Desafios</h3>
+<ol type="1">
+<li>Descubra, usando apenas a tecla <code>?</code> no terminal, o que faz o comando <code>/system clock print</code> — e execute-o. O horário está certo?</li>
+<li>O RouterOS organiza os comandos em menus, como pastas. Entre no menu <code>/system</code> (digite <code>/system</code> e Enter) e liste o que há dentro dele com <code>?</code>. Depois volte à raiz com <code>/</code>.</li>
+<li>Sem consultar a internet: qual comando você usaria para trocar a identidade do roteador para <code>chr-teste</code>? Execute-o e desfaça em seguida, voltando para <code>lab-r1</code>.</li>
+<li>Desligue o roteador <strong>pelo terminal</strong> (não feche a janela da VM no X!). Dica: explore o menu <code>/system</code> do desafio 2.</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> Digite <code>/system clock print ?</code> (ou apenas execute o comando). Ele mostra data, hora e fuso configurados:</p>
+<pre class="routeros"><code>/system clock print</code></pre>
+<p>No CHR recém-instalado o fuso costuma vir errado (<code>gmt</code> ou detectado pela VM); você aprenderá a ajustá-lo no capítulo de primeiro acesso.</p>
+<p><strong>2.</strong> Sessão esperada:</p>
+<pre class="routeros"><code>[admin@lab-r1] &gt; /system
+[admin@lab-r1] /system&gt; ?</code></pre>
+<p>O <code>?</code> lista submenus como <code>clock</code>, <code>identity</code>, <code>resource</code>, <code>reboot</code>, <code>shutdown</code>… Para voltar à raiz:</p>
+<pre class="routeros"><code>[admin@lab-r1] /system&gt; /
+[admin@lab-r1] &gt;</code></pre>
+<p><strong>3.</strong> O mesmo comando do corpo do capítulo, com outro valor:</p>
+<pre class="routeros"><code>/system identity set name=chr-teste
+/system identity set name=lab-r1</code></pre>
+<p><strong>4.</strong> O comando é <code>/system shutdown</code>. Ele pede confirmação — responda <code>y</code>:</p>
+<pre class="routeros"><code>[admin@lab-r1] &gt; /system shutdown
+Shutdown, yes? [y/N]:</code></pre>
+<p>Desligar pelo sistema (em vez de fechar a VM “no cabo”) evita corromper o armazenamento — nos equipamentos físicos de produção, vale a mesma regra.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="1.6">
+<h2 data-number="1.6" class="anchored" data-anchor-id="resumo"><span class="header-section-number">1.6</span> Resumo</h2>
+<ul>
+<li><strong>MikroTik</strong> é a empresa (Letônia, 1996); <strong>RouterOS</strong> é o sistema operacional de rede; <strong>RouterBOARD</strong> é a linha de hardware que o roda.</li>
+<li>O RouterOS é <strong>o mesmo</strong> do equipamento mais barato ao mais caro — o que você aprende no laboratório vale para todo o parque.</li>
+<li><strong>SwOS</strong> é um firmware alternativo minimalista para switches; neste manual, operamos tudo com RouterOS.</li>
+<li>Provedores escolhem MikroTik por <strong>custo, completude, versatilidade e comunidade</strong> — e assumem a responsabilidade de configurar bem.</li>
+<li>Na rede de um ISP, o MikroTik aparece da <strong>borda BGP</strong> ao <strong>rádio do cliente</strong>, passando por switch, concentrador PPPoE e enlaces PtP/PtMP (<a href="#fig-rede-provedor" class="quarto-xref">Figura&nbsp;<span>1.1</span></a>).</li>
+<li>O <strong>CHR</strong> é o RouterOS em máquina virtual, gratuito (limitado a 1 Mbps por interface) — o laboratório perfeito, usado no livro inteiro.</li>
+<li>Você já fez o primeiro login, leu <code>/system resource print</code> e batizou seu roteador com <code>/system identity set</code>.</li>
+</ul>
+<p>No próximo capítulo, conheceremos as linhas de hardware — hEX, hAP, CRS, CCR, LHG/SXT — e como escolher o equipamento certo para cada papel do diagrama.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>Para aprofundar o que vimos aqui: a documentação oficial do RouterOS <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026a</a>)</span> e a página do CHR <span class="citation" data-cites="mikrotik-chr">(<a href="../../referencias.html#ref-mikrotik-chr" role="doc-biblioref">MikroTik, 2026b</a>)</span> são as fontes primárias que acompanharão todo o livro; <span class="citation" data-cites="discher-rosv7">Discher (<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">2016</a>)</span> e <span class="citation" data-cites="burgess-mikrotik">Burgess (<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">2011</a>)</span> são bons livros introdutórios em inglês; e <span class="citation" data-cites="tanenbaum-redes">Tanenbaum; Feamster; Wetherall (<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">2021</a>)</span> cobre a teoria de redes por trás de tudo. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-burgess-mikrotik" class="csl-entry" role="listitem">
+BURGESS, Dennis. <strong>Learn RouterOS</strong>. 2. ed. Raleigh: Lulu Press, 2011.
+</div>
+<div id="ref-discher-rosv7" class="csl-entry" role="listitem">
+DISCHER, Stephen R. W. <strong>RouterOS by Example</strong>. 2. ed. College Station: ISP Services, Inc., 2016.
+</div>
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, a2026.
+</div>
+<div id="ref-mikrotik-chr" class="csl-entry" role="listitem">
+MIKROTIK. <strong>Cloud Hosted Router (<span>CHR</span>) Documentation</strong>. <a href="https://help.mikrotik.com/docs/display/ROS/Cloud+Hosted+Router,+CHR" class="uri">https://help.mikrotik.com/docs/display/ROS/Cloud+Hosted+Router,+CHR</a>, b2026.
+</div>
+<div id="ref-tanenbaum-redes" class="csl-entry" role="listitem">
+TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Computadores</strong>. 6. ed. Porto Alegre: Bookman, 2021.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../index.html" class="pagination-link" aria-label="Apresentação">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Apresentação</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="pagination-link" aria-label="Linhas de hardware MikroTik">
+        <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/01-o-que-e-mikrotik.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
