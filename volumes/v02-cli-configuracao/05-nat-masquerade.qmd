@@ -1,7 +1,352 @@
-# NAT masquerade
+# NAT masquerade {#sec-nat-masquerade}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar por que uma LAN de endereços privados [@rfc1918] não navega na
+  internet sem tradução — analisando o caminho de **volta** do pacote;
+- Descrever o que o NAT de origem faz com cada pacote e como o roteador
+  "lembra" cada conexão traduzida;
+- Criar a regra clássica de **masquerade** e ler a tabela de conexões que
+  ela alimenta;
+- Diferenciar `action=masquerade` de `action=src-nat` — e saber quando o
+  IP fixo vale a troca;
+- Reconhecer os limites: NAT não é firewall, quebra a conectividade fim a
+  fim e tem efeitos colaterais que reaparecerão no CGNAT (Volume 9).
 :::
+
+## O problema: cartas sem remetente válido
+
+Nosso laboratório terminou o capítulo anterior num estado curioso:
+`lab-r2` resolve nomes, tem rota padrão via `lab-r1`, o `lab-r1` alcança a
+internet... e ainda assim um `/ping 8.8.8.8` de `lab-r2` **falha**. Rota
+existe, DNS existe — o que falta?
+
+Siga o pacote. Ele sai de `lab-r2` com origem `192.168.88.254`, o r1 o
+encaminha pela WAN, e ele até pode chegar ao destino. O problema é a
+**resposta**: ela seria endereçada a `192.168.88.254` — um endereço
+privado [@rfc1918], que **não existe na internet**. Nenhum roteador do
+mundo tem rota para ele (e os provedores descartam esses destinos). A
+resposta morre no caminho; para quem pinga, é como se a internet não
+respondesse. É a lição do @sec-ip-rota-padrao levada ao extremo: o caminho
+de volta é metade do problema — e na internet pública, para origem
+privada, **não há volta**.
+
+A solução tem nome pomposo — *Network Address Translation* de origem
+(**srcnat**) — e lógica simples: na saída, o roteador **troca o remetente**.
+
+## Como a máscara funciona
+
+Com NAT de origem ativo, cada pacote que sai da LAN para a WAN passa por
+uma transformação (@fig-nat-fluxo):
+
+::: {#fig-nat-fluxo}
+
+```{.tikz}
+%%| filename: fig-nat-fluxo
+%%| alt: Diagrama do NAT de origem em dois sentidos. Na ida, o pacote parte do cliente com origem 192.168.88.254 porta 51000 e destino 8.8.8.8; ao atravessar o roteador, a origem é trocada para o IP público 203.0.113.7 porta 51000, e o roteador anota a tradução na tabela de conexões. Na volta, a resposta chega para 203.0.113.7 porta 51000; o roteador consulta a tabela, desfaz a tradução e entrega ao cliente 192.168.88.254. Abaixo, a tabela de conexões mostra a linha que liga as duas versões do pacote.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  no/.style={draw=manualblue, very thick, fill=manualblue!8,
+             rounded corners=3pt, minimum height=10mm, text width=24mm,
+             align=center, font=\sffamily\small\bfseries},
+  pacote/.style={draw=manualgray, thick, fill=white, rounded corners=2pt,
+                 minimum height=7mm, text width=40mm, align=center,
+                 font=\sffamily\scriptsize},
+  tabela/.style={draw=manualgreen, very thick, fill=manualgreen!8,
+                 rounded corners=3pt, minimum height=9mm, text width=76mm,
+                 align=center, font=\sffamily\scriptsize},
+  seta/.style={very thick, -stealth, manualblue},
+  volta/.style={very thick, -stealth, manualgreen},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  \node[no] (lan) {Cliente\\ \small 192.168.88.254};
+  \node[no, right=42mm of lan] (rtr) {Roteador\\ \small NAT};
+  \node[no, right=42mm of rtr] (inet) {Internet\\ \small 8.8.8.8};
+
+  \node[pacote, above=6mm of $(lan.east)!0.5!(rtr.west)$] (p1)
+    {origem 192.168.88.254:51000\\destino 8.8.8.8};
+  \node[pacote, above=6mm of $(rtr.east)!0.5!(inet.west)$] (p2)
+    {origem \textbf{203.0.113.7}:51000\\destino 8.8.8.8};
+
+  \draw[seta] (lan.east) -- (rtr.west);
+  \draw[seta] (rtr.east) -- (inet.west);
+  \draw[volta] (inet.west) to[out=200, in=-20] node[below, rotulo]
+    {resposta para 203.0.113.7:51000} (rtr.east);
+  \draw[volta] (rtr.west) to[out=200, in=-20] node[below, rotulo]
+    {entregue a 192.168.88.254:51000} (lan.east);
+
+  \node[tabela, below=16mm of rtr] (tab)
+    {\textbf{tabela de conexões}\\
+     192.168.88.254:51000 $\leftrightarrow$ 203.0.113.7:51000 $\rightarrow$ 8.8.8.8};
+  \draw[manualgreen, thick, dashed] (rtr.south) -- (tab.north);
+\end{tikzpicture}
+```
+
+O NAT de origem em ação: troca de remetente na ida, anotação na tabela de
+conexões, tradução desfeita na volta.
+
+:::
+
+Três observações fazem o mecanismo inteiro:
+
+1. **Na ida**, a origem privada é substituída pelo endereço **público** do
+   roteador (e, se preciso, a porta de origem também muda — é assim que
+   centenas de clientes compartilham um IP sem misturar as respostas);
+2. **A memória**: cada tradução vira uma linha na **tabela de conexões**
+   do roteador — quem pediu, por qual porta, para onde. Essa tabela
+   (*connection tracking*) é uma peça central do RouterOS e será a
+   estrela do primeiro capítulo do Volume 3;
+3. **Na volta**, a resposta chega ao IP público, o roteador consulta a
+   tabela, desfaz a tradução e entrega ao cliente certo.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O NAT é a **portaria do prédio**: as cartas dos moradores saem com o
+endereço do prédio como remetente, e o porteiro anota num caderno quem
+mandou o quê. A resposta chega ao prédio, o porteiro consulta o caderno e
+entrega no apartamento certo. Ninguém lá fora conhece os apartamentos —
+conhecem o prédio.
+:::
+
+## A regra no RouterOS
+
+O NAT vive em `/ip firewall nat` — sim, dentro do firewall: NAT e filtro
+compartilham o motor de classificação de pacotes (chains, matchers) que o
+Volume 3 destrinchará. Por ora, o essencial: regras de NAT de origem vivem
+na chain **`srcnat`**, e a regra clássica do roteador de borda é uma linha:
+
+```routeros
+/ip firewall nat add chain=srcnat out-interface=ether3 action=masquerade comment="NAT da LAN para a WAN"
+```
+
+Lendo por partes:
+
+- `chain=srcnat` — "esta regra trata da origem dos pacotes que saem";
+- `out-interface=ether3` — só pacotes saindo pela WAN. É o **matcher**: a
+  condição que seleciona quem sofre a ação. Sem ele, você mascararia até o
+  tráfego interno;
+- `action=masquerade` — "troque a origem pelo endereço **que estiver** na
+  interface de saída".
+
+### `masquerade` ou `src-nat`?
+
+O `masquerade` descobre o endereço público sozinho, a cada conexão — feito
+sob medida para WAN de endereço **dinâmico** (DHCP, PPPoE): mudou o IP, a
+regra continua certa. A alternativa é dizer o endereço explicitamente:
+
+```routeros
+/ip firewall nat add chain=srcnat out-interface=ether3 action=src-nat to-addresses=203.0.113.7
+```
+
+`src-nat` com IP fixo é mais leve (não consulta a interface a cada
+conexão) e mais previsível — a escolha natural quando o IP público é
+estático, e obrigatória quando se traduz para um endereço que não é o da
+interface (situação comum no CGNAT, Volume 9). A regra de bolso: **WAN
+dinâmica → masquerade; IP fixo → src-nat**.
+
+Um efeito colateral do `masquerade` que vale conhecer desde já: quando o
+link cai e volta (ou o IP muda), as conexões antigas na tabela apontam
+para o endereço velho — e ficam zumbis até expirar, causando aqueles
+minutos de "internet meio quebrada" depois que o link retorna. Guarde o
+sintoma; o remédio (limpar conexões, ajustar timeouts) aparece com o
+connection tracking no Volume 3.
+
+### O que o NAT não é
+
+- **NAT não é firewall.** A tabela de conexões só deixa *voltar* o que
+  *saiu* — o que parece proteção. Mas qualquer serviço do próprio roteador
+  (o DNS do capítulo anterior, o WinBox...) continua exposto na WAN, e
+  regras de NAT mal escritas abrem caminhos inesperados. Proteção é
+  assunto de **filter rules** — Volume 3, sem atalhos;
+- **NAT quebra o fim a fim.** Ninguém de fora consegue *iniciar* conexão
+  com um cliente atrás do NAT — ótimo para esconder, péssimo para servir.
+  Publicar um serviço interno (o DVR do cliente, o servidor da empresa)
+  exigirá a tradução inversa, **dstnat** — também Volume 3;
+- **NAT em escala tem custo**: portas são finitas (~64 mil por IP
+  público), e milhares de assinantes por IP esbarram nisso — o mundo do
+  CGNAT, com suas obrigações legais brasileiras, é o Volume 9.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+NAT de origem = **troca de remetente + memória por conexão**. A regra
+`chain=srcnat out-interface=WAN action=masquerade` é uma linha, mas o que
+ela cria é estado: cada conexão traduzida vive na tabela de conexões do
+roteador. Entender essa tabela — não a regra — é o que separa quem
+configura NAT de quem diagnostica NAT. (E é por ela que o Volume 3
+começa.)
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Continuação direta dos capítulos @sec-dhcp e @sec-dns: `lab-r1` com WAN
+NAT (`ether3`, dhcp-client) e LAN (`ether2`, `192.168.88.1/24` + DHCP
+server); `lab-r2` como cliente DHCP da LAN. É o estado em que o capítulo
+anterior terminou.
+
+### Comandos passo a passo
+
+**Passo 1 — constatar a falha.** Em `lab-r2`:
+
+```routeros
+/ping 8.8.8.8 count=3
+```
+
+```routeros
+[admin@lab-r2] > /ping 8.8.8.8 count=3
+  SEQ HOST     SIZE TTL TIME  STATUS
+    0 8.8.8.8                 timeout
+    1 8.8.8.8                 timeout
+    2 8.8.8.8                 timeout
+  sent=3 received=0 packet-loss=100%
+```
+
+Repare: **`timeout`**, não `no route to host`. Rota existe (a padrão via
+r1); o que não existe é resposta — o sintoma clássico de origem privada
+sem tradução.
+
+**Passo 2 — a regra.** Em `lab-r1`:
+
+```routeros
+/ip firewall nat add chain=srcnat out-interface=ether3 action=masquerade comment="NAT da LAN para a WAN"
+/ip firewall nat print
+```
+
+```routeros
+[vitor@lab-r1] > /ip firewall nat print
+Flags: X - disabled, I - invalid; D - dynamic
+ 0    ;;; NAT da LAN para a WAN
+      chain=srcnat action=masquerade out-interface=ether3
+```
+
+**Passo 3 — o milagre.** Em `lab-r2`, repita:
+
+```routeros
+/ping 8.8.8.8 count=3
+/ping google.com count=3
+```
+
+Zero de perda nos dois — endereço, rota, DNS e agora NAT: o pacote
+completo do acesso à internet, montado peça por peça por você.
+
+**Passo 4 — ver a memória.** Enquanto o `lab-r2` gera tráfego (deixe um
+`/ping 8.8.8.8` rodando sem `count`), veja em `lab-r1` a tabela de
+conexões:
+
+```routeros
+/ip firewall connection print where dst-address~"8.8.8.8"
+```
+
+```routeros
+[vitor@lab-r1] > /ip firewall connection print where dst-address~"8.8.8.8"
+Columns: PROTOCOL, SRC-ADDRESS, DST-ADDRESS, REPLY-SRC-ADDRESS, REPLY-DST-ADDRESS
+# PROTOCOL SRC-ADDRESS          DST-ADDRESS  REPLY-SRC-ADDRESS  REPLY-DST-ADDRESS
+0 icmp     192.168.88.254       8.8.8.8      8.8.8.8            10.0.2.15
+```
+
+A linha conta a história completa: origem real (`192.168.88.254`), e a
+resposta (`REPLY-DST`) endereçada ao IP **da WAN** (`10.0.2.15`) — a
+tradução, anotada. Interrompa o ping no r2 (`Ctrl+C`).
+
+### Verificação
+
+1. O ping do Passo 1 falhou com `timeout` (e você sabe explicar por que
+   não foi `no route to host`);
+2. `/ip firewall nat print` mostra a regra única de masquerade com o
+   comentário;
+3. Após a regra, `lab-r2` pinga IP e nome com 0% de perda;
+4. A tabela de conexões exibiu a tradução (origem privada ↔ endereço da
+   WAN).
+
+### Desafios
+
+1. No Passo 4, a resposta vai para `10.0.2.15` — que também é um endereço
+   privado! Por que o NAT funciona mesmo assim no laboratório? (Pense em
+   quantas "portarias" existem entre o `lab-r2` e o `8.8.8.8`.)
+2. Remova o matcher: crie a regra só com `chain=srcnat
+   action=masquerade` (sem `out-interface`), desabilitando a original. O
+   laboratório continua funcionando — então qual é o perigo? Analise o que
+   acontece com o tráfego `lab-r2 → 192.168.56.1` (gerência) e por que
+   "funciona" não é "está certo". Desfaça ao final.
+3. Sua WAN ganhou IP fixo `203.0.113.7`. Escreva a regra `src-nat`
+   equivalente e explique **dois** ganhos práticos sobre o masquerade
+   nesse cenário.
+4. Um cliente corporativo atrás do seu NAT quer acessar as câmeras dele a
+   partir do celular (de fora). Com o que você aprendeu até aqui, isso é
+   possível? O que falta, conceitualmente — e em que volume mora a
+   resposta?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Porque há **NAT em cascata**: o `lab-r1` traduz
+`192.168.88.254 → 10.0.2.15`, e o NAT do VirtualBox traduz
+`10.0.2.15 → IP do seu computador`, que por sua vez pode estar atrás do
+NAT do seu roteador doméstico (`→ IP público da sua casa`). Cada portaria
+anota no próprio caderno e desfaz na volta. É também um retrato honesto da
+internet IPv4 atual — e do que o CGNAT (Volume 9) faz em escala de
+provedor.
+
+**2.** Sem `out-interface`, a regra mascara **tudo que sai por qualquer
+interface** — inclusive o tráfego para a rede de gerência: o
+`192.168.56.1` passa a ver conexões vindas de `192.168.56.11` (o endereço
+do r1 naquela interface) em vez do endereço real do r2. Você perde a
+rastreabilidade interna (logs, permissões por origem) e cria defeitos
+finíssimos de diagnosticar. "Funciona" ≠ correto: NAT se aplica **na
+fronteira**, não no meio da casa.
+
+**3.**
+
+```routeros
+/ip firewall nat add chain=srcnat out-interface=ether3 action=src-nat to-addresses=203.0.113.7
+```
+
+Ganhos: (a) menos trabalho por conexão (não resolve o IP da interface a
+cada vez — relevante em concentrador com milhares de conexões novas por
+segundo); (b) previsibilidade — o endereço de origem público é sempre o
+mesmo, o que facilita liberações em firewalls de terceiros, reputação de
+IP e diagnóstico.
+
+**4.** Não é possível ainda: o NAT de origem só cria traduções para
+conexões **iniciadas de dentro**; alguém de fora não tem como alcançar a
+câmera (o fim a fim está quebrado, por design). Falta a tradução inversa —
+**dstnat/port forwarding**: "o que chegar ao meu IP público na porta X,
+entregue ao IP interno Y". É o @sec-dstnat, no Volume 3 — junto com o
+firewall que impede que esse portão aberto vire problema.
+:::
+
+## Resumo
+
+- LAN privada não navega sem tradução: a **resposta** para um endereço
+  RFC 1918 não tem rota na internet — o sintoma é `timeout` com rota
+  existente.
+- NAT de origem: **troca o remetente na saída, anota na tabela de
+  conexões, desfaz na volta** (@fig-nat-fluxo) — portas de origem
+  distinguem os clientes que compartilham o IP.
+- A regra clássica: `chain=srcnat out-interface=WAN action=masquerade` —
+  matcher primeiro, ação depois. **WAN dinâmica → masquerade; IP fixo →
+  src-nat** (mais leve e previsível).
+- NAT **não é firewall** (os serviços do roteador seguem expostos), quebra
+  o fim a fim (publicar serviço = dstnat, Volume 3) e em escala vira CGNAT
+  (Volume 9).
+- `/ip firewall connection print` é a janela para a memória do NAT — e a
+  ponte para o connection tracking do Volume 3.
+
+No próximo capítulo, nada de conceito novo: o **projeto integrador** do
+volume — um roteador de borda completo, montado do zero, peça por peça,
+com as mãos.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/ip firewall nat` (chains,
+actions e matchers) e a tabela de conexões. O RFC 1918 [@rfc1918] define
+os endereços privados que tornam o NAT necessário. @tanenbaum-redes
+discute NAT, seus efeitos no fim a fim e a transição para IPv6 — nosso
+assunto no Volume 9. As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
