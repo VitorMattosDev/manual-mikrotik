@@ -23,7 +23,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -201,15 +221,33 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#o-que-vem-de-fábrica" id="toc-o-que-vem-de-fábrica" class="nav-link active" data-scroll-target="#o-que-vem-de-fábrica"><span class="header-section-number">6.1</span> O que vem de fábrica</a></li>
+  <li><a href="#usuários-e-grupos-aposentando-o-admin-compartilhado" id="toc-usuários-e-grupos-aposentando-o-admin-compartilhado" class="nav-link" data-scroll-target="#usuários-e-grupos-aposentando-o-admin-compartilhado"><span class="header-section-number">6.2</span> Usuários e grupos: aposentando o <code>admin</code> compartilhado</a></li>
+  <li><a href="#fechando-as-portas-serviços-e-acesso" id="toc-fechando-as-portas-serviços-e-acesso" class="nav-link" data-scroll-target="#fechando-as-portas-serviços-e-acesso"><span class="header-section-number">6.3</span> Fechando as portas: serviços e acesso</a></li>
+  <li><a href="#relógio-certo-segurança-não-estética" id="toc-relógio-certo-segurança-não-estética" class="nav-link" data-scroll-target="#relógio-certo-segurança-não-estética"><span class="header-section-number">6.4</span> Relógio certo: segurança, não estética</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">6.5</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">6.5.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">6.5.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">6.5.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">6.5.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">6.6</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html">Volume 1 — Primeiros passos</a></li><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></h1>
+<h1 class="title"><span id="sec-primeiro-acesso" class="quarto-section-identifier"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></h1>
 </div>
 
 
@@ -232,15 +270,255 @@ ul.task-list li input[type="checkbox"] {
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Nota</span>Em construção
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Este capítulo ainda não foi escrito. Ele cobrirá o primeiro acesso ao RouterOS, a configuração padrão de fábrica, criação de usuários e grupos, senhas fortes e as primeiras medidas de segurança (desabilitar serviços não usados, restringir por endereço). Consulte o <code>ROADMAP.md</code> para acompanhar o progresso.</p>
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Descrever o que um equipamento MikroTik traz de fábrica — a <em>default configuration</em> — e decidir entre aproveitá-la ou partir do zero;</li>
+<li>Criar usuários com o <strong>grupo</strong> certo (<code>read</code>, <code>write</code>, <code>full</code>) e abolir o uso compartilhado do <code>admin</code>;</li>
+<li>Aplicar o checklist mínimo de segurança inicial: senha forte, serviços desnecessários desligados, acesso restrito por <code>allowed-address</code>, descoberta de vizinhos contida e MAC-server sob controle;</li>
+<li>Ajustar relógio e fuso (<code>/system clock</code>, NTP) — e explicar por que hora certa é item de <strong>segurança</strong>;</li>
+<li>Deixar qualquer equipamento novo em estado “apresentável” em cinco minutos, seguindo sempre a mesma sequência.</li>
+</ul>
 </div>
 </div>
+<section id="o-que-vem-de-fábrica" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="o-que-vem-de-fábrica"><span class="header-section-number">6.1</span> O que vem de fábrica</h2>
+<p>Ligue um hAP novo e ele já funciona: distribui IPs na LAN, faz NAT para a porta WAN, tem firewall básico e WiFi com senha na etiqueta. Essa é a <strong>configuração padrão</strong> (<em>default configuration</em>), pensada para o roteador doméstico — e ela é boa nesse papel.</p>
+<p>No mundo do provedor, porém, a configuração de fábrica é quase sempre <strong>ponto de partida errado</strong>: um rádio de torre não precisa de servidor DHCP; um concentrador não deve ter NAT de fábrica; um switch de POP não quer firewall nas portas. Por isso o costume profissional é começar <strong>limpo</strong> e construir só o que o papel do equipamento pede. Há duas formas de chegar ao estado limpo:</p>
+<ul>
+<li>No primeiro boot de um equipamento físico, o RouterOS mostra a configuração padrão e oferece a tecla <code>r</code> para removê-la já no primeiro login;</li>
+<li>A qualquer momento: <code>/system reset-configuration no-defaults=yes</code> — que reveremos, com os devidos avisos, no <a href="07-backup-export-reset.html" class="quarto-xref"><span>Capítulo 7</span></a>.</li>
+</ul>
+<p>O <strong>CHR nasce limpo</strong> — sem default configuration —, e é por isso que nossos laboratórios nunca precisaram removê-la. O que o CHR <em>tem</em>, como todo RouterOS, é o usuário <strong><code>admin</code></strong> — e é nele que a segurança inicial começa.</p>
+</section>
+<section id="usuários-e-grupos-aposentando-o-admin-compartilhado" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="usuários-e-grupos-aposentando-o-admin-compartilhado"><span class="header-section-number">6.2</span> Usuários e grupos: aposentando o <code>admin</code> compartilhado</h2>
+<p>Todo RouterOS nasce com o usuário <code>admin</code>, do grupo <code>full</code>. Numa operação com três técnicos, é tentador todo mundo usar “o admin” — até o dia em que uma configuração some às 3h da manhã e o <code>/system history print</code> (<a href="03-licencas-routerboot.html" class="quarto-xref"><span>Capítulo 3</span></a>) diz apenas: foi o <code>admin</code>. Quem?</p>
+<p>A regra profissional: <strong>uma pessoa, um usuário</strong> — e cada usuário com o menor privilégio que cumpre sua função. Os privilégios vêm dos <strong>grupos</strong>, em <code>/user group</code>:</p>
+<div id="tbl-user-groups" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-user-groups-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;6.1: Grupos padrão de usuários
+</figcaption>
+<div aria-describedby="tbl-user-groups-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 28%">
+<col style="width: 24%">
+<col style="width: 48%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Grupo</th>
+<th style="text-align: left;">Pode</th>
+<th style="text-align: left;">Uso típico</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>read</code></td>
+<td style="text-align: left;">ver tudo, mudar nada</td>
+<td style="text-align: left;">monitoramento, auditoria, NOC nível 1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>write</code></td>
+<td style="text-align: left;">configurar (exceto gerenciar usuários)</td>
+<td style="text-align: left;">técnicos de campo</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>full</code></td>
+<td style="text-align: left;">tudo, inclusive usuários e reboot</td>
+<td style="text-align: left;">administradores</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Os comandos essenciais:</p>
+<pre class="routeros"><code>/user add name=vitor group=full password=SenhaForte!2026 comment="Vitor - admin"
+/user add name=noc group=read password=OutraSenha!2026 comment="Monitoramento"
+/user print</code></pre>
+<p>Criado o seu usuário nominal e testado o login com ele, desabilite o <code>admin</code> de fábrica — todo scanner de internet conhece esse nome:</p>
+<pre class="routeros"><code>/user disable admin</code></pre>
+<p>Sobre as senhas, o essencial cabe em três linhas: longas (frases servem), únicas por equipamento ou por parque (gerenciador de senhas é ferramenta de provedor, não luxo) e <strong>nunca</strong> a mesma do WiFi da sua casa. O RouterOS não impõe complexidade — a disciplina é sua.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Analogia para guardar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Usuário compartilhado é caixa de supermercado sem operador identificado: qualquer diferença no caixa, ninguém foi. Grupos são os cargos — o repositor (read) não abre a gaveta; o gerente (full) assina a sangria. O <code>/system history</code> só vira auditoria quando cada login tem dono.</p>
+</div>
+</div>
+</section>
+<section id="fechando-as-portas-serviços-e-acesso" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="fechando-as-portas-serviços-e-acesso"><span class="header-section-number">6.3</span> Fechando as portas: serviços e acesso</h2>
+<p>No <a href="04-formas-de-acesso.html" class="quarto-xref"><span>Capítulo 4</span></a> você viu a <a href="04-formas-de-acesso.html#tbl-ip-services" class="quarto-xref">Tabela&nbsp;<span>4.1</span></a>: cada forma de acesso por IP é um serviço em <code>/ip service</code>. Segurança inicial é decidir o destino de cada um. A política deste manual, que aplicaremos no laboratório:</p>
+<ol type="1">
+<li><strong>Desabilitar o que não se usa</strong>: <code>telnet</code> e <code>ftp</code> sempre; <code>www</code> (HTTP puro) e <code>api</code>/<code>api-ssl</code> até que algum uso real os exija;</li>
+<li><strong>Restringir o que fica</strong>: os serviços sobreviventes (<code>ssh</code>, <code>winbox</code>, <code>www-ssl</code>) ganham <code>allowed-address</code> — uma lista de redes de onde aceitam conexão. Tipicamente, a rede de <strong>gerência</strong> do provedor;</li>
+<li><strong>Registrar a decisão</strong>: o <code>comment</code> nos itens críticos explica o porquê para o próximo técnico (que pode ser você, daqui a dois anos).</li>
+</ol>
+<p>O mesmo raciocínio vale para os protocolos de <strong>camada 2</strong>, que não passam por <code>/ip service</code>:</p>
+<ul>
+<li><strong>Descoberta de vizinhos</strong> (<code>/ip neighbor discovery-settings</code>): anuncia o equipamento no cabo. Ótimo na gerência, péssimo nas portas voltadas a clientes — um assinante curioso não precisa ver modelo e versão do seu concentrador;</li>
+<li><strong>MAC-server</strong> (<code>/tool mac-server</code>): controla quem pode abrir MAC-Telnet e WinBox-por-MAC. O kit de resgate do técnico é também o kit de invasão de quem alcança o cabo — restrinja-o a uma lista de interfaces de confiança.</li>
+</ul>
+<p>Ambos aceitam o mesmo remédio: uma <strong>interface list</strong> (uma lista nomeada de interfaces, ex.: <code>gerencia</code>) usada como filtro. Interface lists reaparecerão como protagonistas no firewall (Volume 3).</p>
+</section>
+<section id="relógio-certo-segurança-não-estética" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="relógio-certo-segurança-não-estética"><span class="header-section-number">6.4</span> Relógio certo: segurança, não estética</h2>
+<p><code>/system clock print</code> num equipamento recém-ligado mostra 1970 ou um fuso errado. Parece cosmético — até o dia em que você precisa cruzar o log do concentrador com a reclamação de um cliente (“caiu ontem 21h40”) ou atender um ofício judicial pedindo quem usava tal IP em tal <strong>horário</strong> (assunto sério no Brasil — Volume 9 detalha os requisitos legais de guarda de registros). Log com hora errada é log inútil.</p>
+<p>A receita completa, que aplicaremos no laboratório: fuso correto (<code>America/Sao_Paulo</code>… ou o seu) e <strong>NTP</strong> — o protocolo que mantém o relógio sincronizado pela rede — apontando para servidores confiáveis; no Brasil, os do projeto <code>ntp.br</code>.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Segurança inicial não é um produto que se instala; é uma <strong>sequência que se repete</strong> em todo equipamento que entra no parque: senha forte no usuário nominal → <code>admin</code> desabilitado → serviços não usados desligados → acesso restrito à gerência → descoberta e MAC-server contidos → relógio certo com NTP. Cinco minutos por equipamento; anos de dores de cabeça evitadas.</p>
+</div>
+</div>
+</section>
+<section id="laboratório" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">6.5</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="6.5.1">
+<h3 data-number="6.5.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">6.5.1</span> Ambiente</h3>
+<p>O laboratório padrão do <a href="05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>, restaurado no snapshot <code>base-limpa</code>. Usaremos apenas <strong><code>lab-r1</code></strong> — com o adaptador NAT (<code>ether3</code>) habilitado, pois o NTP precisa de internet. Acesse por SSH: <code>ssh admin@192.168.56.11</code>.</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="6.5.2">
+<h3 data-number="6.5.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">6.5.2</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — usuário nominal.</strong> Crie o seu usuário (troque nome e senha pelos seus), teste-o e desabilite o <code>admin</code>:</p>
+<pre class="routeros"><code>/user add name=vitor group=full password=Lab!Segura2026 comment="dono do lab"</code></pre>
+<p>Abra <strong>outro</strong> terminal e confirme o login novo antes de fechar o atual — regra de ouro ao mexer em usuários:</p>
+<pre class="routeros"><code>ssh vitor@192.168.56.11</code></pre>
+<p>Funcionando, desabilite o usuário de fábrica (na sessão nova):</p>
+<pre class="routeros"><code>/user disable admin
+/user print</code></pre>
+<pre class="routeros"><code>[vitor@lab-r1] &gt; /user print
+Columns: NAME, GROUP, LAST-LOGGED-IN
+# NAME    GROUP  LAST-LOGGED-IN
+0 ;;; system default user
+  X admin  full   2026-07-06 14:02:11
+1 ;;; dono do lab
+    vitor  full   2026-07-06 14:05:37</code></pre>
+<p>O <code>X</code> marca o <code>admin</code> desabilitado.</p>
+<p><strong>Passo 2 — serviços.</strong> Desligue o que não usamos e restrinja o resto à rede de gerência:</p>
+<pre class="routeros"><code>/ip service disable telnet,ftp,www,api,api-ssl
+/ip service set ssh address=192.168.56.0/24
+/ip service set winbox address=192.168.56.0/24
+/ip service set www-ssl address=192.168.56.0/24
+/ip service print</code></pre>
+<pre class="routeros"><code>[vitor@lab-r1] &gt; /ip service print
+Columns: NAME, PORT, ADDRESS
+#   NAME     PORT  ADDRESS
+0 X telnet     23
+1 X ftp        21
+2 X www        80
+3   ssh        22  192.168.56.0/24
+4   winbox   8291  192.168.56.0/24
+5 X api      8728
+6   www-ssl   443  192.168.56.0/24
+7 X api-ssl  8729</code></pre>
+<p><strong>Passo 3 — camada 2 contida.</strong> Crie a interface list <code>gerencia</code>, ponha a <code>ether1</code> nela e aponte a descoberta de vizinhos e o MAC-server para a lista:</p>
+<pre class="routeros"><code>/interface list add name=gerencia comment="interfaces de gerencia do lab"
+/interface list member add list=gerencia interface=ether1
+/ip neighbor discovery-settings set discover-interface-list=gerencia
+/tool mac-server set allowed-interface-list=gerencia
+/tool mac-server mac-winbox set allowed-interface-list=gerencia</code></pre>
+<p><strong>Passo 4 — relógio e NTP.</strong> Ajuste o fuso e ative o cliente NTP com os servidores brasileiros (garanta que o DHCP client do desafio do capítulo anterior está ativo na <code>ether3</code>, ou crie-o: <code>/ip dhcp-client add interface=ether3</code>):</p>
+<pre class="routeros"><code>/system clock set time-zone-name=America/Sao_Paulo
+/system ntp client set enabled=yes
+/system ntp client servers add address=a.st1.ntp.br
+/system ntp client servers add address=b.st1.ntp.br</code></pre>
+<p>Aguarde alguns segundos e verifique a sincronização:</p>
+<pre class="routeros"><code>/system ntp client print</code></pre>
+<pre class="routeros"><code>[vitor@lab-r1] &gt; /system ntp client print
+             enabled: yes
+                mode: unicast
+  synced-stratum: 1
+       synced-server: a.st1.ntp.br</code></pre>
+<p><code>synced-server</code> preenchido = relógio sob controle. Confira o resultado final com <code>/system clock print</code>.</p>
+</section>
+<section id="verificação" class="level3" data-number="6.5.3">
+<h3 data-number="6.5.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">6.5.3</span> Verificação</h3>
+<ol type="1">
+<li><code>ssh vitor@192.168.56.11</code> entra; tentar <code>ssh admin@192.168.56.11</code> é recusado (usuário desabilitado);</li>
+<li><code>/ip service print</code> mostra <code>telnet</code>, <code>ftp</code>, <code>www</code>, <code>api</code> e <code>api-ssl</code> com <code>X</code>, e os demais restritos a <code>192.168.56.0/24</code>;</li>
+<li><code>/ip neighbor discovery-settings print</code> e <code>/tool mac-server print</code> apontam para a lista <code>gerencia</code>;</li>
+<li><code>/system clock print</code> mostra fuso e hora corretos, e <code>/system ntp client print</code> mostra um <code>synced-server</code>.</li>
+</ol>
+<p>Feche com um snapshot novo em <code>lab-r1</code> — nomeie <code>seguranca-inicial</code>: vários capítulos seguintes partirão dele.</p>
+</section>
+<section id="desafios" class="level3" data-number="6.5.4">
+<h3 data-number="6.5.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">6.5.4</span> Desafios</h3>
+<ol type="1">
+<li>Crie um usuário <code>estagiario</code> do grupo <code>read</code> e, logado com ele, tente <code>/system identity set name=hacker</code>. O que acontece? E <code>/user print</code>, funciona?</li>
+<li>Nos grupos padrão não existe “técnico que configura mas não reinicia”. Explore <code>/user group print</code> e crie um grupo <code>campo</code> com as políticas do <code>write</code> <strong>sem</strong> a política <code>reboot</code>.</li>
+<li>Sua sessão SSH vem do <code>192.168.56.1</code> (o hospedeiro). Aplique, <strong>dentro do Safe Mode</strong>, um <code>allowed-address</code> de propósito errado no serviço <code>ssh</code> (ex.: <code>10.99.99.0/24</code>), deixe a sessão cair e explique o que o Safe Mode fez por você (<a href="04-formas-de-acesso.html" class="quarto-xref"><span>Capítulo 4</span></a>).</li>
+<li>Monte, em texto, o <strong>checklist de entrada</strong> do seu provedor fictício: os passos deste capítulo na ordem em que você os aplicaria num rádio novo antes de ele subir na torre — e um item extra que este capítulo ainda não cobriu, mas o próximo cobrirá (dica: o que você faz <em>antes</em> de mexer numa configuração que funciona?).</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> O <code>set</code> falha com erro de permissão (<code>not enough permissions</code>): o grupo <code>read</code> não tem a política <code>write</code>. Já <code>/user print</code> <strong>também falha</strong> — ver e gerenciar usuários exige a política <code>sensitive</code>/política de usuários, que o <code>read</code> não tem. Menor privilégio funcionando.</p>
+<p><strong>2.</strong></p>
+<pre class="routeros"><code>/user group add name=campo policy=local,ssh,read,write,winbox,web,!reboot,!policy,!sensitive</code></pre>
+<p>O essencial: partir das políticas do <code>write</code> e negar <code>reboot</code> (a sintaxe <code>!politica</code> nega). Confira com <code>/user group print</code> e teste com um usuário de mentira.</p>
+<p><strong>3.</strong> Com <code>Ctrl+X</code> ativo, <code>/ip service set ssh address=10.99.99.0/24</code> derruba sua sessão (você não está nessa rede). O Safe Mode detecta a queda e <strong>reverte</strong> o <code>allowed-address</code> — reconecte e confirme com <code>/ip service print</code>. Sem Safe Mode, seria console da VM para consertar.</p>
+<p><strong>4.</strong> Sequência razoável: (1) usuário nominal + senha do gerenciador; (2) <code>admin</code> desabilitado; (3) serviços: só <code>ssh</code>+<code>winbox</code>, com <code>allowed-address</code> da gerência; (4) discovery e MAC-server na lista <code>gerencia</code>; (5) fuso + NTP; (6) identidade com o padrão de nomes do parque (ex.: <code>torre-sul-ptp1</code>). O item que falta: <strong>backup/export da configuração</strong> antes e depois — assunto do próximo capítulo.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="6.6">
+<h2 data-number="6.6" class="anchored" data-anchor-id="resumo"><span class="header-section-number">6.6</span> Resumo</h2>
+<ul>
+<li>Equipamentos físicos trazem <strong>default configuration</strong> boa para uso doméstico; no provedor, parte-se limpo (tecla <code>r</code> no primeiro login ou reset <code>no-defaults=yes</code>). O CHR já nasce limpo.</li>
+<li><strong>Um usuário por pessoa</strong>, no grupo de menor privilégio (<a href="#tbl-user-groups" class="quarto-xref">Tabela&nbsp;<span>6.1</span></a>); <code>admin</code> desabilitado após criar o usuário nominal — e teste o login novo <strong>antes</strong> de fechar a sessão antiga.</li>
+<li>Serviços: desabilite <code>telnet</code>, <code>ftp</code>, <code>www</code>, <code>api</code>; restrinja <code>ssh</code>, <code>winbox</code> e <code>www-ssl</code> com <code>allowed-address</code> da gerência.</li>
+<li>Camada 2 também se fecha: <code>discovery-settings</code> e <code>mac-server</code> apontando para uma <strong>interface list</strong> de gerência.</li>
+<li>Fuso + <strong>NTP</strong> (<code>ntp.br</code>) porque log sem hora certa não serve nem ao troubleshooting nem à Justiça.</li>
+<li>Tudo isso é uma sequência repetível de ~5 minutos — o “ritual de entrada” de equipamento novo no parque.</li>
+</ul>
+<p>No próximo capítulo, a rede de segurança que faltou ao seu checklist: backup binário, export de configuração, restauração — e o reset, com os avisos que ele merece.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>A documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> cobre os menus <code>/user</code>, <code>/ip service</code>, <code>/ip neighbor</code> e <code>/system ntp</code>, além da página <em>Securing your router</em>, que inspira o checklist deste capítulo. O projeto NTP.br (<code>ntp.br</code>) documenta os servidores públicos brasileiros de hora legal. <span class="citation" data-cites="discher-rosv7">Discher (<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">2016</a>)</span> traz um capítulo dedicado a usuários e segurança de acesso. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
 
 
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-discher-rosv7" class="csl-entry" role="listitem">
+DISCHER, Stephen R. W. <strong>RouterOS by Example</strong>. 2. ed. College Station: ISP Services, Inc., 2016.
+</div>
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+</div>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -660,4 +938,4 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>

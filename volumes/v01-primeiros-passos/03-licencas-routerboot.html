@@ -23,7 +23,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -201,15 +221,37 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#licença-o-que-você-compra-junto-com-a-caixa" id="toc-licença-o-que-você-compra-junto-com-a-caixa" class="nav-link active" data-scroll-target="#licença-o-que-você-compra-junto-com-a-caixa"><span class="header-section-number">3.1</span> Licença: o que você compra junto com a caixa</a>
+  <ul class="collapse">
+  <li><a href="#a-licença-do-chr-outro-modelo" id="toc-a-licença-do-chr-outro-modelo" class="nav-link" data-scroll-target="#a-licença-do-chr-outro-modelo"><span class="header-section-number">3.1.1</span> A licença do CHR: outro modelo</a></li>
+  </ul></li>
+  <li><a href="#routerboot-o-que-acorda-o-routeros" id="toc-routerboot-o-que-acorda-o-routeros" class="nav-link" data-scroll-target="#routerboot-o-que-acorda-o-routeros"><span class="header-section-number">3.2</span> RouterBOOT: o que acorda o RouterOS</a>
+  <ul class="collapse">
+  <li><a href="#as-proteções-do-routerboot" id="toc-as-proteções-do-routerboot" class="nav-link" data-scroll-target="#as-proteções-do-routerboot"><span class="header-section-number">3.2.1</span> As proteções do RouterBOOT</a></li>
+  </ul></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">3.3</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">3.3.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">3.3.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">3.3.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">3.3.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">3.4</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/03-licencas-routerboot.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html">Volume 1 — Primeiros passos</a></li><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></h1>
+<h1 class="title"><span id="sec-licencas-routerboot" class="quarto-section-identifier"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></h1>
 </div>
 
 
@@ -232,15 +274,322 @@ ul.task-list li input[type="checkbox"] {
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Nota</span>Em construção
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Este capítulo ainda não foi escrito. Ele explicará os níveis de licença do RouterOS (0–6 e as licenças do CHR) e o RouterBOOT, o bootloader dos equipamentos MikroTik. Consulte o <code>ROADMAP.md</code> para acompanhar o progresso.</p>
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Explicar como funciona o licenciamento do RouterOS: níveis 0–6, o que cada um libera e por que a licença acompanha o equipamento para sempre;</li>
+<li>Diferenciar as licenças de equipamento físico das licenças do CHR (<code>free</code>, <code>p1</code>, <code>p10</code>, <code>p-unlimited</code>) e da modalidade de teste de 60 dias;</li>
+<li>Consultar a licença de um equipamento com <code>/system license print</code>;</li>
+<li>Explicar o que é o RouterBOOT, o que ele faz no boot e por que mantê-lo atualizado junto com o RouterOS;</li>
+<li>Conhecer as proteções do RouterBOOT (senha, <code>protected-routerboot</code>) e os riscos de usá-las sem critério.</li>
+</ul>
 </div>
 </div>
+<section id="licença-o-que-você-compra-junto-com-a-caixa" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="licença-o-que-você-compra-junto-com-a-caixa"><span class="header-section-number">3.1</span> Licença: o que você compra junto com a caixa</h2>
+<p>Uma dúvida comum de quem chega ao MikroTik vindo de outras marcas: “quanto custa a assinatura do sistema?”. A resposta surpreende: <strong>nada</strong>. O modelo da MikroTik não tem mensalidade, contrato de suporte obrigatório nem licença por recurso. Cada equipamento RouterBOARD sai de fábrica com uma <strong>licença perpétua</strong> de um certo <strong>nível</strong>, embutida no preço — e essa licença:</p>
+<ul>
+<li><strong>nunca expira</strong>;</li>
+<li>inclui <strong>todas as atualizações</strong> do RouterOS dentro da mesma major version (e, na prática, a MikroTik liberou até hoje as trocas de major — v5→v6→v7 — sem custo);</li>
+<li>pertence ao <strong>equipamento</strong>, não a você: se o roteador for vendido, a licença vai junto.</li>
+</ul>
+<p>O que os níveis diferenciam não é “recurso” — firewall, BGP, MPLS e scripts existem em todos —, mas <strong>capacidade de alguns serviços</strong>, principalmente quantos túneis e sessões o equipamento pode servir e para que uso o wireless está liberado (1).</p>
+<div id="tbl-niveis" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-niveis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;3.1: O que muda entre os níveis de licença mais comuns (*como servidor; como cliente, ilimitado)
+</figcaption>
+<div aria-describedby="tbl-niveis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Nível 3 (CPE)</th>
+<th style="text-align: left;">Nível 4 (WISP)</th>
+<th style="text-align: left;">Nível 5 (WISP AP)</th>
+<th style="text-align: left;">Nível 6 (Controller)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Wireless <strong>cliente</strong> (station)</td>
+<td style="text-align: left;">sim</td>
+<td style="text-align: left;">sim</td>
+<td style="text-align: left;">sim</td>
+<td style="text-align: left;">sim</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Wireless <strong>AP</strong> (ponto de acesso)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">sim</td>
+<td style="text-align: left;">sim</td>
+<td style="text-align: left;">sim</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Túneis PPPoE/PPTP/L2TP/OVPN ativos</td>
+<td style="text-align: left;">1*</td>
+<td style="text-align: left;">200</td>
+<td style="text-align: left;">500</td>
+<td style="text-align: left;">ilimitado</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Túneis EoIP</td>
+<td style="text-align: left;">1*</td>
+<td style="text-align: left;">200</td>
+<td style="text-align: left;">500</td>
+<td style="text-align: left;">ilimitado</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sessões hotspot ativas</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">200</td>
+<td style="text-align: left;">500</td>
+<td style="text-align: left;">ilimitado</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Interfaces de usuário (vlan, queues…)</td>
+<td style="text-align: left;">ilimitado</td>
+<td style="text-align: left;">ilimitado</td>
+<td style="text-align: left;">ilimitado</td>
+<td style="text-align: left;">ilimitado</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Os níveis que faltam na tabela são triviais: <strong>nível 0</strong> é o modo de demonstração de 24 horas de uso (o que você obtém instalando o RouterOS x86 sem licença); <strong>nível 1</strong> é a demo registrada, quase inútil hoje; <strong>nível 2</strong> não existe mais (era das versões antigas).</p>
+<p>Na prática do provedor, você raramente escolhe nível — ele vem casado com o hardware:</p>
+<ul>
+<li>Equipamentos de <strong>cliente</strong> (SXT, LHG, hEX, hAP) vêm com <strong>nível 3 ou 4</strong>;</li>
+<li>Equipamentos de <strong>torre e POP</strong> (BaseBox, NetMetal, RB4011/5009) vêm com <strong>nível 4 ou 5</strong>;</li>
+<li>Equipamentos de <strong>núcleo</strong> (CCR) vêm com <strong>nível 6</strong>.</li>
+</ul>
+<p>Repare como os limites casam com os papéis do <a href="02-hardware-linhas-produto.html" class="quarto-xref"><span>Capítulo 2</span></a>: o nível 3 não sobe AP wireless (é licença de <em>station</em>, de rádio de cliente); o nível 6 não limita túneis (é licença de concentrador PPPoE). A tabela de níveis é o catálogo de papéis visto por outro ângulo.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Analogia para guardar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A licença do RouterOS é como a carta de alforria gravada no chassi de um carro: paga uma vez, vale para sempre e vai junto na venda. Os níveis são como categorias da CNH — todas dirigem, mas cada uma autoriza um porte de veículo (aqui: uma quantidade de sessões e um papel wireless).</p>
+</div>
+</div>
+<section id="a-licença-do-chr-outro-modelo" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="a-licença-do-chr-outro-modelo"><span class="header-section-number">3.1.1</span> A licença do CHR: outro modelo</h3>
+<p>O CHR usa um licenciamento próprio, por <strong>velocidade de interface</strong> — e é por isso que ele é o laboratório perfeito:</p>
+<div id="tbl-chr-licencas" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-chr-licencas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;3.2: Licenças do CHR
+</figcaption>
+<div aria-describedby="tbl-chr-licencas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Licença CHR</th>
+<th style="text-align: left;">Limite por interface</th>
+<th style="text-align: left;">Custo</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>free</code></td>
+<td style="text-align: left;">1 Mbps</td>
+<td style="text-align: left;">gratuito, para sempre</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>p1</code></td>
+<td style="text-align: left;">1 Gbps</td>
+<td style="text-align: left;">pago (perpétuo)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>p10</code></td>
+<td style="text-align: left;">10 Gbps</td>
+<td style="text-align: left;">pago (perpétuo)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>p-unlimited</code></td>
+<td style="text-align: left;">ilimitado</td>
+<td style="text-align: left;">pago (perpétuo)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Além dessas, todo CHR novo pode ativar um <strong>trial de 60 dias</strong> de qualquer nível pago (<code>/system license renew</code>, com uma conta gratuita do site da MikroTik) — útil para testar desempenho real antes de comprar. Para os laboratórios deste livro, o <code>free</code> com seu 1 Mbps por interface é mais que suficiente: estudamos comportamento, não velocidade.</p>
+<p>Consultar a licença é um comando só, e a saída é diferente em cada mundo. No CHR:</p>
+<pre class="routeros"><code>/system license print</code></pre>
+<pre class="routeros"><code>[admin@lab-r1] &gt; /system license print
+        system-id: hK3x-Wm9P
+            level: free</code></pre>
+<p>Num equipamento físico apareceriam <code>software-id</code>, <code>nlevel</code> (o nível 3–6) e <code>features</code>. O <code>system-id</code>/<code>software-id</code> identifica a instalação — é ele que você informa à MikroTik ao comprar upgrade de licença.</p>
+</section>
+</section>
+<section id="routerboot-o-que-acorda-o-routeros" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="routerboot-o-que-acorda-o-routeros"><span class="header-section-number">3.2</span> RouterBOOT: o que acorda o RouterOS</h2>
+<p>Todo computador tem um programa minúsculo que roda antes do sistema operacional — no PC, o firmware UEFI/BIOS; nas RouterBOARD, o <strong>RouterBOOT</strong>. Quando você liga um MikroTik físico, é o RouterBOOT que:</p>
+<ol type="1">
+<li>inicializa CPU e memória;</li>
+<li>decide <strong>de onde dar o boot</strong> — do armazenamento interno (normal) ou da rede (modo de recuperação usado pelo Netinstall, <span class="quarto-unresolved-ref">?sec-netinstall</span>);</li>
+<li>carrega o RouterOS e lhe entrega o controle.</li>
+</ol>
+<p>O RouterBOOT tem firmware próprio, com versão independente do RouterOS — e aqui mora uma tarefa de manutenção que muitos esquecem. Ao atualizar o RouterOS, a versão nova do bootloader vem junta no pacote, mas <strong>só é gravada quando você manda</strong> e reinicia. O fluxo completo:</p>
+<pre class="routeros"><code>/system routerboard print</code></pre>
+<pre class="routeros"><code>[admin@MikroTik] &gt; /system routerboard print
+       routerboard: yes
+        board-name: hEX S
+             model: RB760iGS
+     serial-number: HEA08XXXXXX
+     firmware-type: mt7621L
+  factory-firmware: 6.46.3
+  current-firmware: 6.49.10
+  upgrade-firmware: 7.15.3</code></pre>
+<p>Quando <code>current-firmware</code> está atrás de <code>upgrade-firmware</code>, aplique:</p>
+<pre class="routeros"><code>/system routerboard upgrade
+/system reboot</code></pre>
+<p>Manter RouterOS e RouterBOOT na mesma geração evita uma classe inteira de problemas — de suporte a hardware a correções de segurança do próprio boot. No CHR não existe nada disso (<code>not routerboard</code>): quem inicializa a VM é o “BIOS” do hipervisor.</p>
+<section id="as-proteções-do-routerboot" class="level3" data-number="3.2.1">
+<h3 data-number="3.2.1" class="anchored" data-anchor-id="as-proteções-do-routerboot"><span class="header-section-number">3.2.1</span> As proteções do RouterBOOT</h3>
+<p>Por padrão, qualquer pessoa com acesso físico a uma RouterBOARD manda nela: basta segurar o botão de reset ao ligar para limpar a configuração, ou inicializar pela rede e reinstalar o sistema pelo Netinstall. Para equipamento em poste, torre ou armário compartilhado, o RouterBOOT oferece camadas de defesa em <code>/system routerboard settings</code>:</p>
+<ul>
+<li><code>boot-device=flash-boot-once-etherboot</code> mantém o boot normal mas ainda permite recuperação; já <code>boot-protocol</code> e afins controlam o boot por rede;</li>
+<li><strong>senha do bootloader</strong> (<code>/system routerboard settings set boot-protocol=... protected-routerboot=...</code>) — as opções variam por modelo;</li>
+<li><strong><code>protected-routerboot=enabled</code></strong> — o modo forte: desabilita o botão de reset <strong>e</strong> o boot por rede. O equipamento só reinstala/reseta com uma intervenção muito mais trabalhosa.</li>
+</ul>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Aviso
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>protected-routerboot=enabled</code> corta justamente os mecanismos de <strong>recuperação</strong>: sem botão de reset e sem Netinstall, uma senha esquecida transforma o equipamento num peso de papel até você conseguir desativar a proteção — o que exige acesso admin ao RouterOS. Só ative em equipamento exposto a acesso físico de terceiros, com a senha do admin guardada em gerenciador de senhas do provedor, e <strong>documente</strong> quais equipamentos do parque têm a proteção ligada.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>No MikroTik, o custo do software é <strong>zero ao longo da vida</strong> do equipamento: licença perpétua, atualizações incluídas. O que os níveis limitam é capacidade de sessões/túneis e o papel wireless — mais um motivo para escolher hardware pelo papel, como no <a href="02-hardware-linhas-produto.html" class="quarto-xref"><span>Capítulo 2</span></a>. E abaixo do RouterOS vive o RouterBOOT: atualize-o junto com o sistema e proteja-o com critério.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="laboratório" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">3.3</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">3.3.1</span> Ambiente</h3>
+<p>A VM única do CHR no VirtualBox, como nos capítulos anteriores. (A partir do <a href="05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a> montaremos topologias maiores.)</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">3.3.2</span> Comandos passo a passo</h3>
+<p>Veja a licença do seu CHR:</p>
+<pre class="routeros"><code>/system license print</code></pre>
+<p>Saída esperada:</p>
+<pre class="routeros"><code>[admin@lab-r1] &gt; /system license print
+        system-id: hK3x-Wm9P
+            level: free</code></pre>
+<p><code>level: free</code> confirma a licença gratuita — cada interface limitada a 1 Mbps, sem prazo de validade. Agora confirme que o CHR não tem RouterBOOT:</p>
+<pre class="routeros"><code>/system routerboard print</code></pre>
+<pre class="routeros"><code>[admin@lab-r1] &gt; /system routerboard print
+  routerboard: no</code></pre>
+<p>Por fim, explore o menu de histórico do sistema, que registra mudanças de configuração — ele nos ajudará a auditar o que os laboratórios alteram:</p>
+<pre class="routeros"><code>/system history print</code></pre>
+<p>A saída lista as últimas ações (como o <code>set name=lab-r1</code> do primeiro capítulo), com autor e horário.</p>
+</section>
+<section id="verificação" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">3.3.3</span> Verificação</h3>
+<ol type="1">
+<li><code>/system license print</code> mostra <code>level: free</code>;</li>
+<li><code>/system routerboard print</code> responde <code>routerboard: no</code> — logo, nada de RouterBOOT para gerenciar no laboratório;</li>
+<li><code>/system history print</code> registra as alterações que você fez até aqui.</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="3.3.4">
+<h3 data-number="3.3.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">3.3.4</span> Desafios</h3>
+<ol type="1">
+<li>Um provedor compra um <code>hAP ax²</code> (nível 4) para a casa de um assinante e um <code>CCR2116</code> (nível 6) para concentrador PPPoE. Algum dos dois precisará de upgrade de licença para exercer seu papel? Justifique com a
+<ol class="example" type="1">
+<li></li>
+</ol></li>
+<li>No site da MikroTik, cada produto informa o nível de licença na ficha técnica. Verifique o nível do <code>SXT SA5</code> e explique por que ele <strong>não</strong> poderia ser usado como AP de uma torre PtMP com essa licença.</li>
+<li>Seu parque tem 40 rádios em torres de difícil acesso. Monte (em texto) a política de proteção do RouterBOOT: o que ativar, o que documentar e qual o plano B se a senha do admin de um rádio se perder.</li>
+<li>Sem executar ainda: qual seria o efeito de <code>/system license renew</code> num CHR novo? Quando isso seria útil na vida real?</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> Nenhum dos dois. O hAP ax² atenderá <strong>uma</strong> casa: o nível 4 permite AP wireless e até 200 túneis — décadas de folga para um CPE. O CCR2116 como concentrador precisará de <strong>milhares</strong> de sessões PPPoE, e o nível 6 é justamente o ilimitado. A MikroTik casa o nível com o papel de fábrica.</p>
+<p><strong>2.</strong> O SXT SA5 vem com <strong>nível 3</strong> — licença de <em>station</em>: pode conectar-se a um AP, mas não pode <strong>ser</strong> AP (a linha “wireless AP” da 1 é “—” no nível 3). Para a torre PtMP usa-se um equipamento nível 4+ (ex.: BaseBox com mANT setorial), e os SXT ficam nos clientes. (Existe a variante “SXT SA5 ap”, vendida com nível 4, exatamente para isso.)</p>
+<p><strong>3.</strong> Política razoável: (a) ativar <code>protected-routerboot=enabled</code> apenas nos rádios fisicamente expostos; (b) senha de admin única por equipamento, guardada no gerenciador de senhas do provedor; (c) registrar em inventário quais equipamentos têm a proteção; (d) plano B: com a senha do admin perdida <strong>e</strong> proteção ativa, resta o procedimento de desbloqueio de fábrica — na prática, RMA. Por isso a proteção só entra onde o risco de acesso físico supera o risco de perda de senha.</p>
+<p><strong>4.</strong> <code>/system license renew</code> ativa o <strong>trial de 60 dias</strong> de um nível pago (<code>p1</code>/<code>p10</code>/<code>p-unlimited</code>), pedindo login de uma conta MikroTik. Útil para testar um CHR de produção — por exemplo, medir se um servidor aguenta o papel de concentrador PPPoE a 10 Gbps — antes de pagar a licença perpétua.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="resumo"><span class="header-section-number">3.4</span> Resumo</h2>
+<ul>
+<li>Licença RouterOS: <strong>perpétua</strong>, sem mensalidade, com atualizações incluídas; pertence ao equipamento.</li>
+<li>Níveis 3–6 diferenciam <strong>papel wireless</strong> (station/AP) e <strong>quantidade de túneis/sessões</strong> (200/500/ilimitado) — não recursos (1).</li>
+<li>CHR licencia por <strong>velocidade de interface</strong>: <code>free</code> (1 Mbps) para laboratório, <code>p1</code>/<code>p10</code>/<code>p-unlimited</code> para produção, trial de 60 dias (<a href="#tbl-chr-licencas" class="quarto-xref">Tabela&nbsp;<span>3.2</span></a>).</li>
+<li><strong>RouterBOOT</strong> é o bootloader das RouterBOARD: atualize-o junto com o RouterOS (<code>/system routerboard upgrade</code> + reboot).</li>
+<li>Proteções de boot (<code>protected-routerboot</code>) defendem equipamento exposto — ao custo de eliminar os caminhos de recuperação. Use com critério e documentação.</li>
+</ul>
+<p>No próximo capítulo, deixamos a caixa e vamos às portas de entrada: WinBox, WebFig, SSH, serial e MAC-Telnet — todas as formas de acessar um RouterOS, e quando usar cada uma.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>A página oficial de licenciamento do RouterOS e a documentação do CHR <span class="citation" data-cites="mikrotik-chr">(<a href="../../referencias.html#ref-mikrotik-chr" role="doc-biblioref">MikroTik, 2026a</a>)</span> detalham níveis e preços atuais; a documentação do RouterOS <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026b</a>)</span> cobre os menus <code>/system license</code> e <code>/system routerboard</code> (incluindo o <code>protected-routerboot</code>). O catálogo <span class="citation" data-cites="mikrotik-products">(<a href="../../referencias.html#ref-mikrotik-products" role="doc-biblioref">MikroTik, 2026c</a>)</span> informa o nível de licença de cada produto na ficha técnica. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
 
 
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, b2026.
+</div>
+<div id="ref-mikrotik-chr" class="csl-entry" role="listitem">
+MIKROTIK. <strong>Cloud Hosted Router (<span>CHR</span>) Documentation</strong>. <a href="https://help.mikrotik.com/docs/display/ROS/Cloud+Hosted+Router,+CHR" class="uri">https://help.mikrotik.com/docs/display/ROS/Cloud+Hosted+Router,+CHR</a>, a2026.
+</div>
+<div id="ref-mikrotik-products" class="csl-entry" role="listitem">
+MIKROTIK. <strong>MikroTik Product Catalog</strong>. <a href="https://mikrotik.com/products" class="uri">https://mikrotik.com/products</a>, c2026.
+</div>
+</div>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -660,4 +1009,4 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/03-licencas-routerboot.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/03-licencas-routerboot.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
