@@ -73,7 +73,7 @@ Pré-requisitos: Vol. 2 (Vol. 3 recomendado).*
 - [x] `volumes/v04-bridge-vlans/02-vlans-8021q.qmd` — VLANs e 802.1Q: tagging, interface vlan sobre bridge/ethernet.
 - [x] `volumes/v04-bridge-vlans/03-bridge-vlan-filtering.qmd` — Bridge VLAN filtering: tagged/untagged, PVID, trunk e access na prática.
 - [x] `volumes/v04-bridge-vlans/04-switch-chip-crs.qmd` — Switch chip nos CRS: switching em hardware, diferenças CRS1xx/3xx.
-- [ ] `volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.qmd` — Cenários de segmentação: gerência, clientes, serviços; projeto de VLANs de um POP.
+- [x] `volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.qmd` — Cenários de segmentação: gerência, clientes, serviços; projeto de VLANs de um POP.
 
 ---
 

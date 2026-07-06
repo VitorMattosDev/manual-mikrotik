@@ -1,7 +1,348 @@
-# Segmentação da rede do provedor
+# Segmentação da rede do provedor {#sec-segmentacao-pop}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Este capítulo integra o volume. Ao final, você será capaz de:
+
+- Projetar o **plano de VLANs** de um POP: gerência, clientes e serviços,
+  com numeração e endereçamento documentados;
+- Aplicar os três princípios da segmentação de provedor: gerência
+  isolada, cliente não vê cliente, e **toda travessia entre segmentos
+  passa pelo firewall**;
+- Montar o desenho completo — roteador de borda + switch filtrado +
+  segmentos — combinando os quatro capítulos do volume;
+- Policiar a fronteira entre segmentos com o firewall do Volume 3
+  (interface lists por VLAN);
+- Reconhecer o mesmo desenho nos cenários reais: POP de fibra (VLANs até
+  a OLT), torre de rádio e o condomínio corporativo.
 :::
+
+## A ordem de serviço
+
+O provedor cresceu: o POP central, que era um roteador e um switch burro,
+vai ser reorganizado. A ordem de serviço:
+
+> **POP Centro — reorganização de rede**
+> Segmentos: **gerência** (equipamentos do provedor), **clientes
+> dedicados** (cada um isolado) e **serviços** (servidores do provedor:
+> monitoramento, cache).
+> Requisitos: cliente não enxerga cliente nem gerência; gerência
+> alcançável só pela equipe; toda travessia entre segmentos passa pelo
+> firewall da borda; switch comutando em hardware.
+> Entregáveis: plano de VLANs, configuração de switch e borda, testes.
+
+O primeiro entregável não é comando — é **tabela**. Todo POP bem operado
+tem um plano de VLANs escrito, e ele é o contrato entre quem configura o
+switch, quem configura a borda e quem chega de madrugada para consertar:
+
+| VLAN | Nome | Rede | Quem participa |
+|:-----|:-----|:-----|:---------------|
+| 99 | gerência | `10.99.0.0/24` | equipamentos do provedor + borda |
+| 101 | cliente-A | `100.64.101.0/24` | porta do cliente A + borda |
+| 102 | cliente-B | `100.64.102.0/24` | porta do cliente B + borda |
+| 200 | serviços | `10.200.0.0/24` | servidores do POP + borda |
+
+: O plano de VLANs do POP (extrato) {#tbl-plano-vlans}
+
+Repare nas decisões embutidas: numeração com **significado** (99 =
+infra, 1xx = clientes, 2xx = serviços — o padrão se estende sem
+reunião); rede casada com a VLAN (o terceiro octeto repete o número —
+diagnóstico agradece); e **a borda participa de todas** — ela é o único
+ponto de travessia.
+
+## Os três princípios
+
+Tudo que este volume ensinou converge em três frases:
+
+1. **Gerência isolada.** A VLAN 99 existe apenas entre equipamentos do
+   provedor: o switch não a entrega em porta de cliente (tabela de
+   VLANs, @sec-vlan-filtering), e o firewall da borda só a aceita da
+   equipe (interface list `gerencia`, @sec-protegendo-roteador). Quem
+   compromete um CPE não ganha um pé na sua infraestrutura;
+2. **Cliente não vê cliente.** Cada cliente na própria VLAN
+   (@sec-switch-chip, desafio 2): sem camada 2 comum, morrem o ARP
+   spoofing entre vizinhos, o vírus que varre o condomínio e a briga de
+   DHCPs. O único caminho entre dois clientes é **subir à borda** — onde
+   há firewall;
+3. **Travessia só pelo firewall.** É a soma dos outros dois com o
+   router-on-a-stick (@sec-vlans-8021q): o tráfego intra-VLAN é comutado
+   em hardware (rápido, invisível — e tudo bem, é tráfego do mesmo
+   dono); o tráfego **entre** VLANs é roteado na borda, atravessando o
+   `forward` do Volume 3. Segmentar é, no fundo, **decidir o que o
+   firewall vê**.
+
+A @fig-pop-segmentado mostra o desenho completo:
+
+::: {#fig-pop-segmentado}
+
+```{.tikz}
+%%| filename: fig-pop-segmentado
+%%| alt: Topologia do POP segmentado. No topo, a internet liga-se ao roteador de borda. Dele desce um único cabo trunk, carregando as VLANs 99, 101, 102 e 200, até o switch CRS com VLAN filtering. Do switch partem quatro portas access: equipamentos de gerência na VLAN 99, cliente A na VLAN 101, cliente B na VLAN 102 e servidores na VLAN 200. Uma anotação indica que o tráfego dentro de cada VLAN é comutado em hardware, e que o tráfego entre VLANs sobe o trunk e atravessa o firewall da borda.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  borda/.style={draw=manualblue, very thick, fill=manualblue!8,
+                rounded corners=3pt, minimum height=11mm, text width=32mm,
+                align=center, font=\sffamily\small\bfseries},
+  sw/.style={draw=manualblue, very thick, fill=manualblue!8,
+             rounded corners=3pt, minimum height=11mm, text width=36mm,
+             align=center, font=\sffamily\small\bfseries},
+  seg/.style={draw=manualgreen, very thick, fill=manualgreen!8,
+              rounded corners=3pt, minimum height=9mm, text width=22mm,
+              align=center, font=\sffamily\scriptsize},
+  nuvem/.style={draw=manualgray, thick, fill=manualgray!10, ellipse,
+                minimum height=9mm, text width=16mm, align=center},
+  trunk/.style={line width=1.6pt, manualblue},
+  access/.style={very thick, manualgreen},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  \node[nuvem] (inet) {Internet};
+  \node[borda, below=7mm of inet] (borda) {Roteador de borda\\ \small firewall + vlans};
+  \node[sw, below=12mm of borda] (sw) {CRS — VLAN filtering\\ \small comutação em hardware};
+
+  \draw[very thick, manualgray] (inet) -- (borda);
+  \draw[trunk] (borda) -- (sw)
+    node[midway, right, rotulo] {trunk: VLANs 99, 101, 102, 200};
+
+  \node[seg, below left=10mm and 34mm of sw] (ger) {gerência\\VLAN 99};
+  \node[seg, below left=12mm and 6mm of sw] (cliA) {cliente A\\VLAN 101};
+  \node[seg, below right=12mm and 6mm of sw] (cliB) {cliente B\\VLAN 102};
+  \node[seg, below right=10mm and 34mm of sw] (srv) {serviços\\VLAN 200};
+
+  \draw[access] (sw.south west) -- (ger.north);
+  \draw[access] (sw.south) -- (cliA.north);
+  \draw[access] (sw.south) -- (cliB.north);
+  \draw[access] (sw.south east) -- (srv.north);
+
+  \node[rotulo, below=2mm of cliA.south east, xshift=6mm]
+    {entre VLANs: sobe o trunk, passa no firewall};
+\end{tikzpicture}
+```
+
+O POP segmentado: um trunk entre borda e switch; segmentos em portas
+access; travessias só pela borda.
+
+:::
+
+## O firewall enxergando segmentos
+
+O toque final vem do Volume 3, com as interface lists absorvendo as
+VLANs. Na borda, cada `/interface vlan` entra na lista do seu papel:
+
+```routeros
+/interface list member add list=gerencia interface=vlan99-ger
+/interface list member add list=LAN interface=vlan101-cliA
+/interface list member add list=LAN interface=vlan102-cliB
+/interface list add name=SERVICOS
+/interface list member add list=SERVICOS interface=vlan200-srv
+```
+
+E o firewall-base (@sec-hardening) já sabe o que fazer: gerência com
+acesso total ao input, clientes como LAN (DNS/DHCP servidos, gerência
+intocável), e as políticas novas entre segmentos viram poucas regras de
+forward — por exemplo, "clientes alcançam os serviços do POP só no que é
+público":
+
+```routeros
+/ip firewall filter add chain=forward in-interface-list=LAN out-interface-list=SERVICOS protocol=tcp dst-port=80,443 action=accept comment="clientes -> servicos: so web"
+/ip firewall filter add chain=forward in-interface-list=LAN out-interface-list=SERVICOS action=drop comment="clientes -> servicos: resto nao"
+```
+
+Perceba o que aconteceu no desenho como um todo: o switch garante **quem
+está em que segmento** (camada 2, em hardware); o firewall garante **o
+que atravessa entre segmentos** (camada 3, com estado). Cada camada faz
+o que sabe — é a defesa em camadas do @sec-hardening ganhando geografia.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Segmentar é **desenhar o que o firewall vê**: VLANs (no switch, em
+hardware) definem os territórios; a borda, única ponte entre eles,
+aplica a política. Os três princípios — gerência isolada, cliente não vê
+cliente, travessia só pelo firewall — cabem em qualquer escala: do
+condomínio ao POP regional, muda o tamanho da @tbl-plano-vlans, não o
+desenho.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+O POP em miniatura, com os papéis do capítulo anterior: `lab-r1` =
+borda, `lab-r2` = switch (bridge `bridge-sw` com filtering do
+@sec-vlan-filtering), `lab-r3` = cliente A. A VLAN 10 do capítulo
+anterior será renumerada para o plano oficial (@tbl-plano-vlans): 101 =
+cliente A, 99 = gerência.
+
+### Comandos passo a passo
+
+**Passo 1 — o plano no switch.** Em `lab-r2`, ajuste a tabela ao plano
+(a VLAN 10 didática vira 101; a 99 entra para a gerência via trunk):
+
+```routeros
+/interface bridge vlan set [find vlan-ids=10] vlan-ids=101
+/interface bridge port set [find interface=ether3] pvid=101
+/interface bridge vlan add bridge=bridge-sw vlan-ids=99 tagged=bridge-sw,ether2
+```
+
+**Passo 2 — a borda fala o plano.** Em `lab-r1`, renomeie o mundo antigo
+e crie os pés da borda em cada segmento:
+
+```routeros
+/interface vlan set [find name=vlan10-svc] name=vlan101-cliA vlan-id=101
+/ip address set [find interface=vlan101-cliA] address=100.64.101.1/24
+/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-lan
+/ip address add address=10.99.0.1/24 interface=vlan99-ger
+```
+
+E a gerência do switch dentro da VLAN 99 (em `lab-r2`):
+
+```routeros
+/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-sw
+/ip address add address=10.99.0.2/24 interface=vlan99-ger
+```
+
+Teste da espinha: de `lab-r1`, `/ping 10.99.0.2 count=3` — a gerência do
+POP vive na VLAN 99, pelo trunk.
+
+**Passo 3 — o cliente no plano.** Em `lab-r3` (que continua ignorante de
+VLANs — porta access cuida):
+
+```routeros
+/ip address set [find address~"10.10.0"] address=100.64.101.30/24
+/ip route add dst-address=0.0.0.0/0 gateway=100.64.101.1
+/ping 100.64.101.1 count=3
+```
+
+**Passo 4 — as listas e a política.** Em `lab-r1`, as VLANs entram nas
+listas do firewall:
+
+```routeros
+/interface list member add list=gerencia interface=vlan99-ger
+/interface list member add list=LAN interface=vlan101-cliA
+```
+
+E o teste dos três princípios, direto do `lab-r3` (cliente):
+
+```routeros
+/ping 10.99.0.2 count=3
+/ping 10.99.0.1 count=3
+```
+
+**Ambos mortos** — e repare o *porquê* de cada um: o `10.99.0.2` (switch)
+morre porque a regra "gerência intocável" do forward
+(@sec-forward-lists) barra a travessia LAN→gerência; o `10.99.0.1` (a
+própria borda) morre no **input**... a menos que o ICMP-com-teto o
+aceite — verifique! Se o ping na borda responde, é o accept de ICMP do
+@sec-protegendo-roteador fazendo seu papel; o que importa é que
+**nenhum serviço** da VLAN 99 se alcança (teste
+`ssh vitor@10.99.0.1` do r3: morto no drop all).
+
+**Passo 5 — a prova do hardware (conceitual) e a bateria.** No CHR não
+há chip, mas confira a *intenção*: em `lab-r2`,
+`/interface bridge vlan print` e `port print` devem contar exatamente a
+@tbl-plano-vlans — num CRS326, essa mesma configuração estaria no chip,
+flag `H` viva. Feche com a bateria: r3 navega
+(`/ping 8.8.8.8` via borda + NAT), gerência do switch acessível **do
+r1** e inacessível **do r3**, e o export do plano:
+
+```routeros
+/interface bridge vlan export file=pop-vlans
+```
+
+Crie o snapshot **`pop-segmentado`** nas três VMs — a Fase 1 do livro
+termina aqui, e a Fase 2 (wireless, PPPoE) partirá deste estado.
+
+### Verificação
+
+1. O plano vive igual nos três lugares: @tbl-plano-vlans ↔ tabela do
+   switch ↔ interfaces da borda (mesmos VIDs, mesmas redes);
+2. O cliente navega (VLAN 101 → borda → NAT) sem enxergar gerência
+   (VLAN 99 inalcançável de dentro, nos dois testes do Passo 4);
+3. A gerência do POP (borda ↔ switch) conversa pela VLAN 99 sobre o
+   trunk;
+4. Exports arquivados e snapshot `pop-segmentado` criado nas três VMs.
+
+### Desafios
+
+1. Chega o cliente B. Liste **todos** os toques necessários (switch,
+   borda, firewall, tabela) — e conte-os. O que esse número diz sobre o
+   desenho?
+2. No Passo 4, o ping do r3 à borda (`10.99.0.1`) pode responder pelo
+   accept de ICMP do input. Isso é um vazamento? Argumente os dois lados
+   e proponha o refinamento se sua resposta for "sim".
+3. A torre de rádio rural entra no POP pelo segundo SFP+ do switch, e
+   atrás dela vêm 300 clientes PtMP. Adapte o plano: a torre é trunk ou
+   access? Que VLANs descem até ela — e qual princípio do capítulo é o
+   mais difícil de manter no rádio (dica: os 300 compartilham o meio)?
+4. O desenho do capítulo tem um ponto único de falha evidente. Qual é, o
+   que acontece com cada tipo de tráfego quando ele cai — e quais
+   volumes deste livro atacam esse problema?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) Switch: 1 linha na tabela de VLANs (102 tagged no trunk,
+untagged na porta) + PVID/frame-types da porta; (b) borda:
+`/interface vlan` 102 + IP `100.64.102.1/24` + membro da lista `LAN`;
+(c) firewall: **zero** (as políticas usam listas); (d) documentação: 1
+linha na @tbl-plano-vlans. Meia dúzia de toques, nenhum em regra de
+firewall — o desenho escala porque política e dados estão separados
+(@sec-forward-lists) e as listas absorvem o crescimento.
+
+**2.** Lados: *não é vazamento* — ICMP com teto é diagnóstico universal
+e não expõe serviço (o drop all segura SSH/WinBox); *é vazamento* — o
+cliente consegue **enumerar** a infraestrutura (descobre que 10.99.0.1
+existe e responde), primeiro passo de reconhecimento. Refinamento comum
+de provedor: restringir o accept de ICMP do input por origem
+(`in-interface-list=!LAN` para os IPs de infra, ou aceitar ICMP da LAN
+apenas para os IPs que a LAN deve ver — o gateway dela). Não há resposta
+única; há decisão documentada.
+
+**3.** A torre é **trunk**: por ela descem a VLAN de gerência (99 — os
+rádios são equipamentos do provedor) e a(s) VLAN(s) de clientes daquela
+torre (ex.: 150). O princípio difícil é o **"cliente não vê cliente"**:
+na VLAN 150, os 300 compartilham o mesmo domínio L2 pelo ar — a
+segmentação por VLAN individual não escala para PtMP. As respostas moram
+na camada wireless (isolamento de clientes no AP, *default-forward* off
+— Volume 5) e no PPPoE (cada cliente numa sessão ponto a ponto — Volume
+6), que devolvem o isolamento sem 300 VLANs.
+
+**4.** O **roteador de borda**: toda travessia e toda saída passam por
+ele. Caindo: tráfego **intra**-VLAN continua (comutação no switch
+independe), mas internet, travessias entre segmentos e serviços da borda
+(DNS, DHCP) morrem — o POP viram ilhas isoladas funcionais. Ataques ao
+problema: redundância de gateway (VRRP — Volume 14), múltiplos uplinks
+(ECMP/failover — Volume 14) e desenho de rede com mais de um caminho
+(OSPF — Volume 8).
+:::
+
+## Resumo
+
+- Segmentação começa por **documento**: o plano de VLANs
+  (@tbl-plano-vlans) com numeração significativa e redes casadas — o
+  contrato entre switch, borda e madrugada.
+- Os três princípios: **gerência isolada** (VLAN que cliente não recebe
+  + firewall), **cliente não vê cliente** (VLAN por cliente; PtMP
+  resolve na camada wireless/PPPoE), **travessia só pelo firewall**
+  (borda é a única ponte).
+- O desenho (@fig-pop-segmentado): trunk único borda↔switch, access nos
+  segmentos, comutação em hardware dentro, roteamento com estado entre.
+- As VLANs entram nas **interface lists** e o firewall-base do Volume 3
+  absorve os segmentos quase sem regras novas — escala é separar
+  política de dados.
+- O mesmo desenho serve do condomínio ao POP regional — muda o tamanho
+  da tabela, não a arquitetura.
+
+Fecha-se o Volume 4 — e a **Fase 1** inteira: você opera o RouterOS,
+constrói a borda, veste o firewall e segmenta o POP. A Fase 2 leva tudo
+isso para a rua: o Volume 5 sobe na torre — rádio, regulamentação e os
+enlaces que levam internet aonde a fibra não chega.
+
+## Bibliografia do capítulo {.unnumbered}
+
+Este capítulo integra os anteriores; além das referências deles, os
+guias *Basic VLAN switching* e os exemplos de segmentação da
+documentação oficial [@mikrotik-docs] mostram variações do mesmo desenho
+por família de hardware. As referências completas, em ABNT, estão no
+apêndice [Referências](../../referencias.qmd).
