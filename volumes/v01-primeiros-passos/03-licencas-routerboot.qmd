@@ -1,8 +1,316 @@
-# Licenças RouterOS e RouterBOOT
+# Licenças RouterOS e RouterBOOT {#sec-licencas-routerboot}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Ele explicará os níveis de licença do
-RouterOS (0–6 e as licenças do CHR) e o RouterBOOT, o bootloader dos
-equipamentos MikroTik. Consulte o `ROADMAP.md` para acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar como funciona o licenciamento do RouterOS: níveis 0–6, o que cada
+  um libera e por que a licença acompanha o equipamento para sempre;
+- Diferenciar as licenças de equipamento físico das licenças do CHR (`free`,
+  `p1`, `p10`, `p-unlimited`) e da modalidade de teste de 60 dias;
+- Consultar a licença de um equipamento com `/system license print`;
+- Explicar o que é o RouterBOOT, o que ele faz no boot e por que mantê-lo
+  atualizado junto com o RouterOS;
+- Conhecer as proteções do RouterBOOT (senha, `protected-routerboot`) e os
+  riscos de usá-las sem critério.
 :::
+
+## Licença: o que você compra junto com a caixa
+
+Uma dúvida comum de quem chega ao MikroTik vindo de outras marcas: "quanto
+custa a assinatura do sistema?". A resposta surpreende: **nada**. O modelo da
+MikroTik não tem mensalidade, contrato de suporte obrigatório nem licença
+por recurso. Cada equipamento RouterBOARD sai de fábrica com uma **licença
+perpétua** de um certo **nível**, embutida no preço — e essa licença:
+
+- **nunca expira**;
+- inclui **todas as atualizações** do RouterOS dentro da mesma major version
+  (e, na prática, a MikroTik liberou até hoje as trocas de major — v5→v6→v7 —
+  sem custo);
+- pertence ao **equipamento**, não a você: se o roteador for vendido, a
+  licença vai junto.
+
+O que os níveis diferenciam não é "recurso" — firewall, BGP, MPLS e scripts
+existem em todos —, mas **capacidade de alguns serviços**, principalmente
+quantos túneis e sessões o equipamento pode servir e para que uso o wireless
+está liberado (@tbl-niveis).
+
+| | Nível 3 (CPE) | Nível 4 (WISP) | Nível 5 (WISP AP) | Nível 6 (Controller) |
+|:--|:--|:--|:--|:--|
+| Wireless **cliente** (station) | sim | sim | sim | sim |
+| Wireless **AP** (ponto de acesso) | — | sim | sim | sim |
+| Túneis PPPoE/PPTP/L2TP/OVPN ativos | 1* | 200 | 500 | ilimitado |
+| Túneis EoIP | 1* | 200 | 500 | ilimitado |
+| Sessões hotspot ativas | 1 | 200 | 500 | ilimitado |
+| Interfaces de usuário (vlan, queues...) | ilimitado | ilimitado | ilimitado | ilimitado |
+
+: O que muda entre os níveis de licença mais comuns (\*como servidor; como cliente, ilimitado) {#tbl-niveis}
+
+Os níveis que faltam na tabela são triviais: **nível 0** é o modo de
+demonstração de 24 horas de uso (o que você obtém instalando o RouterOS x86
+sem licença); **nível 1** é a demo registrada, quase inútil hoje; **nível 2**
+não existe mais (era das versões antigas).
+
+Na prática do provedor, você raramente escolhe nível — ele vem casado com o
+hardware:
+
+- Equipamentos de **cliente** (SXT, LHG, hEX, hAP) vêm com **nível 3 ou 4**;
+- Equipamentos de **torre e POP** (BaseBox, NetMetal, RB4011/5009) vêm com
+  **nível 4 ou 5**;
+- Equipamentos de **núcleo** (CCR) vêm com **nível 6**.
+
+Repare como os limites casam com os papéis do @sec-hardware-linhas: o nível 3
+não sobe AP wireless (é licença de *station*, de rádio de cliente); o nível 6
+não limita túneis (é licença de concentrador PPPoE). A tabela de níveis é o
+catálogo de papéis visto por outro ângulo.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+A licença do RouterOS é como a carta de alforria gravada no chassi de um
+carro: paga uma vez, vale para sempre e vai junto na venda. Os níveis são
+como categorias da CNH — todas dirigem, mas cada uma autoriza um porte de
+veículo (aqui: uma quantidade de sessões e um papel wireless).
+:::
+
+### A licença do CHR: outro modelo
+
+O CHR usa um licenciamento próprio, por **velocidade de interface** — e é
+por isso que ele é o laboratório perfeito:
+
+| Licença CHR | Limite por interface | Custo |
+|:------------|:--------------------|:------|
+| `free` | 1 Mbps | gratuito, para sempre |
+| `p1` | 1 Gbps | pago (perpétuo) |
+| `p10` | 10 Gbps | pago (perpétuo) |
+| `p-unlimited` | ilimitado | pago (perpétuo) |
+
+: Licenças do CHR {#tbl-chr-licencas}
+
+Além dessas, todo CHR novo pode ativar um **trial de 60 dias** de qualquer
+nível pago (`/system license renew`, com uma conta gratuita do site da
+MikroTik) — útil para testar desempenho real antes de comprar. Para os
+laboratórios deste livro, o `free` com seu 1 Mbps por interface é mais que
+suficiente: estudamos comportamento, não velocidade.
+
+Consultar a licença é um comando só, e a saída é diferente em cada mundo. No
+CHR:
+
+```routeros
+/system license print
+```
+
+```routeros
+[admin@lab-r1] > /system license print
+        system-id: hK3x-Wm9P
+            level: free
+```
+
+Num equipamento físico apareceriam `software-id`, `nlevel` (o nível 3–6) e
+`features`. O `system-id`/`software-id` identifica a instalação — é ele que
+você informa à MikroTik ao comprar upgrade de licença.
+
+## RouterBOOT: o que acorda o RouterOS
+
+Todo computador tem um programa minúsculo que roda antes do sistema
+operacional — no PC, o firmware UEFI/BIOS; nas RouterBOARD, o **RouterBOOT**.
+Quando você liga um MikroTik físico, é o RouterBOOT que:
+
+1. inicializa CPU e memória;
+2. decide **de onde dar o boot** — do armazenamento interno (normal) ou da
+   rede (modo de recuperação usado pelo Netinstall, @sec-netinstall);
+3. carrega o RouterOS e lhe entrega o controle.
+
+O RouterBOOT tem firmware próprio, com versão independente do RouterOS — e
+aqui mora uma tarefa de manutenção que muitos esquecem. Ao atualizar o
+RouterOS, a versão nova do bootloader vem junta no pacote, mas **só é
+gravada quando você manda** e reinicia. O fluxo completo:
+
+```routeros
+/system routerboard print
+```
+
+```routeros
+[admin@MikroTik] > /system routerboard print
+       routerboard: yes
+        board-name: hEX S
+             model: RB760iGS
+     serial-number: HEA08XXXXXX
+     firmware-type: mt7621L
+  factory-firmware: 6.46.3
+  current-firmware: 6.49.10
+  upgrade-firmware: 7.15.3
+```
+
+Quando `current-firmware` está atrás de `upgrade-firmware`, aplique:
+
+```routeros
+/system routerboard upgrade
+/system reboot
+```
+
+Manter RouterOS e RouterBOOT na mesma geração evita uma classe inteira de
+problemas — de suporte a hardware a correções de segurança do próprio boot.
+No CHR não existe nada disso (`not routerboard`): quem inicializa a VM é o
+"BIOS" do hipervisor.
+
+### As proteções do RouterBOOT
+
+Por padrão, qualquer pessoa com acesso físico a uma RouterBOARD manda nela:
+basta segurar o botão de reset ao ligar para limpar a configuração, ou
+inicializar pela rede e reinstalar o sistema pelo Netinstall. Para
+equipamento em poste, torre ou armário compartilhado, o RouterBOOT oferece
+camadas de defesa em `/system routerboard settings`:
+
+- `boot-device=flash-boot-once-etherboot` mantém o boot normal mas ainda
+  permite recuperação; já `boot-protocol` e afins controlam o boot por rede;
+- **senha do bootloader** (`/system routerboard settings set boot-protocol=...
+  protected-routerboot=...`) — as opções variam por modelo;
+- **`protected-routerboot=enabled`** — o modo forte: desabilita o botão de
+  reset **e** o boot por rede. O equipamento só reinstala/reseta com uma
+  intervenção muito mais trabalhosa.
+
+::: {.callout-warning}
+`protected-routerboot=enabled` corta justamente os mecanismos de
+**recuperação**: sem botão de reset e sem Netinstall, uma senha esquecida
+transforma o equipamento num peso de papel até você conseguir desativar a
+proteção — o que exige acesso admin ao RouterOS. Só ative em equipamento
+exposto a acesso físico de terceiros, com a senha do admin guardada em
+gerenciador de senhas do provedor, e **documente** quais equipamentos do
+parque têm a proteção ligada.
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+No MikroTik, o custo do software é **zero ao longo da vida** do equipamento:
+licença perpétua, atualizações incluídas. O que os níveis limitam é
+capacidade de sessões/túneis e o papel wireless — mais um motivo para
+escolher hardware pelo papel, como no @sec-hardware-linhas. E abaixo do
+RouterOS vive o RouterBOOT: atualize-o junto com o sistema e proteja-o com
+critério.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+A VM única do CHR no VirtualBox, como nos capítulos anteriores. (A partir do
+@sec-lab-chr montaremos topologias maiores.)
+
+### Comandos passo a passo
+
+Veja a licença do seu CHR:
+
+```routeros
+/system license print
+```
+
+Saída esperada:
+
+```routeros
+[admin@lab-r1] > /system license print
+        system-id: hK3x-Wm9P
+            level: free
+```
+
+`level: free` confirma a licença gratuita — cada interface limitada a
+1 Mbps, sem prazo de validade. Agora confirme que o CHR não tem RouterBOOT:
+
+```routeros
+/system routerboard print
+```
+
+```routeros
+[admin@lab-r1] > /system routerboard print
+  routerboard: no
+```
+
+Por fim, explore o menu de histórico do sistema, que registra mudanças de
+configuração — ele nos ajudará a auditar o que os laboratórios alteram:
+
+```routeros
+/system history print
+```
+
+A saída lista as últimas ações (como o `set name=lab-r1` do primeiro
+capítulo), com autor e horário.
+
+### Verificação
+
+1. `/system license print` mostra `level: free`;
+2. `/system routerboard print` responde `routerboard: no` — logo, nada de
+   RouterBOOT para gerenciar no laboratório;
+3. `/system history print` registra as alterações que você fez até aqui.
+
+### Desafios
+
+1. Um provedor compra um `hAP ax²` (nível 4) para a casa de um assinante e
+   um `CCR2116` (nível 6) para concentrador PPPoE. Algum dos dois precisará
+   de upgrade de licença para exercer seu papel? Justifique com a
+   @tbl-niveis.
+2. No site da MikroTik, cada produto informa o nível de licença na ficha
+   técnica. Verifique o nível do `SXT SA5` e explique por que ele **não**
+   poderia ser usado como AP de uma torre PtMP com essa licença.
+3. Seu parque tem 40 rádios em torres de difícil acesso. Monte (em texto) a
+   política de proteção do RouterBOOT: o que ativar, o que documentar e qual
+   o plano B se a senha do admin de um rádio se perder.
+4. Sem executar ainda: qual seria o efeito de `/system license renew` num
+   CHR novo? Quando isso seria útil na vida real?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Nenhum dos dois. O hAP ax² atenderá **uma** casa: o nível 4 permite
+AP wireless e até 200 túneis — décadas de folga para um CPE. O CCR2116 como
+concentrador precisará de **milhares** de sessões PPPoE, e o nível 6 é
+justamente o ilimitado. A MikroTik casa o nível com o papel de fábrica.
+
+**2.** O SXT SA5 vem com **nível 3** — licença de *station*: pode
+conectar-se a um AP, mas não pode **ser** AP (a linha "wireless AP" da
+@tbl-niveis é "—" no nível 3). Para a torre PtMP usa-se um equipamento
+nível 4+ (ex.: BaseBox com mANT setorial), e os SXT ficam nos clientes.
+(Existe a variante "SXT SA5 ap", vendida com nível 4, exatamente para isso.)
+
+**3.** Política razoável: (a) ativar `protected-routerboot=enabled` apenas
+nos rádios fisicamente expostos; (b) senha de admin única por equipamento,
+guardada no gerenciador de senhas do provedor; (c) registrar em inventário
+quais equipamentos têm a proteção; (d) plano B: com a senha do admin
+perdida **e** proteção ativa, resta o procedimento de desbloqueio de
+fábrica — na prática, RMA. Por isso a proteção só entra onde o risco de
+acesso físico supera o risco de perda de senha.
+
+**4.** `/system license renew` ativa o **trial de 60 dias** de um nível pago
+(`p1`/`p10`/`p-unlimited`), pedindo login de uma conta MikroTik. Útil para
+testar um CHR de produção — por exemplo, medir se um servidor aguenta o
+papel de concentrador PPPoE a 10 Gbps — antes de pagar a licença perpétua.
+:::
+
+## Resumo
+
+- Licença RouterOS: **perpétua**, sem mensalidade, com atualizações
+  incluídas; pertence ao equipamento.
+- Níveis 3–6 diferenciam **papel wireless** (station/AP) e **quantidade de
+  túneis/sessões** (200/500/ilimitado) — não recursos (@tbl-niveis).
+- CHR licencia por **velocidade de interface**: `free` (1 Mbps) para
+  laboratório, `p1`/`p10`/`p-unlimited` para produção, trial de 60 dias
+  (@tbl-chr-licencas).
+- **RouterBOOT** é o bootloader das RouterBOARD: atualize-o junto com o
+  RouterOS (`/system routerboard upgrade` + reboot).
+- Proteções de boot (`protected-routerboot`) defendem equipamento exposto —
+  ao custo de eliminar os caminhos de recuperação. Use com critério e
+  documentação.
+
+No próximo capítulo, deixamos a caixa e vamos às portas de entrada: WinBox,
+WebFig, SSH, serial e MAC-Telnet — todas as formas de acessar um RouterOS, e
+quando usar cada uma.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A página oficial de licenciamento do RouterOS e a documentação do CHR
+[@mikrotik-chr] detalham níveis e preços atuais; a documentação do RouterOS
+[@mikrotik-docs] cobre os menus `/system license` e `/system routerboard`
+(incluindo o `protected-routerboot`). O catálogo [@mikrotik-products] informa
+o nível de licença de cada produto na ficha técnica. As referências
+completas, em ABNT, estão no apêndice [Referências](../../referencias.qmd).
