@@ -1,7 +1,340 @@
-# Projeto: roteador de borda
+# Projeto: roteador de borda {#sec-projeto-borda}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Este capítulo não introduz conceitos novos — ele **integra** tudo do
+volume. Ao final, você será capaz de:
+
+- Transformar uma "ordem de serviço" em uma sequência de configuração
+  planejada, executada e verificada;
+- Montar um roteador de borda completo, do equipamento zerado ao cliente
+  navegando: segurança inicial → WAN → LAN → DHCP → DNS → NAT;
+- Verificar o serviço em camadas (enlace → endereço → rota → tradução →
+  nome), na ordem que o diagnóstico profissional usa;
+- Entregar o serviço **documentado**: export comentado e backup baixado.
 :::
+
+## A ordem de serviço
+
+Situação real de qualquer semana num provedor: um cliente corporativo
+contratou um link dedicado, e você vai configurar o roteador que fica na
+sede dele. A ordem de serviço diz:
+
+> **Cliente:** Padaria Pão Quente (matriz)
+> **WAN:** via ONU em bridge, endereço por DHCP do concentrador
+> **LAN:** `192.168.10.0/24`, roteador no `.1`
+> **Serviços:** DHCP na LAN (faixa `.100–.199`), DNS com cache local,
+> internet para todos os dispositivos
+> **Reservas:** impressora fiscal sempre no `.10`
+> **Padrão da empresa:** checklist de segurança, identidade
+> `cli-paoquente-r1`, export e backup arquivados ao final
+
+A @fig-projeto-borda mostra o que a ordem descreve:
+
+::: {#fig-projeto-borda}
+
+```{.tikz}
+%%| filename: fig-projeto-borda
+%%| alt: Topologia do projeto. À esquerda, a nuvem do provedor liga-se pela ONU à interface ether3 do roteador do cliente, que recebe endereço via DHCP. O roteador, ao centro, chama-se cli-paoquente-r1 e tem na interface ether2 a LAN 192.168.10.0 barra 24, endereço ponto 1. Na LAN, à direita, estão os dispositivos do cliente: computadores e celulares recebendo endereços do DHCP na faixa ponto 100 a ponto 199, e a impressora fiscal com endereço reservado ponto 10. No roteador estão anotados os serviços: DHCP server, DNS cache e NAT masquerade.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  router/.style={draw=manualblue, very thick, fill=manualblue!8,
+                 rounded corners=3pt, minimum height=12mm, text width=30mm,
+                 align=center, font=\sffamily\small\bfseries},
+  disp/.style={draw=manualgreen, very thick, fill=manualgreen!8,
+               rounded corners=3pt, minimum height=9mm, text width=26mm,
+               align=center},
+  nuvem/.style={draw=manualgray, thick, fill=manualgray!10, ellipse,
+                minimum height=11mm, text width=20mm, align=center},
+  serv/.style={draw=manualgray, thick, fill=manualgray!10, rounded corners=3pt,
+               minimum height=7mm, text width=30mm, align=center,
+               font=\sffamily\scriptsize},
+  enlace/.style={very thick, manualblue},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  \node[nuvem] (isp) {Provedor};
+  \node[router, right=26mm of isp] (r) {cli-paoquente-r1};
+  \node[disp, above right=4mm and 22mm of r] (pcs) {Computadores\\ \small DHCP .100–.199};
+  \node[disp, below right=4mm and 22mm of r] (imp) {Impressora fiscal\\ \small reservado .10};
+
+  \draw[enlace] (isp) -- (r)
+    node[midway, above, rotulo] {ONU (bridge)}
+    node[midway, below, rotulo] {ether3 — DHCP};
+  \draw[enlace, manualgreen] (r.east) -- (pcs.west)
+    node[pos=0.3, above, rotulo] {ether2 — .1};
+  \draw[enlace, manualgreen] (r.east) -- (imp.west);
+
+  \node[serv, below=8mm of r] (servs) {DHCP server · DNS cache · NAT};
+  \draw[manualgray, thick, dashed] (r.south) -- (servs.north);
+
+  \node[rotulo, above=1mm of pcs.north] {LAN 192.168.10.0/24};
+\end{tikzpicture}
+```
+
+O projeto do capítulo: um roteador de borda de cliente corporativo, com
+WAN por DHCP e LAN completa.
+
+:::
+
+Antes de digitar qualquer coisa, o hábito profissional: **planejar a
+sequência**. A ordem importa — cada camada depende da anterior, e é a
+mesma ordem em que se diagnostica depois:
+
+| # | Etapa | Capítulo de referência |
+|:--|:------------------------------|:--|
+| 0 | Base limpa + identidade + segurança | @sec-primeiro-acesso |
+| 1 | WAN: DHCP client | @sec-dhcp |
+| 2 | LAN: endereço do gateway | @sec-ip-rota-padrao |
+| 3 | DHCP server (pool, network, server) + reserva | @sec-dhcp |
+| 4 | DNS: upstream + cache para a LAN | @sec-dns |
+| 5 | NAT masquerade | @sec-nat-masquerade |
+| 6 | Verificação em camadas | todos |
+| 7 | Documentar: export + backup para fora | @sec-backup-export |
+
+: O plano de execução {#tbl-plano-borda}
+
+::: {.callout-tip}
+## Analogia para guardar
+
+Configurar rede é construir prédio: fundação (acesso seguro), estrutura
+(endereços e rotas), instalações (DHCP, DNS, NAT) e a vistoria (verificação
+em camadas). Ninguém azuleja antes de rebocar — e quem pula a vistoria
+descobre o vazamento pelo telefone do cliente.
+:::
+
+## 🧪 Laboratório
+
+Este capítulo **é** o laboratório — o texto acima era o projeto; agora,
+mãos à obra.
+
+### Ambiente
+
+Laboratório padrão (@sec-lab-chr), com os papéis do projeto:
+
+- **`lab-r1`** é o roteador do cliente (`cli-paoquente-r1`): restaure o
+  snapshot **`base-limpa`** — o projeto começa do zero de verdade, sem
+  aproveitar nada dos capítulos anteriores. Adaptador NAT (`ether3`)
+  habilitado: ele fará o papel da ONU/concentrador do provedor;
+- **`lab-r2`** é "um computador da padaria": também em `base-limpa`,
+  conectado pela `ether2` (rede `lab-a`).
+
+Acesso inicial ao r1 pelo console da VM (equipamento zerado não tem
+gerência configurada — como na vida real).
+
+### Comandos passo a passo
+
+**Etapa 0 — base.** Pelo console de `lab-r1`, o ritual do
+@sec-primeiro-acesso, condensado (adapte usuário e senha):
+
+```routeros
+/system identity set name=cli-paoquente-r1
+/ip address add address=192.168.56.11/24 interface=ether1 comment="gerencia lab"
+/user add name=vitor group=full password=Lab!Segura2026 comment="tecnico"
+/user disable admin
+/ip service disable telnet,ftp,www,api,api-ssl
+/ip service set ssh address=192.168.56.0/24
+/ip service set winbox address=192.168.56.0/24
+/system clock set time-zone-name=America/Sao_Paulo
+```
+
+Daqui em diante, trabalhe por SSH (`ssh vitor@192.168.56.11`) — e lembre
+do Safe Mode (`Ctrl+X`) como cinto.
+
+**Etapa 1 — WAN.** O link do provedor entrega endereço por DHCP:
+
+```routeros
+/ip dhcp-client add interface=ether3 use-peer-dns=no comment="WAN via provedor"
+/ip dhcp-client print
+```
+
+Espere `bound` e valide a camada: `/ping 8.8.8.8 count=3` **do roteador**
+— a WAN funciona antes de existir LAN. (Repare no `use-peer-dns=no`: a
+ordem de serviço pede cache DNS com upstream nosso — um dono da verdade,
+@sec-dns.)
+
+**Etapa 2 — LAN.** O gateway da padaria:
+
+```routeros
+/ip address add address=192.168.10.1/24 interface=ether2 comment="LAN cliente"
+```
+
+**Etapa 3 — DHCP server.** Pool (repare: `.100–.199`, deixando o resto
+fixo), network e server — e o NTP aproveitando a WAN nova:
+
+```routeros
+/ip pool add name=pool-lan ranges=192.168.10.100-192.168.10.199
+/ip dhcp-server network add address=192.168.10.0/24 gateway=192.168.10.1 dns-server=192.168.10.1
+/ip dhcp-server add name=dhcp-lan interface=ether2 address-pool=pool-lan lease-time=1h
+/system ntp client set enabled=yes
+/system ntp client servers add address=a.st1.ntp.br
+```
+
+**Etapa 4 — DNS.** Upstreams e o modo servidor para a LAN:
+
+```routeros
+/ip dns set servers=1.1.1.1,8.8.8.8 allow-remote-requests=yes
+```
+
+**Etapa 5 — NAT.** A máscara na fronteira:
+
+```routeros
+/ip firewall nat add chain=srcnat out-interface=ether3 action=masquerade comment="NAT LAN->WAN"
+```
+
+**Etapa 6 — o cliente chega.** Em `lab-r2` (fazendo papel de computador):
+
+```routeros
+/system identity set name=pc-padaria
+/ip dhcp-client add interface=ether2
+/ip dhcp-client print
+```
+
+Recebeu `192.168.10.1xx`? Então a prova final, na ordem das camadas —
+gateway, internet por IP, internet por nome:
+
+```routeros
+/ping 192.168.10.1 count=2
+/ping 8.8.8.8 count=2
+/ping google.com count=2
+```
+
+Três pings limpos = serviço entregue. Falta a reserva da impressora: em
+`lab-r1`, fixe o lease do "computador" (na vida real seria o MAC da
+impressora) no `.10`:
+
+```routeros
+/ip dhcp-server lease print
+/ip dhcp-server lease make-static numbers=0
+/ip dhcp-server lease set 0 address=192.168.10.10
+```
+
+Em `lab-r2`, renove (`/ip dhcp-client release numbers=0`) e confirme que
+veio o `.10`.
+
+**Etapa 7 — documentar.** Em `lab-r1`:
+
+```routeros
+/system backup save name=cli-paoquente-r1-entrega
+/export file=cli-paoquente-r1-entrega
+```
+
+E, do seu computador, **para fora** (@sec-backup-export):
+
+```routeros
+scp vitor@192.168.56.11:cli-paoquente-r1-entrega.backup .
+scp vitor@192.168.56.11:cli-paoquente-r1-entrega.rsc .
+```
+
+Abra o `.rsc`: ele é o projeto inteiro em uma página — e o gabarito para o
+próximo cliente igual.
+
+### Verificação
+
+A vistoria de entrega, em camadas (decore esta ordem — ela é o seu roteiro
+de diagnóstico para sempre):
+
+1. **Enlace**: `/interface print` no r1 — `ether2` e `ether3` com flag `R`;
+2. **Endereço**: `/ip address print` — gerência, LAN `.1` e WAN dinâmica
+   (`D`);
+3. **Rota**: `/ip route print` — conectadas `DAc` + padrão `DAd` via
+   provedor;
+4. **Serviços**: `bound` no dhcp-client; lease do "pc" no `.10`
+   (estático); `/ip dns print` com upstreams e `allow-remote-requests=yes`;
+5. **Tradução**: regra de masquerade presente; `/ip firewall connection
+   print` mostrando conexões do `192.168.10.10` traduzidas;
+6. **Experiência do cliente**: os três pings do `lab-r2` (gateway → IP →
+   nome) sem perdas;
+7. **Documentação**: `.backup` e `.rsc` **no seu computador**.
+
+### Desafios
+
+1. A padaria abriu uma filial — mesma ordem de serviço, mas LAN
+   `192.168.20.0/24`. Liste **apenas** os comandos que mudam em relação ao
+   projeto (e note quantos são: essa é a força do padrão).
+2. O dono quer WiFi para os clientes **separado** da rede do caixa. Com as
+   ferramentas deste volume (sem VLANs ainda — Volume 4), como você
+   atenderia usando a `ether4` do roteador? Esboce os comandos das etapas
+   2–5 para essa segunda LAN (`192.168.99.0/24`) e diga o que essa solução
+   **não** separa de verdade.
+3. Simule o chamado clássico: em `lab-r1`, desabilite o dhcp-client da WAN
+   (`/ip dhcp-client disable 0`) e, "sem saber disso", diagnostique a
+   partir do sintoma do cliente ("caiu a internet") usando a vistoria em
+   camadas. Em que camada o defeito aparece, e quais camadas continuam
+   OK? Reabilite ao final.
+4. O `.rsc` exportado serve de gabarito, mas aplicá-lo cru num equipamento
+   novo tem **duas** lacunas (pense no que o export não carrega —
+   @sec-backup-export) e **um** risco (pense no que é dinâmico no projeto).
+   Quais?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Mudam apenas os comandos com o endereço da LAN — identidade e cinco
+linhas:
+
+```routeros
+/system identity set name=cli-paoquente-r2
+/ip address add address=192.168.20.1/24 interface=ether2 comment="LAN cliente"
+/ip pool add name=pool-lan ranges=192.168.20.100-192.168.20.199
+/ip dhcp-server network add address=192.168.20.0/24 gateway=192.168.20.1 dns-server=192.168.20.1
+/ip dhcp-server lease set 0 address=192.168.20.10
+```
+
+Todo o resto (usuários, serviços, DNS, NAT, NTP) é idêntico — é isso que
+um `.rsc`-gabarito bem feito captura.
+
+**2.** Segunda LAN na `ether4`: repetir as etapas com
+`address=192.168.99.1/24 interface=ether4`, pool/network próprios, um
+segundo `/ip dhcp-server` na `ether4` — DNS e NAT existentes já atendem (o
+masquerade casa por `out-interface`, não por origem). O que **não** separa:
+tráfego entre as duas LANs — o roteador roteia entre elas livremente; um
+notebook no WiFi dos clientes alcança a impressora do caixa. Separação de
+verdade exige **firewall entre as redes** (Volume 3) — e, em escala,
+VLANs (Volume 4).
+
+**3.** A vistoria denuncia na camada 2–3 **da WAN**: enlace OK
+(interfaces `R`), mas `/ip address print` perdeu o endereço `D` da ether3
+e `/ip route print` perdeu a rota padrão `DAd` — enquanto a LAN continua
+perfeita (cliente pega IP, pinga o gateway). Sintoma no cliente: "pego
+WiFi mas não navego"; no roteador: `bound` sumiu do dhcp-client. Camadas
+OK: 1 (enlaces), LAN inteira; defeito: endereço/rota da WAN. É o padrão de
+raciocínio que separa "trocar cabo por desespero" de diagnóstico.
+
+**4.** Lacunas do export: (a) **senhas de usuários** não vêm — o
+`/user add` precisa ser refeito (ou mantido num `.rsc`-gabarito escrito à
+mão); (b) itens **dinâmicos** não são configuração: o lease estático da
+impressora vem, mas o `bound` da WAN depende do provedor real. O risco: o
+export carrega o `allowed-address=192.168.56.0/24` dos serviços — aplicado
+num cliente sem essa rede de gerência, você se tranca para fora no momento
+do import. Gabarito se **lê e adapta**, não se despeja.
+:::
+
+## Resumo
+
+- Projeto profissional = **ordem de serviço → plano sequenciado → execução
+  → vistoria → documentação** (@tbl-plano-borda) — nunca comandos soltos
+  de memória.
+- A sequência do roteador de borda: base segura → WAN (`dhcp-client`) →
+  LAN (endereço) → DHCP server (pool menor que a rede + reservas) → DNS
+  (um dono da verdade, cache para a LAN) → NAT (na fronteira) —
+  validando **cada camada antes da seguinte**.
+- A vistoria em camadas (enlace → endereço → rota → serviços → tradução →
+  experiência) é o mesmo roteiro do **diagnóstico** — configurar bem é
+  aprender a diagnosticar.
+- Entrega termina com `.rsc` e `.backup` **fora** do equipamento — e o
+  `.rsc` de hoje é o gabarito (adaptado, nunca despejado) do cliente de
+  amanhã.
+
+Fecha-se o Volume 2: você domina o terminal e constrói um roteador de
+borda completo. Mas ele está **nu**: DNS aberto na WAN, WinBox exposto,
+nada filtrando o forward. O Volume 3 veste a armadura — firewall, do
+connection tracking ao hardening completo.
+
+## Bibliografia do capítulo {.unnumbered}
+
+Este capítulo integra os anteriores; as referências são as deles —
+em especial a documentação oficial [@mikrotik-docs] (páginas *First Time
+Configuration* e *Securing your router*, que espelham nossa sequência).
+@discher-rosv7 traz projetos guiados semelhantes. As referências completas,
+em ABNT, estão no apêndice [Referências](../../referencias.qmd).

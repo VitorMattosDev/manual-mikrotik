@@ -51,7 +51,7 @@ Pré-requisitos: Vol. 1.*
 - [x] `volumes/v02-cli-configuracao/03-dhcp.qmd` — DHCP client (WAN) e DHCP server (LAN): pools, leases, opções.
 - [x] `volumes/v02-cli-configuracao/04-dns.qmd` — DNS: resolver, cache, allow-remote-requests e riscos, entradas estáticas.
 - [x] `volumes/v02-cli-configuracao/05-nat-masquerade.qmd` — NAT masquerade: por que a LAN privada precisa dele; srcnat vs. masquerade.
-- [ ] `volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.qmd` — **Projeto integrador**: roteador de borda completo do zero (WAN DHCP + LAN + DHCP server + DNS + NAT).
+- [x] `volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.qmd` — **Projeto integrador**: roteador de borda completo do zero (WAN DHCP + LAN + DHCP server + DNS + NAT).
 
 ## Volume 3 — Firewall
 *Objetivo: entender e operar o firewall do RouterOS com segurança de provedor.
