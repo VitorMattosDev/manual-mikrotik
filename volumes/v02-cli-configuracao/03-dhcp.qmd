@@ -1,7 +1,383 @@
-# DHCP client e server
+# DHCP client e server {#sec-dhcp}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o diálogo DHCP (Discover → Offer → Request → Ack) e o papel do
+  *lease* (empréstimo com prazo);
+- Configurar o **DHCP client** numa interface WAN e controlar o que ele
+  aceita do provedor (`add-default-route`, `use-peer-dns`);
+- Montar um **DHCP server** completo na LAN — pool, network e server — e
+  explicar o papel de cada peça;
+- Gerenciar *leases*: ler a lista, fixar endereço de um equipamento
+  (`make-static`) e escolher o `lease-time` adequado;
+- Reconhecer os dois lados na rede de um provedor: onde se é cliente
+  (upstream) e onde se é servidor (clientes internos, gerência de CPEs).
 :::
+
+## O empréstimo de endereços
+
+No capítulo anterior, cada endereço foi digitado à mão. Funciona para
+roteadores — são poucos e não mudam de lugar. Mas a LAN de uma casa tem
+celulares, TVs e notebooks chegando e saindo; ninguém vai digitar endereço
+em cada um. O **DHCP** (*Dynamic Host Configuration Protocol*) automatiza:
+o dispositivo pergunta "alguém me dá um endereço?" e um servidor responde
+com o pacote completo — endereço, máscara, gateway e DNS.
+
+O diálogo tem quatro passos, fáceis de lembrar pela sigla **DORA**
+(@fig-dhcp-dora):
+
+::: {#fig-dhcp-dora}
+
+```{.tikz}
+%%| filename: fig-dhcp-dora
+%%| alt: Diagrama de sequência do DHCP entre um cliente, à esquerda, e um servidor, à direita. Quatro setas alternadas: Discover, do cliente para o servidor, em broadcast, perguntando se há servidor DHCP; Offer, do servidor para o cliente, oferecendo o endereço 192.168.88.254; Request, do cliente para o servidor, aceitando a oferta; e Ack, do servidor para o cliente, confirmando o empréstimo com prazo, o lease de dez minutos, e entregando máscara, gateway e DNS.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  ator/.style={draw=manualblue, very thick, fill=manualblue!8,
+               rounded corners=3pt, minimum height=9mm, text width=24mm,
+               align=center, font=\sffamily\small\bfseries},
+  linha/.style={manualgray, thick},
+  msg/.style={very thick, -stealth, manualblue},
+  rotulo/.style={font=\sffamily\small\bfseries, text=manualblue},
+  detalhe/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  \node[ator] (cli) {Cliente\\ \small(sem endereço)};
+  \node[ator, right=72mm of cli] (srv) {Servidor DHCP};
+
+  \draw[linha] (cli.south) -- ++(0,-52mm);
+  \draw[linha] (srv.south) -- ++(0,-52mm);
+
+  \draw[msg] ($(cli.south)+(0,-8mm)$) -- ($(srv.south)+(0,-8mm)$)
+    node[midway, above, rotulo] {1. Discover}
+    node[midway, below, detalhe] {broadcast: "algum servidor aí?"};
+  \draw[msg, manualgreen] ($(srv.south)+(0,-20mm)$) -- ($(cli.south)+(0,-20mm)$)
+    node[midway, above, rotulo, text=manualgreen] {2. Offer}
+    node[midway, below, detalhe] {"tenho o 192.168.88.254 para você"};
+  \draw[msg] ($(cli.south)+(0,-32mm)$) -- ($(srv.south)+(0,-32mm)$)
+    node[midway, above, rotulo] {3. Request}
+    node[midway, below, detalhe] {"aceito o 192.168.88.254"};
+  \draw[msg, manualgreen] ($(srv.south)+(0,-44mm)$) -- ($(cli.south)+(0,-44mm)$)
+    node[midway, above, rotulo, text=manualgreen] {4. Ack}
+    node[midway, below, detalhe] {lease 10m + máscara, gateway, DNS};
+\end{tikzpicture}
+```
+
+O diálogo DORA: o cliente descobre, o servidor oferece, o cliente pede, o
+servidor confirma — e o endereço vem emprestado, com prazo.
+
+:::
+
+O detalhe que muda a operação: o endereço é um **empréstimo** (*lease*) com
+prazo de validade. Na metade do prazo o cliente pede renovação; se o
+servidor sumir, o endereço expira e volta ao estoque. Esse prazo — o
+`lease-time` — será uma decisão sua adiante.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+DHCP é o balcão de um hotel: o hóspede chega sem quarto (Discover), a
+recepção oferece o 254 (Offer), o hóspede aceita (Request) e recebe a chave
+com data de saída (Ack + lease). Hóspede que renova a diária fica; quarto
+de quem partiu volta ao estoque. E o VIP (seu servidor, sua impressora)
+tem **quarto reservado** — o lease estático.
+:::
+
+No dia a dia do provedor você vive **os dois lados do balcão**:
+
+- **Cliente DHCP**: sua WAN recebendo endereço de um upstream — o link da
+  operadora, uma ONU em modo bridge... e o nosso adaptador NAT do
+  VirtualBox, que faz papel de operadora no laboratório;
+- **Servidor DHCP**: distribuindo endereços na LAN do cliente final (o hAP
+  na casa do assinante), na rede de gerência dos rádios de uma torre, na
+  rede dos técnicos no POP.
+
+## DHCP client: a WAN que se configura sozinha
+
+Você já rodou o comando no desafio do @sec-lab-chr; agora com entendimento
+completo:
+
+```routeros
+/ip dhcp-client add interface=ether3
+/ip dhcp-client print
+```
+
+```routeros
+[vitor@lab-r1] > /ip dhcp-client print
+Columns: INTERFACE, USE-PEER-DNS, ADD-DEFAULT-ROUTE, STATUS, ADDRESS
+# INTERFACE  USE-PEER-DNS  ADD-DEFAULT-ROUTE  STATUS  ADDRESS
+0 ether3     yes           yes                bound   10.0.2.15/24
+```
+
+`STATUS: bound` = DORA completo, endereço emprestado. E repare no que veio
+de brinde — confira `/ip address print` e `/ip route print`: um endereço
+com flag **`D`** (dinâmico) e uma rota padrão **`DAd`** apontando para o
+gateway da operadora. É o @sec-ip-rota-padrao acontecendo sozinho.
+
+Os dois botões que importam num roteador de provedor:
+
+- **`add-default-route`** (`yes`/`no`) — aceitar a rota padrão oferecida?
+  No roteador de borda simples, sim. Num equipamento **interno** que só usa
+  aquela WAN para um serviço específico, não: a rota padrão da casa é outra,
+  e uma rota intrusa de distância 1 causa estragos;
+- **`use-peer-dns`** (`yes`/`no`) — aceitar os servidores DNS oferecidos?
+  Veremos no @sec-dns por que um provedor frequentemente prefere `no` e
+  seus próprios resolvedores.
+
+O contrato de leitura: **configuração dinâmica se gerencia na origem**. O
+endereço `D` e a rota `D` não se editam; ajusta-se o dhcp-client que os
+criou (`release`/`renew` estão lá também, para forçar renegociação).
+
+## DHCP server: a LAN que se serve sozinha
+
+O servidor tem três peças, e entender a divisão evita 90% das confusões:
+
+1. **O pool** (`/ip pool`) — o estoque de endereços para emprestar:
+
+   ```routeros
+   /ip pool add name=pool-lan ranges=192.168.88.100-192.168.88.254
+   ```
+
+   Repare que o pool **não** cobre a rede inteira: `192.168.88.1` é o
+   roteador, e a faixa `.2–.99` fica reservada para endereços fixos
+   (impressoras, câmeras, APs) fora do alcance do sorteio.
+
+2. **O network** (`/ip dhcp-server network`) — o que dizer aos clientes
+   daquela rede (gateway, DNS, máscara):
+
+   ```routeros
+   /ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1
+   ```
+
+3. **O server** (`/ip dhcp-server`) — quem atende o balcão, em qual
+   interface, com qual pool e prazo:
+
+   ```routeros
+   /ip dhcp-server add name=dhcp-lan interface=ether2 address-pool=pool-lan lease-time=1h
+   ```
+
+Pré-requisito que o RouterOS exige: o roteador precisa **ter endereço na
+rede servida** (`192.168.88.1/24` na `ether2`) — afinal, ele é o gateway
+que o network anuncia. (Existe um assistente, `/ip dhcp-server setup`, que
+faz as três peças em sequência interativa; conhecendo as peças, você sabe
+o que ele monta — e sabe consertar quando alguém o usou errado.)
+
+### Leases: o livro de registros
+
+Cada empréstimo vivo aparece em:
+
+```routeros
+/ip dhcp-server lease print
+```
+
+```routeros
+[vitor@lab-r1] > /ip dhcp-server lease print
+Columns: ADDRESS, MAC-ADDRESS, HOST-NAME, SERVER, STATUS
+# ADDRESS         MAC-ADDRESS        HOST-NAME  SERVER    STATUS
+0 192.168.88.254  08:00:27:3B:71:9E  lab-r2     dhcp-lan  bound
+```
+
+Dois usos de operação:
+
+- **Fixar o VIP**: `make-static` transforma o lease dinâmico em reserva —
+  aquele MAC receberá **sempre** aquele endereço:
+
+  ```routeros
+  /ip dhcp-server lease make-static numbers=0
+  ```
+
+  É assim que se garante endereço previsível para a câmera, o AP, o
+  servidor do cliente corporativo — sem configurar nada no dispositivo;
+- **`lease-time` com critério**: prazo curto (10m–1h) em redes de alta
+  rotatividade (hotspot, eventos) devolve endereços rápido ao estoque;
+  prazo longo (1d+) em LANs estáveis reduz tráfego de renovação e mantém
+  endereços previsíveis. O padrão de 10 minutos do RouterOS é conservador —
+  em LAN de cliente, 1h a 1d é o usual.
+
+::: {.callout-warning}
+Nunca ative um DHCP server "para testar" numa interface ligada a uma rede
+que **já tem** servidor DHCP — inclusive a sua rede de gerência do
+laboratório ou o escritório do provedor. Dois servidores na mesma rede =
+clientes recebendo configurações conflitantes, aleatoriamente — o clássico
+*rogue DHCP*, um dos defeitos mais confusos de diagnosticar em campo. (O
+RouterOS ajuda a caçá-los: `/ip dhcp-server alert`.)
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+DHCP é **estado emprestado com prazo**: o client materializa endereço e
+rota dinâmicos (flag `D`) que se gerenciam na origem; o server é
+pool + network + server, com o pool desenhado para **sobrar espaço fixo**
+fora do sorteio e leases estáticos para quem precisa de endereço
+previsível. Provedor opera os dois lados do balcão — e nunca deixa dois
+balcões na mesma rede.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Laboratório padrão (@sec-lab-chr): **`lab-r1` e `lab-r2`**, snapshot
+`base-limpa` (+ `seguranca-inicial` no r1, se preferir). Adaptador NAT
+(`ether3`) do `lab-r1` habilitado. Papéis: `lab-r1` será **cliente** DHCP
+na WAN (ether3, NAT do VirtualBox) e **servidor** DHCP na LAN (ether2,
+rede `lab-a`); `lab-r2` fará o papel do dispositivo do cliente final,
+pedindo endereço pela `ether2`.
+
+### Comandos passo a passo
+
+**Passo 1 — r1 como cliente (WAN).** Em `lab-r1`:
+
+```routeros
+/ip dhcp-client add interface=ether3 comment="WAN do lab (NAT VirtualBox)"
+/ip dhcp-client print
+```
+
+Aguarde `STATUS: bound` e inspecione as criações dinâmicas:
+
+```routeros
+/ip address print where dynamic
+/ip route print where dst-address=0.0.0.0/0
+/ping 8.8.8.8 count=3
+```
+
+O ping sai para a internet de verdade: WAN pronta, sem digitar um endereço.
+
+**Passo 2 — r1 como servidor (LAN).** Ainda em `lab-r1`, as quatro peças
+na ordem: endereço do gateway, pool, network, server:
+
+```routeros
+/ip address add address=192.168.88.1/24 interface=ether2 comment="LAN do lab"
+/ip pool add name=pool-lan ranges=192.168.88.100-192.168.88.254
+/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1
+/ip dhcp-server add name=dhcp-lan interface=ether2 address-pool=pool-lan lease-time=1h
+```
+
+**Passo 3 — r2 como "cliente da casa".** Em `lab-r2`:
+
+```routeros
+/ip dhcp-client add interface=ether2 comment="simula dispositivo na LAN"
+/ip dhcp-client print
+```
+
+```routeros
+[admin@lab-r2] > /ip dhcp-client print
+Columns: INTERFACE, USE-PEER-DNS, ADD-DEFAULT-ROUTE, STATUS, ADDRESS
+# INTERFACE  USE-PEER-DNS  ADD-DEFAULT-ROUTE  STATUS  ADDRESS
+0 ether2     yes           yes                bound   192.168.88.254/24
+```
+
+O r2 recebeu endereço **do seu servidor** — DORA completo dentro do seu
+laboratório. Confira o que veio junto (`/ip route print`: rota padrão via
+`192.168.88.1`).
+
+**Passo 4 — o livro de registros.** De volta a `lab-r1`:
+
+```routeros
+/ip dhcp-server lease print
+```
+
+O lease do r2 está lá, com MAC e hostname. Fixe-o e renove do lado do
+cliente para ver a reserva funcionando:
+
+```routeros
+/ip dhcp-server lease make-static [find mac-address~":"]
+/ip dhcp-server lease print
+```
+
+Em `lab-r2`, force a renegociação e confirme que o endereço **se manteve**:
+
+```routeros
+/ip dhcp-client release numbers=0
+/ip dhcp-client print
+```
+
+### Verificação
+
+1. Em `lab-r1`: dhcp-client `bound` na ether3, `/ping 8.8.8.8` com 0% de
+   perda;
+2. Em `lab-r1`: `/ip pool print`, `/ip dhcp-server network print` e
+   `/ip dhcp-server print` mostram as três peças com os nomes do
+   laboratório;
+3. Em `lab-r2`: endereço dinâmico `192.168.88.x` na ether2 e rota padrão
+   `D` via `192.168.88.1`;
+4. Em `lab-r1`: o lease aparece **sem** a flag `D` após o `make-static`
+   (virou configuração), e o release/renew do r2 devolveu o mesmo endereço.
+
+### Desafios
+
+1. Por que o pool (`.100–.254`) não começa no `.2`? Dê dois exemplos de
+   equipamentos de um cliente corporativo que você colocaria na faixa
+   fixa.
+2. `lab-r2` recebeu rota padrão via `192.168.88.1` — mas o r2 é um roteador
+   do **seu** laboratório, com a própria rota padrão via enlace `lab-a` em
+   outros capítulos. Que parâmetro do dhcp-client evitaria a rota intrusa,
+   e quando você o usaria em produção?
+3. No `lab-r1`, o que acontece se você apontar o `address-pool` do server
+   para um pool de **outra** rede (ex.: `10.50.0.100-10.50.0.200`)?
+   Raciocine antes; se testar, observe o `/log print` e desfaça.
+4. Um cliente reclama: "de vez em quando meu computador pega IP
+   `169.254.x.x` e a internet some". O que esse endereço significa e quais
+   as duas causas mais prováveis do lado do provedor?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** A faixa fora do pool é o território dos endereços **previsíveis**:
+o `.1` é o gateway; `.2–.99` ficam para leases estáticos e configurações
+manuais — ex.: a impressora de rede e o DVR de câmeras do cliente
+corporativo (ambos precisam de endereço fixo para port forwarding, assunto
+do Volume 3). Se o pool cobrisse tudo, um lease dinâmico poderia colidir
+com um fixo configurado à mão.
+
+**2.** `add-default-route=no` no dhcp-client. Em produção: qualquer
+equipamento que usa uma WAN DHCP apenas como **serviço secundário** — ex.:
+um concentrador que recebe uma ONU de backup, um roteador interno que pega
+endereço de gerência via DHCP — e cuja rota padrão verdadeira vem de outro
+lugar (estática ou OSPF/BGP).
+
+**3.** O server entrega um endereço do pool, mas o **network** continua
+sendo o `192.168.88.0/24` — e um cliente com endereço `10.50.0.x`, gateway
+`192.168.88.1`, fica incomunicável (gateway fora da própria rede). O
+RouterOS registra reclamações no log. Moral: pool, network e o endereço do
+roteador na interface precisam contar **a mesma história**.
+
+**4.** `169.254.0.0/16` é *link-local* (APIPA): o sistema se autoendereça
+quando **nenhum servidor DHCP respondeu** dentro do prazo. Causas prováveis:
+(a) o DHCP server do CPE/concentrador fora do ar ou sem pool disponível
+(estoque esgotado — pool pequeno demais para a rotatividade); (b) problema
+de camada 2 entre o cliente e o servidor (porta, VLAN, rádio) engolindo o
+broadcast do Discover. Em ambas, o DORA nunca completa.
+:::
+
+## Resumo
+
+- DHCP = **DORA** (Discover, Offer, Request, Ack) e endereço **emprestado**
+  com prazo (`lease-time`) — renovado na metade do prazo
+  (@fig-dhcp-dora).
+- **Client** (`/ip dhcp-client`): WAN automática; controle o que aceita com
+  `add-default-route` e `use-peer-dns`; o que ele cria tem flag `D` e se
+  gerencia na origem.
+- **Server** = três peças: `pool` (estoque, **menor** que a rede),
+  `network` (gateway/DNS anunciados) e `server` (interface + pool + prazo)
+  — mais o endereço do próprio roteador na interface.
+- **Leases**: `print` é o livro de registros; `make-static` reserva
+  endereço por MAC; `lease-time` curto para rotatividade, longo para
+  estabilidade.
+- Dois servidores na mesma rede = caos (*rogue DHCP*); há `/ip dhcp-server
+  alert` para caçar intrusos.
+
+No próximo capítulo, o terceiro serviço que toda LAN espera do roteador:
+**DNS** — resolver nomes, cachear respostas e as decisões de segurança que
+vêm junto.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/ip dhcp-client`,
+`/ip dhcp-server` (com o assistente `setup` e os alertas de rogue server) e
+`/ip pool`. O funcionamento do protocolo (DORA, renovação, opções) está em
+@tanenbaum-redes. As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
