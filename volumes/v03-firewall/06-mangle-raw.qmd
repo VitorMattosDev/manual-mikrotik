@@ -1,7 +1,356 @@
-# Mangle e RAW
+# Mangle e RAW {#sec-mangle-raw}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Situar as tabelas **mangle** e **RAW** na linha de montagem do pacote —
+  e por que a posição de cada uma define seu poder;
+- Usar o mangle para **marcar** conexões e pacotes
+  (`mark-connection`/`mark-packet`) com o padrão eficiente "marca a
+  conexão uma vez, herda nos pacotes";
+- Entender para quem as marcas trabalham: filas de QoS (Volume 7) e
+  decisões de rota (`routing-mark`, Volumes 8 e 14);
+- Usar o RAW para agir **antes do connection tracking**: descartar floods
+  barato (`drop`) e isentar tráfego do conntrack (`notrack`);
+- Prever os efeitos colaterais do `notrack` — o que quebra quando um
+  pacote vira invisível para NAT e firewall stateful.
 :::
+
+## A linha de montagem completa
+
+Você já conhece três estações da fábrica: o filter julga, o NAT traduz, o
+conntrack anota. Faltavam duas — e a posição delas na esteira é a chave
+do capítulo (@fig-pipeline):
+
+::: {#fig-pipeline}
+
+```{.tikz}
+%%| filename: fig-pipeline
+%%| alt: Linha de processamento de um pacote que atravessa o roteador, da esquerda para a direita: RAW prerouting, destacado em vermelho como primeira estação; connection tracking; mangle prerouting; NAT dstnat; decisão de roteamento; filter forward; mangle postrouting; NAT srcnat; e a saída pela interface. Abaixo da estação RAW, uma anotação: agir aqui custa menos, antes de o conntrack criar estado. Abaixo do mangle, anotação: as marcas criadas aqui são lidas por filas e rotas adiante.
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize,
+  estacao/.style={draw=manualgray, thick, fill=manualgray!10, rounded corners=2pt,
+                  minimum height=9mm, text width=15mm, align=center},
+  destaque/.style={draw=manualred, very thick, fill=manualred!8,
+                   rounded corners=2pt, minimum height=9mm, text width=15mm,
+                   align=center, font=\sffamily\scriptsize\bfseries},
+  mangle/.style={draw=manualblue, very thick, fill=manualblue!8,
+                 rounded corners=2pt, minimum height=9mm, text width=15mm,
+                 align=center, font=\sffamily\scriptsize\bfseries},
+  seta/.style={thick, -stealth, manualgray},
+  nota/.style={font=\sffamily\scriptsize, text=manualgray, text width=40mm, align=center}
+]
+  \node[destaque] (raw) {RAW\\prerouting};
+  \node[estacao, right=3mm of raw] (ct) {conntrack};
+  \node[mangle, right=3mm of ct] (mpre) {mangle\\prerouting};
+  \node[estacao, right=3mm of mpre] (dnat) {dstnat};
+  \node[estacao, right=3mm of dnat] (rot) {roteamento};
+  \node[estacao, right=3mm of rot] (fwd) {filter\\forward};
+  \node[mangle, right=3mm of fwd] (mpost) {mangle\\postrouting};
+  \node[estacao, right=3mm of mpost] (snat) {srcnat};
+
+  \draw[seta] (raw) -- (ct);
+  \draw[seta] (ct) -- (mpre);
+  \draw[seta] (mpre) -- (dnat);
+  \draw[seta] (dnat) -- (rot);
+  \draw[seta] (rot) -- (fwd);
+  \draw[seta] (fwd) -- (mpost);
+  \draw[seta] (mpost) -- (snat);
+
+  \node[nota, below=4mm of raw.south east] {agir aqui é barato:\\antes do estado existir};
+  \node[nota, below=4mm of mpost.south west] {marcas do mangle: lidas\\por filas e rotas adiante};
+\end{tikzpicture}
+```
+
+A esteira do pacote que atravessa o roteador: o RAW é a primeira estação
+(antes do conntrack); o mangle marca ao longo do caminho para consumo das
+estações seguintes.
+
+:::
+
+- O **RAW** é a **primeira** estação: vê o pacote cru, antes mesmo de o
+  conntrack procurar/criar a conexão. Poder: agir **barato** — e decidir
+  se o conntrack sequer verá aquele tráfego;
+- O **mangle** tem regras em **todas** as etapas (prerouting, input,
+  forward, output, postrouting) e não aceita nem descarta: ele **anota**
+  — marcas invisíveis que viajam com o pacote *dentro do roteador* e são
+  lidas pelas estações seguintes.
+
+## Mangle: o almoxarifado de etiquetas
+
+O mangle marca três coisas, cada uma com seu consumidor:
+
+| Marca | Action | Quem consome |
+|:------|:-------|:-------------|
+| de **conexão** | `mark-connection` | o próprio mangle (herança) |
+| de **pacote** | `mark-packet` | filas de QoS (Volume 7) |
+| de **rota** | `mark-routing` | decisão de roteamento (Volumes 8 e 14) |
+
+: As marcas do mangle e seus consumidores {#tbl-marcas}
+
+As etiquetas não mudam o pacote na rede — são metadados internos. E o
+padrão de uso profissional aproveita o conntrack para marcar **barato**:
+
+```routeros
+/ip firewall mangle
+add chain=forward connection-state=new protocol=udp dst-port=53 action=mark-connection new-connection-mark=conn-dns passthrough=yes comment="classifica a conexao (1x)"
+add chain=forward connection-mark=conn-dns action=mark-packet new-packet-mark=pkt-dns passthrough=no comment="etiqueta os pacotes (herda)"
+```
+
+Leia o par com atenção — ele voltará no QoS inteiro:
+
+1. A primeira regra classifica **só o primeiro pacote** da conexão
+   (`connection-state=new`) e grava a marca **na conexão** (na tabela do
+   conntrack — você a verá lá no laboratório);
+2. A segunda marca **cada pacote** consultando apenas a marca da conexão
+   (`connection-mark=conn-dns`) — sem reavaliar portas/protocolos a cada
+   pacote. Classificação cara 1× por conexão; etiquetagem barata por
+   pacote. É o `established,related` do mangle;
+3. **`passthrough`**: `yes` = o pacote continua descendo a lista do
+   mangle (permite acumular marcas: conexão + pacote); `no` = para aqui
+   (a etiquetagem final é terminal). O padrão dos pares
+   classifica-e-etiqueta é exatamente esse: `yes` na primeira, `no` na
+   segunda.
+
+Um terceiro uso do mangle, sem marca alguma, resolve um defeito clássico
+de provedor: **`change-mss`** — ajustar o tamanho máximo de segmento TCP
+quando o caminho tem MTU menor (túneis, PPPoE). Guarde o nome; o Volume 6
+o usará no concentrador (`action=change-mss ... tcp-flags=syn`), e ele
+explica metade dos chamados "abre uns sites e outros não".
+
+## RAW: agir antes de existir
+
+As regras do RAW (`/ip firewall raw`) vivem em `prerouting` (e `output`),
+**antes do conntrack** — e essa posição paga duas contas:
+
+**1. `action=drop` — a defesa barata contra flood.** Relembre o desafio
+do @sec-conntrack: um flood de conexões novas enche a tabela e derruba
+clientes legítimos. Um `drop` no **filter** descarta o pacote, mas *tarde
+demais* — o conntrack já gastou CPU e criou a entrada. O mesmo drop no
+**RAW** mata o pacote antes de qualquer estado nascer:
+
+```routeros
+/ip firewall raw add chain=prerouting in-interface-list=WAN src-address-list=atacantes action=drop comment="flood: morre antes do conntrack"
+```
+
+Sob ataque volumétrico, essa diferença é o roteador de pé ou caído. O
+padrão de operação: detectar as origens (listas dinâmicas do
+@sec-forward-lists, ou à mão durante o incidente) e despachá-las no RAW.
+
+**2. `action=notrack` — isentar do conntrack.** Tráfego que não precisa
+de NAT nem de firewall stateful pode ser dispensado da contabilidade:
+
+```routeros
+/ip firewall raw add chain=prerouting src-address=10.255.0.0/24 dst-address=10.255.0.0/24 action=notrack comment="trafego de infra: sem estado"
+```
+
+Cada pacote isento economiza a busca/criação na tabela — em roteadores
+de core ou enlaces de infraestrutura com milhões de pacotes por segundo,
+é CPU de volta ao caixa. Mas o `notrack` tem dentes:
+
+::: {.callout-warning}
+Pacote `notrack` é **invisível** para tudo que depende do conntrack: NAT
+não o traduz, matchers de `connection-state` não casam
+(o estado vira `untracked`) e as regras `established,related` **não o
+aceitam**. Aplicar notrack em tráfego que passa por NAT quebra a
+navegação na hora — o laboratório demonstra de propósito. Use-o apenas em
+tráfego que comprovadamente não precisa de estado (infraestrutura,
+roteamento puro) e **teste os firewalls no caminho**: um esqueleto que só
+aceita `established,related` + drop all descarta o untracked
+silenciosamente.
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Posição é poder: o **RAW** age antes do estado existir (defesa barata,
+isenção de contabilidade — com os riscos de quem fica invisível), e o
+**mangle** anota ao longo da esteira para as estações seguintes
+decidirem (filas, rotas). Nenhum dos dois "bloqueia ou libera" — RAW
+poupa o roteador; mangle informa o roteador. O filter continua sendo o
+juiz.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+`lab-r1` (borda completa dos capítulos anteriores) e `lab-r2` (cliente na
+LAN). O r3 já voltou ao padrão (@sec-dstnat, Passo 6).
+
+### Comandos passo a passo
+
+**Passo 1 — o par classifica-e-etiqueta.** Em `lab-r1`, marque o tráfego
+ICMP dos clientes (nosso "tráfego prioritário" de mentira — no Volume 7
+será VoIP):
+
+```routeros
+/ip firewall mangle add chain=forward connection-state=new protocol=icmp action=mark-connection new-connection-mark=conn-ping passthrough=yes comment="classifica ping"
+/ip firewall mangle add chain=forward connection-mark=conn-ping action=mark-packet new-packet-mark=pkt-ping passthrough=no comment="etiqueta ping"
+```
+
+**Passo 2 — ver as etiquetas.** Em `lab-r2`, um ping contínuo a
+`8.8.8.8`. Em `lab-r1`, veja a **marca na conexão** e os contadores do
+par:
+
+```routeros
+/ip firewall connection print detail where protocol=icmp
+/ip firewall mangle print stats
+```
+
+Na conexão: `connection-mark=conn-ping`. Nos contadores: a regra 0
+(classifica) com **1** pacote; a regra 1 (etiqueta) crescendo a cada
+ping — o padrão barato, visível nos números. Pare o ping.
+
+**Passo 3 — RAW drop: o porteiro de fora.** Simule o despacho de um
+atacante. Em `lab-r1`:
+
+```routeros
+/ip firewall raw add chain=prerouting src-address=192.168.10.0/24 dst-address=1.1.1.1 action=drop comment="teste RAW drop"
+```
+
+Em `lab-r2`: `/ping 1.1.1.1 count=3` — morto. Agora o detalhe fino: em
+`lab-r1`, procure a conexão:
+
+```routeros
+/ip firewall connection print where dst-address~"1.1.1.1"
+```
+
+**Nada.** O pacote morreu antes do conntrack — compare com um drop de
+filter, que deixaria... também nada de conexão (drop no new impede a
+entrada), mas o contraste real é o custo: no RAW, nem a **busca** na
+tabela aconteceu. Remova o teste:
+
+```routeros
+/ip firewall raw remove [find comment="teste RAW drop"]
+```
+
+**Passo 4 — notrack quebrando o NAT (de propósito).** A demonstração
+mais instrutiva do capítulo. Em `lab-r1`:
+
+```routeros
+/ip firewall raw add chain=prerouting src-address=192.168.10.0/24 protocol=icmp action=notrack comment="teste notrack"
+```
+
+Em `lab-r2`: `/ping 8.8.8.8 count=3` — **falha**. Por quê? O ping saiu
+`untracked`: o masquerade (que depende do conntrack) não o traduziu, e o
+pacote foi para a internet com origem `192.168.10.x` — o timeout do
+@sec-nat-masquerade de novo, agora causado por *excesso de otimização*.
+Confirme a invisibilidade:
+
+```routeros
+/ip firewall connection print where protocol=icmp
+```
+
+Vazio, mesmo com o ping rodando. Desfaça e confirme que voltou:
+
+```routeros
+/ip firewall raw remove [find comment="teste notrack"]
+```
+
+**Passo 5 — limpar o mangle de teste.** As marcas de ping cumpriram seu
+papel didático:
+
+```routeros
+/ip firewall mangle remove [find comment~"ping"]
+```
+
+### Verificação
+
+1. A conexão ICMP exibiu `connection-mark=conn-ping` e os contadores do
+   par mostraram 1 pacote na classificação e N na etiquetagem;
+2. Com o RAW drop, o destino de teste morreu **sem** gerar entrada no
+   conntrack;
+3. Com o notrack, o ping dos clientes quebrou (NAT cego) e a tabela de
+   conexões ficou vazia para ICMP — e você sabe explicar a cadeia
+   causal;
+4. Tudo removido ao final (`/ip firewall raw print` e
+   `.. mangle print` limpos).
+
+### Desafios
+
+1. No par classifica-e-etiqueta, o que aconteceria se a **primeira**
+   regra usasse `passthrough=no`? E se a **segunda** usasse
+   `passthrough=yes`?
+2. Sob um flood UDP de 500 mil pps contra um cliente, compare o custo por
+   pacote de três defesas: drop no filter forward, drop no RAW
+   prerouting, e blackhole na operadora (pedir para o upstream descartar).
+   Quando cada uma é a resposta certa?
+3. Escreva a regra de mangle `change-mss` para clientes PPPoE com MTU
+   1492 (MSS 1452) — chain, matchers de tcp-flags e sentido do tráfego —
+   e explique por que ela casa só com pacotes SYN.
+4. Um roteador de core sem NAT e sem filtro stateful roda
+   `connection tracking enabled=auto`. Há regra RAW `notrack` para tudo.
+   O conntrack está de fato desligado? O que o `auto` decide — e qual a
+   diferença prática entre "notrack em tudo" e `enabled=no`?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Com `passthrough=no` na primeira, o primeiro pacote da conexão
+para ali: recebe marca de conexão mas **nunca chega** à regra de pacote —
+o primeiro pacote de cada conexão viaja sem etiqueta (em filas, o SYN
+escaparia da fila certa; sutil e real). Com `yes` na segunda, os pacotes
+etiquetados continuariam descendo o mangle — inofensivo se não há mais
+regras, mas paga-se o percurso; em listas grandes, é desperdício por
+pacote.
+
+**2.** Filter forward: o pacote já passou por RAW+conntrack+mangle+
+roteamento — CPU cheia por pacote; certo quando o volume é pequeno ou a
+decisão exige estado. RAW: só o custo de chegada + um matcher — aguenta
+uma ordem de grandeza a mais; a resposta certa on-box para floods. Mas a
+500 kpps o **enlace** já está pago: se o flood satura a banda de entrada,
+descartar dentro de casa não devolve banda — a resposta certa é o
+**blackhole no upstream** (a operadora descarta lá, e o seu link
+respira). Escada: filter < RAW < upstream, conforme o gargalo sobe.
+
+**3.**
+
+```routeros
+/ip firewall mangle add chain=forward protocol=tcp tcp-flags=syn action=change-mss new-mss=1452 tcp-mss=1453-65535 passthrough=yes comment="MSS clamp PPPoE"
+```
+
+O MSS é negociado **no aperto de mão**: só os pacotes SYN carregam a
+opção — ajustar os demais é inútil. O matcher `tcp-mss=1453-65535` evita
+*aumentar* MSS já menores. (No Volume 6, a versão nos dois sentidos e a
+discussão de MTU completa.)
+
+**4.** Com `auto`, o conntrack liga se **existir** regra que o use — e a
+própria regra RAW conta como uso do subsistema: o módulo fica ativo,
+processando o notrack por pacote (barato, mas não zero) e mantendo a
+infraestrutura da tabela. `enabled=no` desliga o subsistema inteiro:
+nenhuma consulta, nenhum estado, custo mínimo absoluto — e sem exceções
+possíveis. "Notrack em tudo" = flexível (dá para excetuar a gerência,
+p.ex.); `no` = mais rápido e radical. Core puro: `no`; core que ainda
+faz alguma coisa stateful: notrack seletivo.
+:::
+
+## Resumo
+
+- A esteira completa (@fig-pipeline): **RAW → conntrack → mangle →
+  dstnat → roteamento → filter → mangle → srcnat** — posição é poder.
+- **Mangle** anota (conexão, pacote, rota — @tbl-marcas) para
+  consumidores adiante (filas, roteamento); o padrão
+  **classifica-1×-e-etiqueta-por-herança** com `passthrough` certo é a
+  base de todo QoS eficiente.
+- `change-mss` no mangle: o remédio dos "sites que não abrem" em
+  caminhos de MTU reduzida (PPPoE, túneis).
+- **RAW**: `drop` antes do conntrack é a defesa barata contra floods;
+  `notrack` isenta da contabilidade — e torna o tráfego invisível para
+  NAT e stateful (**quebra NAT**, escapa de `established,related`).
+- A escada anti-flood: filter → RAW → blackhole no upstream, conforme o
+  gargalo sobe.
+
+No próximo capítulo, o gran finale do volume: o **hardening completo** —
+todos os tijolos deste volume montados num checklist consolidado de
+roteador de provedor.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/ip firewall mangle`
+(marcas e `change-mss`), `/ip firewall raw` e o diagrama de packet flow
+que este capítulo resume. A página *DDoS protection* da mesma
+documentação traz padrões RAW + address lists dinâmicas. As referências
+completas, em ABNT, estão no apêndice [Referências](../../referencias.qmd).
