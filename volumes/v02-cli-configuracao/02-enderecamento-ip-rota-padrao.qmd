@@ -1,7 +1,431 @@
-# Endereçamento IP e rota padrão
+# Endereçamento IP e rota padrão {#sec-ip-rota-padrao}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Ler e escrever endereços em notação **CIDR** (`192.168.10.1/24`) e
+  escolher o prefixo certo para cada situação (enlaces `/30`, LANs `/24`);
+- Configurar endereços em `/ip address` e explicar o que o RouterOS deriva
+  sozinho (campo `network`, rotas conectadas);
+- Ler a tabela de rotas (`/ip route print`) com suas flags — `D`, `A`, `C`,
+  `S` — como quem lê um mapa;
+- Criar **rotas estáticas** para redes remotas e a **rota padrão**
+  (`0.0.0.0/0`), entendendo gateway e `distance`;
+- Usar `check-gateway` para que uma rota morta saia de cena sozinha.
 :::
+
+## O endereço e a máscara, sem mistério
+
+Um endereço IPv4 são 32 bits escritos em quatro números (`192.168.10.1`), e
+todo endereço em uso carrega junto uma informação crucial: **até onde vai a
+minha rede?** Essa é a função do **prefixo** — o `/24` em
+`192.168.10.1/24`, a notação **CIDR** que usaremos no livro inteiro.
+
+O prefixo diz quantos bits iniciais identificam a **rede**; o resto
+identifica os **hospedeiros** dentro dela. `/24` significa "os 3 primeiros
+números são a rede": tudo que começa com `192.168.10.` é vizinho direto,
+alcançável sem roteador. Os tamanhos que um provedor usa todo dia:
+
+| Prefixo | Máscara | Endereços úteis | Uso típico |
+|:--------|:----------------|:----------------|:-----------|
+| `/30` | 255.255.255.252 | 2 | enlace ponto a ponto entre roteadores |
+| `/29` | 255.255.255.248 | 6 | bloco pequeno de IPs fixos de cliente |
+| `/24` | 255.255.255.0 | 254 | LAN, rede de gerência |
+| `/22` | 255.255.252.0 | 1022 | pool de assinantes |
+
+: Prefixos do dia a dia do provedor {#tbl-prefixos}
+
+A conta dos "úteis" desconta dois endereços reservados de cada rede: o
+primeiro (**endereço da rede**, ex.: `192.168.10.0`) e o último
+(**broadcast**, ex.: `192.168.10.255`). É por isso que o enlace entre dois
+roteadores casa perfeitamente num `/30`: 4 endereços, 2 reservados, 2
+roteadores. Nada sobra, nada falta.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O endereço IP é "rua + número": o prefixo diz onde termina o nome da rua e
+começa o número da casa. Dois vizinhos da mesma rua conversam pela janela
+(mesmo segmento, sem roteador); para outra rua, é preciso ir ao **cruzamento
+com o guarda de trânsito** — o gateway.
+:::
+
+Uma convenção que você já viu no laboratório: redes **privadas**
+(`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` [@rfc1918]) são livres
+para uso interno e não existem na internet. O que acontece quando uma LAN
+privada precisa sair para a internet é o assunto do @sec-nat-masquerade.
+
+## `/ip address`: o que você dá e o que o RouterOS deduz
+
+Configurar um endereço você já fez desde o @sec-formas-de-acesso; agora
+vamos olhar o que acontece por dentro:
+
+```routeros
+/ip address add address=10.0.12.1/30 interface=ether2 comment="enlace r1-r2"
+/ip address print detail
+```
+
+```routeros
+[vitor@lab-r1] > /ip address print detail
+Flags: X - disabled, I - invalid, D - dynamic
+ 0   ;;; enlace r1-r2
+     address=10.0.12.1/30 network=10.0.12.0 interface=ether2
+     actual-interface=ether2
+```
+
+Você deu `address` e `interface`; o RouterOS **derivou** o `network`
+(`10.0.12.0`, o primeiro endereço do `/30`). E fez mais uma coisa,
+silenciosa e importante — criou uma **rota conectada**. Espie a tabela de
+rotas:
+
+```routeros
+/ip route print
+```
+
+```routeros
+[vitor@lab-r1] > /ip route print
+Flags: D - DYNAMIC; A - ACTIVE; c - CONNECT
+Columns: DST-ADDRESS, GATEWAY, DISTANCE
+    DST-ADDRESS   GATEWAY  DISTANCE
+DAc 10.0.12.0/30  ether2          0
+DAc 192.168.56.0/24 ether1        0
+```
+
+Leia as flags como um crachá de cada rota:
+
+- **`D`** (*dynamic*) — criada automaticamente por um processo (aqui, pelo
+  endereço que você adicionou; adiante, por DHCP, PPPoE, OSPF...). Não se
+  edita uma rota dinâmica; edita-se a origem dela;
+- **`A`** (*active*) — em uso: é a vencedora para aquele destino agora;
+- **`c`** (*connect*) — rota **conectada**: "esta rede está pendurada
+  direto nesta interface". É o RouterOS registrando quem são as ruas das
+  suas janelas.
+
+A regra de ouro que essa tabela ensina: **um roteador só alcança o que está
+na tabela de rotas**. Redes conectadas entram sozinhas; todo o resto — as
+redes que estão *atrás de outros roteadores* — precisa de rota. É o próximo
+assunto.
+
+## Rotas estáticas: ensinando o caminho
+
+Imagine a topologia do nosso laboratório (@fig-rotas-lab): `lab-r1` e
+`lab-r2` conversam pelo enlace `10.0.12.0/30`, e atrás de `lab-r2` existe
+uma LAN `192.168.100.0/24`. O `lab-r1` conhece o enlace (conectado), mas a
+LAN é invisível para ele — não há rota.
+
+::: {#fig-rotas-lab}
+
+```{.tikz}
+%%| filename: fig-rotas-lab
+%%| alt: Topologia com dois roteadores. lab-r1, à esquerda, conecta-se a lab-r2 pelo enlace 10.0.12.0 barra 30, sendo ponto 1 em lab-r1 e ponto 2 em lab-r2. Atrás de lab-r2, à direita, existe a LAN 192.168.100.0 barra 24, na qual lab-r2 tem o endereço ponto 1. Abaixo, duas anotações: a rota estática de lab-r1 para a LAN, com destino 192.168.100.0 barra 24 e gateway 10.0.12.2, e a rota padrão de lab-r2, com destino 0.0.0.0 barra 0 e gateway 10.0.12.1.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  router/.style={draw=manualblue, very thick, fill=manualblue!8,
+                 rounded corners=3pt, minimum height=10mm, text width=22mm,
+                 align=center, font=\sffamily\small\bfseries},
+  lan/.style={draw=manualgreen, very thick, fill=manualgreen!8,
+              rounded corners=3pt, minimum height=10mm, text width=26mm,
+              align=center},
+  rota/.style={draw=manualgray, thick, fill=manualgray!10, rounded corners=3pt,
+               minimum height=8mm, text width=46mm, align=left,
+               font=\sffamily\scriptsize},
+  enlace/.style={very thick, manualblue},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  \node[router] (r1) {lab-r1};
+  \node[router, right=34mm of r1] (r2) {lab-r2};
+  \node[lan, right=18mm of r2] (lan) {LAN\\192.168.100.0/24};
+
+  \draw[enlace] (r1) -- (r2)
+    node[midway, above, rotulo] {10.0.12.0/30}
+    node[pos=0.15, below, rotulo] {.1}
+    node[pos=0.85, below, rotulo] {.2};
+  \draw[enlace, manualgreen] (r2) -- (lan)
+    node[pos=0.7, above, rotulo] {.1};
+
+  \node[rota, below=8mm of r1.south west, anchor=north west] (rot1)
+    {\textbf{rota estática em lab-r1:}\\
+     dst 192.168.100.0/24 $\rightarrow$ gw 10.0.12.2};
+  \node[rota, right=12mm of rot1] (rot2)
+    {\textbf{rota padrão em lab-r2:}\\
+     dst 0.0.0.0/0 $\rightarrow$ gw 10.0.12.1};
+\end{tikzpicture}
+```
+
+A topologia do laboratório deste capítulo, com as duas rotas que a fazem
+funcionar: a estática (r1 aprende a LAN) e a padrão (r2 manda "todo o
+resto" para r1).
+
+:::
+
+A solução é uma **rota estática** — você, administrador, ensinando o
+caminho:
+
+```routeros
+/ip route add dst-address=192.168.100.0/24 gateway=10.0.12.2 comment="LAN atras do r2"
+```
+
+Traduzindo: "para chegar em `192.168.100.0/24`, entregue o pacote a
+`10.0.12.2`". O **gateway** precisa ser alcançável por uma rede conectada
+— é o guarda do cruzamento da sua rua, não de uma rua distante.
+
+No `print`, ela aparece com as flags `AS` (*active, static*). E a coluna
+que ainda não explicamos entra em cena:
+
+### `distance`: o desempate entre rotas
+
+Duas rotas para o **mesmo destino** podem coexistir — enlace principal e
+backup, por exemplo. Quem decide a vencedora é a **distância
+administrativa** (`distance`): menor vence, e só a vencedora fica ativa
+(`A`). Rotas conectadas têm distância `0` (imbatíveis — a rede está ali);
+estáticas nascem com `1`; protocolos dinâmicos usam valores maiores (OSPF
+110, BGP 20/200 — Volume 8).
+
+O uso clássico no provedor:
+
+```routeros
+/ip route add dst-address=0.0.0.0/0 gateway=10.0.12.1 distance=1 comment="saida principal"
+/ip route add dst-address=0.0.0.0/0 gateway=10.0.99.1 distance=5 comment="saida backup"
+```
+
+A principal vence; se ela sumir da tabela, a backup assume. "Sumir" é o
+detalhe crucial — e nos leva às duas últimas peças.
+
+### A rota padrão e o `check-gateway`
+
+`dst-address=0.0.0.0/0` casa com **qualquer destino** — é a **rota
+padrão** (*default route*): "tudo que eu não souber entregar, vai para este
+gateway". É ela que leva sua LAN à internet, e é a rota mais importante de
+qualquer roteador de borda. Na escolha do caminho vale sempre o **prefixo
+mais específico primeiro**: um pacote para `192.168.100.7` prefere a rota
+`/24` da LAN à rota `/0` — a padrão só apanha as sobras. A `distance` só
+desempata rotas para o **mesmo** prefixo.
+
+Falta o seguro contra gateway morto. Uma rota estática fica ativa enquanto
+o gateway for *alcançável na tabela* — mas "alcançável" não significa
+*vivo*: se o roteador do outro lado travar com a interface acesa, a rota
+continua ativa, despejando pacotes num buraco. O remédio básico:
+
+```routeros
+/ip route set [find comment="saida principal"] check-gateway=ping
+```
+
+Com `check-gateway=ping`, o RouterOS pinga o gateway periodicamente (a
+cada 10 s); duas falhas seguidas **desativam a rota** — e a backup de
+distância 5 assume sozinha. (O failover de gente grande, com detecção de
+falha *além* do gateway, é assunto do Volume 14.)
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Um roteador é a sua **tabela de rotas** — ele não alcança nada fora dela.
+Redes conectadas entram sozinhas (`DAc`); o resto é decisão sua: rotas
+estáticas para o que está atrás de outros roteadores, uma rota padrão
+(`0.0.0.0/0`) para "todo o resto", `distance` para hierarquizar caminhos e
+`check-gateway` para tirar de cena um caminho morto.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Laboratório padrão (@sec-lab-chr): **`lab-r1` e `lab-r2`**, snapshot
+`base-limpa` (em `lab-r1`, o snapshot `seguranca-inicial` também serve).
+Acessos: `ssh vitor@192.168.56.11` (r1) e `ssh admin@192.168.56.12` (r2).
+Topologia da @fig-rotas-lab: enlace pela rede interna `lab-a` (`ether2` de
+ambos) e a "LAN" na `ether3` de `lab-r2` (rede interna `lab-b`, sem mais
+ninguém — ela existe só para ser anunciada).
+
+### Comandos passo a passo
+
+**Passo 1 — endereçar o enlace.** Em `lab-r1`:
+
+```routeros
+/ip address add address=10.0.12.1/30 interface=ether2 comment="enlace r1-r2"
+```
+
+Em `lab-r2`:
+
+```routeros
+/ip address add address=10.0.12.2/30 interface=ether2 comment="enlace r1-r2"
+/ping 10.0.12.1 count=3
+```
+
+O ping deve fechar sem perdas — enlace vivo.
+
+**Passo 2 — criar a "LAN" atrás do r2.** Em `lab-r2`:
+
+```routeros
+/ip address add address=192.168.100.1/24 interface=ether3 comment="LAN simulada"
+```
+
+**Passo 3 — sentir a falta da rota.** De `lab-r1`, tente alcançar a LAN:
+
+```routeros
+/ping 192.168.100.1 count=3
+```
+
+```routeros
+[vitor@lab-r1] > /ping 192.168.100.1 count=3
+  SEQ HOST         SIZE TTL TIME  STATUS
+    0 192.168.100.1                no route to host
+    1 192.168.100.1                no route to host
+    2 192.168.100.1                no route to host
+  sent=3 received=0 packet-loss=100%
+```
+
+`no route to host`: o r1 não tem rota — exatamente o diagnóstico que a
+tabela confirma (`/ip route print` não tem `192.168.100.0/24`).
+
+**Passo 4 — a rota estática.** Em `lab-r1`:
+
+```routeros
+/ip route add dst-address=192.168.100.0/24 gateway=10.0.12.2 comment="LAN atras do r2"
+/ip route print
+```
+
+```routeros
+[vitor@lab-r1] > /ip route print
+Flags: D - DYNAMIC; A - ACTIVE; c - CONNECT, s - STATIC
+Columns: DST-ADDRESS, GATEWAY, DISTANCE
+    DST-ADDRESS       GATEWAY    DISTANCE
+ As 192.168.100.0/24  10.0.12.2         1
+DAc 10.0.12.0/30      ether2            0
+DAc 192.168.56.0/24   ether1            0
+```
+
+E o mesmo ping agora:
+
+```routeros
+/ping 192.168.100.1 count=3
+```
+
+Sem perdas. Você acabou de rotear entre redes pela primeira vez no livro.
+
+**Passo 5 — a rota padrão do r2, com seguro.** O r2 conhece o enlace e a
+própria LAN; ensine-o a mandar "todo o resto" para o r1:
+
+```routeros
+/ip route add dst-address=0.0.0.0/0 gateway=10.0.12.1 check-gateway=ping comment="default via r1"
+/ip route print where dst-address=0.0.0.0/0
+```
+
+Teste com um destino que o r2 **não** conhece — o IP de gerência do r1:
+
+```routeros
+/ping 192.168.56.11 count=3
+```
+
+Funciona: a rota padrão entregou ao r1, que conhece a rede de gerência
+(conectada).
+
+**Passo 6 — matar o gateway e observar o seguro.** Em **`lab-r1`**,
+derrube a ponta do enlace (é para isso que a gerência é separada — seu SSH
+não passa por ali):
+
+```routeros
+/interface disable ether2
+```
+
+Em `lab-r2`, aguarde ~20 s e imprima:
+
+```routeros
+/ip route print where dst-address=0.0.0.0/0
+```
+
+A rota padrão perdeu a flag `A` — o `check-gateway` detectou o gateway
+morto e a desativou. Reative em `lab-r1` (`/interface enable ether2`),
+aguarde e confirme que o `A` voltou.
+
+### Verificação
+
+1. `/ip address print` em cada roteador confere com a @fig-rotas-lab
+   (inclusive o `network` derivado);
+2. O ping do Passo 3 falhou com `no route to host` e o do Passo 4 fechou
+   com `packet-loss=0%` — antes e depois da rota;
+3. `/ip route print` em `lab-r1` mostra a estática `As` e as conectadas
+   `DAc`;
+4. No Passo 6, a rota padrão de `lab-r2` ficou inativa com a `ether2` do
+   r1 desabilitada e reativou sozinha depois.
+
+### Desafios
+
+1. O enlace r1–r2 usa `/30`. Se você o tivesse endereçado como `/24`
+   (`10.0.12.1/24` e `.2/24`), tudo funcionaria igual — então por que o
+   `/30` é a boa prática em enlaces de provedor? (Duas razões.)
+2. Em `lab-r2`, adicione uma **segunda** rota padrão:
+   `gateway=192.168.100.254 distance=5`. Ela aparece ativa? Por quê? E se o
+   `check-gateway` da principal desativá-la (repita o Passo 6), quem
+   assume — e isso seria bom ou ruim nesta topologia?
+3. De `lab-r1`, `/ping 192.168.100.1` funciona. Mas se houvesse um
+   computador de verdade na LAN do r2 (ex.: `192.168.100.50`), o ping de
+   `lab-r1` até ele funcionaria com a configuração atual? Analise o caminho
+   de **volta** do pacote.
+4. Qual é a diferença entre remover uma rota (`remove`) e desabilitá-la
+   (`disable`)? Em que situação de operação o `disable` é a escolha certa?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) **Economia**: um `/24` queimaria 254 endereços úteis onde só
+existem 2 — em blocos públicos, isso é dinheiro; mesmo em privados, é
+organização. (b) **Contenção**: no `/30` não existe espaço para um terceiro
+"morador" — um equipamento intruso ou um erro de configuração não ganha
+endereço válido no enlace, e a documentação da rede fica inequívoca (cada
+`/30` é um enlace, com dono conhecido).
+
+**2.** Ela entra na tabela, mas **sem** a flag `A`: para o mesmo prefixo
+(`0.0.0.0/0`), vence a menor distância (1 < 5). Com a principal desativada
+pelo check-gateway, a de distância 5 assume (`A`). Aqui isso seria
+**ruim**: `192.168.100.254` não existe (a LAN é simulada, vazia) — o
+tráfego cairia num buraco. Moral: rota de backup só ajuda se apontar para
+um caminho que existe; backup mentiroso é pior que nenhum.
+
+**3.** **Não.** O pacote de ida chega (r1 → r2 → LAN), mas o computador
+responderia para `10.0.12.1` (o endereço de origem do ping) — e a volta
+depende de o **computador** saber voltar: o gateway dele precisa ser
+`192.168.100.1` (o r2), e o r2 conhece `10.0.12.0/30` (conectada), então
+funcionaria **se** o computador tiver o gateway certo. A lição: rota se
+analisa **nos dois sentidos** — metade dos problemas de "não pinga" mora no
+caminho de volta.
+
+**4.** `remove` apaga (e some da configuração, do export, de tudo);
+`disable` mantém o item documentado, com comentário e parâmetros, apenas
+inativo (`X`). Em operação, `disable` é o certo para mudanças reversíveis
+e janelas de manutenção — "tirar o backup de cena por uma hora" — e para
+guardar a configuração de um enlace que volta semana que vem. `remove` é
+para o que não volta mais.
+:::
+
+## Resumo
+
+- **CIDR**: o prefixo diz onde a rede termina; `/30` para enlaces, `/24`
+  para LANs (@tbl-prefixos); cada rede reserva o primeiro (rede) e o último
+  (broadcast) endereços.
+- `/ip address add address=X/NN interface=Y` — o RouterOS deriva o
+  `network` e cria a **rota conectada** (`DAc`) sozinho.
+- **A tabela de rotas é o roteador**: conectadas entram sós; o resto exige
+  rota estática (`As`) com `gateway` alcançável, ou virá de protocolos
+  dinâmicos (Volume 8).
+- Rota mais específica vence; entre rotas para o **mesmo** prefixo, vence a
+  menor **`distance`** (conectada 0, estática 1) — e só a vencedora fica
+  `A`tiva.
+- **`0.0.0.0/0`** é a rota padrão ("todo o resto"); com
+  **`check-gateway=ping`**, um gateway morto desativa a rota e o backup de
+  distância maior assume.
+- Problema de alcance se analisa **nos dois sentidos** — ida e volta.
+
+No próximo capítulo, tiramos os endereços do modo manual: DHCP client para
+a WAN receber endereço da operadora, e DHCP server para a LAN distribuir
+endereços sozinha.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/ip address` e `/ip route`
+(incluindo todas as flags e o comportamento do `check-gateway`). O RFC 1918
+[@rfc1918] define as faixas privadas usadas nos laboratórios. Para a teoria
+de endereçamento e roteamento IP, @tanenbaum-redes segue sendo a referência
+completa. As referências, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
