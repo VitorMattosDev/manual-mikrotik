@@ -1,7 +1,345 @@
-# dstnat e port forwarding
+# dstnat e port forwarding {#sec-dstnat}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o **dstnat** como o espelho do srcnat: troca de **destino** na
+  entrada, para publicar serviços internos;
+- Escrever a regra clássica de **port forwarding** e entender o momento em
+  que ela age (antes do roteamento — e antes do filter);
+- Fazer firewall e dstnat conversarem: por que o `forward` enxerga o
+  pacote **já traduzido** e como aceitá-lo com precisão
+  (`connection-nat-state`);
+- Diagnosticar e resolver o **hairpin NAT** — o clássico "funciona de
+  fora, mas não funciona de dentro";
+- Usar `redirect` (dstnat para o próprio roteador) e publicar serviços com
+  o mínimo de exposição.
 :::
+
+## O espelho do masquerade
+
+O @sec-nat-masquerade encerrou com uma porta fechada: ninguém de fora
+inicia conexão com quem está atrás do NAT — o fim a fim está quebrado, por
+design. Mas a padaria quer ver as câmeras do celular; o cliente
+corporativo quer publicar o sistema da empresa; você quer alcançar um
+equipamento na LAN de um cliente. A resposta é o **dstnat**: se o srcnat
+troca o *remetente* na saída, o dstnat troca o **destinatário na
+entrada**.
+
+A regra clássica — o **port forwarding** — diz: "o que chegar ao meu IP
+público na porta X, entregue ao IP interno Y, porta Z":
+
+```routeros
+/ip firewall nat add chain=dstnat in-interface-list=WAN protocol=tcp dst-port=8080 action=dst-nat to-addresses=192.168.10.10 to-ports=80 comment="publica DVR da padaria"
+```
+
+Lendo por partes, como sempre: `chain=dstnat` (tradução de destino, na
+entrada), matchers (`in-interface-list=WAN protocol=tcp dst-port=8080` —
+só o que chega da fronteira àquela porta), action `dst-nat` com o destino
+real (`to-addresses`/`to-ports` — que podem diferir da porta pública,
+como aqui: 8080 fora, 80 dentro).
+
+O detalhe de arquitetura que explica tudo neste capítulo: **o dstnat age
+antes da decisão de roteamento** (e o srcnat, depois). A ordem completa da
+travessia:
+
+```
+chegada → dstnat → decisão de roteamento → filter forward → srcnat → saída
+```
+
+Duas consequências imediatas:
+
+1. É *por isso* que o dstnat funciona: o destino é trocado **antes** de o
+   roteador decidir para onde encaminhar — a decisão já vê o endereço
+   interno;
+2. O **filter forward enxerga o pacote traduzido**: destino
+   `192.168.10.10:80`, não `IP-público:8080`. Suas regras de filtro devem
+   casar com o mundo *pós*-dstnat.
+
+## Firewall e dstnat: aceitando com precisão
+
+E o nosso forward aceita esse pacote? Revise o esqueleto do
+@sec-forward-lists: conversas novas vindas da WAN não têm accept — na
+política permissiva de fábrica passariam, mas o hardening completo do
+@sec-hardening fechará o forward com drop all. O jeito **errado** de
+liberar é abrir `dst-address=192.168.10.10 dst-port=80` — funciona, mas
+duplica a informação (regra de NAT + regra de filtro dizendo o mesmo, que
+alguém um dia atualiza pela metade). O jeito certo usa o conntrack, que
+marca conexões traduzidas:
+
+```routeros
+/ip firewall filter add chain=forward connection-state=new connection-nat-state=dstnat in-interface-list=WAN action=accept comment="aceita o que o dstnat publicou"
+```
+
+`connection-nat-state=dstnat` casa com **qualquer** conexão que passou
+pelo dstnat: uma regra de filtro serve todas as publicações, presentes e
+futuras — a lista de "o que está publicado" mora num lugar só (o NAT). É
+o mesmo princípio das address lists: política estável, dados num ponto
+único.
+
+::: {.callout-warning}
+Todo port forwarding é um **portão na muralha**: o serviço interno passa
+a receber a internet inteira — inclusive os robôs que varrem portas 24/7.
+Antes de publicar, pergunte: (1) o serviço precisa mesmo ser público, ou
+uma VPN de gerência resolve (Volume 10)? (2) o destino aguenta exposição
+(DVRs e câmeras antigos são o recheio favorito das botnets)? (3) dá para
+restringir a origem (`src-address-list` de IPs confiáveis)? Porta
+"escondida" (8080 em vez de 80) **não é segurança** — scanners acham em
+minutos; é só higiene contra ruído.
+:::
+
+## Hairpin NAT: o defeito clássico
+
+Publique o DVR e teste **de dentro da LAN** pelo IP público: não abre. De
+fora (4G), abre. Bem-vindo ao defeito mais famoso do NAT — e à pergunta de
+entrevista favorita do mundo ISP. A @fig-hairpin mostra o porquê:
+
+::: {#fig-hairpin}
+
+```{.tikz}
+%%| filename: fig-hairpin
+%%| alt: Diagrama do problema do hairpin NAT. Um cliente da LAN, 192.168.10.50, envia pacote para o IP público do roteador porta 8080. O roteador aplica o dstnat e encaminha ao servidor 192.168.10.10, mas mantém a origem original. O servidor, vendo origem na própria LAN, responde diretamente ao cliente pela rede local, sem passar pelo roteador. O cliente recebe resposta do endereço 192.168.10.10, mas esperava resposta do IP público, e descarta o pacote. Uma anotação indica a solução: uma regra adicional de srcnat que mascara também esse tráfego, forçando a resposta a voltar pelo roteador.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  no/.style={draw=manualblue, very thick, fill=manualblue!8,
+             rounded corners=3pt, minimum height=10mm, text width=26mm,
+             align=center, font=\sffamily\small\bfseries},
+  seta/.style={very thick, -stealth, manualblue},
+  errada/.style={very thick, -stealth, manualred, dashed},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray},
+  err/.style={font=\sffamily\scriptsize, text=manualred}
+]
+  \node[no] (cli) {Cliente LAN\\ \small 192.168.10.50};
+  \node[no, right=44mm of cli] (rtr) {Roteador\\ \small público 203.0.113.7};
+  \node[no, below=18mm of $(cli)!0.5!(rtr)$] (srv) {Servidor\\ \small 192.168.10.10};
+
+  \draw[seta] (cli) -- (rtr)
+    node[midway, above, rotulo] {1. para 203.0.113.7:8080};
+  \draw[seta] (rtr.south) -- (srv.east)
+    node[midway, right, rotulo] {2. dstnat: dst vira .10\\ \textcolor{manualred}{origem segue .50!}};
+  \draw[errada] (srv.west) -- (cli.south)
+    node[midway, left, err] {3. resposta direta\\ (origem .10 — cliente descarta)};
+\end{tikzpicture}
+```
+
+O hairpin: a ida faz a volta pelo roteador, mas a resposta corta caminho
+pela LAN — e chega com o remetente "errado".
+
+:::
+
+Siga os passos: o cliente da LAN mira o IP público (1); o dstnat troca o
+destino, mas **a origem continua sendo o vizinho de LAN** (2); o servidor
+responde **direto** pela rede local (3) — e o cliente descarta: ele
+esperava resposta de `203.0.113.7:8080`, recebeu de `192.168.10.10:80`.
+Conversa assimétrica, conexão morta.
+
+A solução: forçar a volta a passar pelo roteador, mascarando **também** a
+origem quando cliente e servidor são da mesma LAN:
+
+```routeros
+/ip firewall nat add chain=srcnat src-address=192.168.10.0/24 dst-address=192.168.10.10 protocol=tcp dst-port=80 out-interface-list=LAN action=masquerade comment="hairpin: forca resposta via roteador"
+```
+
+Agora o servidor vê a conexão vinda **do roteador** (`192.168.10.1`) e
+responde a ele — que desfaz as duas traduções e entrega ao cliente com o
+remetente esperado. (O preço: o servidor perde o IP real do cliente
+interno nos logs — todos parecem vir do gateway. A alternativa elegante é
+*split DNS*: o nome do serviço resolvendo para o IP **interno** quando
+consultado de dentro — uma entrada em `/ip dns static`, @sec-dns.)
+
+## `redirect`: dstnat para o próprio roteador
+
+Uma variação com usos de provedor: `action=redirect` traduz o destino
+para **o próprio roteador**, na porta indicada:
+
+```routeros
+/ip firewall nat add chain=dstnat in-interface-list=LAN protocol=udp dst-port=53 action=redirect to-ports=53 comment="forca DNS local"
+```
+
+Essa regra intercepta **qualquer** consulta DNS da LAN — mesmo a do
+dispositivo teimoso configurado com `8.8.8.8` — e a entrega ao resolvedor
+local (@sec-dns). Todos usam o cache do provedor, queira o dispositivo ou
+não. (Com a chegada do DoH essa técnica perdeu alcance — TLS na 443 não
+se intercepta — mas segue útil para a massa de consultas UDP/53.) O mesmo
+`redirect` é a base do *transparent proxy* e de portais de captura de
+hotspot.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Grave a linha do tempo: **dstnat → roteamento → filter → srcnat**. Dela
+saem as três lições do capítulo: port forwarding funciona porque o
+destino muda *antes* do roteamento; o filter deve casar com o pacote *já
+traduzido* (e `connection-nat-state=dstnat` aceita tudo que o NAT
+publicou, sem duplicar dados); e o hairpin existe porque a *volta* não
+repassa pelo roteador — até você mascarar a origem interna também.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Os três CHRs (@sec-lab-chr), com um ajuste **só para este capítulo**: no
+VirtualBox, mova o Adaptador 2 de `lab-r3` da rede interna `lab-b` para a
+**`lab-a`** — o r3 vira um segundo dispositivo na LAN da padaria (cliente
+do teste de hairpin). Papéis: `lab-r1` = borda (como está), `lab-r2` =
+"DVR" (servidor a publicar), `lab-r3` = "notebook do dono".
+
+Em `lab-r3` (console): `/ip dhcp-client add interface=ether2` — ele deve
+receber um IP `192.168.10.1xx` do r1.
+
+### Comandos passo a passo
+
+**Passo 1 — o "DVR".** O r2 será o servidor: seu WebFig (porta 80) fará
+papel da interface do DVR. Em `lab-r2`, garanta o serviço ativo e anote o
+IP (nos passos abaixo usamos `.105` — substitua pelo real):
+
+```routeros
+/ip service enable www
+/ip address print where interface=ether2
+```
+
+**Passo 2 — publicar.** Em `lab-r1`, descubra o IP da WAN e crie o port
+forwarding (8080 fora → 80 dentro):
+
+```routeros
+/ip address print where interface=ether3
+/ip firewall nat add chain=dstnat in-interface-list=WAN protocol=tcp dst-port=8080 action=dst-nat to-addresses=192.168.10.105 to-ports=80 comment="publica DVR (WebFig do r2)"
+```
+
+E a regra de filtro que aceita o publicado (entra antes de futuros drops
+do forward):
+
+```routeros
+/ip firewall filter add chain=forward connection-state=new connection-nat-state=dstnat in-interface-list=WAN action=accept comment="fwd: aceita publicados" place-before=[find chain=forward comment~"antispoofing"]
+```
+
+**Passo 3 — testar "de fora" (opcional, mas ótimo).** O NAT do
+VirtualBox esconde o r1 do mundo, mas o próprio VirtualBox faz port
+forward: com a VM `lab-r1` selecionada, **Configurações → Rede →
+Adaptador 3 → Avançado → Redirecionamento de portas**: adicione TCP,
+porta do hospedeiro `18080`, porta do convidado `8080`. No navegador do
+**seu computador**: `http://localhost:18080` → deve abrir o WebFig do
+**r2**. Você atravessou dois NATs até o "DVR" — de fora, funciona.
+
+**Passo 4 — o defeito de dentro.** Em `lab-r3` (o notebook do dono),
+acesse pelo IP **público** do r1 (o da ether3, ex.: `10.0.2.15`):
+
+```routeros
+/tool fetch url=http://10.0.2.15:8080 keep-result=no
+```
+
+Trava e expira — o hairpin da @fig-hairpin, ao vivo. (Em `lab-r1`, a
+tabela de conexões mostra a conexão `d` presa em `SYN`:
+`/ip firewall connection print where dst-port=80`.)
+
+**Passo 5 — a cura.** Em `lab-r1`, o masquerade do hairpin:
+
+```routeros
+/ip firewall nat add chain=srcnat src-address=192.168.10.0/24 dst-address=192.168.10.105 protocol=tcp dst-port=80 action=masquerade comment="hairpin DVR"
+```
+
+Repita o fetch no r3: `status: finished`. De dentro e de fora, o mesmo
+endereço funciona.
+
+**Passo 6 — desfazer o especial.** Ao terminar: remova o port forward do
+VirtualBox (Passo 3), devolva o Adaptador 2 do r3 para `lab-b` e desative
+o `www` no r2 (`/ip service disable www`) — o laboratório volta ao padrão.
+
+### Verificação
+
+1. `http://localhost:18080` no hospedeiro abriu o WebFig do r2 (se fez o
+   Passo 3) — dstnat + filtro por `connection-nat-state` funcionando;
+2. O fetch do r3 ao IP público **falhou** antes do Passo 5 e **funcionou**
+   depois — hairpin demonstrado e curado;
+3. `/ip firewall nat print` no r1: masquerade original, dst-nat da
+   publicação e o masquerade do hairpin, todos comentados;
+4. A tabela de conexões mostrou a flag `d` (dstnat) nas conexões
+   publicadas.
+
+### Desafios
+
+1. Sem executar: um pacote chega da WAN para `IP-público:8080`. Escreva a
+   sequência completa de processamento no r1 (chains e traduções) até
+   sair para o r2 — e a da resposta.
+2. O dono quer as câmeras acessíveis **só do celular dele** (IP móvel
+   muda, mas a operadora publica as faixas). Melhore a publicação do
+   laboratório com uma address list `acesso-dvr` — quais regras mudam?
+3. Explique por que o split DNS (entrada em `/ip dns static` apontando o
+   nome do serviço para o IP interno) elimina o hairpin — e cite a
+   desvantagem operacional que ele traz num parque com muitos clientes
+   publicados.
+4. Um técnico publicou o WinBox do próprio r1 na WAN ("pra facilitar"):
+   `chain=dstnat dst-port=8291 action=redirect to-ports=8291`. Aponte os
+   dois erros — um de segurança, um conceitual.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Ida: chega pela ether3 → **dstnat** casa (dst vira
+`192.168.10.105:80`) → decisão de roteamento (destino é a LAN) → **filter
+forward** (o pacote já traduzido casa com `connection-nat-state=dstnat` →
+accept; conexão anotada com flag `d`) → srcnat (masquerade não casa —
+`out-interface` é LAN, e a regra de hairpin só casa se a origem for da
+LAN) → entrega ao r2. Volta: r2 responde ao cliente externo → forward
+(established) → na saída pela WAN o conntrack **desfaz** o dstnat
+(origem volta a ser `IP-público:8080`). Simetria por estado, não por
+regra.
+
+**2.** Cria-se a lista e aperta-se **o filtro** (o NAT pode ficar):
+
+```routeros
+/ip firewall address-list add list=acesso-dvr address=177.0.0.0/8 comment="faixa da operadora do dono"
+/ip firewall filter set [find comment="fwd: aceita publicados"] src-address-list=acesso-dvr
+```
+
+(Se houver mais publicações com políticas distintas, regras de filtro
+separadas por serviço — a genérica deixa de servir.)
+
+**3.** De dentro, o nome resolve para `192.168.10.105`: o cliente fala
+**direto** com o servidor, sem tocar no IP público — não há tradução, não
+há assimetria, e os logs do servidor veem o IP real do cliente interno
+(o que o hairpin-masquerade esconde). Desvantagem: é **um cadastro a
+mais** por serviço/cliente, no DNS de cada roteador envolvido — esquecer
+de atualizar ao mudar o IP interno gera o defeito inverso ("de fora
+funciona, de dentro abre a coisa errada"). Automação (Volume 12) ou
+disciplina.
+
+**4.** Segurança: expor a **gerência** do roteador à internet é o pecado
+capital — força bruta e exploits contra WinBox são varredura de rotina;
+gerência remota se faz por VPN (Volume 10). Conceitual: `redirect` já
+entrega ao próprio roteador — mas o WinBox **já escuta** na 8291; a regra
+é inútil (não fosse o `/ip service` com `allowed-address` e o input com
+drop all, que — felizmente — continuam barrando o acesso; defesa em
+camadas salvando o dia de novo).
+:::
+
+## Resumo
+
+- **dstnat** troca o destino **na entrada, antes do roteamento** — a linha
+  do tempo `dstnat → roteamento → filter → srcnat` explica o capítulo
+  inteiro.
+- Port forwarding: `chain=dstnat in-interface-list=WAN dst-port=X
+  action=dst-nat to-addresses=interno to-ports=Z` — e o filtro aceita por
+  **`connection-nat-state=dstnat`**, sem duplicar dados.
+- Publicar é abrir portão: questione a necessidade (VPN?), restrinja
+  origem quando possível, e lembre que porta alta não é segurança.
+- **Hairpin**: de dentro, a resposta corta caminho e chega com remetente
+  errado (@fig-hairpin) — cura-se mascarando a origem interna (ou, mais
+  elegante, com split DNS).
+- **`redirect`** entrega ao próprio roteador: interceptação de DNS,
+  proxy transparente, portais de hotspot.
+
+No próximo capítulo, as duas tabelas que faltam no arsenal: **mangle**
+(marcar pacotes e conexões — a fundação do QoS do Volume 7) e **RAW**
+(agir antes do conntrack — a defesa barata contra floods).
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/ip firewall nat`
+(actions `dst-nat`, `redirect`, `netmap`) e o diagrama de packet flow que
+fundamenta a linha do tempo do capítulo; a página *Hairpin NAT* traz o
+caso clássico com variações. As referências completas, em ABNT, estão no
+apêndice [Referências](../../referencias.qmd).
