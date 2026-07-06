@@ -1,7 +1,364 @@
-# Bridge VLAN filtering
+# Bridge VLAN filtering {#sec-vlan-filtering}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Ativar o **VLAN filtering** numa bridge e explicar o que muda: o switch
+  passa a **policiar** etiquetas em vez de ignorá-las;
+- Configurar portas **trunk** e **access** de verdade, com a tabela
+  `/interface bridge vlan`, o **PVID** e os `frame-types`;
+- Explicar o caminho de um quadro pelo switch filtrado: o que acontece na
+  entrada (ingress) e na saída (egress) de cada porta;
+- Manter o acesso de **gerência** ao próprio switch numa VLAN — incluindo
+  o detalhe que derruba iniciantes: a bridge como membro tagged;
+- Aplicar a ordem de configuração que **não** tranca você para fora.
 :::
+
+## Do consentimento à lei
+
+O laboratório do @sec-vlans-8021q terminou com uma demonstração
+incômoda: o r3 entrou na VLAN 10 sozinho, bastando configurar a própria
+placa. Num cabo compartilhado, a tag 802.1Q é um **acordo entre pontas**
+— e acordos não protegem contra quem não os assina.
+
+O **bridge VLAN filtering** transforma o acordo em lei: com ele ativo, a
+bridge (o switch) passa a **decidir, porta a porta**, quais VIDs entram,
+quais saem, e com ou sem etiqueta. O cliente pode etiquetar o que quiser;
+se a porta dele só admite VLAN 10 untagged, é isso que ele terá.
+
+Liga-se com um parâmetro:
+
+```routeros
+/interface bridge set bridge-sw vlan-filtering=yes
+```
+
+— mas **não rode isso ainda**. A ordem importa (é a pegadinha número 1
+do capítulo, tratada adiante). Antes, entenda as três peças que passam a
+mandar.
+
+### Peça 1: a tabela de VLANs da bridge
+
+`/interface bridge vlan` é o mapa: para cada VLAN, quem participa e como:
+
+```routeros
+/interface bridge vlan add bridge=bridge-sw vlan-ids=10 tagged=bridge-sw,ether2 untagged=ether3
+```
+
+Traduzindo: "a VLAN 10 existe nesta bridge; sai **tagged** pelo trunk
+`ether2` (e para a própria bridge — já explico); sai **untagged** pela
+porta de acesso `ether3`". Na **saída** (egress) de cada porta, essa
+tabela é lei: quadro da VLAN 10 saindo pela ether3 perde a etiqueta;
+pela ether2, mantém; por uma porta que não está na linha, **não sai**.
+
+### Peça 2: o PVID — a etiqueta de entrada
+
+E o quadro **untagged** que *chega* a uma porta — de que VLAN ele é? A
+resposta é o **PVID** (*Port VLAN ID*) da porta:
+
+```routeros
+/interface bridge port set [find interface=ether3] pvid=10
+```
+
+Todo quadro sem etiqueta que entrar pela `ether3` é internamente tratado
+como VLAN 10. PVID é o "carimbo de entrada" — e o par
+tabela-de-saída + PVID-de-entrada define os dois papéis clássicos:
+
+| Papel | Na tabela vlan | PVID | frame-types |
+|:------|:---------------|:-----|:------------|
+| **access** (VLAN 10) | `untagged=porta` na VLAN 10 | 10 | `admit-only-untagged-and-priority-tagged` |
+| **trunk** | `tagged=porta` em cada VLAN transportada | (irrelevante se só aceita tagged) | `admit-only-vlan-tagged` |
+
+: As receitas de porta access e trunk {#tbl-port-roles}
+
+### Peça 3: `frame-types` — o que a porta admite
+
+O terceiro controle é o filtro de **entrada** (ingress): que tipos de
+quadro a porta aceita?
+
+- `admit-all` (padrão): tagged e untagged;
+- `admit-only-untagged-and-priority-tagged`: só untagged — a porta
+  access ortodoxa: se o cliente mandar quadro etiquetado (como o r3
+  "esperto" do capítulo passado), **descarte**;
+- `admit-only-vlan-tagged`: só tagged — o trunk ortodoxo: quadro sem
+  etiqueta num tronco é acidente ou ataque à VLAN nativa; descarte.
+
+Com as três peças, o caminho do quadro fecha: **ingress** (frame-types
+admite? untagged ganha o PVID) → comutação **dentro da VLAN** (host
+table por VLAN) → **egress** (a tabela diz se sai e se sai
+tagged/untagged).
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O switch filtrado é uma **portaria de eventos com pulseiras**: na
+entrada, o segurança da porta confere o traje (frame-types) e coloca a
+pulseira da casa em quem chega sem (PVID); lá dentro, cada salão é uma
+VLAN; na saída, a porta VIP mantém a pulseira (tagged, trunk) e a porta
+do salão único a corta (untagged, access). Pulseira trazida de casa não
+vale: quem manda é a portaria.
+:::
+
+## A gerência e a pegadinha do `tagged=bridge`
+
+Releia a linha da tabela: `tagged=bridge-sw,ether2`. Por que a **própria
+bridge** aparece como membro tagged?
+
+Porque o switch também é um equipamento com IP de gerência — e se a
+gerência mora numa VLAN (como deve, @sec-segmentacao-pop), os quadros
+dela precisam chegar **à CPU do próprio switch**. Na arquitetura do
+RouterOS, a CPU é alcançada "saindo" pela interface bridge: incluir a
+bridge como `tagged` na VLAN é abrir o cano entre aquela VLAN e o
+cérebro do equipamento — e é sobre esse cano que a
+`/interface vlan` de gerência (com o IP) se pendura:
+
+```routeros
+/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-sw
+/ip address add address=10.99.0.2/24 interface=vlan99-ger
+```
+
+Esquecer o `bridge` na lista tagged da VLAN 99 = gerência morta no
+momento em que o filtering ligar. O que nos leva à pegadinha-mor:
+
+::: {.callout-warning}
+**`vlan-filtering=yes` é a última linha, nunca a primeira.** No momento
+em que o filtering liga, a tabela de VLANs vira lei — e tudo que não
+está nela **para de passar**, incluindo o seu acesso. A ordem segura:
+(1) montar a tabela `/interface bridge vlan` completa (com a bridge nos
+tagged das VLANs de gerência); (2) configurar PVIDs e frame-types das
+portas; (3) conferir tudo com `print`; (4) **só então** ligar o
+filtering — de preferência com acesso por um caminho fora da bridge
+(nossa `ether1` de gerência do laboratório, o console serial no CRS
+real) e Safe Mode.
+:::
+
+Uma nota de desempenho para fechar a teoria: nos **CRS3xx**, tudo isso —
+tabela, PVID, frame-types — é programado **no switch chip**: filtering
+com flag `H` viva, em velocidade de fio (@sec-bridge-offload). Nos
+CRS1xx/2xx antigos, ligar o filtering derruba o tráfego para a CPU — lá,
+usa-se o menu legado do chip (@sec-switch-chip). Saber **qual** dos dois
+mundos é o seu equipamento é o primeiro passo de qualquer projeto de
+POP.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Com VLAN filtering, quem manda é o **switch**, não as pontas: ingress
+(frame-types + PVID) decide o que entra e com que VLAN; a tabela
+`/interface bridge vlan` decide por onde sai e se sai tagged. Porta
+access e trunk são só combinações dessas peças (@tbl-port-roles). E a
+liturgia de ativação — tabela primeiro, bridge tagged para gerência,
+filtering por último — é o que separa a segmentação do POP de uma viagem
+até ele.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Os três CHRs com papéis novos: **`lab-r2` será o switch**. No
+VirtualBox, devolva o Adaptador 2 de `lab-r3` para a rede interna
+**`lab-b`** (desfazendo o ajuste do @sec-bridge-offload). Topologia:
+
+- `lab-r1` (roteador): `ether2` → lab-a — já tem a `vlan10-svc`
+  (`10.10.0.1/24`) sobre a `bridge-lan` (@sec-vlans-8021q);
+- `lab-r2` (switch): `ether2` → lab-a (**trunk** para o r1), `ether3` →
+  lab-b (**access VLAN 10** para o r3). Gerência intacta pela `ether1`
+  (fora da bridge — nosso "console serial");
+- `lab-r3` (dispositivo final): `ether2` → lab-b, **sem nenhuma
+  configuração de VLAN** — o ponto do exercício.
+
+Limpe no r2 as interfaces vlan do capítulo anterior
+(`/interface vlan remove [find]` após remover os IPs correspondentes:
+`/ip address remove [find interface~"vlan"]`).
+
+### Comandos passo a passo
+
+**Passo 1 — a bridge do switch.** Em `lab-r2`:
+
+```routeros
+/interface bridge add name=bridge-sw comment="switch do lab"
+/interface bridge port add bridge=bridge-sw interface=ether2
+/interface bridge port add bridge=bridge-sw interface=ether3
+```
+
+**Passo 2 — a tabela ANTES do filtering.** A VLAN 10 sai tagged pelo
+trunk e untagged pela porta do r3; e já deixamos a bridge como membro
+tagged (gerência futura na VLAN — desafio 3 usa):
+
+```routeros
+/interface bridge vlan add bridge=bridge-sw vlan-ids=10 tagged=bridge-sw,ether2 untagged=ether3
+```
+
+**Passo 3 — os papéis das portas.** Trunk ortodoxo na ether2, access
+ortodoxo na ether3:
+
+```routeros
+/interface bridge port set [find interface=ether2] frame-types=admit-only-vlan-tagged
+/interface bridge port set [find interface=ether3] pvid=10 frame-types=admit-only-untagged-and-priority-tagged
+```
+
+**Passo 4 — conferir, e só então ligar.** A liturgia:
+
+```routeros
+/interface bridge vlan print
+/interface bridge port print
+/interface bridge set bridge-sw vlan-filtering=yes
+```
+
+(Seu SSH ao r2 chega pela `ether1`, fora da bridge — o filtering não o
+toca. Num CRS real, este seria o momento do Safe Mode.)
+
+**Passo 5 — o milagre do access.** Em `lab-r3` — que não sabe o que é
+VLAN — apenas um endereço na rede da VLAN 10:
+
+```routeros
+/ip address add address=10.10.0.30/24 interface=ether2
+/ping 10.10.0.1 count=3
+```
+
+**Funciona.** Acompanhe o quadro: sai do r3 untagged → entra na ether3
+do switch (frame-types admite; PVID carimba VLAN 10) → comutado na VLAN
+10 → sai pelo trunk ether2 **tagged** → chega ao r1, cuja `vlan10-svc`
+sobre a bridge o reconhece. O r3 nunca soube da etiqueta — o switch
+cuidou de tudo. É exatamente assim que a ONU do cliente recebe "a VLAN
+de PPPoE" sem saber.
+
+**Passo 6 — a lei nas portas.** Duas tentativas de violação:
+
+(a) Em `lab-r3`, banque o esperto do capítulo passado — tente entrar
+tagged pela porta access:
+
+```routeros
+/interface vlan add name=vlan10 vlan-id=10 interface=ether2
+/ip address add address=10.10.0.31/24 interface=vlan10
+/ping 10.10.0.1 count=3
+```
+
+**Silêncio total** — o `frame-types` da access descarta quadros
+etiquetados na entrada. A tranca que faltava no @sec-vlans-8021q existe.
+Desfaça (`/ip address remove [find interface=vlan10]`,
+`/interface vlan remove vlan10`).
+
+(b) Em `lab-r1`, tente uma VLAN que **não está na tabela** do switch:
+
+```routeros
+/interface vlan add name=vlan30-teste vlan-id=30 interface=bridge-lan
+/ip address add address=10.30.0.1/24 interface=vlan30-teste
+```
+
+De `lab-r3`... nada a testar: a VLAN 30 morre no trunk do r2 (egress: não
+está na tabela, não sai por porta nenhuma). Confirme no r2 que só a 10
+(e a 1 padrão) existem: `/interface bridge vlan print`. Limpe o teste no
+r1.
+
+### Verificação
+
+1. `/interface bridge vlan print` no r2 mostra a VLAN 10 com
+   `tagged=bridge-sw,ether2` e `untagged=ether3` (a flag `D` da VLAN 1
+   padrão é normal);
+2. O r3, **sem configuração de VLAN**, pinga `10.10.0.1` através do
+   switch — access + PVID funcionando;
+3. As duas violações do Passo 6 falharam em silêncio (tagged na access;
+   VID fora da tabela no trunk);
+4. Sua gerência ao r2 continuou viva o tempo todo (ela está fora da
+   bridge — e você sabe por que isso importou).
+
+### Desafios
+
+1. No Passo 6a, o quadro do r3 morreu na **entrada** da porta access. Se
+   o `frame-types` fosse o padrão `admit-all`, o ataque funcionaria?
+   Percorra ingress → comutação → egress e responda com precisão.
+2. Migre a gerência do **r2** para dentro da VLAN 99 pelo trunk:
+   acrescente a VLAN 99 à tabela (quem é tagged?), crie a
+   `/interface vlan` sobre a bridge com IP `10.99.0.2/24` e a
+   contraparte no r1 (`10.99.0.1/24` sobre a bridge-lan). Liste os
+   comandos nos dois lados e o teste. (Não desative a ether1 — rede de
+   segurança do laboratório.)
+3. Um trunk com `pvid=1` e `frame-types=admit-all` transporta as VLANs
+   10 e 20. Explique o ataque clássico de **VLAN hopping** por dupla
+   etiqueta (802.1Q-in-802.1Q) que essa configuração permite — e como as
+   receitas da @tbl-port-roles o previnem.
+4. No CRS326 do POP, você ligou `vlan-filtering=yes` e o tráfego
+   continuou em velocidade de fio; no CRS125 antigo do armário, a CPU
+   foi a 100%. Explique a diferença — e onde a configuração de VLAN do
+   CRS125 deveria viver (dica: próximo capítulo).
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Com `admit-all` no ingress, o quadro tagged VID 10 **entraria**.
+Comutação: ele pertence à VLAN 10, que existe na bridge — segue. Egress
+pelo trunk: a tabela permite a 10 tagged — **sai**. Ou seja: sim, o
+ataque voltaria a funcionar; a única defesa da porta access contra
+etiquetas trazidas de casa é o `frame-types` restritivo. (O PVID não
+ajuda aqui — ele só age sobre quadros *sem* etiqueta.)
+
+**2.** No r2:
+
+```routeros
+/interface bridge vlan add bridge=bridge-sw vlan-ids=99 tagged=bridge-sw,ether2
+/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-sw
+/ip address add address=10.99.0.2/24 interface=vlan99-ger
+```
+
+No r1:
+
+```routeros
+/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-lan
+/ip address add address=10.99.0.1/24 interface=vlan99-ger
+```
+
+Teste: do r1, `/ping 10.99.0.2`. Os pontos didáticos: a VLAN 99 é
+tagged **no trunk e na própria bridge** (sem `bridge-sw` na lista, o IP
+de gerência nunca veria os quadros), e **não** aparece na ether3 — o r3
+não tem como alcançá-la.
+
+**3.** O atacante numa porta com PVID 1 envia quadro com **duas** tags:
+externa VID 1, interna VID 20. O switch remove a externa (casa com o
+PVID/nativa do trunk em alguns cenários de egress untagged) e reenvia —
+o quadro chega ao próximo switch **com a tag interna exposta** (VID 20):
+o atacante injetou tráfego na VLAN 20 sem pertencer a ela. As receitas
+previnem por três lados: trunk `admit-only-vlan-tagged` sem VLAN nativa
+untagged (nada sai untagged no trunk), PVID de access em VLAN sem
+privilégio, e a VLAN 1 fora do uso (nem na tabela).
+
+**4.** O CRS326 (série 3xx) programa o filtering **no switch chip** — a
+CPU só vê o que é para ela (gerência); dados correm em hardware com a
+flag `H`. O CRS125 (série 1xx) não sabe fazer 802.1Q da bridge no chip:
+`vlan-filtering=yes` derruba a comutação para a CPU — 100% e vazão de
+roteadorzinho. No CRS125, a VLAN se configura no **menu legado do switch
+chip** (`/interface ethernet switch`), assunto do @sec-switch-chip — o
+mesmo resultado, programado na linguagem daquele hardware.
+:::
+
+## Resumo
+
+- VLAN filtering transforma a bridge em **switch que policia**: ingress
+  (`frame-types` + **PVID** carimbando untagged), comutação por VLAN,
+  egress pela tabela **`/interface bridge vlan`** (sai/não sai;
+  tagged/untagged).
+- **Access** = untagged na tabela + PVID + só-untagged; **trunk** =
+  tagged na tabela + só-tagged (@tbl-port-roles) — e etiqueta trazida
+  pelo cliente morre na porta.
+- Gerência em VLAN exige a **bridge como membro tagged** e a
+  `/interface vlan` sobre a bridge — esquecer é gerência morta.
+- Liturgia de ativação: **tabela → portas → conferir → filtering por
+  último**, com acesso alternativo garantido (console/ether fora da
+  bridge) — `vlan-filtering=yes` prematuro é a viagem clássica ao POP.
+- CRS3xx: filtering em hardware (`H` vivo); CRS1xx/2xx: filtering na CPU
+  — lá, o caminho é o switch chip legado (próximo capítulo).
+
+No próximo capítulo, descemos ao porão: o **switch chip** dos CRS — o
+menu legado, as diferenças entre gerações e como extrair velocidade de
+fio de cada uma.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A página *Bridge VLAN Filtering* da documentação oficial
+[@mikrotik-docs] é a referência canônica — inclusive a tabela de quais
+modelos fazem filtering em hardware. Os guias *Basic VLAN switching* da
+mesma documentação cobrem cenários por família de produto. As
+referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
