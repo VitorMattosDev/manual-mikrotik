@@ -1,10 +1,351 @@
 # Montando o laboratório com CHR {#sec-lab-chr}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. É o **capítulo-chave do laboratório**:
-ensinará a montar, uma única vez, o ambiente de prática com o MikroTik CHR
-(Cloud Hosted Router) no VirtualBox, GNS3 ou EVE-NG — a topologia-base que
-todos os laboratórios do livro reutilizam. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Montar, no VirtualBox, o **laboratório padrão do livro**: três CHRs
+  (`lab-r1`, `lab-r2`, `lab-r3`) com rede de gerência fixa e redes internas
+  para as topologias;
+- Explicar o papel de cada tipo de rede do VirtualBox no laboratório —
+  *host-only* (gerência), *rede interna* (enlaces entre roteadores) e *NAT*
+  (saída para a internet);
+- Clonar VMs e usar **snapshots** para começar cada laboratório limpo;
+- Acessar qualquer roteador do laboratório por SSH e WinBox a partir do seu
+  computador, pela rede de gerência;
+- Reconhecer quando vale migrar para GNS3 ou EVE-NG — e por que o VirtualBox
+  basta para este livro.
 :::
+
+## Um laboratório para o livro inteiro
+
+Este é o capítulo mais rentável do manual: o que você montar aqui será
+reutilizado em **todos** os laboratórios até a última página. A seção
+"Ambiente" dos próximos capítulos dirá apenas coisas como "2 CHRs em rede
+interna (@sec-lab-chr)" — e você já saberá exatamente o que ligar.
+
+O desenho atende três exigências que acompanham qualquer laboratório de
+redes:
+
+1. **Gerência estável**: você precisa alcançar os roteadores por SSH/WinBox
+   do seu computador **sempre**, mesmo quando o exercício quebra a rede
+   entre eles. A solução é uma rede de gerência separada, que os exercícios
+   nunca tocam.
+2. **Enlaces isolados**: os "cabos" entre roteadores devem ser redes que só
+   existem entre eles, sem interferência do seu computador ou da sua rede
+   doméstica.
+3. **Reset rápido**: errar faz parte; recomeçar do zero não pode custar uma
+   reinstalação. Snapshots resolvem.
+
+A topologia-base fica assim (@fig-lab-topologia):
+
+::: {#fig-lab-topologia}
+
+```{.tikz}
+%%| filename: fig-lab-topologia
+%%| alt: Topologia do laboratório padrão. Na parte superior, o computador hospedeiro conecta-se à rede de gerência host-only 192.168.56.0 barra 24, que alcança os três roteadores lab-r1, lab-r2 e lab-r3 pela interface ether1 de cada um, com endereços terminando em 11, 12 e 13. Abaixo, lab-r1 liga-se a lab-r2 pela rede interna lab-a nas interfaces ether2, e lab-r2 liga-se a lab-r3 pela rede interna lab-b, também nas ether2 e ether3. lab-r1 possui ainda uma interface ether3 ligada ao adaptador NAT do VirtualBox, dando saída para a internet, indicada por uma nuvem.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  router/.style={draw=manualblue, very thick, fill=manualblue!8,
+                 rounded corners=3pt, minimum height=10mm, text width=24mm,
+                 align=center, font=\sffamily\small\bfseries},
+  host/.style={draw=manualgreen, very thick, fill=manualgreen!8,
+               rounded corners=3pt, minimum height=10mm, text width=30mm,
+               align=center, font=\sffamily\small\bfseries},
+  nuvem/.style={draw=manualgray, thick, fill=manualgray!10, ellipse,
+                minimum height=10mm, text width=18mm, align=center},
+  gerencia/.style={very thick, manualgreen},
+  enlace/.style={very thick, manualblue},
+  wan/.style={very thick, manualgray, dashed},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray},
+  porta/.style={font=\sffamily\scriptsize, text=manualblue}
+]
+  % Host e rede de gerência
+  \node[host] (pc) {Seu computador\\ \small SSH / WinBox};
+  \node[draw=manualgreen, thick, fill=manualgreen!5, rounded corners=3pt,
+        minimum width=118mm, minimum height=7mm, below=7mm of pc,
+        font=\sffamily\scriptsize, align=center] (mgmt)
+        {rede de gerência (host-only) — 192.168.56.0/24};
+  \draw[gerencia] (pc) -- (mgmt);
+
+  % Roteadores
+  \node[router, below=10mm of mgmt.south west, anchor=north, xshift=18mm] (r1) {lab-r1\\ \small .11};
+  \node[router, below=10mm of mgmt.south] (r2) {lab-r2\\ \small .12};
+  \node[router, below=10mm of mgmt.south east, anchor=north, xshift=-18mm] (r3) {lab-r3\\ \small .13};
+
+  \draw[gerencia] (r1.north) -- (r1.north |- mgmt.south)
+    node[porta, pos=0.4, left] {ether1};
+  \draw[gerencia] (r2.north) -- (r2.north |- mgmt.south)
+    node[porta, pos=0.4, left] {ether1};
+  \draw[gerencia] (r3.north) -- (r3.north |- mgmt.south)
+    node[porta, pos=0.4, left] {ether1};
+
+  % Enlaces internos
+  \draw[enlace] (r1.east) -- (r2.west)
+    node[midway, above, rotulo] {rede interna lab-a}
+    node[pos=0.12, below, porta] {ether2}
+    node[pos=0.88, below, porta] {ether2};
+  \draw[enlace] (r2.east) -- (r3.west)
+    node[midway, above, rotulo] {rede interna lab-b}
+    node[pos=0.12, below, porta] {ether3}
+    node[pos=0.88, below, porta] {ether2};
+
+  % WAN NAT
+  \node[nuvem, below=12mm of r1] (inet) {Internet\\ \small(NAT)};
+  \draw[wan] (r1.south) -- (inet.north)
+    node[pos=0.3, right, porta] {ether3};
+\end{tikzpicture}
+```
+
+A topologia-base do laboratório: gerência host-only fixa (verde), enlaces
+por redes internas (azul) e saída opcional para a internet via NAT em
+`lab-r1` (tracejado).
+
+:::
+
+O mapa fixo de interfaces e endereços — decore ou marque esta página:
+
+| VM | `ether1` (gerência) | `ether2` | `ether3` |
+|:--------|:--------------------|:----------------------|:--------------------|
+| `lab-r1` | host-only — `192.168.56.11` | rede interna `lab-a` | NAT (internet) |
+| `lab-r2` | host-only — `192.168.56.12` | rede interna `lab-a` | rede interna `lab-b` |
+| `lab-r3` | host-only — `192.168.56.13` | rede interna `lab-b` | — |
+
+: Mapa de interfaces do laboratório padrão {#tbl-lab-mapa}
+
+::: {.callout-tip}
+## Analogia para guardar
+
+A rede de gerência é o **corredor de serviço** de um hotel: os hóspedes (o
+tráfego dos exercícios) circulam pelos corredores normais (`lab-a`,
+`lab-b`), enquanto a manutenção (você, por SSH) tem um corredor próprio que
+nunca fecha — mesmo com um quarto em obras.
+:::
+
+### Os três tipos de rede do VirtualBox
+
+O VirtualBox oferece vários modos de rede; o laboratório usa três, cada um
+num papel:
+
+- **Host-only** — cria uma rede virtual entre o seu computador e as VMs.
+  Perfeita para gerência: o hospedeiro alcança todas as VMs, e nada disso
+  vaza para sua rede doméstica.
+- **Rede interna** (*internal network*) — um "switch virtual" nomeado que só
+  conecta VMs que apontem para o mesmo nome (`lab-a`, `lab-b`). É o cabo
+  entre roteadores: seu computador não participa.
+- **NAT** — a VM sai para a internet através do seu computador, como um
+  celular no modo roteador. Usamos apenas na `ether3` do `lab-r1`, nos
+  capítulos que precisam de internet de verdade (atualizações, DNS, NTP).
+
+## GNS3 e EVE-NG: quando crescer
+
+**GNS3** e **EVE-NG** são plataformas de emulação de redes completas:
+desenho de topologia por arrastar-e-soltar, dezenas de nós, imagens de
+vários fabricantes. Ambas rodam o CHR muito bem, e você encontrará
+laboratórios MikroTik prontos para elas na internet.
+
+Este livro, porém, padroniza no **VirtualBox** por três razões: é mais leve
+(roda em qualquer máquina de estudo), não exige imagens adicionais nem
+servidor dedicado, e três roteadores cobrem quase todos os exercícios — nos
+poucos capítulos que pedem um quarto nó (o estudo de caso do Volume 15, por
+exemplo), o padrão de clonagem que você aprenderá aqui resolve em minutos.
+Se você já domina GNS3/EVE-NG, use-os sem medo: os laboratórios descrevem
+**topologias**, não cliques — basta reproduzir as redes da @tbl-lab-mapa.
+
+## 🧪 Laboratório
+
+Este capítulo **é** um grande laboratório: vamos montar o ambiente
+definitivo, do zero ao snapshot.
+
+### Ambiente
+
+- VirtualBox instalado (o mesmo do @sec-o-que-e-mikrotik);
+- A imagem `.vdi` do CHR baixada de `mikrotik.com/download`;
+- A VM avulsa dos capítulos anteriores pode ser **removida** ao final — o
+  laboratório novo a substitui.
+
+### Comandos passo a passo
+
+**Parte 1 — preparar a rede host-only.** No VirtualBox, menu
+**Arquivo → Ferramentas → Gerenciador de Rede** (*Network Manager*):
+confirme que existe um adaptador host-only com IPv4 `192.168.56.1/24` (é o
+padrão; crie-o se não existir) e **desative o servidor DHCP** dele — os IPs
+do laboratório são fixos, e um DHCP intrometido só atrapalha.
+
+**Parte 2 — criar a VM-molde.** Crie uma VM chamada `lab-r1`, como no
+primeiro capítulo (Linux / Other Linux 64-bit, 256 MB de RAM), usando uma
+**cópia** do `.vdi` do CHR como disco. Antes de ligar, em
+**Configurações → Rede**:
+
+1. **Adaptador 1**: habilitado, modo *Placa exclusiva de hospedeiro*
+   (host-only) — será a `ether1`;
+2. **Adaptador 2**: habilitado, modo *Rede interna*, nome `lab-a` — será a
+   `ether2`;
+3. **Adaptador 3**: habilitado, modo *NAT* — será a `ether3`.
+
+Ligue a VM, faça o primeiro login (`admin`, senha em branco, defina a nova
+senha) e configure identidade e IP de gerência:
+
+```routeros
+/system identity set name=lab-r1
+/ip address add address=192.168.56.11/24 interface=ether1 comment=gerencia
+```
+
+Do **seu computador**, confirme o acesso antes de continuar:
+
+```routeros
+ssh admin@192.168.56.11
+```
+
+**Parte 3 — clonar.** Desligue a VM (`/system shutdown`). No VirtualBox,
+clique com o botão direito em `lab-r1` → **Clonar**: nome `lab-r2`, tipo
+**clone completo**, e marque a opção de **gerar novos endereços MAC** para
+todas as placas (fundamental — MACs duplicados criam defeitos
+enlouquecedores). Repita para criar `lab-r3`.
+
+Ajuste as redes dos clones conforme a @tbl-lab-mapa:
+
+- `lab-r2`: Adaptador 2 → rede interna `lab-a`; Adaptador 3 → rede interna
+  `lab-b`;
+- `lab-r3`: Adaptador 2 → rede interna `lab-b`; Adaptador 3 →
+  **desabilitado**.
+
+Ligue `lab-r2`, e pelo **console** corrija identidade e IP (o clone veio com
+os dados do molde):
+
+```routeros
+/system identity set name=lab-r2
+/ip address set numbers=0 address=192.168.56.12/24
+```
+
+O mesmo em `lab-r3`:
+
+```routeros
+/system identity set name=lab-r3
+/ip address set numbers=0 address=192.168.56.13/24
+```
+
+**Parte 4 — testar os enlaces internos.** Com as três VMs ligadas, dê
+endereços provisórios ao enlace `lab-a` para prová-lo. Em `lab-r1`:
+
+```routeros
+/ip address add address=10.0.12.1/30 interface=ether2 comment=teste-lab-a
+```
+
+Em `lab-r2`:
+
+```routeros
+/ip address add address=10.0.12.2/30 interface=ether2 comment=teste-lab-a
+```
+
+E, ainda de `lab-r2`, pingue o vizinho:
+
+```routeros
+/ping 10.0.12.1 count=4
+```
+
+```routeros
+[admin@lab-r2] > /ping 10.0.12.1 count=4
+  SEQ HOST       SIZE TTL TIME       STATUS
+    0 10.0.12.1    56  64 1ms234us
+    1 10.0.12.1    56  64 987us
+    2 10.0.12.1    56  64 1ms102us
+    3 10.0.12.1    56  64 995us
+  sent=4 received=4 packet-loss=0%
+```
+
+`packet-loss=0%` prova o enlace. Remova os endereços de teste nos dois
+roteadores — os capítulos seguintes sempre começam com os enlaces "crus":
+
+```routeros
+/ip address remove [find comment=teste-lab-a]
+```
+
+**Parte 5 — snapshot.** Desligue as três VMs (`/system shutdown`). No
+VirtualBox, selecione cada uma → **Snapshots** → **Criar** — nomeie
+`base-limpa`. Este é o estado oficial de partida: identidade + IP de
+gerência, e nada mais.
+
+### Verificação
+
+O checklist de "laboratório pronto":
+
+1. As três VMs existem, com os adaptadores exatamente como na
+   @tbl-lab-mapa;
+2. Do seu computador, `ssh admin@192.168.56.11`, `.12` e `.13` entram nos
+   três roteadores (com as VMs ligadas), e o prompt de cada um mostra a
+   identidade certa;
+3. O WinBox lista os três em **Neighbors** (@sec-formas-de-acesso);
+4. O ping da Parte 4 fechou com `packet-loss=0%` e os endereços de teste
+   foram removidos;
+5. Cada VM tem o snapshot `base-limpa`.
+
+A partir de agora, "restaurar o laboratório" = desligar as VMs e restaurar o
+snapshot `base-limpa` de cada uma. Faça isso sempre que um capítulo pedir
+ambiente limpo — ou quando um experimento sair do controle.
+
+### Desafios
+
+1. Sem olhar a tabela: qual rede interna conecta `lab-r2` a `lab-r3`, e por
+   quais interfaces de cada um?
+2. De `lab-r3`, encontre os vizinhos MikroTik com `/ip neighbor print`. Quem
+   aparece, e por quê `lab-r1` (não) aparece?
+3. O enlace `lab-b` ainda não foi testado. Repita a Parte 4 nele — desta
+   vez escolhendo você mesmo a sub-rede de teste — e desfaça ao final.
+4. Habilite temporariamente o adaptador NAT (`ether3`) do `lab-r1` e, no
+   roteador, rode `/ip dhcp-client add interface=ether3` seguido de
+   `/ip dhcp-client print`. O que aconteceu? (É um gostinho do Volume 2 —
+   desfaça com `/ip dhcp-client remove numbers=0` ao terminar.)
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Rede interna `lab-b`, entre a `ether3` de `lab-r2` e a `ether2` de
+`lab-r3` (@tbl-lab-mapa).
+
+**2.** Aparecem `lab-r2` (vizinho direto pela `lab-b`) e — dependendo do
+modo do seu adaptador host-only — os demais pela rede de gerência, já que
+ela é um segmento comum a todos. Pela rede **interna**, `lab-r1` não é
+vizinho de `lab-r3`: eles não compartilham segmento (`lab-a` e `lab-b` são
+switches separados, e `lab-r2` está no meio).
+
+**3.** Exemplo com `10.0.23.0/30`: em `lab-r2`,
+`/ip address add address=10.0.23.1/30 interface=ether3`; em `lab-r3`,
+`/ip address add address=10.0.23.2/30 interface=ether2`; ping de um para o
+outro; remoção com `/ip address remove [find comment=...]` (se você usou
+comentário — bom hábito) ou pelo número do item.
+
+**4.** O DHCP client pediu endereço ao NAT do VirtualBox e recebeu algo como
+`10.0.2.15/24` com gateway `10.0.2.2` — o roteador ganhou uma "WAN" e já
+alcança a internet (`/ping 8.8.8.8` funciona). É exatamente assim que o
+capítulo de DHCP montará a WAN do roteador de borda.
+:::
+
+## Resumo
+
+- O laboratório padrão: **3 CHRs** no VirtualBox, gerência **host-only**
+  fixa (`192.168.56.11/.12/.13` na `ether1`), enlaces por **redes internas**
+  `lab-a` e `lab-b`, NAT opcional na `ether3` de `lab-r1`
+  (@fig-lab-topologia, @tbl-lab-mapa).
+- Gerência separada dos exercícios = acesso que **nunca cai**, aconteça o
+  que acontecer com a topologia.
+- Clones completos com **MACs novos**; identidade e IP ajustados no console
+  logo após clonar.
+- Snapshot `base-limpa` em cada VM: restaurá-lo é o "reset de fábrica" do
+  laboratório.
+- GNS3/EVE-NG são upgrades válidos; os laboratórios do livro descrevem
+  topologias e funcionam em qualquer plataforma.
+
+No próximo capítulo, usamos o laboratório novo para o assunto que abre toda
+operação real: o primeiro acesso a um equipamento, a configuração de fábrica
+e a segurança inicial — usuários, senhas e serviços.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação do CHR [@mikrotik-chr] cobre instalação em VirtualBox,
+VMware, Proxmox e nuvens públicas; o manual do VirtualBox (em
+`virtualbox.org/manual`) detalha os modos de rede que usamos. Para
+laboratórios em GNS3/EVE-NG, a documentação de cada plataforma traz guias de
+importação do CHR. As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
