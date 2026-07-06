@@ -1,7 +1,342 @@
-# Forward e address-lists
+# Forward e address-lists {#sec-forward-lists}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Projetar a chain `forward` de um provedor — que é **diferente** da de
+  uma empresa: o cliente paga por internet aberta, não por censura;
+- Aplicar os filtros de forward que todo provedor sério tem: esqueleto
+  stateful, antispoofing e o bloqueio clássico da porta 25;
+- Criar e usar **address lists** estáticas — a ferramenta que separa
+  *política* (regras) de *dados* (quem);
+- Criar address lists **dinâmicas** com `add-src-to-address-list` +
+  `timeout` — listas que se alimentam sozinhas;
+- Reconhecer os usos de operação: corte de inadimplentes, armadilhas para
+  scanners e listas de proteção da infraestrutura.
 :::
+
+## O forward de um provedor não é o de uma empresa
+
+A chain `forward` julga tudo que **atravessa** o roteador
+(@sec-chains-firewall) — a navegação dos clientes, portanto. E aqui o
+projeto exige uma reflexão que firewall de empresa não tem: numa empresa,
+o forward implementa a política do dono ("RH não acessa rede social");
+num **provedor**, o cliente paga por **acesso à internet** — filtrar o
+tráfego dele é, além de má prática, problema jurídico (a neutralidade de
+rede do Marco Civil brasileiro, que reencontraremos no Volume 9).
+
+O forward do provedor filtra pouco, e o pouco certo:
+
+1. **O esqueleto stateful** de sempre — eficiência e higiene
+   (@sec-conntrack);
+2. **Antispoofing** — pacotes *saindo* da sua rede devem ter origem *da
+   sua rede*. Um cliente infectado emitindo pacotes com origem forjada
+   participa de ataques DDoS refletidos mundo afora com o **seu** nome
+   (seu bloco IP, sua reputação). A regra: o que entra pela LAN com origem
+   que não é da LAN, morre;
+3. **Porta 25 (SMTP) saindo** — o bloqueio mais consagrado: máquinas
+   infectadas despejando spam pela porta 25 direta são a via expressa
+   para seu bloco IP entrar em listas negras de e-mail (e todos os seus
+   clientes junto). Bloqueia-se 25; e-mail legítimo usa 587 (submissão
+   autenticada) há vinte anos. É a exceção de neutralidade aceita
+   universalmente — o CERT.br a recomenda formalmente;
+4. **Proteção da infraestrutura** — clientes não têm por que alcançar a
+   rede de **gerência** do provedor. Uma regra fecha o assunto.
+
+E só. Nada de bloquear "sites", jogos, VPNs — provedor é estrada, não
+alfândega.
+
+## Address lists: separar política de dados
+
+Repare no antispoofing: "origem que não é da LAN". E o corte de
+inadimplente: "estes 37 IPs não navegam até pagar". E a gerência: "estas
+redes são intocáveis". Todos são a mesma pergunta — **o endereço está
+neste conjunto?** — e a resposta errada é criar 37 regras.
+
+A ferramenta certa é a **address list** (`/ip firewall address-list`):
+um conjunto nomeado de endereços/redes, referenciado pelas regras via
+`src-address-list`/`dst-address-list`:
+
+```routeros
+/ip firewall address-list add list=inadimplentes address=192.168.10.105 comment="contrato 4412"
+/ip firewall address-list add list=inadimplentes address=192.168.10.130 comment="contrato 8177"
+
+/ip firewall filter add chain=forward src-address-list=inadimplentes action=reject reject-with=icmp-admin-prohibited comment="corte por debito"
+```
+
+**Uma regra**, dados à parte. Cortar/religar cliente vira operação de
+lista (o sistema de gestão faz via API — Volume 12), sem tocar no
+firewall. A regra usa `reject` e não `drop` — o cliente cortado recebe
+resposta imediata em vez de timeouts (lembre a regra de bolso do
+@sec-chains-firewall: dentro de casa, experiência importa; e um cliente
+cortado continua sendo seu cliente).
+
+Listas aceitam **redes** (`10.0.0.0/8`), têm `comment` por entrada e —
+a parte que muda o jogo — podem ser alimentadas **pelas próprias regras
+do firewall**.
+
+## Listas dinâmicas: o firewall que aprende
+
+Toda action de filter pode, em vez de (ou além de) aceitar/descartar,
+**anotar o endereço numa lista**:
+
+```routeros
+add chain=input in-interface-list=WAN protocol=tcp dst-port=23 action=add-src-to-address-list address-list=scanners address-list-timeout=1d comment="armadilha: telnet na WAN"
+add chain=input in-interface-list=WAN src-address-list=scanners action=drop comment="scanners: drop por 1 dia"
+```
+
+Leia o par: ninguém legítimo tenta Telnet no seu IP público (o serviço
+nem existe — @sec-primeiro-acesso); quem tenta é robô de varredura. A
+primeira regra **anota** a origem na lista `scanners` com validade de 1
+dia (`timeout` — a entrada nasce com flag `D` e expira sozinha); a
+segunda descarta **tudo** que venha de quem está na lista. O firewall
+aprendeu: sondou a porta-armadilha, perdeu acesso ao roteador por 24 h.
+
+O mecanismo (@fig-lista-dinamica) é um ciclo:
+
+::: {#fig-lista-dinamica}
+
+```{.tikz}
+%%| filename: fig-lista-dinamica
+%%| alt: Ciclo de uma address list dinâmica em três etapas dispostas em círculo. Etapa um: o atacante toca a porta armadilha, telnet na WAN. Etapa dois: a regra de captura anota o endereço de origem na lista scanners com validade de um dia. Etapa três: a regra de bloqueio descarta qualquer pacote cuja origem esteja na lista. Uma seta tracejada fecha o ciclo indicando que após o timeout a entrada expira sozinha e o endereço volta a ser tratado normalmente.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  etapa/.style={draw=manualblue, very thick, fill=manualblue!8,
+                rounded corners=3pt, minimum height=11mm, text width=36mm,
+                align=center},
+  seta/.style={very thick, -stealth, manualblue},
+  expira/.style={very thick, -stealth, manualgray, dashed},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  \node[etapa] (toca) {\textbf{1. Sondagem}\\ \small atacante tenta a porta-armadilha (23/WAN)};
+  \node[etapa, below right=8mm and -6mm of toca] (anota)
+    {\textbf{2. Captura}\\ \small \texttt{add-src-to-address-list}\\ lista \texttt{scanners}, timeout 1d};
+  \node[etapa, below left=8mm and -6mm of toca] (bloqueia)
+    {\textbf{3. Bloqueio}\\ \small \texttt{src-address-list=scanners}\\ \texttt{action=drop}};
+
+  \draw[seta] (toca.south east) -- (anota.north west);
+  \draw[seta] (anota.west) -- (bloqueia.east)
+    node[midway, below, rotulo] {próximos pacotes};
+  \draw[expira] (bloqueia.north east) -- (toca.south west)
+    node[midway, above left, rotulo] {timeout expira};
+\end{tikzpicture}
+```
+
+O ciclo da lista dinâmica: sondou a armadilha, entrou na lista, perdeu o
+acesso — até o timeout devolver o benefício da dúvida.
+
+:::
+
+O padrão captura-e-bloqueia serve para muito mais que armadilhas: força
+bruta em SSH (capturar quem abre conexões demais), rajadas de conexões
+novas (o flood do desafio do @sec-conntrack), lista de quem baixou de
+um servidor de atualização... O @sec-hardening usa esse tijolo várias
+vezes.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Address lists separam **política** (poucas regras, estáveis) de **dados**
+(listas que mudam todo dia — por operação, por API ou pelo próprio
+firewall via `add-src-to-address-list` + timeout). No forward do
+provedor, a política é curta: stateful, antispoofing, porta 25,
+infraestrutura protegida — e neutralidade no resto. Quem precisar de "mais
+firewall" que isso está no lugar errado da rede (o CPE do cliente) ou do
+livro (@sec-hardening).
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+`lab-r1` (borda com input fechado do @sec-protegendo-roteador) e `lab-r2`
+(cliente na LAN). Safe Mode como hábito.
+
+### Comandos passo a passo
+
+**Passo 1 — o esqueleto do forward.** Em `lab-r1`:
+
+```routeros
+/ip firewall filter add chain=forward action=accept connection-state=established,related comment="fwd: conversas em andamento"
+/ip firewall filter add chain=forward action=drop connection-state=invalid comment="fwd: lixo"
+```
+
+**Passo 2 — antispoofing e porta 25.** As duas regras de cidadania:
+
+```routeros
+/ip firewall filter add chain=forward in-interface-list=LAN src-address=!192.168.10.0/24 action=drop comment="fwd: antispoofing da LAN"
+/ip firewall filter add chain=forward in-interface-list=LAN protocol=tcp dst-port=25 action=reject reject-with=icmp-admin-prohibited comment="fwd: SMTP direto bloqueado"
+```
+
+(O `!` nega o matcher: "origem que **não** é a LAN". Teste o SMTP de
+`lab-r2`: `/tool fetch url=telnet://smtp.google.com:25` falha na hora —
+`reject` avisando.)
+
+**Passo 3 — proteger a gerência.** Clientes não alcançam a rede de
+gerência:
+
+```routeros
+/ip firewall filter add chain=forward in-interface-list=LAN dst-address=192.168.56.0/24 action=drop comment="fwd: gerencia intocavel"
+```
+
+De `lab-r2`, prove: `/ping 192.168.56.1` — morto. (Antes funcionava — o
+r1 roteava para a gerência sem cerimônia.)
+
+**Passo 4 — corte por lista.** Simule a inadimplência do "pc-padaria":
+
+```routeros
+/ip firewall address-list add list=inadimplentes address=192.168.10.105 comment="contrato 4412 - em aberto"
+/ip firewall filter add chain=forward src-address-list=inadimplentes connection-state=new action=reject reject-with=icmp-admin-prohibited comment="fwd: corte por debito"
+```
+
+(Ajuste o `.105` para o IP real do r2 — `/ip dhcp-server lease print`.)
+Em `lab-r2`: `/ping 8.8.8.8` — cortado. **Religue** o cliente removendo-o
+da lista (a regra fica):
+
+```routeros
+/ip firewall address-list remove [find list=inadimplentes]
+```
+
+Ping de novo: navegando. Corte e religação sem tocar em regra — a
+operação do dia a dia.
+
+**Passo 5 — a armadilha dinâmica.** No input (a fronteira é da WAN, mas
+testaremos da LAN para ver o mecanismo — a LAN também não tem por que
+telnetar o roteador):
+
+```routeros
+/ip firewall filter add chain=input protocol=tcp dst-port=23 action=add-src-to-address-list address-list=scanners address-list-timeout=10m comment="armadilha telnet" place-before=[find comment="drop all"]
+/ip firewall filter add chain=input src-address-list=scanners action=drop comment="scanners: drop" place-before=[find comment="armadilha telnet"]
+```
+
+Em `lab-r2`, caia na armadilha e constate a sentença:
+
+```routeros
+/system telnet 192.168.10.1
+/ping 192.168.10.1 count=3
+```
+
+O telnet falha **e** o ping morre junto — você está na lista. Em
+`lab-r1`, veja o prisioneiro e o prazo:
+
+```routeros
+/ip firewall address-list print
+```
+
+```routeros
+[vitor@lab-r1] > /ip firewall address-list print
+Flags: X - disabled, D - dynamic
+Columns: LIST, ADDRESS, TIMEOUT
+#   LIST      ADDRESS         TIMEOUT
+0 D scanners  192.168.10.105  9m41s
+```
+
+Flag `D`, timeout decrescendo: em 10 minutos a pena prescreve (ou
+solte-o já: `remove numbers=0`).
+
+### Verificação
+
+1. O forward tem: esqueleto, antispoofing, SMTP 25 (reject), gerência
+   protegida e a regra de corte — todos comentados
+   (`/ip firewall filter print where chain=forward`);
+2. O corte por lista funcionou nos dois sentidos (cortou ao entrar na
+   lista; religou ao sair) **sem editar regras**;
+3. A armadilha capturou o r2 (entrada `D` com timeout) e o drop por lista
+   o bloqueou por completo;
+4. `lab-r2` navegando normal ao final (fora das listas), e SMTP 25
+   continua morto.
+
+### Desafios
+
+1. O antispoofing usa `src-address=!192.168.10.0/24`. Num concentrador
+   com 30 pools de clientes, essa abordagem escala mal. Reescreva-a com
+   address list — e diga de onde a lista seria alimentada na prática.
+2. A regra de corte usa `connection-state=new`. O que muda para o cliente
+   cortado, comparado ao corte sem esse matcher? Qual é mais "justo" na
+   religação?
+3. Monte (comandos) a defesa clássica anti força-bruta de SSH **na WAN**:
+   quem abrir mais de 3 conexões novas TCP/22 em 1 minuto entra em
+   `ssh-bruta` por 1 hora. (Dica: uma lista-contador com timeout de 1m
+   como "memória curta" + a captura definitiva; matchers
+   `connection-state=new` e `src-address-list`.)
+4. Por que a armadilha do Passo 5 ficou **acima** do drop all mas o
+   drop-por-lista ficou acima **dela**? Desenhe o caminho de um pacote do
+   scanner na segunda visita.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.**
+
+```routeros
+/ip firewall address-list add list=redes-clientes address=192.168.10.0/24
+/ip firewall filter set [find comment~"antispoofing"] src-address=!0.0.0.0 src-address-list=!redes-clientes
+```
+
+(Na prática: regra nova `in-interface-list=LAN
+src-address-list=!redes-clientes action=drop`.) A lista é alimentada pelo
+provisionamento: cada pool/rede de clientes nova entra na lista junto com
+sua criação — por script ou API (Volume 12). Política parada, dados
+acompanhando o crescimento.
+
+**2.** Com `new`, as conexões **existentes** do cliente sobrevivem ao
+corte (a regra 0 do esqueleto as aceita antes) — só não abre nada novo;
+sem o matcher, tudo morre na hora. Mais importante é a **religação**: sem
+`new`, remover da lista já resolve; com qualquer resíduo, conexões
+travadas expiram sozinhas. O corte com `new` é mais suave (downloads em
+andamento terminam) e mais usado; o corte total é para abuso. Justiça é
+critério comercial — o firewall oferece os dois.
+
+**3.**
+
+```routeros
+/ip firewall filter add chain=input in-interface-list=WAN protocol=tcp dst-port=22 connection-state=new src-address-list=ssh-suspeitos action=add-src-to-address-list address-list=ssh-bruta address-list-timeout=1h comment="3a conexao em 1m: bloqueia"
+/ip firewall filter add chain=input in-interface-list=WAN protocol=tcp dst-port=22 connection-state=new action=add-src-to-address-list address-list=ssh-suspeitos address-list-timeout=1m comment="anota tentativa"
+/ip firewall filter add chain=input in-interface-list=WAN src-address-list=ssh-bruta action=drop comment="ssh-bruta: drop" place-before=[find comment="3a conexao em 1m: bloqueia"]
+```
+
+A ordem importa: quem já é `ssh-suspeitos` (memória de 1 m) e tenta de
+novo sobe para `ssh-bruta` (1 h); senão, apenas é anotado. (Refinável em
+mais estágios — o padrão em cascata do hardening.)
+
+**4.** A armadilha precisa vir antes do drop all para sequer executar
+(depois dele, código morto — nada passa do drop). O drop-por-lista vem
+antes da armadilha para que o **reincidente** morra imediatamente, sem
+nem renovar a anotação... quer dizer: na segunda visita, o pacote desce:
+established? não → invalid? não → drop-por-lista: **casa e morre**. Se o
+drop viesse depois da armadilha, o scanner na lista ainda "renovaria" o
+próprio timeout a cada tentativa na porta 23 — detalhe fino: às vezes
+*queremos* isso (pena renovável!). As duas ordens são defensáveis; o que
+não se negocia é ambas acima do drop all.
+:::
+
+## Resumo
+
+- Forward de **provedor**: esqueleto stateful, **antispoofing** (origem da
+  LAN deve ser da LAN), **porta 25 fechada** (reputação do bloco),
+  **gerência intocável** — e neutralidade no resto; filtro de conteúdo não
+  é papel da estrada.
+- **Address lists** = política separada de dados: regras estáveis
+  (`src/dst-address-list`), listas mudando por operação/API — corte de
+  inadimplente é `add`/`remove` na lista, nunca edição de regra.
+- Listas **dinâmicas**: `action=add-src-to-address-list` +
+  `address-list-timeout` — entradas `D` que expiram sozinhas; o padrão
+  captura-e-bloqueia (@fig-lista-dinamica) constrói armadilhas, defesa de
+  força bruta e rate-limiting por reincidência.
+- `reject` para clientes (experiência), `drop` para a WAN (silêncio) — a
+  regra de bolso continua.
+
+No próximo capítulo, o caminho inverso: **dstnat** — publicar serviços de
+dentro para fora (port forwarding), com o hairpin NAT e os cuidados que
+todo portão aberto exige.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/ip firewall address-list`
+e os matchers/actions de lista. A recomendação de gerência da porta
+25/TCP para redes de provedores é do CERT.br (`cert.br/docs/`), alinhada
+ao MAAWG. Sobre antispoofing na origem, o RFC 2827/BCP 38 é o texto
+clássico. As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
