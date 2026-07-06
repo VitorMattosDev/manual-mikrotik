@@ -1,7 +1,341 @@
-# DNS no RouterOS
+# DNS no RouterOS {#sec-dns}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o papel do DNS e o caminho de uma consulta — do dispositivo do
+  cliente ao resolvedor upstream, passando pelo cache do roteador;
+- Configurar o resolvedor do RouterOS (`/ip dns`): servidores upstream,
+  cache e o significado exato de `allow-remote-requests=yes`;
+- Reconhecer o risco do **open resolver** — por que um roteador respondendo
+  DNS para a internet inteira é um problema seu e dos outros;
+- Usar **entradas estáticas** para nomes internos da rede do provedor (e
+  entender seus limites como ferramenta de bloqueio);
+- Decidir entre os DNS da operadora (`use-peer-dns`), resolvedores públicos
+  e resolvedor próprio.
 :::
+
+## O catálogo telefônico da internet
+
+Nenhum cliente digita `142.250.79.78`; ele digita `google.com`. O **DNS**
+(*Domain Name System*) é o serviço que traduz nomes em endereços — e para o
+assinante ele **é** a internet: quando o DNS falha, "a internet caiu",
+mesmo com o link perfeito. Metade dos chamados de "internet lenta" de um
+provedor são, na verdade, DNS lento. Por isso este capítulo é curto no
+protocolo e longo na operação.
+
+O caminho de uma consulta na rede que estamos montando (@fig-dns-fluxo):
+
+::: {#fig-dns-fluxo}
+
+```{.tikz}
+%%| filename: fig-dns-fluxo
+%%| alt: Fluxo de uma consulta DNS em três estágios. À esquerda, o dispositivo do cliente pergunta o endereço de google.com ao roteador MikroTik, que está no centro com seu cache DNS. Do roteador saem dois caminhos: se a resposta está no cache, hit, ela volta imediatamente ao cliente em cerca de um milissegundo; se não está, miss, o roteador consulta o resolvedor upstream à direita, por exemplo 1.1.1.1, guarda a resposta no cache e então responde ao cliente, em dezenas de milissegundos.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  caixa/.style={draw=manualblue, very thick, fill=manualblue!8,
+                rounded corners=3pt, minimum height=10mm, text width=26mm,
+                align=center, font=\sffamily\small\bfseries},
+  cliente/.style={draw=manualgreen, very thick, fill=manualgreen!8,
+                  rounded corners=3pt, minimum height=10mm, text width=24mm,
+                  align=center, font=\sffamily\small\bfseries},
+  up/.style={draw=manualgray, thick, fill=manualgray!10, ellipse,
+             minimum height=10mm, text width=20mm, align=center},
+  seta/.style={very thick, -stealth, manualblue},
+  volta/.style={very thick, -stealth, manualgreen},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  \node[cliente] (cli) {Cliente\\ \small"google.com?"};
+  \node[caixa, right=26mm of cli] (rtr) {Roteador\\ \small cache DNS};
+  \node[up, right=26mm of rtr] (up) {Upstream\\ \small 1.1.1.1};
+
+  \draw[seta] (cli.east) to[out=15, in=165] node[above, rotulo] {consulta} (rtr.west);
+  \draw[volta] (rtr.west) to[out=195, in=-15]
+    node[below, rotulo] {\textbf{hit}: resposta do cache ($\sim$1 ms)} (cli.east);
+  \draw[seta] (rtr.east) to[out=15, in=165]
+    node[above, rotulo] {\textbf{miss}: pergunta e guarda} (up.west);
+  \draw[volta] (up.west) to[out=195, in=-15]
+    node[below, rotulo] {resposta ($\sim$dezenas de ms)} (rtr.east);
+\end{tikzpicture}
+```
+
+O roteador como intermediário com memória: cache hit responde na hora;
+cache miss consulta o upstream e guarda para o próximo.
+
+:::
+
+O RouterOS não é um resolvedor recursivo completo (ele não sai caçando a
+resposta pela hierarquia do DNS); ele é um **encaminhador com cache**
+(*caching forwarder*): repassa a consulta a servidores upstream que você
+define e **guarda a resposta** pelo tempo indicado (TTL). Esse cache é o
+que interessa ao provedor: a segunda consulta a `google.com` sai do POP em
+um milissegundo, sem viajar até o upstream.
+
+## Configurando o resolvedor
+
+Tudo mora num menu só:
+
+```routeros
+/ip dns set servers=1.1.1.1,8.8.8.8
+/ip dns print
+```
+
+```routeros
+[vitor@lab-r1] > /ip dns print
+                      servers: 1.1.1.1,8.8.8.8
+              dynamic-servers:
+        allow-remote-requests: no
+                   cache-size: 2048KiB
+                cache-max-ttl: 1w
+                   cache-used: 32KiB
+```
+
+Os campos que decidem a operação:
+
+- **`servers`** — os upstreams **estáticos** que você escolheu;
+- **`dynamic-servers`** — os que chegaram sozinhos pelo `use-peer-dns=yes`
+  do DHCP client (@sec-dhcp). Se ambos existem, o RouterOS usa todos —
+  fonte clássica de comportamento "misterioso": você configura `1.1.1.1` e
+  as consultas continuam indo para o DNS lento da operadora. Decida **um**
+  dono da verdade: ou `use-peer-dns=no` no client, ou nenhum servidor
+  estático;
+- **`allow-remote-requests`** — o interruptor mais importante do menu, a
+  seguir;
+- **`cache-size`/`cache-max-ttl`** — o tamanho e a validade máxima do
+  cache; os padrões servem até redes médias.
+
+### `allow-remote-requests`: servidor, e para quem?
+
+Com `allow-remote-requests=no`, o resolvedor só atende o **próprio
+roteador** (pings e ferramentas locais). Com `yes`, o roteador vira
+**servidor DNS**: passa a ouvir na porta 53 e responder consultas de
+terceiros — e é isso que queremos para a LAN: foi por essa razão que o
+DHCP do @sec-dhcp anunciou `dns-server=192.168.88.1` aos clientes.
+
+O problema: o RouterOS ouve na porta 53 de **todas** as interfaces — a LAN
+e a WAN. Um roteador com IP público e `allow-remote-requests=yes` sem
+proteção é um **open resolver**: a internet inteira pode usá-lo como DNS.
+Isso significa banda e CPU suas servindo estranhos e, pior, participação
+involuntária em **ataques de amplificação** — o atacante envia consultas
+pequenas com endereço de origem forjado (o da vítima), e seu roteador
+despeja respostas grandes na vítima. Seu provedor vira artilharia alheia,
+e o seu IP entra em listas de bloqueio.
+
+::: {.callout-warning}
+`allow-remote-requests=yes` num roteador com interface pública **exige**
+regras de firewall bloqueando a porta 53 (UDP e TCP) vinda da WAN. Ainda
+não temos firewall — ele é o assunto do Volume 3, e este é um dos primeiros
+buracos que fecharemos lá (@sec-protegendo-roteador). No laboratório
+estamos seguros: a "WAN" NAT do VirtualBox não é alcançável de fora.
+:::
+
+## Entradas estáticas: o DNS interno do provedor
+
+O menu `/ip dns static` — nosso campo de treino no
+@sec-anatomia-terminal — resolve nomes **antes** de consultar o upstream.
+Usos legítimos de provedor:
+
+```routeros
+/ip dns static add name=core-r1.provedor.lan address=10.255.0.1 comment="gerencia core"
+/ip dns static add name=noc.provedor.lan address=10.255.0.50
+```
+
+Pronto: a equipe digita `ssh core-r1.provedor.lan` em vez de decorar
+endereços de gerência — um "DNS interno" de custo zero, servido pelo
+roteador que a equipe já usa. As entradas aceitam expressão regular no nome
+(`regexp=`), TTL próprio e tipos além de A (AAAA, CNAME, TXT...).
+
+E o uso tentador que exige honestidade: **bloqueio por DNS** (apontar
+`name=site-indesejado.com` para `127.0.0.1`). Funciona como filtro de
+conveniência — rede de escritório, controle parental básico — e falha como
+segurança: qualquer dispositivo com DNS alternativo configurado (ou DoH,
+o DNS sobre HTTPS dos navegadores modernos) passa por cima sem esforço.
+Bloqueio de verdade se faz no firewall, e mesmo lá tem limites — Volume 3.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+No provedor, o DNS é **serviço de infraestrutura**: escolha upstreams
+rápidos e confiáveis (e um só dono da verdade — estático **ou**
+`use-peer-dns`), sirva a LAN com cache local (`allow-remote-requests=yes`)
+e **nunca** deixe a porta 53 aberta para a WAN. DNS rápido = "internet
+rápida" na percepção do cliente; DNS aberto = seu roteador trabalhando
+para atacantes.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Continuação direta do laboratório do @sec-dhcp (se você o desfez, repita
+os Passos 1–3 de lá): `lab-r1` com WAN NAT (`ether3`) e DHCP server na
+LAN (`ether2`); `lab-r2` como cliente DHCP na `ether2`.
+
+### Comandos passo a passo
+
+**Passo 1 — um só dono da verdade.** O dhcp-client da WAN trouxe DNS
+dinâmico (`use-peer-dns=yes`). Vamos assumir o controle: upstreams
+explícitos e nada de dinâmico:
+
+```routeros
+/ip dhcp-client set [find interface=ether3] use-peer-dns=no
+/ip dns set servers=1.1.1.1,8.8.8.8
+/ip dns print
+```
+
+Confira: `servers` com os dois endereços, `dynamic-servers` vazio.
+
+**Passo 2 — o roteador resolve (para si).** Teste o resolvedor local:
+
+```routeros
+/resolve mikrotik.com
+```
+
+```routeros
+[vitor@lab-r1] > /resolve mikrotik.com
+159.148.147.196
+```
+
+E veja a resposta guardada no cache:
+
+```routeros
+/ip dns cache print where name~"mikrotik"
+```
+
+**Passo 3 — o roteador serve a LAN.** Ligue o modo servidor:
+
+```routeros
+/ip dns set allow-remote-requests=yes
+```
+
+Em **`lab-r2`** (que recebeu `dns-server=192.168.88.1` via DHCP no capítulo
+anterior — confira com `/ip dns print`, campo `dynamic-servers`), resolva
+um nome **através do r1**:
+
+```routeros
+/ping google.com count=3
+```
+
+O ping traduz o nome (via r1) e sai pela rota padrão (via r1) — o
+mini-provedor do laboratório está completo até a camada de nomes.
+
+**Passo 4 — sentir o cache.** Em `lab-r1`, meça a diferença entre miss e
+hit. Primeiro limpe o cache, depois resolva o mesmo nome duas vezes:
+
+```routeros
+/ip dns cache flush
+/resolve wikipedia.org
+/resolve wikipedia.org
+```
+
+A primeira consulta demora dezenas de milissegundos (foi ao upstream); a
+segunda é instantânea (cache). Veja o estoque acumulado:
+
+```routeros
+/ip dns cache print
+```
+
+**Passo 5 — DNS interno.** Crie o nome de gerência do próprio laboratório
+e use-o de `lab-r2`:
+
+```routeros
+/ip dns static add name=r1.lab address=192.168.88.1 comment="gerencia lab"
+```
+
+Em `lab-r2`:
+
+```routeros
+/ping r1.lab count=2
+```
+
+O nome interno resolve — servido pela entrada estática do r1, sem
+consultar upstream nenhum.
+
+### Verificação
+
+1. `/ip dns print` em `lab-r1`: `servers=1.1.1.1,8.8.8.8`,
+   `dynamic-servers` vazio, `allow-remote-requests=yes`;
+2. `/ping google.com` funciona em `lab-r2` (nome + rota, tudo via r1);
+3. `/ip dns cache print` em `lab-r1` acumula entradas conforme você
+   resolve nomes — e `flush` as zera;
+4. `/ping r1.lab` responde em `lab-r2` (entrada estática servida à LAN).
+
+### Desafios
+
+1. Explique a sequência de consulta quando `lab-r2` pede `r1.lab` ao r1:
+   por que a entrada estática responde mesmo com o upstream configurado? E
+   se existisse um `r1.lab` real na internet?
+2. No cache (`/ip dns cache print detail`), localize o TTL de uma entrada.
+   Resolva o mesmo nome de novo e observe o TTL. O que está acontecendo, e
+   por que o `cache-max-ttl=1w` raramente "vale" na prática?
+3. Um colega sugere: "aponte `use-peer-dns=yes` de volta e deixe também os
+   servers estáticos — redundância!". Por que essa "redundância" costuma
+   piorar o serviço em vez de melhorar?
+4. Projete (só em texto) o DNS de um provedor de 5 mil assinantes: o que
+   você anunciaria via DHCP/PPPoE aos clientes, onde ficaria o cache, e
+   que upstream escolheria? Considere: latência, privacidade dos dados de
+   consulta dos clientes e o que acontece se o upstream cair.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** A ordem do resolvedor é: **estáticas primeiro**, depois cache,
+depois upstream. `r1.lab` casa com a estática e a consulta morre ali —
+rápido e sem vazamento. Se existisse um `r1.lab` público, os clientes do
+seu roteador **nunca** o veriam: a estática o "sombreia" (é exatamente
+assim que o bloqueio por DNS funciona — e por que entradas estáticas
+erradas causam defeitos misteriosos).
+
+**2.** O TTL exibido **decresce** a cada segundo: é o prazo restante da
+resposta, herdado do TTL original definido pelo dono do domínio (minutos a
+horas, tipicamente). O `cache-max-ttl=1w` é apenas um **teto**: o RouterOS
+guarda pelo menor entre o TTL da resposta e o teto — e como quase nenhum
+domínio publica TTL de uma semana, o teto quase nunca decide.
+
+**3.** O RouterOS distribui consultas entre **todos** os servidores
+(estáticos + dinâmicos), sem preferência por qualidade: parte das
+consultas irá ao DNS da operadora mesmo com upstreams melhores
+configurados. Resultado: desempenho inconsistente (ora 5 ms, ora 80 ms) e
+diagnóstico difícil. Redundância boa é ter **dois upstreams bons** nos
+`servers` — não misturar bons e ruins.
+
+**4.** Desenho razoável: anunciar aos assinantes **o IP do próprio
+provedor** (o cache no concentrador/POP, ou um par de resolvedores
+dedicados — dois CHRs com `allow-remote-requests=yes` atrás de firewall);
+upstreams `1.1.1.1`+`8.8.8.8` (latência baixa e independência entre si) —
+ou resolvedor recursivo próprio (ex.: Unbound em servidor Linux) se a
+privacidade das consultas dos clientes for requisito, pois upstream público
+vê tudo que seus clientes resolvem. Queda de upstream: com dois
+independentes, o cache segura o grosso; recursivo próprio elimina a
+dependência. O que **não** fazer: anunciar upstream público direto aos
+clientes (perde-se o cache local e o controle).
+:::
+
+## Resumo
+
+- O RouterOS é um **encaminhador com cache**: estáticas → cache → upstream
+  (@fig-dns-fluxo); cache local faz a "internet do cliente" parecer rápida.
+- Um só dono da verdade: `servers` estáticos **ou** `use-peer-dns` — os
+  dois juntos misturam upstreams bons e ruins.
+- `allow-remote-requests=yes` liga o servidor DNS para a LAN — e abre a
+  porta 53 em **todas** as interfaces: sem firewall na WAN, você é um
+  **open resolver** servindo ataques de amplificação.
+- `/ip dns static`: DNS interno de gerência (ótimo), bloqueio de conteúdo
+  (frágil — DoH e DNS alternativo passam por cima).
+- `/resolve`, `/ip dns cache print` e `flush` são o kit de diagnóstico.
+
+No próximo capítulo, a última peça que falta ao nosso roteador de borda:
+**NAT masquerade** — como uma LAN inteira de endereços privados navega na
+internet com um único IP público.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/ip dns` (resolvedor,
+cache, entradas estáticas e tipos de registro). Sobre o funcionamento do
+DNS em profundidade (hierarquia, recursão, TTLs), @tanenbaum-redes é a
+referência. O risco de open resolvers e amplificação é documentado pelo
+CERT.br em `cert.br/docs/` (recomendações para provedores brasileiros). As
+referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
