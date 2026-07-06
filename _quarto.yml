@@ -63,7 +63,16 @@ book:
         - volumes/v04-bridge-vlans/04-switch-chip-crs.qmd
         - volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.qmd
 
-    # (Volumes 5–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
+    - part: "Volume 5 — Wireless e enlaces de rádio"
+      chapters:
+        - volumes/v05-wireless/01-fundamentos-radio-regulamentacao.qmd
+        - volumes/v05-wireless/02-wireless-routeros.qmd
+        - volumes/v05-wireless/03-ptp-nstreme-nv2.qmd
+        - volumes/v05-wireless/04-ptmp-rural.qmd
+        - volumes/v05-wireless/05-alinhamento-troubleshooting.qmd
+        - volumes/v05-wireless/06-capsman-wifi-moderno.qmd
+
+    # (Volumes 6–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
 
   appendices:
     - referencias.qmd

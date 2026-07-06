@@ -1,0 +1,332 @@
+# Fundamentos de rádio e regulamentação {#sec-fundamentos-radio}
+
+::: {.callout-note}
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Falar a língua do rádio: **dBm**, **dBi** e **dB** — e fazer as contas
+  de cabeça que todo projetista de enlace faz;
+- Comparar as bandas do provedor — **2,4 GHz**, **5 GHz** e **60 GHz** —
+  em alcance, capacidade e interferência;
+- Explicar visada e **zona de Fresnel**: por que "estar vendo a torre"
+  não basta;
+- Calcular um **link budget** completo: potência, ganhos, perda de
+  percurso e margem;
+- Situar a operação dentro das regras da **Anatel**: radiação restrita,
+  limites de potência EIRP e as responsabilidades do provedor.
+:::
+
+## A língua dos decibéis
+
+Rádio se projeta em **decibéis**, e há uma razão prática: as grandezas
+envolvidas variam por fatores de bilhões (miliwatts transmitidos, femtowatts
+recebidos), e o decibel transforma multiplicação em **soma**. Três
+unidades, três papéis:
+
+- **dBm** — potência absoluta, referida a 1 mW: $P_{\text{dBm}} = 10\log_{10}(P/1\,\text{mW})$.
+  Um rádio que transmite 25 dBm emite ~316 mW; um sinal recebido de
+  −65 dBm são ~0,3 nW;
+- **dBi** — ganho de antena, relativo à antena isotrópica (que irradia
+  igual em todas as direções). A grade de um LHG tem ~24,5 dBi: concentra
+  a energia num feixe estreito;
+- **dB** — razões e perdas: cabo, conectores, atenuação no caminho.
+
+E as duas contas de cabeça que valem o capítulo:
+
+1. **+3 dB dobra, −3 dB corta pela metade** (potência);
+2. **+10 dB é 10×** — logo 20 dBm = 100 mW, 30 dBm = 1 W.
+
+O que torna tudo somável: **potência recebida = potência transmitida +
+ganhos − perdas**. Essa soma tem nome — *link budget* — e fecharemos o
+capítulo com ela.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+Pense no enlace como uma conversa num campo aberto: dBm é o volume da
+voz, dBi é fazer concha com as mãos (a mesma voz, concentrada numa
+direção), e a perda de percurso é a distância engolindo o som. O link
+budget responde: "gritando a X dBm, com as mãos em concha de Y dBi, a
+voz chega ao ouvido do outro lado acima do burburinho?"
+:::
+
+## As bandas do provedor
+
+| | 2,4 GHz | 5 GHz | 60 GHz |
+|:--|:--|:--|:--|
+| Alcance típico | maior | grande | curto (< 2–3 km) |
+| Largura de canais | 3 canais úteis (20 MHz) | dezenas de canais (20–80 MHz) | canais gigantes (2 GHz) |
+| Capacidade | baixa | média/alta | multi-gigabit |
+| Interferência | **saturada** | moderada (e crescente) | quase nula |
+| Chuva/obstáculos | atravessa vegetação leve | sensível a obstáculos | bloqueada por quase tudo (e chuva forte atenua) |
+| Papel no provedor | legado, IoT, última opção | **PtP e PtMP rural** — o cavalo de batalha | PtP curto de alta capacidade (Wire, @sec-hardware-linhas) |
+
+: As três bandas na prática do provedor {#tbl-bandas}
+
+A física por trás da tabela: quanto **maior a frequência**, mais o sinal
+se comporta como luz — feixes mais estreitos e mais capacidade (canais
+largos), porém menos capacidade de contornar obstáculos e mais atenuação.
+Os 2,4 GHz contornam árvores e chegam longe — e justamente por isso todo
+mundo os usa, e a banda virou um mercado de peixe de interferência. Os
+5 GHz equilibram alcance e espectro limpo o suficiente — são a banda do
+PtMP rural brasileiro. Os 60 GHz são um laser de dados: multi-gigabit
+entre dois prédios, inúteis atrás de uma folha de bananeira.
+
+## Visada e a zona de Fresnel
+
+"Da torre eu vejo a casa do cliente" — e o enlace não fecha. O erro está
+em pensar o rádio como um raio de luz fino: a energia viaja num
+**volume** elíptico ao redor da linha reta, a **zona de Fresnel**
+(@fig-fresnel). Obstáculos que invadem esse volume — mesmo sem tocar a
+linha de visada — roubam sinal.
+
+::: {#fig-fresnel}
+
+```{.tikz}
+%%| filename: fig-fresnel
+%%| alt: Diagrama da zona de Fresnel entre duas torres. Duas torres nas extremidades, com uma linha reta de visada ligando os rádios. Ao redor da linha, uma elipse alongada representa a zona de Fresnel, mais larga no meio do caminho. No centro, indicado o raio máximo r. Abaixo, no meio do enlace, uma árvore invade a parte inferior da elipse sem tocar a linha de visada, com a anotação: obstáculo dentro da zona rouba sinal mesmo sem bloquear a visada.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  % Torres
+  \draw[very thick, manualgray] (0,0) -- (0,18mm);
+  \draw[very thick, manualgray] (110mm,0) -- (110mm,18mm);
+  \node[rotulo, below] at (0,0) {torre A};
+  \node[rotulo, below] at (110mm,0) {torre B};
+
+  % Linha de visada
+  \draw[thick, manualblue] (0,18mm) -- (110mm,18mm)
+    node[midway, above, rotulo, yshift=6mm] {};
+
+  % Elipse de Fresnel
+  \draw[very thick, manualblue!60, fill=manualblue!6]
+    (55mm,18mm) ellipse (55mm and 9mm);
+  \draw[thick, manualblue] (0,18mm) -- (110mm,18mm);
+  \node[rotulo, text=manualblue] at (55mm,23mm) {linha de visada};
+
+  % Raio r no centro
+  \draw[very thick, -stealth, manualred] (55mm,18mm) -- (55mm,9mm)
+    node[midway, right, font=\sffamily\small\bfseries, text=manualred] {$r$};
+
+  % Árvore invasora
+  \draw[very thick, manualgreen!70!black] (68mm,0) -- (68mm,8mm);
+  \draw[very thick, manualgreen!70!black, fill=manualgreen!30]
+    (68mm,10mm) circle (4.5mm);
+  \node[rotulo, text width=44mm, align=center] at (68mm,-6mm)
+    {obstáculo dentro da zona\\rouba sinal mesmo sem bloquear a visada};
+\end{tikzpicture}
+```
+
+A zona de Fresnel: o sinal viaja num volume elíptico — e é esse volume,
+não a linha fina, que precisa estar livre.
+
+:::
+
+O raio máximo da primeira zona, no meio de um enlace de comprimento $d$
+(km) na frequência $f$ (GHz):
+
+$$r \approx 8{,}66\sqrt{\frac{d}{f}}\ \text{metros}$$
+
+Num enlace de 10 km em 5,8 GHz: $r \approx 8{,}66\sqrt{10/5{,}8} \approx
+11{,}4$ m. Onze metros de folga **no meio do caminho** — é por isso que
+torres têm a altura que têm, e por que o enlace que fechou em agosto cai
+em dezembro, quando o eucalipto do vizinho cresceu. Regra de projeto:
+**pelo menos 60% da primeira zona livre** (no exemplo, ~7 m).
+
+## O link budget: a conta que fecha enlaces
+
+A perda de percurso no espaço livre (FSPL) também tem fórmula amigável em
+dB, com $d$ em km e $f$ em GHz:
+
+$$\text{FSPL} \approx 92{,}45 + 20\log_{10}(d) + 20\log_{10}(f)\ \text{dB}$$
+
+E o link budget é a soma completa, de ponta a ponta:
+
+$$P_{rx} = P_{tx} + G_{tx} - \text{FSPL} + G_{rx}$$
+
+Exemplo real — enlace PtP de 10 km em 5,8 GHz com dois LHG 5 (24,5 dBi;
+transmissor a 20 dBm):
+
+- FSPL: $92{,}45 + 20\log_{10}(10) + 20\log_{10}(5{,}8) \approx 92{,}45 +
+  20 + 15{,}3 = 127{,}8$ dB;
+- $P_{rx} = 20 + 24{,}5 - 127{,}8 + 24{,}5 = -58{,}8$ dBm.
+
+Esse número se compara com a **sensibilidade** do rádio na modulação
+desejada (a ficha técnica diz: p.ex., −80 dBm para MCS alto) e nasce a
+**margem** — aqui, ~21 dB. A regra de campo: **margem mínima de 15–20 dB**
+para o enlace sobreviver a chuva, desvanecimento e ao eucalipto que
+cresce. Menos que 10 dB de margem no papel = enlace que dará chamado.
+
+## Anatel: as regras do jogo
+
+As bandas da @tbl-bandas são de **radiação restrita** (Resolução Anatel
+nº 680/2017, herdeira da 506): não exigem licença **por estação** e podem
+ser usadas em caráter secundário — sem direito a proteção contra
+interferência e sem poder causar interferência em serviços primários. As
+letras que importam ao provedor:
+
+- **Limites de EIRP** — a potência efetivamente irradiada
+  ($P_{tx} + G_{ant}$) tem tetos por banda e aplicação; em 5,8 GHz
+  ponto-a-ponto há mais folga (o feixe estreito não incomoda os
+  vizinhos), em 2,4 GHz os limites são apertados. O detalhe que muda
+  projeto: antena de mais ganho pode exigir **reduzir** a potência do
+  rádio para respeitar o teto;
+- **DFS/radar em parte dos 5 GHz** — faixas compartilhadas com radares
+  meteorológicos exigem detecção e desvio automáticos (o RouterOS
+  implementa); ignorar não é opção;
+- **SCM** — o provedor em si opera sob outorga de Serviço de Comunicação
+  Multimídia (dispensada abaixo de 5 mil assinantes, mas o registro tem
+  vantagens) — a camada jurídica acima do rádio;
+- **Homologação** — os equipamentos precisam ser homologados pela Anatel
+  (os MikroTik vendidos no Brasil são; o selo importa em fiscalização).
+
+::: {.callout-warning}
+Operar acima dos limites de EIRP — o "destravar a potência" folclórico —
+é infração sancionável pela Anatel, além de má engenharia: potência a
+mais no seu rádio é interferência nos vizinhos e no seu próprio setor
+(você grita mais, e ouve pior os clientes distantes). Enlace bom se faz
+com **antena, altura e alinhamento**, não com watt.
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Enlace de rádio não se "tenta" — se **calcula**: $P_{rx} = P_{tx} +
+G_{tx} - \text{FSPL} + G_{rx}$, comparado à sensibilidade, com 15–20 dB
+de margem e 60% da primeira zona de Fresnel livre. A conta cabe num
+guardanapo, respeita os tetos da Anatel e prevê no papel o que o campo
+confirmaria a 40 km de distância — a ordem certa é essa.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Papel, calculadora — e mapa. Este é o laboratório de **projeto**: o CHR
+não tem rádio, e as contas deste capítulo são exatamente o que se faz
+antes de subir em qualquer torre. (Ferramentas de mapa com perfil de
+elevação — como o modo *caminho* do Google Earth — ajudam nos desafios.)
+
+### Comandos passo a passo
+
+Sem comandos hoje — passos de cálculo. Refaça cada um **antes** de olhar
+o gabarito ao lado:
+
+**Passo 1 — traduzir potências.** Complete de cabeça: 23 dBm = ? mW
+(gabarito: ~200 mW — 20 dBm são 100 mW, +3 dB dobra); 316 mW = ? dBm
+(25 dBm); um cabo com 2 dB de perda deixa passar que fração? (~63%).
+
+**Passo 2 — Fresnel.** Enlace de 6 km em 5,8 GHz: raio no meio do
+caminho? ($r = 8{,}66\sqrt{6/5{,}8} \approx 8{,}8$ m; 60% ≈ 5,3 m de
+folga necessária.)
+
+**Passo 3 — FSPL.** O mesmo enlace: perda de percurso?
+($92{,}45 + 20\log_{10}6 + 20\log_{10}5{,}8 \approx 92{,}45 + 15{,}6 +
+15{,}3 = 123{,}3$ dB.)
+
+**Passo 4 — o budget completo.** Dois SXT SA5 *não* — um enlace PtP com
+duas LHG 5 (24,5 dBi), rádios a 20 dBm, 6 km, 5,8 GHz:
+$P_{rx} = 20 + 24{,}5 - 123{,}3 + 24{,}5 = -54{,}3$ dBm. Com
+sensibilidade de −80 dBm na modulação alvo: **margem ≈ 25,7 dB** —
+enlace confortável.
+
+**Passo 5 — o mesmo enlace com equipamento errado.** Refaça com duas
+antenas de 16 dBi (SXT): $P_{rx} = 20 + 16 - 123{,}3 + 16 = -71{,}3$ dBm
+— margem de ~8,7 dB. No papel "funciona"; na primeira chuva com
+desvanecimento, cai. É a diferença, em números, entre o SXT e o LHG do
+desafio do @sec-hardware-linhas.
+
+### Verificação
+
+1. Suas contas dos Passos 1–4 batem com os gabaritos (erros de ±1 dB são
+   arredondamento; erros de ±10 dB são conceito — refaça);
+2. Você sabe justificar a escolha LHG × SXT do Passo 5 **com a margem**,
+   não com achismo;
+3. Você sabe dizer, para seu projeto, o teto de EIRP aplicável — e o que
+   fazer quando antena + potência o excedem.
+
+### Desafios
+
+1. Um enlace de 15 km em 5,8 GHz precisa fechar com margem ≥ 20 dB
+   usando rádios de 25 dBm e sensibilidade −80 dBm. Que ganho mínimo
+   (idêntico nas duas pontas) as antenas precisam ter? Consulte a
+   @tbl-bandas e o catálogo mental do @sec-hardware-linhas: que produto
+   você especificaria?
+2. O mesmo enlace do desafio 1 passa sobre um vale, e no meio do caminho
+   há uma mata cujas copas chegam a 18 m. As torres têm 30 m e o terreno
+   é plano. A primeira zona de Fresnel está suficientemente livre?
+3. Um concorrente instalou um setor de 2,4 GHz "no talo" (potência
+   máxima + antena de alto ganho, EIRP acima do permitido) apontado para
+   a sua área. Liste: (a) o efeito técnico na rede **dele**; (b) o efeito
+   na sua; (c) as suas opções técnicas e regulatórias.
+4. Por que um enlace de 60 GHz de 1,5 km pode ser melhor **e** pior que
+   um de 5,8 GHz no mesmo caminho? Dê duas vantagens e dois riscos, e o
+   critério de decisão.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** FSPL(15 km; 5,8 GHz) = $92{,}45 + 23{,}5 + 15{,}3 = 131{,}3$ dB.
+Precisamos de $P_{rx} \ge -60$ dBm (−80 + 20 de margem). Então
+$G_{tx}+G_{rx} \ge -60 - 25 + 131{,}3 = 46{,}3$ dB → **≥ 23,2 dBi por
+antena**. Especificação natural: **LHG 5 XL** (~27 dBi) — folga para
+chuva e envelhecimento; um LHG 5 comum (24,5 dBi) fecharia justo. E
+atenção ao EIRP: 25 dBm + 27 dBi = 52 dBm — confira o teto da faixa
+PtP antes de cravar a potência.
+
+**2.** $r = 8{,}66\sqrt{15/5{,}8} \approx 13{,}9$ m; 60% ≈ 8,4 m. A
+linha de visada corre a 30 m; o limite inferior aceitável da zona fica a
+$30 - 8{,}4 = 21{,}6$ m. As copas a 18 m **passam** — mas com 3,6 m de
+folga apenas: mata cresce (1–2 m/ano em eucalipto!) e o meio do vão é
+onde a elipse é máxima. Veredicto: fecha hoje, com plano de revisita — ou
+torres mais altas já.
+
+**3.** (a) Na rede dele: autointerferência — gritando, ele não ouve os
+próprios clientes distantes (enlace é via de mão dupla; EIRP alto só na
+torre não melhora o uplink do cliente); (b) na sua: piso de ruído mais
+alto em 2,4 GHz, CCQ e MCS caindo nos setores apontados; (c) técnicas:
+migrar o que puder para 5 GHz (@tbl-bandas), canais mais afastados,
+antenas mais diretivas, polarização; regulatória: radiação restrita não
+dá direito a proteção, **mas** operação fora dos limites é infração —
+medição documentada e denúncia à Anatel é caminho legítimo (e comum)
+entre provedores.
+
+**4.** Vantagens do 60 GHz: capacidade multi-gigabit (canais de 2 GHz) e
+espectro limpo (sem vizinhos, feixe a laser). Riscos: atenuação por
+chuva forte (enlaces > 1 km podem cair em tempestade) e sensibilidade
+total a obstáculos (um galho novo = enlace morto). Critério: 60 GHz
+quando a distância é curta, a visada é estéril (urbana, entre prédios) e
+a demanda de banda justifica — idealmente com backup em 5 GHz (os Wire
+AP fazem isso sozinhos); 5,8 GHz quando o caminho é rural, verde e
+longo.
+:::
+
+## Resumo
+
+- Decibéis: **dBm** (potência), **dBi** (ganho), **dB** (perdas); +3 dB
+  dobra, +10 dB é 10× — e tudo vira soma.
+- Bandas (@tbl-bandas): 2,4 GHz alcança e está saturada; **5 GHz é o
+  cavalo de batalha** do provedor rural; 60 GHz é um laser multi-gigabit
+  de curta distância.
+- Visada não basta: **zona de Fresnel** ($r \approx 8{,}66\sqrt{d/f}$ m)
+  com **60% livre** — e mata cresce.
+- **Link budget**: $P_{rx} = P_{tx} + G_{tx} - \text{FSPL} + G_{rx}$,
+  FSPL $\approx 92{,}45 + 20\log d + 20\log f$; margem alvo **15–20 dB**.
+- Anatel: radiação restrita = sem proteção e com **tetos de EIRP**; DFS
+  em parte dos 5 GHz; equipamentos homologados; SCM como camada de
+  outorga. Enlace se melhora com antena e altura, não com watt ilegal.
+
+No próximo capítulo, o rádio entra no RouterOS: modos de interface,
+registration table, segurança — o wireless como o sistema o vê.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] traz as fichas com sensibilidade
+por modulação de cada rádio (essenciais ao link budget). A Resolução
+Anatel nº 680/2017 e os atos de requisitos técnicos correlatos definem
+os limites de radiação restrita no Brasil — leia-os na fonte
+(`anatel.gov.br`). @tanenbaum-redes cobre a física de transmissão sem
+fio. As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
