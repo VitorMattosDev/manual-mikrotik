@@ -63,7 +63,7 @@ Pré-requisitos: Vol. 2.*
 - [x] `volumes/v03-firewall/04-forward-address-lists.qmd` — Filter na chain forward e address-lists (estáticas e dinâmicas, timeout).
 - [x] `volumes/v03-firewall/05-dstnat-port-forwarding.qmd` — dstnat e port forwarding: publicando serviços, hairpin NAT.
 - [x] `volumes/v03-firewall/06-mangle-raw.qmd` — Mangle (marcação de pacote/conexão/rota) e RAW (notrack, drop antes do conntrack).
-- [ ] `volumes/v03-firewall/07-hardening-completo.qmd` — Hardening completo do roteador de provedor: checklist consolidado.
+- [x] `volumes/v03-firewall/07-hardening-completo.qmd` — Hardening completo do roteador de provedor: checklist consolidado.
 
 ## Volume 4 — Bridge, switching e VLANs
 *Objetivo: segmentar a rede em camada 2 com desempenho de hardware.

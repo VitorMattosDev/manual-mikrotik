@@ -1,7 +1,350 @@
-# Hardening completo
+# Hardening completo {#sec-hardening}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Este capítulo consolida o volume. Ao final, você será capaz de:
+
+- Enxergar a segurança do roteador como **camadas independentes** — da
+  superfície de serviços ao RAW — e saber o que mora em cada uma;
+- Montar e aplicar o **firewall-base** do provedor: o `.rsc` comentado que
+  todo equipamento do parque recebe;
+- Acrescentar as peças finais: defesa de força bruta em cascata, descarte
+  de bogons, FastTrack (e seu preço) e logging do que importa;
+- Auditar um roteador em produção com um **checklist** repetível;
+- Manter o firewall-base **vivo**: versionado, auditado e aplicado ao
+  parque inteiro.
 :::
+
+## Defesa em camadas: o mapa do volume
+
+Cada capítulo deste volume construiu uma camada; o hardening é
+reconhecê-las como um sistema (@fig-camadas):
+
+::: {#fig-camadas}
+
+```{.tikz}
+%%| filename: fig-camadas
+%%| alt: Diagrama de camadas concêntricas de defesa, da mais externa para a mais interna: RAW, descartando floods antes do estado; filter input com default deny, protegendo o próprio roteador; serviços e usuários, com superfície mínima e allowed-address; e no centro o RouterOS. Ao lado, uma coluna separada representa o filter forward, protegendo e policiando o tráfego dos clientes que atravessa o roteador.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  % Camadas concêntricas
+  \draw[very thick, manualred, fill=manualred!6] (0,0) ellipse (44mm and 26mm);
+  \draw[very thick, manualyellow, fill=manualyellow!8] (0,0) ellipse (33mm and 19mm);
+  \draw[very thick, manualblue, fill=manualblue!8] (0,0) ellipse (22mm and 12.5mm);
+  \draw[very thick, manualgreen, fill=manualgreen!10] (0,0) ellipse (11mm and 6.5mm);
+
+  \node[font=\sffamily\small\bfseries, text=manualgreen] at (0,0) {RouterOS};
+  \node[font=\sffamily\scriptsize\bfseries, text=manualblue] at (0,9.5mm) {serviços + usuários};
+  \node[font=\sffamily\scriptsize\bfseries, text=manualyellow!60!black] at (0,15.7mm) {filter input (default deny)};
+  \node[font=\sffamily\scriptsize\bfseries, text=manualred] at (0,22.5mm) {RAW (antes do estado)};
+
+  % Forward à parte
+  \node[draw=manualblue, very thick, fill=manualblue!8, rounded corners=3pt,
+        minimum height=14mm, text width=26mm, align=center,
+        font=\sffamily\scriptsize\bfseries] (fwd) at (62mm,0)
+        {filter forward\\ \small(protege e policia\\os clientes)};
+  \node[rotulo, below=1mm of fwd] {o tráfego que atravessa};
+\end{tikzpicture}
+```
+
+As camadas do hardening: cascas concêntricas protegem o roteador; o
+forward, ao lado, cuida do que atravessa.
+
+:::
+
+A propriedade que importa: as camadas são **independentes**. O
+`allowed-address` do serviço segura mesmo se o firewall for esvaziado; o
+input segura mesmo se um serviço for habilitado por engano; o RAW segura
+a CPU mesmo com o input sob flood. Segurança de provedor não é uma
+muralha alta — são várias muralhas medíocres que falham em momentos
+diferentes.
+
+## As peças finais
+
+Quatro adições transformam o firewall dos capítulos anteriores no
+firewall-base definitivo.
+
+**1. Bogons na fronteira.** Pacotes chegando da WAN com origem privada
+(RFC 1918), loopback ou reservada são, por definição, forjados ou
+vazados — nenhum deles tem o que fazer batendo na sua borda:
+
+```routeros
+/ip firewall address-list
+add list=bogons address=10.0.0.0/8 comment="RFC1918"
+add list=bogons address=172.16.0.0/12 comment="RFC1918"
+add list=bogons address=192.168.0.0/16 comment="RFC1918"
+add list=bogons address=127.0.0.0/8 comment="loopback"
+add list=bogons address=100.64.0.0/10 comment="CGNAT space"
+add list=bogons address=169.254.0.0/16 comment="link-local"
+
+/ip firewall raw add chain=prerouting in-interface-list=WAN src-address-list=bogons action=drop comment="bogons: lixo de fronteira"
+```
+
+No RAW, pela lição do @sec-mangle-raw: lixo certo morre barato. (Atenção
+do mundo real: se a sua "WAN" recebe endereço de CGNAT da operadora —
+`100.64.0.0/10` — ajuste a lista; o laboratório com NAT do VirtualBox
+usa `10.0.2.x`, e o laboratório tratará disso.)
+
+**2. Força bruta em cascata.** O desafio do @sec-forward-lists, agora
+oficial — a escada de listas dinâmicas que pega quem insiste no SSH da
+WAN sem punir o técnico que errou a senha uma vez:
+
+```routeros
+/ip firewall filter
+add chain=input in-interface-list=WAN protocol=tcp dst-port=22 connection-state=new src-address-list=ssh-s3 action=add-src-to-address-list address-list=ssh-bloqueado address-list-timeout=1d comment="bruta: 4a tentativa = 1 dia"
+add chain=input in-interface-list=WAN protocol=tcp dst-port=22 connection-state=new src-address-list=ssh-s2 action=add-src-to-address-list address-list=ssh-s3 address-list-timeout=1m comment="bruta: 3a tentativa"
+add chain=input in-interface-list=WAN protocol=tcp dst-port=22 connection-state=new src-address-list=ssh-s1 action=add-src-to-address-list address-list=ssh-s2 address-list-timeout=1m comment="bruta: 2a tentativa"
+add chain=input in-interface-list=WAN protocol=tcp dst-port=22 connection-state=new action=add-src-to-address-list address-list=ssh-s1 address-list-timeout=1m comment="bruta: 1a tentativa"
+add chain=input in-interface-list=WAN src-address-list=ssh-bloqueado action=drop comment="bruta: drop dos condenados"
+```
+
+(Repare a ordem invertida — a regra da 4ª tentativa vem **primeiro**,
+senão toda conexão pararia no estágio 1. E lembre: no nosso desenho, SSH
+da WAN nem deveria existir — a cascata é a rede de segurança para o dia
+em que alguém abrir uma exceção.)
+
+**3. FastTrack — desempenho com letras miúdas.** A regra que faz um hEX
+de R$ 300 rotear como gente grande:
+
+```routeros
+/ip firewall filter add chain=forward action=fasttrack-connection hw-offload=yes connection-state=established,related comment="fasttrack: atalho para conversas aprovadas" place-before=[find chain=forward comment~"conversas em andamento"]
+```
+
+`fasttrack-connection` marca a conexão para pular quase toda a esteira
+da @fig-pipeline nos pacotes seguintes — multiplicando o throughput. O
+preço: pacotes fastrackeados **não passam** por mangle, filas e pela
+maior parte do filter. Num roteador de borda simples, ligue; num
+concentrador com QoS (Volume 7), a decisão muda — as filas precisam ver
+os pacotes. A regra convive com a gêmea `accept` logo abaixo (nem toda
+conexão é fastrackeável; a accept apanha o resto).
+
+**4. Logar o que importa.** Log de tudo é ruído; log de nada é cegueira.
+O equilíbrio do provedor: logar **negações interessantes** (tentativas
+na gerência, publicados) e **mudanças de listas dinâmicas** — os
+add-to-list já contam a história dos ataques em
+`/ip firewall address-list print`. Uma regra exemplar:
+
+```routeros
+/ip firewall filter add chain=input in-interface-list=WAN protocol=tcp dst-port=8291 action=drop log=yes log-prefix="WINBOX-WAN: " comment="winbox da WAN: drop logado" place-before=[find comment="drop all"]
+```
+
+Se um dia esse prefixo aparecer em rajada no log, você saberá que estão
+procurando por você — antes de acharem.
+
+## O checklist consolidado
+
+O volume inteiro numa tabela — a auditoria repetível de qualquer
+roteador do parque:
+
+| Camada | Item | Referência |
+|:-------|:-----|:-----------|
+| Superfície | serviços mínimos + `allowed-address`; `admin` off; usuários nominais | @sec-primeiro-acesso |
+| Superfície | discovery e MAC-server só na `gerencia` | @sec-primeiro-acesso |
+| Listas | `WAN`/`LAN`/`gerencia` refletem a topologia real | @sec-protegendo-roteador |
+| Input | esqueleto stateful + gerência + ICMP c/ teto + serviços da LAN + **drop all** | @sec-protegendo-roteador |
+| Input | cascata anti força bruta nas portas de gerência | este capítulo |
+| Forward | esqueleto + antispoofing + porta 25 + gerência intocável + drop de publicações órfãs | @sec-forward-lists |
+| Forward | `connection-nat-state=dstnat` para publicados; FastTrack conforme o papel | @sec-dstnat, este |
+| RAW | bogons da WAN; despacho de flood; notrack só onde provado | @sec-mangle-raw, este |
+| Operação | export versionado; contadores/logs revisados; teste de acesso pós-mudança | @sec-backup-export |
+
+: Checklist de hardening do roteador de provedor {#tbl-hardening}
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Hardening não é um evento — é um **padrão versionado**. O produto deste
+volume é um `firewall-base.rsc` comentado, guardado em repositório, que
+todo equipamento novo recebe (Netinstall + configure script,
+@sec-netinstall) e contra o qual todo equipamento antigo é auditado
+(@tbl-hardening). Segurança que depende de memória humana regride;
+segurança que mora num arquivo versionado acumula.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+`lab-r1` com tudo do volume aplicado (é o estado em que o
+@sec-mangle-raw o deixou) e `lab-r2` na LAN. O trabalho final: completar,
+testar como um auditor e **exportar o padrão**.
+
+### Comandos passo a passo
+
+**Passo 1 — bogons.** Aplique a lista e a regra RAW da seção anterior —
+com **uma adaptação de laboratório**: a nossa "WAN" do VirtualBox usa
+`10.0.2.x`, que está dentro de `10.0.0.0/8`... incluir essa linha
+bloquearia o gateway do laboratório. Aplique a lista **sem** a primeira
+entrada (e anote no comentário o porquê — auditoria futura agradece):
+
+```routeros
+/ip firewall address-list
+add list=bogons address=172.16.0.0/12 comment="RFC1918"
+add list=bogons address=192.168.0.0/16 comment="RFC1918"
+add list=bogons address=127.0.0.0/8 comment="loopback"
+add list=bogons address=169.254.0.0/16 comment="link-local"
+add list=bogons address=100.64.0.0/10 comment="CGNAT space"
+/ip firewall raw add chain=prerouting in-interface-list=WAN src-address-list=bogons action=drop comment="bogons (SEM 10/8: lab usa NAT VirtualBox)"
+```
+
+**Passo 2 — cascata anti-bruta.** Aplique as cinco regras da seção
+anterior (copie do texto). Em seguida, o teste: a nossa WAN não recebe
+conexões externas, então simule **pela LAN** trocando temporariamente o
+matcher da 1ª tentativa (`in-interface-list=LAN`)... ou melhor: entenda o
+mecanismo com o desafio 4 do @sec-forward-lists já feito e apenas
+confira a sintaxe com `print`. (Auditor também sabe quando **não** repetir
+um teste destrutivo.)
+
+**Passo 3 — FastTrack.** No nosso roteador de borda, sem filas por
+enquanto — liga:
+
+```routeros
+/ip firewall filter add chain=forward action=fasttrack-connection hw-offload=yes connection-state=established,related comment="fasttrack" place-before=[find chain=forward comment="fwd: conversas em andamento"]
+```
+
+Em `lab-r2`, gere tráfego (`/tool fetch url=https://mikrotik.com
+keep-result=no`) e veja as conexões marcadas em `lab-r1`:
+
+```routeros
+/ip firewall connection print where fasttrack
+```
+
+A flag `F` nas conexões: o atalho está ativo.
+
+**Passo 4 — o log-sentinela.** A regra do WinBox-da-WAN logado (copie da
+seção). Confira a posição: acima do drop all, abaixo dos accepts.
+
+**Passo 5 — auditoria completa.** Agora, vista o chapéu de auditor e
+percorra a @tbl-hardening item a item contra o roteador real:
+
+```routeros
+/ip service print
+/user print
+/interface list member print
+/ip firewall filter print where chain=input
+/ip firewall filter print where chain=forward
+/ip firewall raw print
+/ip firewall address-list print
+```
+
+Cada linha do checklist deve apontar para algo que você **vê** na saída.
+Achou divergência? Corrija agora — é exatamente para isso que a
+auditoria existe.
+
+**Passo 6 — a bateria de fumaça.** O teste funcional de sempre, agora
+completo: sessão de gerência viva; `lab-r2` navega (IP e nome); DHCP
+renova; SSH da LAN ao r1 morre; SMTP 25 morre com aviso; gerência
+inalcançável do r2; ping ao r1 funciona (com teto).
+
+**Passo 7 — o padrão nasce.** Exporte e guarde:
+
+```routeros
+/export file=firewall-base-v1
+/system backup save name=hardening-completo
+```
+
+Baixe os dois (`scp`) e — hábito novo — **versione**: o
+`firewall-base-v1.rsc` é o primeiro commit do padrão de segurança do seu
+provedor fictício. Todo capítulo futuro que mexer em firewall parte
+dele.
+
+E crie o snapshot **`hardening-completo`** nas VMs `lab-r1` e `lab-r2`:
+os próximos volumes partem daqui.
+
+### Verificação
+
+1. Auditoria do Passo 5 sem divergências (ou com as correções feitas e
+   anotadas);
+2. Bateria de fumaça do Passo 6: 7 de 7;
+3. Conexões com flag `F` (FastTrack vivo) e bogons na RAW com o
+   comentário de adaptação do laboratório;
+4. `firewall-base-v1.rsc` fora do equipamento e snapshot
+   `hardening-completo` criado.
+
+### Desafios
+
+1. A cascata anti-bruta tem um falso positivo clássico: o próprio técnico
+   com automação (Ansible, scripts) abrindo várias conexões SSH legítimas
+   em sequência. Proponha duas mitigações que não desliguem a defesa.
+2. Com FastTrack ligado, o par classifica-e-etiqueta do @sec-mangle-raw
+   voltaria a marcar todos os pacotes de uma conexão? Teste mentalmente
+   (ou no laboratório) e explique — e diga qual regra teria que mudar
+   para um futuro QoS funcionar.
+3. Ordene os itens do checklist (@tbl-hardening) do **maior para o menor
+   impacto** se estiverem errados, na sua avaliação — e defenda as duas
+   primeiras posições.
+4. Seu parque tem 300 equipamentos com firewalls "cada um de um jeito".
+   Desenhe (em texto) o plano de convergência para o firewall-base em 90
+   dias sem derrubar ninguém: fases, ferramentas deste livro e critérios
+   de sucesso.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) **Isentar a origem certa**: os accepts da gerência (lista
+`gerencia`/address list dos IPs do NOC) ficam **acima** da cascata — quem
+é de casa nunca entra na contagem; (b) **contar só falhas de fato**:
+subir o limiar (estágios com timeout maior, ou contar a partir da 2ª
+conexão em janela curta) e/ou usar portas distintas para automação
+(SSH de gestão em porta/endereço dedicados de gerência, fora da WAN). A
+defesa é para a fronteira; automação não deveria vir de lá.
+
+**2.** Não: pacotes fastrackeados **pulam o mangle** — só o primeiro
+punhado de pacotes de cada conexão (antes de a marca FastTrack pegar)
+seria etiquetado. Filas veriam quase nada. Para QoS funcionar, a regra de
+FastTrack precisa **excluir** o tráfego que se quer enfileirar — p.ex.
+`connection-mark=no-mark` (fastrackear só o não classificado) ou remover
+o FastTrack no concentrador. É a tensão desempenho × visibilidade do
+Volume 7.
+
+**3.** Resposta modelo (defensável, não única): 1º **input sem drop
+all** — o roteador inteiro exposto é comprometimento de infraestrutura,
+raio de dano máximo (atacante dentro = todas as outras camadas viram
+decoração); 2º **superfície de serviços aberta** (senha fraca no admin +
+WinBox na WAN é a dupla que mais derruba provedor no mundo real — explora
+sem "furar" firewall nenhum, só entrando pela porta). Os demais causam
+danos graves porém mais contidos (spoofing/25 = reputação; bogons/RAW =
+resiliência; logs = tempo de detecção).
+
+**4.** Fases: (1) **Inventário** (semanas 1–2): coletar `/export` de
+todos (script/API — Volume 12), diffs contra o base, classificar por
+distância; (2) **Base mínima sem risco** (semanas 3–6): aplicar em massa
+o que não muda comportamento (usuários, serviços, listas, logs) via
+script testado em laboratório-espelho; (3) **Firewall em ensaio**
+(semanas 7–10): input/forward novos com drop all em modo `log` por 1
+semana por lote de equipamentos, auditar logs, então apertar — lotes
+pequenos, horário de manutenção, Safe Mode/backup antes de cada um; (4)
+**Selo** (semanas 11–13): auditoria da @tbl-hardening por amostragem +
+alarme de desvio (export diário comparado ao base). Sucesso: 100% dos
+equipamentos com diff vazio contra o base, zero chamados atribuíveis à
+migração.
+:::
+
+## Resumo
+
+- Segurança é **camadas independentes** (@fig-camadas): superfície →
+  input → forward → RAW — cada uma segura quando as outras falham.
+- As peças finais: **bogons** no RAW, **cascata anti-bruta** (ordem
+  invertida!), **FastTrack** (desempenho ao preço da visibilidade — QoS
+  exigirá exceções) e **logs-sentinela** com prefixo.
+- O produto do volume é um **`firewall-base.rsc`** comentado e
+  versionado — aplicado a todo equipamento novo, auditado contra todo
+  equipamento antigo (@tbl-hardening).
+- Auditoria é ver cada item do checklist na saída real do equipamento —
+  e a bateria de fumaça funcional fecha toda mudança.
+
+Fecha-se a Fase 1 do trivium do firewall... e abre-se o Volume 4: até
+aqui, roteamos entre redes; agora vamos **segmentar dentro** delas —
+bridge, VLANs e o switching em hardware dos CRS.
+
+## Bibliografia do capítulo {.unnumbered}
+
+As páginas *Securing your router*, *Building Advanced Firewall* e *DDoS
+Protection* da documentação oficial [@mikrotik-docs] são as fontes dos
+padrões consolidados aqui — vale lê-las na íntegra agora que você tem o
+volume todo como contexto. O CERT.br publica recomendações de segurança
+para provedores brasileiros (`cert.br/docs/`). As referências completas,
+em ABNT, estão no apêndice [Referências](../../referencias.qmd).
