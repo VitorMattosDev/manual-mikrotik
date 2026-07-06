@@ -36,6 +36,10 @@ jobs:
           # senão o render falha com "pdflatex/dvisvgm not found" — a extensão
           # TikZ chama pdflatex/dvisvgm PELO NOME.
           echo "$BIN" >> "$GITHUB_PATH"
+          # O tlmgr recém-instalado pode estar mais velho que o repositório
+          # remoto; nesse caso ele ABORTA (exit 255) qualquer install até
+          # rodar o self-update.
+          tlmgr update --self
           tlmgr install standalone pgf pgfplots dvisvgm xcolor amsmath amsfonts
 
       # SEM ISTO o mermaid (mapa de pré-requisitos do index.qmd) trava o render
