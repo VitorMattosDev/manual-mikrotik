@@ -36,15 +36,15 @@ book:
     # volume (fatia vertical — ver ROADMAP.md). Os arquivos são criados sob
     # demanda, um capítulo por sessão.
     #
-    # - part: "Volume 2 — CLI e configuração essencial"
-    #   chapters:
-    #     - volumes/v02-cli-configuracao/01-anatomia-terminal.qmd
-    #     - volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.qmd
-    #     - volumes/v02-cli-configuracao/03-dhcp.qmd
-    #     - volumes/v02-cli-configuracao/04-dns.qmd
-    #     - volumes/v02-cli-configuracao/05-nat-masquerade.qmd
-    #     - volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.qmd
-    #
+    - part: "Volume 2 — CLI e configuração essencial"
+      chapters:
+        - volumes/v02-cli-configuracao/01-anatomia-terminal.qmd
+        - volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.qmd
+        - volumes/v02-cli-configuracao/03-dhcp.qmd
+        - volumes/v02-cli-configuracao/04-dns.qmd
+        - volumes/v02-cli-configuracao/05-nat-masquerade.qmd
+        - volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.qmd
+
     # - part: "Volume 3 — Firewall"
     #   chapters:
     #     - volumes/v03-firewall/01-connection-tracking.qmd

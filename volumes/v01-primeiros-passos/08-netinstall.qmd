@@ -1,8 +1,288 @@
-# Netinstall
+# Netinstall {#sec-netinstall}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Ele ensinará a usar o Netinstall para
-reinstalar o RouterOS e recuperar equipamentos que não inicializam. Consulte
-o `ROADMAP.md` para acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que o Netinstall faz e em que ele difere do reset do capítulo
+  anterior — reinstalação do **sistema**, não só da configuração;
+- Reconhecer as situações em que ele é o único caminho: equipamento que não
+  dá boot, senha perdida, suspeita de comprometimento, downgrade;
+- Descrever o mecanismo: RouterBOOT em modo *etherboot* + o aplicativo
+  Netinstall respondendo na rede;
+- Executar o procedimento completo num equipamento físico, incluindo os
+  preparos que evitam as armadilhas clássicas (cabo direto, IP fixo,
+  firewall do notebook);
+- Usar os recursos extras: *keep old configuration*, pacotes por
+  arquitetura, provisionamento com configuração inicial.
 :::
+
+## Quando o reset não basta
+
+O @sec-backup-export encerrou com o reset: apaga-se a configuração, o
+**sistema** permanece. Mas há defeitos que moram no sistema — e para eles
+existe o **Netinstall**, a reinstalação completa do RouterOS pela rede.
+Casos clássicos do provedor:
+
+- o equipamento **não completa o boot** (atualização interrompida por queda
+  de energia na torre, armazenamento corrompido);
+- a **senha se perdeu** e não há backup — sem ela não há reset remoto, e o
+  Netinstall zera tudo, sistema e senha juntos;
+- suspeita de **comprometimento**: roteador invadido não se "limpa" com
+  reset — a única higiene confiável é reinstalar o sistema de fora;
+- **downgrade** controlado ou troca de *release channel* que o upgrade
+  normal não resolve.
+
+A analogia direta: o reset é a *restauração de fábrica* do celular; o
+Netinstall é *reinstalar o sistema operacional com um cabo no computador*.
+Um mexe nos dados; o outro regrava a própria plataforma.
+
+O CHR fica de fora deste capítulo por natureza: sendo uma máquina virtual,
+"reinstalar o sistema" é simplesmente trocar o disco `.vdi` por um novo
+(@sec-lab-chr). O Netinstall é ferramenta do mundo **físico**, das
+RouterBOARD — e por isso este é o único capítulo do livro cujo laboratório
+pede um equipamento de verdade (qualquer RouterBOARD barata serve, e um
+hEX usado é um ótimo investimento de estudo).
+
+## Como funciona por baixo
+
+O truque está no RouterBOOT (@sec-licencas-routerboot). Além de dar boot
+pelo armazenamento interno, ele sabe dar boot **pela rede** — o modo
+*etherboot*: o equipamento liga, envia pedidos de boot pela porta Ethernet
+e espera que alguém na rede lhe entregue um sistema.
+
+Esse "alguém" é o aplicativo **Netinstall**, da MikroTik, rodando no seu
+computador, com dois papéis: servir o boot de rede e, em seguida, regravar
+o RouterOS escolhido no armazenamento do equipamento (@fig-netinstall-fluxo).
+
+::: {#fig-netinstall-fluxo}
+
+```{.tikz}
+%%| filename: fig-netinstall-fluxo
+%%| alt: Sequência do procedimento Netinstall em quatro passos. Um notebook rodando o aplicativo Netinstall com IP fixo 192.168.88.2 conecta-se por cabo Ethernet direto à porta ether1 de uma RouterBOARD. Passo 1: equipamento entra em etherboot segurando o botão de reset ao ligar. Passo 2: o equipamento pede boot pela rede. Passo 3: o Netinstall responde e o equipamento aparece na lista do aplicativo. Passo 4: o aplicativo regrava o pacote RouterOS escolhido e o equipamento reinicia com sistema novo.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  caixa/.style={draw=manualblue, very thick, fill=manualblue!8,
+                rounded corners=3pt, minimum height=11mm, text width=34mm,
+                align=center, font=\sffamily\small\bfseries},
+  passo/.style={draw=manualgray, thick, fill=manualgray!10, rounded corners=3pt,
+                minimum height=8mm, text width=52mm, align=left,
+                font=\sffamily\scriptsize},
+  cabo/.style={very thick, manualblue},
+  seta/.style={very thick, -stealth, manualgray}
+]
+  \node[caixa] (pc) {Notebook\\ \small Netinstall — IP fixo 192.168.88.2};
+  \node[caixa, right=34mm of pc] (rb) {RouterBOARD\\ \small etherboot pela ether1};
+  \draw[cabo] (pc) -- (rb) node[midway, above, font=\sffamily\scriptsize]
+    {cabo direto};
+
+  \node[passo, below=8mm of pc.south west, anchor=north west] (p1)
+    {\textbf{1.} Ligar o equipamento com o botão de reset pressionado até o etherboot};
+  \node[passo, below=2mm of p1] (p2)
+    {\textbf{2.} O equipamento pede boot pela rede (BOOTP)};
+  \node[passo, below=2mm of p2] (p3)
+    {\textbf{3.} O Netinstall responde; o equipamento aparece na lista};
+  \node[passo, below=2mm of p3] (p4)
+    {\textbf{4.} Regravação do RouterOS e reboot com sistema novo};
+  \draw[seta] (p1.east) [out=0, in=180] to ++(4mm,0) |- (p2.east);
+\end{tikzpicture}
+```
+
+O fluxo do Netinstall: notebook e equipamento sozinhos num cabo, boot de
+rede e regravação do sistema.
+
+:::
+
+Desse mecanismo derivam as regras práticas que evitam 90% das frustrações:
+
+1. **Cabo direto, rede exclusiva.** O boot de rede fala com quem responder
+   primeiro. Notebook e equipamento sozinhos (cabo ponta a ponta) — nunca
+   através da rede do provedor, onde um DHCP alheio atropela o processo. Em
+   muitos modelos, o etherboot só funciona pela **ether1/boot port**.
+2. **IP fixo no notebook.** O Netinstall precisa de um endereço estável —
+   o consagrado é `192.168.88.2/24`. No aplicativo, configura-se o *Client
+   IP* (ex.: `192.168.88.3`) que será oferecido ao equipamento.
+3. **Firewall do notebook fora do caminho.** O Windows adora bloquear
+   BOOTP/TFTP silenciosamente; desative o firewall na interface do cabo
+   durante o procedimento.
+4. **Pacote da arquitetura certa.** O RouterOS é distribuído por
+   arquitetura (`arm`, `arm64`, `mipsbe`, `tile`...). Baixe o *main
+   package* correspondente ao seu modelo (a ficha do produto informa;
+   @sec-hardware-linhas) — o Netinstall só lista pacotes compatíveis com o
+   equipamento detectado.
+
+O procedimento em si, com os preparos feitos: abrir o Netinstall (como
+administrador), *Net booting* ativado com o Client IP, ligar o equipamento
+com o **botão de reset pressionado** até ele entrar em etherboot (os beeps
+e LEDs indicam; ~15–20 s), o equipamento aparece na lista, seleciona-se o
+pacote e **Install**. Minutos depois, reboot com sistema zerado — usuário
+`admin`, sem senha, configuração de fábrica.
+
+Recursos que valem conhecer na janela do aplicativo:
+
+- ***Keep old configuration***: tenta preservar a configuração através da
+  reinstalação — útil quando o objetivo é só regravar um sistema corrompido
+  (mas lembre: se a hipótese é invasão, o objetivo é justamente **não**
+  preservar nada);
+- ***Configure script***: aplica um script de configuração inicial após a
+  instalação — o irmão do `run-after-reset` do capítulo anterior, e a base
+  de provisionamento em massa (equipamento novo → Netinstall → nasce com a
+  configuração-base do parque);
+- **Downgrade**: instalar versão mais antiga é tão simples quanto escolher
+  outro pacote — o caminho limpo quando um equipamento específico não se dá
+  bem com uma versão nova.
+
+::: {.callout-warning}
+O Netinstall **apaga tudo**: sistema, configuração, usuários, arquivos —
+inclusive backups guardados no armazenamento interno (mais um motivo para a
+regra do @sec-backup-export: backup mora **fora** do equipamento). Sem
+*keep old configuration*, o equipamento volta absolutamente virgem. E não
+interrompa a gravação no meio — energia estável e paciência; um Netinstall
+interrompido só se resolve com... outro Netinstall.
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Com o Netinstall no cinto de ferramentas, **não existe RouterBOARD
+perdida**: enquanto o hardware estiver são, qualquer estado de software —
+boot quebrado, senha esquecida, sistema comprometido — se resolve com um
+cabo, o aplicativo e alguns minutos. É a rede de segurança final de tudo o
+que você fará com MikroTik daqui em diante.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Excepcionalmente, este laboratório é **físico**: uma RouterBOARD qualquer
+(um hEX/hAP usado serve perfeitamente), um cabo Ethernet e um computador
+Windows com o aplicativo Netinstall (baixe de `mikrotik.com/download`,
+seção *Netinstall*) e o *main package* da arquitetura do seu equipamento.
+
+**Sem equipamento físico?** Faça o "laboratório seco": leia os passos
+executando cada preparo possível no seu computador (aplicativo aberto, IP
+fixo configurado, pacote baixado) e responda os desafios — o procedimento
+estará ensaiado para o dia em que a torre chamar.
+
+### Comandos passo a passo
+
+**Preparo do notebook.** Configure IP fixo na interface Ethernet:
+`192.168.88.2`, máscara `255.255.255.0` (sem gateway). Desative o firewall
+dessa interface. Conecte o cabo direto na **ether1** do equipamento
+(desligado). Abra o Netinstall como administrador, ative *Net booting* e
+defina o Client IP como `192.168.88.3`.
+
+**Etherboot.** Desconecte a energia do equipamento, pressione e **segure**
+o botão de reset, reconecte a energia mantendo o botão até o equipamento
+sinalizar o boot de rede (beep/LEDs, ou até ele aparecer na lista do
+aplicativo).
+
+**Instalação.** O equipamento surge na lista do Netinstall com MAC e
+modelo. Selecione-o, marque o pacote RouterOS baixado e clique **Install**.
+Acompanhe a barra; ao final, *Installation finished* — e o equipamento
+reinicia.
+
+**Primeiro contato pós-instalação.** O equipamento está de fábrica.
+Reconfigure o IP do notebook para DHCP (a default configuration entrega IP
+na LAN) ou use o WinBox por MAC (@sec-formas-de-acesso) e aplique o ritual
+completo: remoção da default config se for o caso, checklist de segurança
+do @sec-primeiro-acesso, backup do @sec-backup-export. O ciclo do Volume 1,
+fechado num equipamento real.
+
+### Verificação
+
+1. O equipamento apareceu na lista do Netinstall (prova do etherboot + cabo
+   + IP corretos);
+2. A instalação concluiu sem interrupção e o equipamento reiniciou;
+3. O login pós-instalação é `admin` sem senha, e
+   `/system resource print` mostra a versão que você instalou;
+4. Ao final, o equipamento está com o checklist de segurança aplicado e um
+   backup baixado — pronto para uso (ou para a próxima brincadeira).
+
+### Desafios
+
+1. Por que o Netinstall pede cabo **direto** entre notebook e equipamento,
+   em vez de usar a rede normal do escritório? Cite os dois problemas que a
+   rede compartilhada introduz.
+2. Um técnico esqueceu a senha de um rádio na torre, e o rádio **funciona**
+   (clientes navegando). Netinstall já? Monte a árvore de decisão,
+   considerando o que você sabe de acesso (@sec-formas-de-acesso), backup
+   (@sec-backup-export) e as proteções do RouterBOOT
+   (@sec-licencas-routerboot).
+3. Você suspeita que um roteador de borda foi invadido. Por que *keep old
+   configuration* seria um erro nesse caso — e qual é o fluxo correto de
+   recuperação, do Netinstall ao retorno à produção?
+4. Desenhe (em texto) a "bancada de provisionamento" de um provedor que
+   ativa 30 rádios por mês: como Netinstall + *configure script* + o
+   checklist do @sec-primeiro-acesso viram uma linha de montagem.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) **Concorrência de servidores**: na rede do escritório há DHCP e
+outros serviços que respondem ao boot de rede antes/junto do Netinstall,
+confundindo o processo; (b) **caminho não confiável**: switches, VLANs e
+firewalls no meio podem filtrar BOOTP/TFTP. O cabo direto elimina as duas
+variáveis — e é por isso que é o primeiro item de qualquer checklist de
+Netinstall que falhou.
+
+**2.** Netinstall é a **última** parada, porque exige subir na torre e
+derruba os clientes durante o procedimento. Antes: (1) tentar as vias que
+não dependem de senha esquecida — outra credencial da equipe, acesso por
+outro usuário `full`; (2) se há backup binário recente **e** acesso físico
+fácil: reset + restaurar backup pode ser mais rápido; (3) sem nada disso —
+e sem `protected-routerboot` ativo —, Netinstall com janela de manutenção
+programada. Se `protected-routerboot` estiver ativo, nem o Netinstall
+entra: é o cenário de RMA que o capítulo 3 avisou.
+
+**3.** Se o invasor alterou a configuração (usuário oculto, scheduler
+malicioso, regra de NAT espiã), *keep old configuration* **reinstala a
+porta dos fundos junto**. Fluxo correto: Netinstall limpo → reconstruir a
+configuração a partir de um **export conhecido e auditado** (de antes do
+incidente, lido linha a linha antes do import) → senhas novas em tudo →
+só então voltar à produção — idealmente entendendo por onde a invasão
+entrou (o hardening do Volume 3 existe para isso).
+
+**4.** Linha de montagem: bancada com switch dedicado só para
+provisionamento; notebook com Netinstall e *configure script* apontando
+para o `.rsc`-base do parque (IP de gerência por DHCP da bancada, usuário
+nominal da equipe, serviços restritos, NTP — o checklist do capítulo 6 em
+forma de script); cada rádio novo: etherboot → install → o script aplica a
+base → etiqueta com identidade → backup/export arquivados → estoque de
+"prontos para torre". Trinta rádios viram uma tarde de trabalho repetitivo
+e à prova de esquecimento.
+:::
+
+## Resumo
+
+- **Netinstall reinstala o sistema**; o reset só limpa a configuração. É o
+  caminho para boot quebrado, senha perdida, comprometimento e downgrade.
+- Mecanismo: RouterBOOT em **etherboot** (botão de reset ao ligar) + o
+  aplicativo Netinstall servindo boot e regravando o RouterOS
+  (@fig-netinstall-fluxo).
+- Receita à prova de frustração: **cabo direto**, notebook com IP fixo
+  `192.168.88.2`, firewall local desligado, pacote da **arquitetura
+  certa**, e paciência durante a gravação.
+- *Keep old configuration* preserva a configuração (nunca em caso de
+  invasão); *configure script* provisiona — o `run-after-reset` do mundo
+  físico.
+- Netinstall apaga **tudo**, inclusive backups internos — que, você já
+  sabe, deveriam estar fora do equipamento.
+- Com ele, fecha-se o ciclo do Volume 1: não existe RouterBOARD
+  irrecuperável.
+
+Este capítulo encerra o Volume 1 — você conhece o sistema, o hardware, as
+licenças, os acessos, montou seu laboratório e domina o ciclo de vida
+completo de um equipamento. No Volume 2, mergulhamos de vez na linha de
+comando: a anatomia do terminal e a construção, peça por peça, de um
+roteador de borda funcional.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A página *Netinstall* da documentação oficial [@mikrotik-docs] traz o
+passo a passo com capturas atualizadas e a tabela de solução de problemas
+que inspirou nossas regras práticas; o download do aplicativo e dos *main
+packages* por arquitetura está em `mikrotik.com/download`. As referências
+completas, em ABNT, estão no apêndice [Referências](../../referencias.qmd).

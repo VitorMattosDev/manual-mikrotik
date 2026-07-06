@@ -1,0 +1,371 @@
+# Anatomia do terminal {#sec-anatomia-terminal}
+
+::: {.callout-note}
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Navegar pela árvore de menus do RouterOS como quem navega por pastas —
+  caminho absoluto, caminho relativo e o retorno à raiz;
+- Usar os cinco verbos que operam quase tudo: `print`, `add`, `set`,
+  `remove` e `enable`/`disable`;
+- Entender a **numeração de itens** — por que ela muda, quando usá-la e por
+  que `[find ...]` é mais seguro;
+- Explorar comandos desconhecidos sozinho, com `TAB` (completar) e `?`
+  (ajuda embutida);
+- Usar `export` como lupa (@sec-backup-export) para conferir qualquer seção
+  da configuração;
+- Aplicar truques de produtividade: histórico, `/undo` e `/redo`,
+  comentários e flags.
+:::
+
+## A árvore e os verbos
+
+Você já usou o terminal do RouterOS em todos os capítulos do Volume 1 —
+agora vamos entendê-lo de verdade. O modelo mental cabe numa frase: **a
+configuração é uma árvore de menus; em cada menu vivem itens; e um pequeno
+conjunto de verbos opera esses itens**.
+
+A árvore você já conhece de tanto digitar: `/ip address` é o menu de
+endereços dentro da seção IP; `/system identity`, a identidade dentro de
+system. A barra inicial é a **raiz** — como o `C:\` do Windows ou o `/` do
+Linux. E, como em qualquer árvore de diretórios, você pode:
+
+```routeros
+/ip address print          # caminho absoluto: executa de onde estiver
+/ip                        # entrar no menu ip
+address                    # descer para ip > address
+print                      # executar o comando do menu atual
+/                          # voltar à raiz
+..                         # subir um nível
+```
+
+O prompt sempre mostra onde você está:
+
+```routeros
+[vitor@lab-r1] > /ip address
+[vitor@lab-r1] /ip/address> print
+[vitor@lab-r1] /ip/address> ..
+[vitor@lab-r1] /ip>
+```
+
+Entrar num menu compensa quando você fará várias operações nele; para
+comandos avulsos, o caminho absoluto documenta melhor — e é por isso que
+todos os blocos de comandos deste livro usam caminhos absolutos.
+
+Sobre essa árvore agem os **verbos**. Cinco fazem 95% do trabalho:
+
+| Verbo | Faz | Exemplo |
+|:------|:----|:--------|
+| `print` | lista os itens do menu | `/ip address print` |
+| `add` | cria um item | `/ip address add address=... interface=...` |
+| `set` | altera um item existente | `/ip service set ssh port=2222` |
+| `remove` | apaga um item | `/ip address remove numbers=0` |
+| `enable` / `disable` | liga/desliga sem apagar | `/ip service disable telnet` |
+
+: Os cinco verbos fundamentais {#tbl-verbos}
+
+Repare no padrão dos argumentos: **`chave=valor`**, separados por espaço,
+sem vírgulas. `add address=192.168.56.11/24 interface=ether1` lê-se como
+uma frase: "adicione o endereço X na interface Y". Aspas só quando o valor
+tem espaços (`comment="link para a torre"`).
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O terminal do RouterOS é um sistema de arquivos onde cada "pasta" (menu)
+contém "planilhas" (itens em linhas numeradas), e os verbos são as operações
+de linha: listar, inserir, editar, apagar, ocultar. Quem pensa assim nunca
+se perde — só pergunta "em que menu estou e que linha quero mexer?".
+:::
+
+## Itens, números e o perigo escondido
+
+Faça um `print` em qualquer menu populado e observe a primeira coluna:
+
+```routeros
+[vitor@lab-r1] > /ip service print
+Columns: NAME, PORT, ADDRESS
+#   NAME     PORT  ADDRESS
+0 X telnet     23
+1 X ftp        21
+2 X www        80
+3   ssh        22  192.168.56.0/24
+```
+
+O `#` é o **número do item** — o endereço da linha, usado pelos verbos:
+`set 3 port=2222`, `remove numbers=0,1`, `disable numbers=2`. Funciona, e
+você usará o tempo todo em sessões interativas. Mas guarde o aviso:
+
+::: {.callout-warning}
+A numeração **não é estável**: ela é recalculada a cada `print` — remover
+um item renumera os seguintes, e menus diferentes têm numerações
+independentes. Número de item em **script**, em **procedimento documentado**
+ou em comando executado "de memória" sem um `print` imediatamente antes é
+receita para apagar a linha errada — às vezes, a que segurava seu acesso.
+:::
+
+A alternativa profissional é selecionar por **conteúdo**, com `[find ...]`:
+
+```routeros
+/ip address remove [find comment=teste-lab-a]
+/ip service set [find name=ssh] port=2222
+```
+
+O `find` devolve os itens que casam com o critério, e o verbo age sobre
+eles — não importa em que posição estejam. Você já o usou no laboratório do
+@sec-lab-chr; nos scripts do Volume 12 ele será onipresente. Regra prática:
+**números na exploração interativa; `find` em tudo que será repetido**.
+
+Duas colunas de metadados ajudam o `find` e os humanos:
+
+- **`comment`** — todo item aceita um comentário. Em rede de provedor,
+  comentário é documentação de campo: `comment="uplink operadora X"` salva
+  madrugadas;
+- **flags** — as letras à esquerda do `print`: `X` (desabilitado), `D`
+  (dinâmico: criado por um processo, como DHCP — não se edita, se edita a
+  origem), `I` (inválido: aponta para algo que não existe mais, ex.:
+  endereço numa interface removida).
+
+## TAB e `?`: o manual que mora no equipamento
+
+O RouterOS carrega a própria documentação, e dois atalhos a liberam:
+
+- **`TAB`** completa o que você começou a digitar: `/ip add` + `TAB` vira
+  `/ip address`; dois `TAB`s listam as opções possíveis. Além de poupar
+  dedos, o TAB **valida** — se não completa, o comando não existe (ou você
+  está no menu errado);
+- **`?`** mostra a ajuda do ponto onde você está: os submenus de um menu,
+  os argumentos de um comando, os valores válidos de um argumento
+  (`address=?`).
+
+A combinação transforma qualquer menu desconhecido em terreno explorável —
+foi assim que você descobriu o `/system shutdown` no primeiro capítulo, e é
+assim que se aprende recurso novo sem sair do terminal.
+
+Complete o kit de exploração com:
+
+- **histórico**: setas ↑/↓ navegam os comandos anteriores da sessão;
+- **`/undo` e `/redo`**: desfazem/refazem a última ação de configuração —
+  o Ctrl+Z do RouterOS (o Safe Mode do @sec-formas-de-acesso continua sendo
+  o cinto de segurança para *sequências* de mudanças);
+- **`/system history print`**: quem fez o quê, quando — o `undo` sabe até
+  o que desfazer porque essa trilha existe.
+
+## `print` afiado e `export` como lupa
+
+O `print` cru despeja tudo; os modificadores o transformam em ferramenta de
+precisão:
+
+```routeros
+/ip address print detail          # todos os campos de cada item
+/ip address print where interface=ether1   # filtra por condição
+/ip route print count-only        # só conta
+/interface print stats            # estatísticas (tráfego, erros)
+/ip address print interval=2      # re-executa a cada 2s (monitor ao vivo)
+```
+
+O `where` merece atenção: é o irmão interativo do `find` — mesma sintaxe de
+condições, mas para **ver** em vez de agir. `print where` para investigar,
+`[find]` para operar.
+
+E quando a pergunta é "como este menu está configurado, por inteiro?", a
+resposta é o velho conhecido `export` (@sec-backup-export), que funciona em
+**qualquer** menu:
+
+```routeros
+/ip service export
+```
+
+```routeros
+# 2026-07-06 15:12:40 by RouterOS 7.15.3
+/ip service
+set telnet disabled=yes
+set ftp disabled=yes
+set www disabled=yes
+set ssh address=192.168.56.0/24
+```
+
+`export` responde à pergunta que o `print` não responde: *o que foi mudado
+em relação à fábrica?* — só as alterações aparecem. Por isso ele é a lupa
+deste livro: sempre que um laboratório disser "confira a seção X", o
+`export` da seção é a conferência.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+O terminal inteiro cabe numa gramática: **menu** (onde) + **verbo** (o quê)
++ **`chave=valor`** (como) + **seleção por número ou `find`** (em quem). Com
+TAB e `?` para explorar e `export` para conferir, você opera qualquer
+recurso do RouterOS — inclusive os que este livro não cobre.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+O laboratório padrão (@sec-lab-chr): apenas **`lab-r1`**, a partir do
+snapshot `seguranca-inicial`. Acesso: `ssh vitor@192.168.56.11`.
+
+### Comandos passo a passo
+
+**Passo 1 — navegar.** Percorra a árvore dos dois jeitos e observe o
+prompt:
+
+```routeros
+/ip
+address
+print
+..
+service
+print
+/
+```
+
+**Passo 2 — explorar com TAB e `?`.** No menu raiz, digite `/ip a` e
+pressione `TAB` duas vezes: o RouterOS lista os menus que começam com `a`
+(`address`, `arp`, ...). Entre em `/ip dns` (que nunca usamos) e descubra,
+usando apenas `?`, qual comando mostra a configuração e qual argumento
+ativa a resposta a consultas remotas — **não altere nada**; a hora do DNS
+chega no @sec-dns.
+
+**Passo 3 — os verbos num alvo inofensivo.** Vamos exercitar
+`add`/`set`/`disable`/`remove` num menu sem risco: as entradas estáticas de
+DNS locais.
+
+```routeros
+/ip dns static add name=teste1.lab address=10.99.0.1 comment="cobaia 1"
+/ip dns static add name=teste2.lab address=10.99.0.2 comment="cobaia 2"
+/ip dns static print
+```
+
+```routeros
+[vitor@lab-r1] > /ip dns static print
+Columns: NAME, ADDRESS, TTL
+# NAME        ADDRESS    TTL
+0 teste1.lab  10.99.0.1  1d
+1 teste2.lab  10.99.0.2  1d
+```
+
+Altere, desabilite, observe as flags:
+
+```routeros
+/ip dns static set 0 address=10.99.0.100
+/ip dns static disable 1
+/ip dns static print
+```
+
+A entrada `1` agora exibe `X`. Confira a seção com a lupa:
+
+```routeros
+/ip dns static export
+```
+
+**Passo 4 — sentir a renumeração.** Remova o item `0` e imprima de novo:
+
+```routeros
+/ip dns static remove numbers=0
+/ip dns static print
+```
+
+O antigo item `1` (`teste2.lab`) agora é o **`0`** — a prova concreta do
+aviso deste capítulo. Remova-o pelo caminho seguro, por conteúdo:
+
+```routeros
+/ip dns static remove [find comment="cobaia 2"]
+/ip dns static print
+```
+
+**Passo 5 — undo e history.** Crie uma cobaia nova, desfaça e confira a
+trilha:
+
+```routeros
+/ip dns static add name=teste3.lab address=10.99.0.3
+/undo
+/ip dns static print
+/system history print
+```
+
+O `print` volta vazio, e o history mostra as duas ações (o `add` e o
+desfazer).
+
+### Verificação
+
+1. Você navegou com prompt mudando (`/ip/address>` etc.) e voltou à raiz;
+2. O `TAB` duplo listou menus, e o `?` revelou os argumentos de `/ip dns`
+   sem você alterar nada;
+3. Após o Passo 4, `/ip dns static print` está vazio — e você viu a
+   renumeração acontecer no meio do caminho;
+4. `/system history print` conta a história completa do laboratório.
+
+### Desafios
+
+1. Usando apenas `TAB` e `?` (sem internet), descubra o que faz o comando
+   `/interface ethernet print stats` e identifique duas colunas úteis para
+   diagnosticar um cabo ruim.
+2. Em uma linha, desabilite **todas** as entradas de `/ip dns static` que
+   contenham a palavra `lab` no nome. (Dica: `find` aceita `name~"lab"` —
+   o `~` casa por expressão regular.)
+3. O comando `/ip service set [find name=ssh] port=2222` muda a porta do
+   SSH. Se você o executasse agora, o que aconteceria com a sua sessão
+   atual? E como você se conectaria depois? (Pense antes; se testar, use o
+   Safe Mode e desfaça.)
+4. Explique a diferença entre `print where interface=ether1` e
+   `[find interface=ether1]` — quando cada um é a ferramenta certa?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** `/interface ethernet print stats` mostra contadores por porta
+física. Para cabo ruim, procure `rx-fcs-error`/`rx-align-error` (quadros
+corrompidos chegando — clássico de cabo/conector ruim) e
+`rx-too-short`/colisões. Contadores subindo continuamente = camada física
+suspeita.
+
+**2.**
+
+```routeros
+/ip dns static disable [find name~"lab"]
+```
+
+**3.** A sessão **atual não cai** — conexões TCP já estabelecidas
+sobrevivem à mudança do serviço; mas a **próxima** conexão precisa de
+`ssh -p 2222 vitor@192.168.56.11`. O risco real é esquecer a porta nova (ou
+um firewall no caminho que só libera a 22) — por isso: Safe Mode, testar a
+conexão nova antes de fechar a antiga (a mesma regra de ouro do
+@sec-primeiro-acesso com usuários).
+
+**4.** São a mesma sintaxe de seleção com destinos diferentes: `print
+where` **mostra** o subconjunto (investigação, sem efeito colateral);
+`[find]` **entrega os itens a um verbo** (`set`, `remove`, `disable`...)
+para agir sobre eles. Investigue com `where`, opere com `find` — e nunca
+opere com números decorados.
+:::
+
+## Resumo
+
+- Configuração = **árvore de menus** + **itens numerados** + **verbos**
+  (`print`, `add`, `set`, `remove`, `enable`/`disable`; @tbl-verbos), com
+  argumentos `chave=valor`.
+- Números de item **mudam** (renumeração após remoções): use-os só com um
+  `print` fresco na tela; em tudo repetível, selecione com `[find ...]`.
+- Flags contam estado: `X` desabilitado, `D` dinâmico, `I` inválido — e
+  `comment` é a documentação de campo do provedor.
+- **`TAB`** completa e valida; **`?`** é o manual embutido; ↑/↓, `/undo`,
+  `/redo` e `/system history` completam o kit interativo.
+- `print` tem modificadores (`detail`, `where`, `stats`, `interval`);
+  `export` em qualquer menu mostra **o que difere da fábrica** — a lupa
+  para conferir laboratórios e auditar equipamentos.
+
+No próximo capítulo, a gramática entra em serviço: endereçamento IP no
+RouterOS e a rota padrão — os dois primeiros tijolos do roteador de borda
+que construiremos ao longo deste volume.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A seção *Console* da documentação oficial [@mikrotik-docs] detalha a
+navegação, os modificadores de `print` e a sintaxe completa de seleção
+(`find`, `where`, expressões regulares). @discher-rosv7 e
+@burgess-mikrotik dedicam capítulos iniciais à filosofia da CLI. As
+referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).

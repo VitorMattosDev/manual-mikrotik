@@ -46,7 +46,7 @@ Pré-requisitos: nenhum.*
 *Objetivo: dominar o terminal e construir um roteador de borda funcional.
 Pré-requisitos: Vol. 1.*
 
-- [ ] `volumes/v02-cli-configuracao/01-anatomia-terminal.qmd` — Anatomia do terminal: menus, `print`, `add`, `set`, `remove`, numeração de itens, TAB, `?`, `export` de seções.
+- [x] `volumes/v02-cli-configuracao/01-anatomia-terminal.qmd` — Anatomia do terminal: menus, `print`, `add`, `set`, `remove`, numeração de itens, TAB, `?`, `export` de seções.
 - [ ] `volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.qmd` — Endereçamento IP no RouterOS e rota padrão (gateway, distância, check-gateway básico).
 - [ ] `volumes/v02-cli-configuracao/03-dhcp.qmd` — DHCP client (WAN) e DHCP server (LAN): pools, leases, opções.
 - [ ] `volumes/v02-cli-configuracao/04-dns.qmd` — DNS: resolver, cache, allow-remote-requests e riscos, entradas estáticas.
