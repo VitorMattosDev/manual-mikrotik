@@ -39,7 +39,7 @@ Pré-requisitos: nenhum.*
 - [x] `volumes/v01-primeiros-passos/04-formas-de-acesso.qmd` — Formas de acesso: WinBox, WebFig, SSH, serial, MAC-Telnet; quando usar cada uma. *Pré-req.: cap. 1.*
 - [x] `volumes/v01-primeiros-passos/05-laboratorio-chr.qmd` — **Capítulo-chave**: montando o laboratório com CHR no VirtualBox/GNS3/EVE-NG; topologia-base reutilizada em todo o livro. Recebe a âncora `{#sec-lab-chr}`. *Pré-req.: cap. 4.*
 - [x] `volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.qmd` — Primeiro acesso, configuração padrão, usuários, grupos, senhas e segurança inicial (desabilitar serviços, allowed-address). *Pré-req.: cap. 5.*
-- [~] `volumes/v01-primeiros-passos/07-backup-export-reset.qmd` — Backup binário vs. export, restauração, reset de configuração (com avisos). *Pré-req.: cap. 6.*
+- [x] `volumes/v01-primeiros-passos/07-backup-export-reset.qmd` — Backup binário vs. export, restauração, reset de configuração (com avisos). *Pré-req.: cap. 6.*
 - [~] `volumes/v01-primeiros-passos/08-netinstall.qmd` — Netinstall: reinstalação e recuperação de equipamentos. *Pré-req.: cap. 7.*
 
 ## Volume 2 — CLI e configuração essencial

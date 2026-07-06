@@ -1,9 +1,373 @@
-# Backup, export e reset
+# Backup, export e reset {#sec-backup-export}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Ele explicará a diferença entre backup
-binário e `export`, como restaurar configurações e como resetar um
-equipamento com segurança. Consulte o `ROADMAP.md` para acompanhar o
-progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar a diferença entre o **backup binário** (`/system backup`) e o
+  **export de configuração** (`/export`) — e por que um provedor precisa dos
+  dois;
+- Gerar, baixar para fora do equipamento e restaurar cada tipo;
+- Ler um export com olhos críticos: o que ele contém, o que omite e como
+  usá-lo para documentar e comparar configurações;
+- Resetar um equipamento com `/system reset-configuration`, escolhendo as
+  opções certas (`no-defaults`, `keep-users`, `run-after-reset`);
+- Definir a rotina de backup de um parque: quando gerar, onde guardar, como
+  testar.
 :::
+
+## Duas fotografias diferentes da mesma configuração
+
+Tudo o que você configura num RouterOS vive numa base de dados interna. O
+sistema oferece duas maneiras de fotografá-la, e a diferença entre elas é o
+coração deste capítulo:
+
+- O **backup binário** é um *clone* da base: um arquivo `.backup` que
+  captura tudo — endereços, usuários, senhas, certificados, tudo — num
+  formato que só o RouterOS lê. Restaurá-lo devolve o equipamento
+  exatamente àquele estado, **inclusive identidade e MACs registrados**.
+- O **export** é a *receita*: um arquivo de texto `.rsc` com os comandos
+  que reconstroem a configuração — os mesmos comandos que você digitaria.
+  Você pode lê-lo, editá-lo, versioná-lo no Git, aplicar um pedaço em outro
+  equipamento.
+
+| | Backup binário | Export |
+|:--|:--|:--|
+| Formato | binário (`.backup`) | texto com comandos (`.rsc`) |
+| Contém senhas de usuários | sim | não |
+| Contém certificados/chaves | sim | não |
+| Legível/editável | não | sim |
+| Restauração | total, no **mesmo** equipamento | total ou parcial, em **qualquer** equipamento |
+| Uso típico | desastre: voltar o equipamento como era | documentação, migração, auditoria, versionamento |
+
+: Backup binário × export {#tbl-backup-export}
+
+A conclusão prática vem antes da técnica: **um não substitui o outro**. O
+backup binário é o seguro contra desastre do equipamento X; o export é a
+documentação viva da configuração — que sobrevive até à morte do hardware,
+porque pode ser aplicada num substituto de modelo diferente.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O backup binário é a **imagem do disco**; o export é o **código-fonte**.
+Com a imagem você restaura a máquina idêntica; com o código-fonte você
+entende, adapta e reconstrói em qualquer máquina. Todo projeto sério guarda
+os dois.
+:::
+
+## Backup binário: gerar, baixar, restaurar
+
+Gerar é um comando (o nome é opcional — sem ele, o RouterOS usa a
+identidade e a data):
+
+```routeros
+/system backup save name=lab-r1-2026-07-06
+```
+
+O arquivo aparece no armazenamento interno, visível em `/file print`. E
+aqui entra a regra número um dos backups: **backup que mora só dentro do
+equipamento não é backup** — se o hardware morrer, ele morre junto. Baixe
+para fora. Como o SSH do RouterOS aceita SFTP/SCP (@sec-formas-de-acesso),
+do seu computador:
+
+```routeros
+scp vitor@192.168.56.11:lab-r1-2026-07-06.backup .
+```
+
+Restaurar exige o caminho inverso (subir o arquivo por SCP, se não estiver
+mais lá) e:
+
+```routeros
+/system backup load name=lab-r1-2026-07-06
+```
+
+O equipamento pede confirmação e **reinicia** aplicando o estado salvo.
+
+Dois cuidados de quem opera parque:
+
+- O `.backup` carrega **senhas e chaves**: trate o arquivo como material
+  sensível (armazenamento com acesso controlado — não no grupo de WhatsApp
+  da equipe);
+- Por padrão o backup é criptografado com a senha do usuário; aceite o
+  hábito de conferir se o arquivo restaura **antes** de precisar dele (o
+  laboratório fará isso).
+
+## Export: a configuração como texto
+
+O `/export` imprime os comandos que reconstroem a configuração — do sistema
+inteiro ou do menu onde você está:
+
+```routeros
+/export file=lab-r1-full
+/ip service export file=lab-r1-servicos
+```
+
+O primeiro gera `lab-r1-full.rsc` com tudo; o segundo, só a seção
+`/ip service`. Abra um `.rsc` e você encontra exatamente o que digitaria:
+
+```routeros
+# 2026-07-06 14:32:10 by RouterOS 7.15.3
+# software id = ...
+/ip service
+set telnet disabled=yes
+set ftp disabled=yes
+set www disabled=yes
+set ssh address=192.168.56.0/24
+```
+
+Três detalhes para ler exports como gente grande:
+
+- Por padrão, o export omite o que está com valor de fábrica. A variante
+  `/export verbose` mostra **tudo** — útil para caçar diferenças sutis;
+- Desde o RouterOS v7, `/export show-sensitive` é quem exibe segredos como
+  chaves de PPP (sem essa opção eles saem mascarados); ainda assim,
+  **senhas de usuários nunca saem** num export;
+- O export é a base do "diff de configuração": exporte antes e depois de
+  uma mudança e compare os arquivos — você enxerga exatamente o que mudou.
+  É o complemento perfeito do `/system history`.
+
+Para **aplicar** um `.rsc` (inteiro ou um trecho), o comando é `/import`:
+
+```routeros
+/import file-name=lab-r1-servicos.rsc
+```
+
+O import executa linha a linha, como se você digitasse — inclusive parando
+no meio se uma linha falhar. Por isso, exports de seções pequenas e bem
+escolhidas são mais úteis que um `.rsc` gigante na hora de migrar pedaços
+de configuração entre equipamentos.
+
+## Reset: recomeçar sem sustos
+
+O comando que zera a configuração é:
+
+```routeros
+/system reset-configuration
+```
+
+E as opções que o transformam de "botão de pânico" em ferramenta de
+precisão:
+
+- `no-defaults=yes` — não aplica a configuração de fábrica após o reset: o
+  equipamento volta **vazio**, o ponto de partida profissional
+  (@sec-primeiro-acesso);
+- `keep-users=yes` — preserva os usuários e senhas;
+- `skip-backup=yes` — por padrão o RouterOS salva um backup automático
+  antes de resetar; esta opção pula isso (raramente uma boa ideia);
+- `run-after-reset=arquivo.rsc` — a joia da coroa: aplica um `.rsc` logo
+  após o reset. Reset + `run-after-reset` = **provisionamento**: o
+  equipamento renasce já com a configuração-base do seu provedor.
+
+::: {.callout-warning}
+`/system reset-configuration` **apaga toda a configuração** e reinicia o
+equipamento. Remotamente, isso significa perder o acesso — o equipamento
+volta ao padrão de fábrica (ou vazio, com `no-defaults=yes`, sem nenhum IP).
+Antes de resetar qualquer coisa: backup binário **e** export baixados para
+fora, e certeza de que você tem um caminho de acesso pós-reset (console
+físico, WinBox por MAC no cabo, ou o `run-after-reset` bem testado).
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+A pergunta de operação não é "tenho backup?", é "**já testei restaurar?**".
+Backup não testado é esperança, não backup. A rotina completa: gerar os
+dois formatos → baixar para fora do equipamento → testar a restauração de
+tempos em tempos (o laboratório de hoje é o ensaio geral).
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+O laboratório padrão (@sec-lab-chr), usando **`lab-r1`** a partir do
+snapshot `seguranca-inicial` do capítulo anterior — assim temos uma
+configuração de verdade para salvar, destruir e ressuscitar. Acesso:
+`ssh vitor@192.168.56.11`.
+
+### Comandos passo a passo
+
+**Passo 1 — fotografar dos dois jeitos.** Gere backup binário e export
+completo:
+
+```routeros
+/system backup save name=lab-r1-cap07
+/export file=lab-r1-cap07
+/file print
+```
+
+```routeros
+[vitor@lab-r1] > /file print
+Columns: NAME, TYPE, SIZE
+# NAME                    TYPE     SIZE
+0 lab-r1-cap07.backup     backup   24.3KiB
+1 lab-r1-cap07.rsc        script    1.8KiB
+```
+
+**Passo 2 — baixar para fora.** No terminal do **seu computador**:
+
+```routeros
+scp vitor@192.168.56.11:lab-r1-cap07.backup .
+scp vitor@192.168.56.11:lab-r1-cap07.rsc .
+```
+
+Abra o `.rsc` num editor de texto e reconheça o capítulo anterior nele: os
+serviços desabilitados, o `allowed-address`, o NTP. Esta é sua
+configuração, agora legível e arquivável.
+
+**Passo 3 — o desastre.** Hora de quebrar tudo de propósito. O reset vai
+derrubar seu SSH (esperado — é um reset!); a volta será pelo **console da
+VM**:
+
+```routeros
+/system reset-configuration no-defaults=yes skip-backup=yes
+```
+
+Confirme com `y`. Após o reboot, entre pelo console da VM: o login voltou a
+ser `admin` **sem senha**, não há usuários, não há IP — o equipamento está
+virgem. Sinta o frio na barriga: em produção, este seria um rádio mudo numa
+torre.
+
+**Passo 4 — ressuscitar pelo backup binário.** O arquivo `.backup` ainda
+está no armazenamento interno (só a *configuração* foi zerada — arquivos
+sobrevivem ao reset). Pelo console:
+
+```routeros
+/system backup load name=lab-r1-cap07
+```
+
+Confirme; o roteador reinicia e... está tudo de volta: identidade
+`lab-r1`, seu usuário, o IP de gerência, os serviços restritos. Prove pelo
+seu computador:
+
+```routeros
+ssh vitor@192.168.56.11
+```
+
+**Passo 5 — ressuscitar pela receita.** Agora o caminho do export. Repita o
+reset do Passo 3. Pelo console, o equipamento vazio não tem IP — então crie
+o mínimo para receber o arquivo:
+
+```routeros
+/ip address add address=192.168.56.11/24 interface=ether1
+```
+
+Do seu computador, suba o `.rsc` (o usuário agora é `admin` sem senha —
+estado pós-reset):
+
+```routeros
+scp lab-r1-cap07.rsc admin@192.168.56.11:
+```
+
+E pelo console, importe:
+
+```routeros
+/import file-name=lab-r1-cap07.rsc
+```
+
+```routeros
+Script file loaded and executed successfully
+```
+
+Compare com o Passo 4: o import reconstruiu serviços, listas, NTP,
+identidade — mas **não** os usuários com suas senhas (não estavam no
+export) nem removeu o que já existia (o IP que você criou à mão). A receita
+reconstrói a casa; os segredos, você repõe pelo checklist do
+@sec-primeiro-acesso.
+
+### Verificação
+
+1. Os dois arquivos (`.backup` e `.rsc`) existem **no seu computador**, não
+   só no roteador;
+2. Após o Passo 4, `ssh vitor@...` funciona e `/ip service print` mostra a
+   configuração do capítulo 6 intacta — restauração binária validada;
+3. Após o Passo 5, `/system identity print` mostra `lab-r1` e os serviços
+   estão restritos, mas `/user print` **não** tem o usuário `vitor` —
+   você explicou a diferença da @tbl-backup-export na prática;
+4. Termine restaurando o snapshot `seguranca-inicial` da VM (ou refazendo o
+   usuário nominal), para os próximos capítulos partirem do estado certo.
+
+### Desafios
+
+1. Gere um `/export verbose file=teste-verbose` e compare o tamanho com o
+   export normal (`/file print`). De onde vem a diferença, e quando o
+   verbose é mais útil?
+2. Exporte **apenas** a seção `/system ntp client`, delete a configuração
+   de NTP (`/system ntp client servers remove numbers=0,1` e
+   `set enabled=no`) e restaure-a usando só o arquivo exportado.
+3. Escreva (em texto) a rotina de backup de um provedor com 200
+   equipamentos: o que gerar, com que frequência, para onde os arquivos
+   vão, e como você *testaria* as restaurações sem derrubar produção. Que
+   ferramenta do RouterOS poderia agendar a geração? (Palpite livre — a
+   resposta técnica completa é o Volume 12.)
+4. Explique por que `run-after-reset` + um `.rsc` bem-feito é a forma mais
+   segura de resetar um equipamento **remoto** — e o que precisa
+   obrigatoriamente estar dentro desse `.rsc` para você não perder o
+   acesso.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O verbose sai várias vezes maior: ele imprime **todos** os
+parâmetros, inclusive os que estão no padrão de fábrica (que o export
+normal omite). É mais útil para auditoria e comparação fina entre dois
+equipamentos "teoricamente iguais" — o diff do verbose denuncia qualquer
+padrão alterado.
+
+**2.**
+
+```routeros
+/system ntp client export file=ntp-backup
+/system ntp client servers remove numbers=0,1
+/system ntp client set enabled=no
+/import file-name=ntp-backup.rsc
+/system ntp client print
+```
+
+O import reexecuta os comandos da seção e o NTP volta a sincronizar.
+
+**3.** Rotina defensável: export **diário** + backup binário **semanal** (e
+ambos antes/depois de qualquer mudança); envio automático para fora
+(FTP/SFTP de um servidor de backups, e-mail para os pequenos); retenção de
+algumas gerações; teste de restauração **mensal em laboratório** — um CHR
+que importa os exports do parque e denuncia erros de sintaxe/seções
+faltantes. O agendador do RouterOS é o `/system scheduler`, e o Volume 12
+monta exatamente essa automação.
+
+**4.** Porque elimina a janela em que o equipamento fica "vazio e surdo": o
+reset já renasce aplicando a configuração-base. O `.rsc` precisa conter, no
+mínimo: IP de gerência na interface certa (ou DHCP client), usuário nominal
+com senha (lembre: o export não carrega senhas — num `.rsc` de
+provisionamento escrito à mão você **pode e deve** incluir o
+`/user add ... password=...`), e serviços de acesso habilitados/restritos.
+Sem isso, o "reset seguro" vira viagem à torre.
+:::
+
+## Resumo
+
+- **Backup binário** = clone total (com senhas e certificados), restaura o
+  mesmo equipamento; **export** = receita em texto, legível e portável, sem
+  segredos (@tbl-backup-export). Provedor guarda **os dois**.
+- Backup que só existe dentro do equipamento não é backup: **baixe por
+  SCP/SFTP** e guarde com controle de acesso.
+- `/export` por seção + `/import` é a ferramenta de migração e de "diff" de
+  configuração; `verbose` e `show-sensitive` são os modificadores a
+  conhecer.
+- Reset profissional: `no-defaults=yes` para nascer limpo, `keep-users` e
+  `run-after-reset` para não nascer surdo — e **sempre** com backups
+  baixados antes.
+- Backup não testado é esperança: ensaie a restauração (você acabou de
+  fazer isso duas vezes).
+
+No próximo capítulo, o último recurso de quem opera hardware de verdade: o
+**Netinstall** — reinstalar o RouterOS do zero quando nem o reset resolve.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/system backup`, `/export`,
+`/import` e `/system reset-configuration` (páginas *Backup* e
+*Configuration Management*). @discher-rosv7 discute estratégias de backup
+em parques de provedor. As referências completas, em ABNT, estão no
+apêndice [Referências](../../referencias.qmd).
