@@ -1,9 +1,371 @@
-# Linhas de hardware MikroTik
+# Linhas de hardware MikroTik {#sec-hardware-linhas}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Ele apresentará as linhas de produto
-MikroTik — hEX, hAP, CRS, CCR, LHG/SXT — e como escolher o equipamento certo
-para cada função na rede do provedor (borda, concentrador, switch, rádio).
-Consulte o `ROADMAP.md` para acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Decifrar o nome de um produto MikroTik (ex.: `CCR2004-1G-12S+2XS`) e saber,
+  só pelo código, quantas e quais portas ele tem;
+- Reconhecer as grandes famílias de hardware — hEX, hAP, RB/L009/RB5009, CRS,
+  CCR, SXT/LHG/DISC — e o papel de cada uma na rede de um provedor;
+- Escolher equipamento pelo **papel** que ele exercerá (borda, concentrador,
+  switch de POP, rádio de torre, CPE do cliente), e não pelo preço;
+- Avaliar as especificações que realmente importam: CPU (núcleos *versus*
+  desempenho por núcleo), portas SFP/SFP+, PoE e uso externo;
+- Consultar o catálogo e as fichas técnicas oficiais da MikroTik com olhar
+  crítico.
 :::
+
+## O catálogo visto de longe
+
+No @sec-o-que-e-mikrotik você aprendeu que o RouterOS é o mesmo em todos os
+equipamentos da marca. A consequência prática é libertadora: **escolher
+hardware MikroTik é escolher desempenho e portas, nunca "recursos"**. O
+firewall, o PPPoE, o OSPF e o BGP estão em todos; o que muda é quanta CPU e
+quantas interfaces existem para executá-los.
+
+Por isso, este capítulo não é um catálogo decorado — é um mapa. A pergunta
+certa nunca é "qual MikroTik é o melhor?", e sim "**qual papel este
+equipamento vai exercer na minha rede?**". Cada papel tem uma família de
+produtos desenhada para ele.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+Escolher equipamento por papel é como montar um time de futebol: não existe
+"o melhor jogador", existe o melhor goleiro, o melhor zagueiro, o melhor
+atacante. Um CCR no papel de rádio de cliente é um goleiro de centroavante —
+caro e mal aproveitado.
+:::
+
+## Decifrando o nome dos produtos
+
+Os nomes MikroTik parecem sopa de letrinhas, mas seguem um código consistente.
+A parte final do nome descreve as **portas**, e cada letra tem significado
+(@tbl-sufixos):
+
+| Código | Significado | Velocidade típica |
+|:-------|:-----------------------------------------|:------------------|
+| `5`, `8`, `12`... | quantidade de portas do tipo que segue | — |
+| `G` | Ethernet Gigabit (RJ45) | 1 Gbps |
+| `P` | porta com **PoE de saída** (alimenta outro equipamento) | — |
+| `S` | gaiola **SFP** (fibra) | 1 Gbps |
+| `S+` | gaiola **SFP+** (fibra) | 10 Gbps |
+| `XS` | gaiola **SFP28** (fibra) | 25 Gbps |
+| `Q+` | gaiola **QSFP+** (fibra) | 40 Gbps |
+
+: Sufixos de porta na nomenclatura MikroTik {#tbl-sufixos}
+
+Com a tabela, o nome assustador `CCR2004-1G-12S+2XS` vira uma frase: é um
+**C**loud **C**ore **R**outer da geração 2004, com **1** porta **G**igabit,
+**12** gaiolas **SFP+** (10 Gbps) e **2** gaiolas **SFP28** (25 Gbps). Um
+roteador nascido para viver num rack cheio de fibra.
+
+Vale o mesmo para os menores: o `hEX S` é um hEX com uma gaiola **S**FP; o
+`hAP ax²` é um hAP com WiFi padrão **ax** de segunda geração. Quando encontrar
+um nome novo, decifre as portas primeiro — elas dizem para que rede o produto
+foi feito.
+
+## As famílias, papel por papel
+
+A @fig-familias-papel posiciona as famílias no mesmo diagrama de provedor que
+você conheceu no capítulo anterior — agora com os nomes das linhas de produto
+em cada posição:
+
+::: {#fig-familias-papel}
+
+```{.tikz}
+%%| filename: fig-familias-papel
+%%| alt: Diagrama em três colunas relacionando papel na rede e família de produto MikroTik. Coluna do núcleo: borda BGP com CCR2xxx, switch de POP com CRS3xx, concentrador PPPoE com CCR ou CHR. Coluna de distribuição rádio: enlace ponto a ponto com LHG, Wire e NetMetal; torre rural com setoriais mANT mais BaseBox. Coluna do cliente: fibra com hEX e hAP atrás da ONU; rádio com SXT e LHG; escritórios com RB5009. Setas indicam o fluxo do núcleo para o cliente.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  papel/.style={draw=manualgray, thick, fill=manualgray!10, rounded corners=3pt,
+                minimum height=8mm, text width=34mm, align=center},
+  prod/.style={draw=manualblue, very thick, fill=manualblue!8, rounded corners=3pt,
+               minimum height=8mm, text width=34mm, align=center,
+               font=\sffamily\small\bfseries},
+  enlace/.style={very thick, manualblue, -stealth},
+  coluna/.style={font=\sffamily\small\bfseries, manualblue}
+]
+  % Coluna 1 — núcleo (POP)
+  \node[coluna] (c1) {Núcleo (POP)};
+  \node[papel, below=4mm of c1] (p-borda) {Borda / BGP};
+  \node[prod, below=1mm of p-borda] (f-borda) {CCR2xxx};
+  \node[papel, below=5mm of f-borda] (p-sw) {Switch do POP};
+  \node[prod, below=1mm of p-sw] (f-sw) {CRS3xx};
+  \node[papel, below=5mm of f-sw] (p-bng) {Concentrador PPPoE};
+  \node[prod, below=1mm of p-bng] (f-bng) {CCR / CHR};
+
+  % Coluna 2 — distribuição rádio
+  \node[coluna, right=48mm of c1] (c2) {Distribuição rádio};
+  \node[papel, below=4mm of c2] (p-ptp) {Enlace PtP (backhaul)};
+  \node[prod, below=1mm of p-ptp] (f-ptp) {LHG XL / Wire / NetMetal};
+  \node[papel, below=5mm of f-ptp] (p-torre) {Torre rural (PtMP)};
+  \node[prod, below=1mm of p-torre] (f-torre) {BaseBox + mANT setorial};
+
+  % Coluna 3 — cliente
+  \node[coluna, right=48mm of c2] (c3) {Cliente};
+  \node[papel, below=4mm of c3] (p-fibra) {Casa (fibra, após a ONU)};
+  \node[prod, below=1mm of p-fibra] (f-fibra) {hEX / hAP};
+  \node[papel, below=5mm of f-fibra] (p-radio) {Casa (rádio rural)};
+  \node[prod, below=1mm of p-radio] (f-radio) {SXT / LHG};
+  \node[papel, below=5mm of f-radio] (p-emp) {Empresa / escritório};
+  \node[prod, below=1mm of p-emp] (f-emp) {RB5009 / L009};
+
+  % Fluxo núcleo -> distribuição -> cliente
+  \draw[enlace] (f-sw.east) -- (p-ptp.west);
+  \draw[enlace] (f-ptp.south) -- (p-torre.north);
+  \draw[enlace] (f-torre.east) -- (p-radio.west);
+  \draw[enlace] (f-bng.east) to[out=-15, in=195] (p-fibra.west);
+\end{tikzpicture}
+```
+
+As famílias de produto MikroTik posicionadas pelo papel que exercem na rede
+de um provedor de fibra e rádio.
+
+:::
+
+Vamos percorrer as famílias na mesma ordem — do núcleo para o cliente.
+
+### CCR — Cloud Core Router: o núcleo
+
+A linha **CCR** é a série de roteadores de rack da MikroTik: muitos núcleos
+de CPU, muita porta de fibra, fontes redundantes nos maiores modelos. É o
+hardware para os papéis mais pesados da rede:
+
+- **Borda BGP** — receber a tabela cheia da internet de uma ou mais
+  operadoras exige memória e CPU; um `CCR2004` ou `CCR2116` é a escolha
+  natural.
+- **Concentrador PPPoE (BNG)** — autenticar milhares de sessões e aplicar
+  filas de velocidade é trabalho de CPU; os CCR de geração 2 (`CCR2004`,
+  `CCR2116`, `CCR2216`) usam núcleos **ARM64** rápidos, muito superiores aos
+  antigos.
+
+Uma nota histórica que ainda importa em campo: os CCR de primeira geração
+(`CCR1009`, `CCR1016`, `CCR1036`) usam a arquitetura **TILE** — dezenas de
+núcleos individualmente lentos. Eles brilham quando o tráfego se espalha por
+muitos núcleos, mas sofrem em tarefas que rodam num núcleo só. Você aprenderá
+no Volume 6 que uma sessão PPPoE é exatamente esse caso — e por que um
+`CCR2004` com 4 núcleos modernos supera um `CCR1036` com 36 núcleos antigos
+em muitos cenários de provedor.
+
+### CRS — Cloud Router Switch: o switch do POP
+
+A linha **CRS** tem cara de switch e alma dupla: roda RouterOS completo, mas
+carrega um **switch chip** — um circuito dedicado que comuta quadros em
+hardware, sem gastar CPU. É a família dos POPs: `CRS3xx` e `CRS5xx` oferecem
+combinações de portas Gigabit, SFP+ e até QSFP+ para agregar os enlaces do
+provedor.
+
+Dois cuidados com essa linha:
+
+- A CPU dos CRS é modesta. Eles são **switches** que sabem rotear em caso de
+  necessidade, não roteadores. Colocar um CRS para concentrar PPPoE é receita
+  de suporte lotado.
+- Os modelos `CSS` (sem o "R") rodam **apenas SwOS** — o firmware minimalista
+  do @sec-o-que-e-mikrotik. Confira a letra antes de comprar.
+
+O Volume 4 é inteiro dedicado a extrair o máximo dos CRS: bridge, VLANs e
+switching em hardware.
+
+### hEX, hAP e L009/RB5009 — roteadores de mesa
+
+São os "roteadores de caixinha", cada um com sua vocação:
+
+- **hEX** — roteador cabeado de 5 portas Gigabit. Barato e confiável, é o
+  clássico atrás da ONU do cliente de fibra que contratou IP fixo ou precisa
+  de um roteador de verdade. O `hEX S` acrescenta uma gaiola SFP e PoE de
+  saída.
+- **hAP** — o hEX com WiFi. A linha atual (`hAP ax²`, `hAP ax³`) entrega
+  WiFi 6 e é o CPE padrão que muitos provedores instalam na casa do
+  assinante. No Volume 5 você o verá gerenciado em massa via CAPsMAN.
+- **L009 e RB5009** — o degrau acima: mais CPU, porta de 2.5/10 Gbps, versões
+  com PoE. Servem pequenas empresas, condomínios e até papéis de POP compacto
+  (um `RB5009` aguenta um POP de bairro inteiro).
+
+### SXT, LHG, DISC, Wire — a família de rádio
+
+O ramo rural do provedor vive desta família — antenas com o rádio (e o
+RouterOS) embutidos, prontas para poste e torre:
+
+- **SXT** — antena compacta, abertura de feixe mais larga; o rádio de
+  cliente para distâncias curtas e médias.
+- **LHG** — *Light Head Grid*: uma grade parabólica leve com ganho alto; o
+  rádio de cliente para longas distâncias e a opção econômica para enlaces
+  PtP de backhaul (versões `LHG XL` têm ganho ainda maior).
+- **DISC** — parábola sólida fechada, imune a acúmulo de detritos, papel
+  semelhante ao LHG.
+- **Wire (Wireless Wire)** — enlaces em **60 GHz**: multi-gigabit em
+  distâncias curtas, perfeitos para atravessar uma rua ou ligar prédios.
+- **BaseBox/NetMetal + mANT** — rádios em caixa metálica sem antena
+  integrada, que você combina com uma antena externa — tipicamente uma
+  **setorial mANT** na torre para atender dezenas de clientes em PtMP.
+
+O Volume 5 detalha como projetar esses enlaces; por ora, guarde o padrão:
+**setorial na torre, SXT/LHG na casa do cliente, LHG XL/Wire no backhaul**.
+
+### CHR — o "hardware" que é software
+
+Por fim, lembre que o **CHR** (@sec-o-que-e-mikrotik) é um membro pleno do
+catálogo: um RouterOS que roda em máquina virtual sobre um servidor x86. Em
+produção, provedores usam CHR como concentrador PPPoE, como roteador de
+borda e como caixa de ferramentas de rede — com a vantagem de escalar CPU e
+memória comprando servidor, não roteador. Todos os laboratórios deste livro
+rodam em CHR justamente porque ele **é** um RouterOS de verdade.
+
+## As especificações que realmente importam
+
+Ficha técnica de roteador tem dezenas de números. Na prática do provedor,
+cinco decidem a compra:
+
+1. **Desempenho por núcleo da CPU** — tarefas como uma sessão PPPoE ou uma
+   fila de QoS rodam num único núcleo. Quatro núcleos rápidos valem mais que
+   trinta e seis lentos para esses papéis.
+2. **Testes de throughput no cenário certo** — a MikroTik publica números em
+   três condições: *fast path* (encaminhamento otimizado, sem firewall),
+   *bridging/routing* simples e **com 25 regras de firewall**. O último é o
+   único próximo da sua realidade. Desconfie de qualquer número de capa.
+3. **Portas de fibra (S/S+/XS)** — provedor cresce em fibra. Um equipamento
+   de núcleo sem SFP+ nasce obsoleto.
+4. **PoE** — nas pontas, alimentar o rádio pelo próprio cabo de rede (PoE de
+   saída no equipamento de baixo, ou injetor) elimina fonte na torre — menos
+   ponto de falha.
+5. **Uso externo e temperatura** — equipamentos de torre (SXT, LHG, BaseBox)
+   são selados para intempérie; equipamentos de mesa, não. Parece óbvio, até
+   você encontrar um hEX dentro de uma marmita de PVC no alto de um poste.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Todo equipamento MikroTik roda o mesmo RouterOS — portanto, **compra-se
+capacidade, não recurso**. Defina primeiro o papel (borda, concentrador,
+switch, rádio, CPE), depois dimensione CPU e portas para esse papel, usando
+os números de teste **com firewall**, não os de capa.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+O mesmo do capítulo anterior: a VM única do CHR no VirtualBox
+(@sec-o-que-e-mikrotik). Você também vai precisar de um navegador para
+consultar `mikrotik.com` — parte deste laboratório é aprender a ler o
+catálogo oficial.
+
+### Comandos passo a passo
+
+Primeiro, vamos ver o que o RouterOS informa sobre o "hardware" em que está
+rodando. No CHR:
+
+```routeros
+/system resource print
+```
+
+Observe três campos na saída: `board-name` (no CHR, `CHR`; num equipamento
+físico, o modelo — ex.: `hEX S`), `cpu-count` e `architecture-name` (`x86_64`
+no CHR; `arm64`, `mipsbe` ou `tile` nos físicos):
+
+```routeros
+[admin@lab-r1] > /system resource print
+                   uptime: 12m4s
+                  version: 7.15.3 (stable)
+        architecture-name: x86_64
+               board-name: CHR
+                cpu-count: 1
+```
+
+Num equipamento físico existe um menu a mais, que o CHR não tem por ser
+virtual — ele mostra modelo, número de série e a versão do RouterBOOT (o
+bootloader, assunto do próximo capítulo):
+
+```routeros
+/system routerboard print
+```
+
+No CHR esse comando responde `not routerboard` — comportamento esperado, e
+uma forma rápida de descobrir se você está numa máquina virtual ou física.
+
+Agora a parte de catálogo. Abra `mikrotik.com/products` no navegador e
+localize a ficha do **CCR2004-1G-12S+2XS**. Na aba de especificações,
+encontre a tabela **Test results** e compare as linhas de throughput em
+*fast path* e com *25 ip filter rules*. Anote os dois números — a diferença
+entre eles é o "preço" do firewall, e você reencontrará esse conceito no
+Volume 3.
+
+### Verificação
+
+1. `/system resource print` no seu CHR mostra `architecture-name: x86_64` e
+   `board-name: CHR`;
+2. `/system routerboard print` responde `not routerboard` (você está numa VM);
+3. Você anotou os dois números de throughput do CCR2004 (com e sem firewall)
+   e sabe explicar por que são diferentes.
+
+### Desafios
+
+1. Decifre, sem consultar o site: quantas portas, e de que tipo, tem um
+   `CRS326-24G-2S+`? E um `CCR2116-12G-4S+`?
+2. Um provedor precisa de um switch para um POP novo: 20 clientes de fibra
+   dedicados em portas Gigabit e 2 uplinks de 10 Gbps para o núcleo. Que
+   família e que modelo do desafio 1 atendem?
+3. Um cliente rural mora a 12 km da torre, com visada limpa. SXT ou LHG? Por
+   quê?
+4. Sua borda BGP com a operadora receberá tabela cheia e crescerá para dois
+   trânsitos. Por que um `CCR1036` (36 núcleos TILE) pode ser pior que um
+   `CCR2004` (4 núcleos ARM64) nesse papel, mesmo tendo nove vezes mais
+   núcleos?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** `CRS326-24G-2S+`: Cloud Router Switch com **24** portas **G**igabit
+RJ45 e **2** gaiolas **SFP+** (10 Gbps). `CCR2116-12G-4S+`: Cloud Core Router
+com **12** portas **G**igabit e **4** gaiolas **SFP+**.
+
+**2.** Papel de switch de POP → família **CRS**. O `CRS326-24G-2S+` do
+desafio 1 serve como uma luva: 24 portas Gigabit para os clientes (sobram 4)
+e 2 uplinks SFP+ de 10 Gbps para o núcleo.
+
+**3.** **LHG.** A 12 km, o que decide é o ganho da antena: a grade
+parabólica do LHG concentra o feixe e entrega sinal utilizável onde o SXT
+(feixe mais aberto, ganho menor) já não alcança com qualidade. O SXT é para
+distâncias curtas/médias; acima de ~8–10 km, LHG (ou DISC).
+
+**4.** Processar atualizações de BGP e recalcular a tabela de rotas são
+tarefas que rodam em **um núcleo** — o que importa é o desempenho por
+núcleo, e cada núcleo ARM64 do CCR2004 é muito mais rápido que um núcleo
+TILE de 2012. Os 36 núcleos do CCR1036 só ajudariam se a carga se
+espalhasse por eles, o que não é o caso do BGP.
+:::
+
+## Resumo
+
+- O nome do produto descreve as portas: `G` (Gigabit), `S` (SFP), `S+`
+  (SFP+ 10G), `XS` (25G), `P` (PoE de saída) — decifre o nome antes de ler a
+  ficha (@tbl-sufixos).
+- Famílias por papel (@fig-familias-papel): **CCR** no núcleo (borda BGP,
+  concentrador), **CRS** como switch de POP, **hEX/hAP** na casa do cliente,
+  **RB5009/L009** em empresas, **SXT/LHG/DISC/Wire** no rádio, **BaseBox +
+  mANT setorial** na torre.
+- **CSS ≠ CRS**: modelos CSS rodam apenas SwOS.
+- CCR geração 1 (TILE) tem muitos núcleos lentos; geração 2 (ARM64) tem
+  poucos núcleos rápidos — para PPPoE e BGP, vence o desempenho **por
+  núcleo**.
+- Avalie throughput sempre no teste **com regras de firewall**, nunca no
+  número de capa (*fast path*).
+- O **CHR** é membro pleno do catálogo: RouterOS em VM, usado em produção
+  como concentrador e borda — e como nosso laboratório.
+
+No próximo capítulo, veremos o que dá o "direito de rodar" ao RouterOS — os
+níveis de licença — e o RouterBOOT, o bootloader que você acabou de procurar
+com `/system routerboard print`.
+
+## Bibliografia do capítulo {.unnumbered}
+
+O catálogo oficial [@mikrotik-products] e as fichas técnicas de cada produto
+são a fonte primária deste capítulo — em especial as tabelas *Test results*,
+cuja leitura crítica discutimos. A documentação do RouterOS [@mikrotik-docs]
+descreve os menus `/system resource` e `/system routerboard`. Sobre
+arquiteturas de hardware de rede em geral, @tanenbaum-redes é a referência
+teórica. As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
