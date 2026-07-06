@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>14&nbsp; Projeto: roteador de borda – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v03-firewall/01-connection-tracking.html" rel="next">
+<link href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html">Volume 2 — CLI e configuração essencial</a></li><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#a-ordem-de-serviço" id="toc-a-ordem-de-serviço" class="nav-link active" data-scroll-target="#a-ordem-de-serviço"><span class="header-section-number">14.1</span> A ordem de serviço</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">14.2</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">14.2.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">14.2.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">14.2.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">14.2.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">14.3</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html">Volume 2 — CLI e configuração essencial</a></li><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-projeto-borda" class="quarto-section-identifier"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Este capítulo não introduz conceitos novos — ele <strong>integra</strong> tudo do volume. Ao final, você será capaz de:</p>
+<ul>
+<li>Transformar uma “ordem de serviço” em uma sequência de configuração planejada, executada e verificada;</li>
+<li>Montar um roteador de borda completo, do equipamento zerado ao cliente navegando: segurança inicial → WAN → LAN → DHCP → DNS → NAT;</li>
+<li>Verificar o serviço em camadas (enlace → endereço → rota → tradução → nome), na ordem que o diagnóstico profissional usa;</li>
+<li>Entregar o serviço <strong>documentado</strong>: export comentado e backup baixado.</li>
+</ul>
+</div>
+</div>
+<section id="a-ordem-de-serviço" class="level2" data-number="14.1">
+<h2 data-number="14.1" class="anchored" data-anchor-id="a-ordem-de-serviço"><span class="header-section-number">14.1</span> A ordem de serviço</h2>
+<p>Situação real de qualquer semana num provedor: um cliente corporativo contratou um link dedicado, e você vai configurar o roteador que fica na sede dele. A ordem de serviço diz:</p>
+<blockquote class="blockquote">
+<p><strong>Cliente:</strong> Padaria Pão Quente (matriz) <strong>WAN:</strong> via ONU em bridge, endereço por DHCP do concentrador <strong>LAN:</strong> <code>192.168.10.0/24</code>, roteador no <code>.1</code> <strong>Serviços:</strong> DHCP na LAN (faixa <code>.100–.199</code>), DNS com cache local, internet para todos os dispositivos <strong>Reservas:</strong> impressora fiscal sempre no <code>.10</code> <strong>Padrão da empresa:</strong> checklist de segurança, identidade <code>cli-paoquente-r1</code>, export e backup arquivados ao final</p>
+</blockquote>
+<p>A <a href="#fig-projeto-borda" class="quarto-xref">Figura&nbsp;<span>14.1</span></a> mostra o que a ordem descreve:</p>
+<div id="fig-projeto-borda" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-projeto-borda-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="400.840996pt" height="133.222496pt" viewbox="-68.014948 -68.014952 400.840996 133.222496">
+<defs>
+<path id="tz_fig_projeto_borda_g0-183" d="M.536986-1.513325V-1.136737H.913574H1.283188V-1.513325V-1.889913H.913574H.536986Z"></path>
+<path id="tz_fig_projeto_borda_g1-40" d="M2.127024-5.230386C2.008468-5.230386 1.994521-5.230386 1.910834-5.153674C1.03213-4.38655 .585803-3.145205 .585803-1.743462C.585803-.425405 .983313 .843836 1.903861 1.652802C1.994521 1.743462 2.008468 1.743462 2.127024 1.743462H2.461768C2.440847 1.729514 1.764384 1.150685 1.443587 .062765C1.276214-.481196 1.192528-1.053051 1.192528-1.743462C1.192528-4.156413 2.322291-5.111831 2.461768-5.230386H2.127024Z"></path>
+<path id="tz_fig_projeto_borda_g1-41" d="M.746202 1.743462C.864757 1.743462 .878705 1.743462 .962391 1.66675C1.841096 .899626 2.287422-.341719 2.287422-1.743462C2.287422-3.061519 1.889913-4.33076 .969365-5.139726C.878705-5.230386 .864757-5.230386 .746202-5.230386H.411457C.432379-5.216438 1.108842-4.637609 1.429639-3.549689C1.597011-3.005729 1.680697-2.433873 1.680697-1.743462C1.680697 .669489 .550934 1.624907 .411457 1.743462H.746202Z"></path>
+<path id="tz_fig_projeto_borda_g1-46" d="M1.338979-.627646H.711333V0H1.338979V-.627646Z"></path>
+<path id="tz_fig_projeto_borda_g1-47" d="M3.249813-4.944458C3.284682-5.028144 3.284682-5.05604 3.284682-5.069988C3.284682-5.160648 3.214944-5.230386 3.124284-5.230386C3.012702-5.230386 2.984807-5.1467 2.949938-5.063014L.446326 1.457534C.411457 1.54122 .411457 1.569116 .411457 1.583064C.411457 1.673724 .481196 1.743462 .571856 1.743462C.683437 1.743462 .711333 1.659776 .746202 1.57609L3.249813-4.944458Z"></path>
+<path id="tz_fig_projeto_borda_g1-48" d="M3.403238-2.266501C3.403238-2.601245 3.403238-3.417186 3.075467-3.989041C2.719801-4.616687 2.182814-4.721295 1.84807-4.721295C1.534247-4.721295 .990286-4.623661 .641594-4.02391C.306849-3.466002 .292902-2.705853 .292902-2.266501C.292902-1.750436 .320797-1.115816 .613699-.585803C.920548-.020922 1.436613 .146451 1.84807 .146451C2.545455 .146451 2.929016-.258032 3.138232-.697385C3.382316-1.192528 3.403238-1.834122 3.403238-2.266501ZM1.84807-.313823C1.555168-.313823 1.220423-.481196 1.046077-.983313C.9066-1.408717 .899626-1.84807 .899626-2.357161C.899626-2.998755 .899626-4.261021 1.84807-4.261021S2.796513-2.998755 2.796513-2.357161C2.796513-1.896887 2.796513-1.373848 2.629141-.927522C2.433873-.425405 2.078207-.313823 1.84807-.313823Z"></path>
+<path id="tz_fig_projeto_borda_g1-49" d="M2.238605-4.721295H2.085181C1.63188-4.302864 1.060025-4.274969 .641594-4.261021V-3.821669C.913574-3.828643 1.262267-3.84259 1.610959-3.982067V-.439352H.683437V0H3.166127V-.439352H2.238605V-4.721295Z"></path>
+<path id="tz_fig_projeto_borda_g1-50" d="M1.973599-.536986C1.889913-.536986 1.806227-.530012 1.72254-.530012H.927522L2.008468-1.48543C2.133998-1.597011 2.475716-1.855044 2.608219-1.966625C2.915068-2.245579 3.326526-2.608219 3.326526-3.214944C3.326526-4.002989 2.740722-4.721295 1.743462-4.721295C1.004234-4.721295 .54396-4.323786 .306849-3.612453L.63462-3.200996C.795019-3.7868 1.039103-4.2401 1.645828-4.2401C2.231631-4.2401 2.677958-3.828643 2.677958-3.200996C2.677958-2.622167 2.336239-2.294396 1.917808-1.896887C1.778331-1.75741 1.401743-1.443587 1.255293-1.30411C1.053051-1.12279 .571856-.655542 .369614-.481196V0H3.326526V-.536986H1.973599Z"></path>
+<path id="tz_fig_projeto_borda_g1-51" d="M.697385-3.577584C.983313-4.135492 1.48543-4.288917 1.820174-4.288917C2.231631-4.288917 2.538481-4.051806 2.538481-3.654296C2.538481-3.284682 2.287422-2.831382 1.75741-2.740722C1.72254-2.733748 1.694645-2.733748 1.234371-2.698879V-2.238605H1.778331C2.440847-2.238605 2.684932-1.715567 2.684932-1.276214C2.684932-.732254 2.350187-.313823 1.806227-.313823C1.311083-.313823 .746202-.550934 .397509-.99726L.306849-.54396C.711333-.09066 1.276214 .146451 1.820174 .146451C2.733748 .146451 3.38929-.536986 3.38929-1.26924C3.38929-1.841096 2.929016-2.30137 2.378082-2.461768C2.908095-2.733748 3.180075-3.200996 3.180075-3.654296C3.180075-4.247073 2.57335-4.721295 1.827148-4.721295C1.21345-4.721295 .704359-4.400498 .411457-3.982067L.697385-3.577584Z"></path>
+<path id="tz_fig_projeto_borda_g1-52" d="M2.761644-1.164633H3.486924V-1.624907H2.761644V-4.574844H2.071233L.209215-1.624907V-1.164633H2.161893V0H2.761644V-1.164633ZM.801993-1.624907C1.011208-1.952677 2.21071-3.814695 2.21071-4.233126V-1.624907H.801993Z"></path>
+<path id="tz_fig_projeto_borda_g1-54" d="M3.061519-4.581818C2.684932-4.721295 2.419925-4.721295 2.287422-4.721295C1.227397-4.721295 .306849-3.724035 .306849-2.252553C.306849-.36264 1.157659 .146451 1.862017 .146451C2.426899 .146451 2.719801-.118555 2.93599-.341719C3.382316-.81594 3.38929-1.311083 3.38929-1.555168C3.38929-2.468742 2.894147-3.228892 2.217684-3.228892C1.534247-3.228892 1.164633-2.873225 .962391-2.670984C1.053051-3.626401 1.54122-4.288917 2.294396-4.288917C2.433873-4.288917 2.712827-4.274969 3.061519-4.142466V-4.581818ZM.969365-1.534247C.969365-1.57609 .969365-1.680697 .976339-1.715567C.976339-2.189788 1.276214-2.768618 1.896887-2.768618C2.747696-2.768618 2.747696-1.792279 2.747696-1.555168C2.747696-1.290162 2.747696-.99726 2.559402-.704359C2.39203-.4533 2.182814-.313823 1.862017-.313823C1.12279-.313823 1.004234-1.227397 .969365-1.534247Z"></path>
+<path id="tz_fig_projeto_borda_g1-56" d="M2.385056-2.468742C2.84533-2.615193 3.284682-2.984807 3.284682-3.500872C3.284682-4.135492 2.677958-4.721295 1.84807-4.721295S.411457-4.135492 .411457-3.500872C.411457-2.977833 .864757-2.608219 1.311083-2.468742C.697385-2.280448 .306849-1.806227 .306849-1.26924C.306849-.523039 .969365 .146451 1.84807 .146451S3.38929-.523039 3.38929-1.26924C3.38929-1.806227 2.991781-2.280448 2.385056-2.468742ZM1.84807-2.698879C1.352927-2.698879 .948443-2.984807 .948443-3.493898C.948443-3.940224 1.262267-4.288917 1.84807-4.288917C2.426899-4.288917 2.747696-3.940224 2.747696-3.493898C2.747696-2.998755 2.357161-2.698879 1.84807-2.698879ZM1.84807-.313823C1.366874-.313823 .941469-.620672 .941469-1.276214C.941469-1.903861 1.345953-2.238605 1.84807-2.238605S2.75467-1.896887 2.75467-1.276214C2.75467-.620672 2.322291-.313823 1.84807-.313823Z"></path>
+<path id="tz_fig_projeto_borda_g1-57" d="M.536986-.174346C.878705 .076712 1.192528 .146451 1.520299 .146451C2.496638 .146451 3.38929-.836862 3.38929-2.336239C3.38929-4.2401 2.545455-4.721295 1.875965-4.721295C1.255293-4.721295 .969365-4.428394 .767123-4.226152C.320797-3.772852 .306849-3.291656 .306849-3.019676C.306849-2.12005 .795019-1.345953 1.478456-1.345953C2.266501-1.345953 2.698879-1.868991 2.733748-1.910834C2.636115-.801993 2.092154-.313823 1.520299-.313823C1.157659-.313823 .934496-.446326 .774097-.578829L.536986-.174346ZM2.712827-3.02665C2.719801-2.984807 2.719801-2.915068 2.719801-2.873225C2.719801-2.357161 2.405978-1.806227 1.799253-1.806227C1.534247-1.806227 1.325031-1.882939 1.143711-2.168867C.962391-2.440847 .948443-2.705853 .948443-3.019676C.948443-3.291656 .948443-3.605479 1.164633-3.912329C1.311083-4.121544 1.520299-4.288917 1.868991-4.288917C2.545455-4.288917 2.691905-3.472976 2.712827-3.02665Z"></path>
+<path id="tz_fig_projeto_borda_g1-65" d="M2.803487-4.839851H2.127024L.209215 0H.781071L1.325031-1.380822H3.445081L3.989041 0H4.721295L2.803487-4.839851ZM2.39203-4.309838L3.270735-1.792279H1.499377L2.39203-4.309838Z"></path>
+<path id="tz_fig_projeto_borda_g1-67" d="M4.316812-.850809C3.828643-.550934 3.605479-.418431 2.908095-.418431C1.827148-.418431 1.171606-1.429639 1.171606-2.433873C1.171606-3.466002 1.889913-4.435367 2.908095-4.435367C3.368369-4.435367 3.84259-4.288917 4.163387-4.044832L4.274969-4.679452C3.7868-4.860772 3.396264-4.916563 2.887173-4.916563C1.506351-4.916563 .474222-3.772852 .474222-2.426899C.474222-.990286 1.569116 .069738 2.929016 .069738C3.612453 .069738 3.898381-.069738 4.358655-.320797L4.316812-.850809Z"></path>
+<path id="tz_fig_projeto_borda_g1-68" d="M.683437-4.839851V0H2.66401C3.919303 0 4.930511-1.060025 4.930511-2.378082C4.930511-3.744956 3.912329-4.839851 2.66401-4.839851H.683437ZM1.366874-.411457V-4.428394H2.475716C3.431133-4.428394 4.247073-3.668244 4.247073-2.385056C4.247073-1.08792 3.396264-.411457 2.475716-.411457H1.366874Z"></path>
+<path id="tz_fig_projeto_borda_g1-72" d="M4.546949-4.839851H3.84259V-2.747696H1.380822V-4.839851H.676463V0H1.380822V-2.287422H3.84259V0H4.546949V-4.839851Z"></path>
+<path id="tz_fig_projeto_borda_g1-76" d="M1.380822-4.839851H.676463V0H3.717061V-.495143C3.054545-.495143 2.39203-.481196 1.729514-.481196H1.380822V-4.839851Z"></path>
+<path id="tz_fig_projeto_borda_g1-78" d="M1.645828-4.839851H.697385V0H1.283188V-4.288917H1.290162L3.577584 0H4.526027V-4.839851H3.940224V-.550934H3.93325L1.645828-4.839851Z"></path>
+<path id="tz_fig_projeto_borda_g1-79" d="M5.05604-2.399004C5.05604-3.84259 3.996015-4.986301 2.733748-4.986301S.411457-3.84259 .411457-2.399004S1.48543 .146451 2.733748 .146451C3.989041 .146451 5.05604-.962391 5.05604-2.399004ZM2.733748-.348692C1.889913-.348692 1.115816-1.192528 1.115816-2.510585C1.115816-3.744956 1.896887-4.505106 2.733748-4.505106S4.351681-3.744956 4.351681-2.510585C4.351681-1.185554 3.577584-.348692 2.733748-.348692Z"></path>
+<path id="tz_fig_projeto_borda_g1-80" d="M2.615193-1.987547C3.514819-1.987547 4.316812-2.622167 4.316812-3.424159C4.316812-4.170361 3.577584-4.839851 2.566376-4.839851H.683437V0H1.387796V-1.987547H2.615193ZM2.39203-4.428394C3.180075-4.428394 3.682192-4.009963 3.682192-3.424159C3.682192-2.852304 3.20797-2.419925 2.39203-2.419925H1.366874V-4.428394H2.39203Z"></path>
+<path id="tz_fig_projeto_borda_g1-83" d="M3.445081-4.644583C2.998755-4.87472 2.601245-4.986301 2.085181-4.986301C1.03213-4.986301 .411457-4.274969 .411457-3.605479C.411457-3.319552 .502117-2.984807 .843836-2.66401C1.150685-2.378082 1.471482-2.308344 1.903861-2.203736C2.489664-2.064259 2.650062-2.02939 2.852304-1.820174C2.984807-1.687671 3.096389-1.492403 3.096389-1.255293C3.096389-.822914 2.705853-.376588 2.02939-.376588C1.63188-.376588 .990286-.495143 .439352-.962391L.327771-.334745C.676463-.132503 1.255293 .146451 2.036364 .146451C3.005729 .146451 3.696139-.557908 3.696139-1.338979C3.696139-1.903861 3.368369-2.224658 3.228892-2.371108C2.93599-2.657036 2.615193-2.733748 2.078207-2.859278C1.652802-2.956912 1.429639-3.012702 1.262267-3.173101C1.171606-3.263761 1.011208-3.424159 1.011208-3.689166C1.011208-4.079701 1.401743-4.484184 2.078207-4.484184C2.608219-4.484184 2.977833-4.316812 3.333499-4.016936L3.445081-4.644583Z"></path>
+<path id="tz_fig_projeto_borda_g1-84" d="M2.880199-4.309838H3.535741C3.619427-4.309838 3.703113-4.302864 3.7868-4.302864H4.791034V-4.791034H.265006V-4.302864H1.26924C1.352927-4.302864 1.436613-4.309838 1.520299-4.309838H2.175841V0H2.880199V-4.309838Z"></path>
+<path id="tz_fig_projeto_borda_g1-85" d="M4.400498-4.839851H3.793773V-1.624907C3.793773-.690411 3.166127-.265006 2.566376-.265006S1.380822-.697385 1.380822-1.617933V-4.839851H.676463V-1.63188C.676463-.606725 1.555168 .146451 2.559402 .146451C3.556663 .146451 4.400498-.613699 4.400498-1.63188V-4.839851Z"></path>
+<path id="tz_fig_projeto_borda_g1-97" d="M2.970859-2.008468C2.970859-2.719801 2.426899-3.200996 1.736488-3.200996C1.297136-3.200996 .962391-3.110336 .571856-2.901121L.613699-2.39203C.843836-2.545455 1.185554-2.75467 1.736488-2.75467C2.043337-2.75467 2.364134-2.524533 2.364134-2.001494V-1.72254C1.332005-1.687671 .313823-1.471482 .313823-.822914C.313823-.474222 .550934 .069738 1.164633 .069738C1.464508 .069738 2.015442 .006974 2.385056-.265006V0H2.970859V-2.008468ZM2.364134-.990286C2.364134-.850809 2.364134-.669489 2.12005-.523039C1.896887-.397509 1.624907-.390535 1.548194-.390535C1.164633-.390535 .871731-.564882 .871731-.829888C.871731-1.276214 2.050311-1.318057 2.364134-1.332005V-.990286Z"></path>
+<path id="tz_fig_projeto_borda_g1-98" d="M1.17858-4.839851H.592777V0H1.199502V-.327771C1.352927-.195268 1.687671 .069738 2.196762 .069738C2.956912 .069738 3.57061-.641594 3.57061-1.555168C3.57061-2.399004 3.089415-3.166127 2.39203-3.166127C1.952677-3.166127 1.527273-3.02665 1.17858-2.768618V-4.839851ZM1.199502-2.196762C1.199502-2.308344 1.199502-2.39203 1.443587-2.552428C1.548194-2.615193 1.736488-2.705853 1.973599-2.705853C2.440847-2.705853 2.963885-2.39203 2.963885-1.555168C2.963885-.704359 2.385056-.390535 1.896887-.390535C1.638854-.390535 1.39477-.509091 1.199502-.822914V-2.196762Z"></path>
+<path id="tz_fig_projeto_borda_g1-99" d="M3.033624-.760149C2.684932-.536986 2.308344-.411457 1.875965-.411457C1.234371-.411457 .857783-.927522 .857783-1.555168C.857783-2.092154 1.136737-2.719801 1.896887-2.719801C2.371108-2.719801 2.594271-2.622167 2.949938-2.399004L3.040598-2.901121C2.622167-3.110336 2.440847-3.200996 1.896887-3.200996C.850809-3.200996 .251059-2.357161 .251059-1.548194C.251059-.697385 .920548 .069738 1.868991 .069738C2.357161 .069738 2.775592-.076712 3.075467-.251059L3.033624-.760149Z"></path>
+<path id="tz_fig_projeto_borda_g1-100" d="M3.228892-4.839851H2.643088V-2.796513C2.196762-3.124284 1.743462-3.166127 1.54122-3.166127C.808966-3.166127 .251059-2.433873 .251059-1.548194S.801993 .069738 1.520299 .069738C1.952677 .069738 2.357161-.125529 2.622167-.36264V0H3.228892V-4.839851ZM2.622167-.864757C2.447821-.578829 2.182814-.390535 1.84807-.390535C1.3599-.390535 .857783-.732254 .857783-1.54122C.857783-2.412951 1.45056-2.705853 1.924782-2.705853C2.203736-2.705853 2.440847-2.587298 2.622167-2.350187V-.864757Z"></path>
+<path id="tz_fig_projeto_borda_g1-101" d="M2.998755-.760149C2.608219-.481196 2.168867-.390535 1.868991-.390535C1.262267-.390535 .801993-.885679 .781071-1.527273H3.068493C3.068493-1.84807 3.033624-2.315318 2.761644-2.712827C2.510585-3.068493 2.092154-3.200996 1.750436-3.200996C.899626-3.200996 .244085-2.454795 .244085-1.569116C.244085-.676463 .941469 .069738 1.862017 .069738C2.266501 .069738 2.684932-.048817 3.040598-.265006L2.998755-.760149ZM.829888-1.945704C.990286-2.503611 1.401743-2.740722 1.750436-2.740722C2.057285-2.740722 2.510585-2.594271 2.643088-1.945704H.829888Z"></path>
+<path id="tz_fig_projeto_borda_g1-103" d="M3.507846-3.166127C3.354421-3.166127 2.887173-3.159153 2.357161-2.956912L2.343213-2.949938C2.092154-3.11731 1.84807-3.166127 1.645828-3.166127C.962391-3.166127 .4533-2.629141 .4533-2.02939C.4533-1.785305 .536986-1.534247 .697385-1.338979C.599751-1.220423 .495143-1.025156 .495143-.760149C.495143-.488169 .606725-.313823 .669489-.230137C.285928-.006974 .209215 .313823 .209215 .481196C.209215 1.011208 .941469 1.429639 1.84807 1.429639C2.761644 1.429639 3.486924 1.011208 3.486924 .481196C3.486924-.502117 2.266501-.502117 1.966625-.502117H1.318057C1.206476-.502117 .9066-.502117 .9066-.864757C.9066-1.004234 .955417-1.073973 .962391-1.08792C1.206476-.934496 1.45056-.885679 1.638854-.885679C2.322291-.885679 2.831382-1.422665 2.831382-2.022416C2.831382-2.245579 2.768618-2.447821 2.643088-2.636115C2.615193-2.677958 2.615193-2.684932 2.615193-2.691905C2.615193-2.719801 3.033624-2.719801 3.068493-2.719801C3.075467-2.719801 3.340473-2.719801 3.591532-2.691905L3.507846-3.166127ZM1.645828-1.318057C1.26924-1.318057 .990286-1.555168 .990286-2.022416C.990286-2.566376 1.338979-2.733748 1.638854-2.733748C2.015442-2.733748 2.294396-2.496638 2.294396-2.02939C2.294396-1.48543 1.945704-1.318057 1.645828-1.318057ZM1.973599 .041843C2.133998 .041843 2.956912 .041843 2.956912 .488169C2.956912 .788045 2.433873 .99726 1.84807 .99726S.739228 .788045 .739228 .488169C.739228 .4533 .739228 .041843 1.30411 .041843H1.973599Z"></path>
+<path id="tz_fig_projeto_borda_g1-104" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.624907-3.166127 1.30411-2.817435 1.164633-2.670984V-4.839851H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_projeto_borda_g1-105" d="M1.227397-4.78406H.523039V-4.079701H1.227397V-4.78406ZM1.171606-3.096389H.585803V0H1.171606V-3.096389Z"></path>
+<path id="tz_fig_projeto_borda_g1-114" d="M1.17858-1.48543C1.17858-2.238605 1.806227-2.643088 2.419925-2.650062V-3.166127C1.834122-3.159153 1.408717-2.873225 1.129763-2.503611V-3.145205H.592777V0H1.17858V-1.48543Z"></path>
+<path id="tz_fig_projeto_borda_g1-115" d="M2.545455-2.984807C2.071233-3.180075 1.72254-3.200996 1.471482-3.200996C1.297136-3.200996 .244085-3.200996 .244085-2.273474C.244085-1.945704 .425405-1.764384 .516065-1.680697C.760149-1.436613 1.053051-1.380822 1.422665-1.311083C1.750436-1.248319 2.127024-1.17858 2.127024-.843836C2.127024-.404483 1.548194-.404483 1.45056-.404483C1.004234-.404483 .585803-.564882 .306849-.760149L.209215-.237111C.446326-.118555 .871731 .069738 1.45056 .069738C1.764384 .069738 2.071233 .020922 2.329265-.167372C2.587298-.36264 2.670984-.669489 2.670984-.9066C2.670984-1.03213 2.657036-1.30411 2.364134-1.569116C2.106102-1.799253 1.855044-1.84807 1.520299-1.910834C1.108842-1.987547 .788045-2.050311 .788045-2.357161C.788045-2.75467 1.297136-2.75467 1.401743-2.75467C1.799253-2.75467 2.106102-2.670984 2.454795-2.489664L2.545455-2.984807Z"></path>
+<path id="tz_fig_projeto_borda_g1-116" d="M1.311083-2.657036H2.343213V-3.096389H1.311083V-3.982067H.774097V-3.096389H.139477V-2.657036H.753176V-.892653C.753176-.425405 .871731 .069738 1.373848 .069738S2.259527-.09066 2.468742-.188294L2.350187-.63462C2.12005-.467248 1.875965-.411457 1.680697-.411457C1.387796-.411457 1.311083-.697385 1.311083-1.018182V-2.657036Z"></path>
+<path id="tz_fig_projeto_borda_g1-118" d="M3.305604-3.096389H2.747696C1.792279-.760149 1.750436-.571856 1.72254-.411457H1.715567C1.659776-.683437 1.464508-1.171606 1.248319-1.708593L.690411-3.096389H.104608L1.380822 0H2.02939L3.305604-3.096389Z"></path>
+<path id="tz_fig_projeto_borda_g1-124" d="M7.406227-1.680697V-2.140971H0V-1.680697H7.406227Z"></path>
+<path id="tz_fig_projeto_borda_g2-45" d="M2.304359-1.730511C2.411955-1.730511 2.734745-1.730511 2.734745-2.0533S2.411955-2.37609 2.304359-2.37609H.537983C.430386-2.37609 .107597-2.37609 .107597-2.0533S.430386-1.730511 .537983-1.730511H2.304359Z"></path>
+<path id="tz_fig_projeto_borda_g2-49" d="M3.183064-5.989539C3.183064-6.1599 3.183064-6.419925 2.788543-6.419925C2.609215-6.419925 2.57335-6.401993 2.465753-6.294396C2.304359-6.150934 1.963636-5.819178 1.075965-5.801245C.91457-5.801245 .681445-5.738481 .681445-5.478456C.681445-5.155666 .995268-5.155666 1.111831-5.155666C1.380822-5.155666 1.694645-5.200498 1.95467-5.272229V-.645579H1.255293C1.13873-.645579 .824907-.645579 .824907-.32279S1.13873 0 1.255293 0H3.81071C3.90934 0 4.241096 0 4.241096-.32279S3.90934-.645579 3.81071-.645579H3.183064V-5.989539Z"></path>
+<path id="tz_fig_projeto_borda_g2-97" d="M4.160399-2.833375C4.160399-4.250062 2.797509-4.259029 2.349191-4.259029C1.927771-4.259029 1.479452-4.223163 .878705-3.972105C.690411-3.891407 .645579-3.864508 .645579-3.765878C.645579-3.703113 .699377-3.183064 .708344-3.111333C.71731-3.057534 .762142-3.012702 .824907-3.012702C.869738-3.012702 .896638-3.039601 .923537-3.066501C1.309091-3.469988 1.75741-3.667248 2.313325-3.667248C2.797509-3.667248 2.940971-3.371357 2.940971-2.842341V-2.528518C2.627148-2.528518 .277958-2.510585 .277958-1.192528C.277958-.564882 .780075 .09863 1.569116 .09863C1.873973 .09863 2.546451 .008966 2.96787-.609714V-.430386C2.96787-.143462 3.030635 0 3.398257 0H3.730012C4.070735 0 4.160399-.116563 4.160399-.430386V-2.833375ZM2.940971-1.380822C2.940971-.546949 2.089166-.546949 2.062267-.546949C1.685679-.546949 1.443587-.869738 1.443587-1.210461C1.443587-2.089166 2.689913-2.15193 2.940971-2.160897V-1.380822Z"></path>
+<path id="tz_fig_projeto_borda_g2-99" d="M4.097634-.448319C4.097634-.546949 4.061768-.959402 4.043836-1.075965C4.043836-1.102864 4.025903-1.192528 3.936239-1.192528C3.900374-1.192528 3.882441-1.192528 3.792777-1.102864C3.640349-.968369 3.218929-.600747 2.483686-.600747C1.551183-.600747 1.551183-1.506351 1.551183-2.080199C1.551183-2.806476 1.596015-3.559651 2.510585-3.559651C3.0934-3.559651 3.335492-3.416189 3.658281-3.147198C3.765878-3.048568 3.783811-3.048568 3.819676-3.048568C3.90934-3.048568 3.927273-3.129265 3.936239-3.165131C3.954172-3.236862 4.043836-3.738979 4.043836-3.783811C4.043836-3.864508 3.981071-3.900374 3.828643-3.972105C3.398257-4.169365 3.129265-4.259029 2.501619-4.259029C1.165629-4.259029 .331756-3.631382 .331756-2.062267C.331756-.573848 1.102864 .09863 2.456787 .09863C2.698879 .09863 3.236862 .089664 3.837609-.215193C4.088667-.349689 4.097634-.358655 4.097634-.448319Z"></path>
+<path id="tz_fig_projeto_borda_g2-101" d="M3.864508-1.918804C4.070735-1.918804 4.294894-1.927771 4.294894-2.331258C4.294894-3.48792 3.756912-4.259029 2.420922-4.259029C.986301-4.259029 .277958-3.452055 .277958-2.089166C.277958-.61868 1.129763 .09863 2.537484 .09863C2.878207 .09863 3.38929 .053798 3.981071-.242092C4.178331-.340722 4.241096-.367621 4.241096-.475218C4.241096-.537983 4.214197-.798007 4.20523-.869738C4.169365-1.147696 4.160399-1.156663 4.079701-1.156663C4.043836-1.156663 4.025903-1.156663 3.927273-1.066999C3.398257-.609714 2.860274-.546949 2.57335-.546949C1.560149-.546949 1.452553-1.344956 1.425654-1.918804H3.864508ZM1.43462-2.394022C1.461519-2.940971 1.640847-3.61345 2.420922-3.61345C3.138232-3.61345 3.272727-3.0934 3.299626-2.394022H1.43462Z"></path>
+<path id="tz_fig_projeto_borda_g2-105" d="M.91457-6.231631C.627646-6.231631 .484184-6.177833 .484184-5.819178V-5.406725C.484184-5.119801 .573848-5.003238 .905604-5.003238H1.371856C1.802242-5.003238 1.802242-5.191532 1.802242-5.612951C1.802242-6.043337 1.802242-6.231631 1.371856-6.231631H.91457ZM1.739477-3.676214C1.739477-3.963138 1.676712-4.1066 1.309091-4.1066H.977335C.654545-4.1066 .546949-4.00797 .546949-3.676214V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-3.676214Z"></path>
+<path id="tz_fig_projeto_borda_g2-108" d="M1.739477-5.792279C1.739477-6.079203 1.676712-6.222665 1.309091-6.222665H.977335C.654545-6.222665 .546949-6.124035 .546949-5.792279V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-5.792279Z"></path>
+<path id="tz_fig_projeto_borda_g2-110" d="M4.483188-2.914072C4.483188-3.837609 4.088667-4.20523 3.174097-4.20523C2.232628-4.20523 1.829141-3.523786 1.712578-3.281694H1.703611V-3.730012C1.703611-4.016936 1.640847-4.160399 1.273225-4.160399H.968369C.645579-4.160399 .537983-4.061768 .537983-3.730012V-.430386C.537983-.107597 .636613 0 .968369 0H1.327024C1.667746 0 1.75741-.116563 1.75741-.430386V-2.411955C1.75741-3.19203 2.27746-3.559651 2.743711-3.559651C3.174097-3.559651 3.263761-3.353425 3.263761-2.896139V-.430386C3.263761-.143462 3.326526 0 3.694147 0H4.052802C4.393524 0 4.483188-.116563 4.483188-.430386V-2.914072Z"></path>
+<path id="tz_fig_projeto_borda_g2-111" d="M4.644583-2.017435C4.644583-3.48792 3.927273-4.259029 2.465753-4.259029C.968369-4.259029 .277958-3.461021 .277958-2.017435C.277958-.555915 1.049066 .09863 2.456787 .09863S4.644583-.546949 4.644583-2.017435ZM2.465753-.600747C1.497385-.600747 1.497385-1.407721 1.497385-2.125031C1.497385-2.815442 1.497385-3.61345 2.456787-3.61345C3.425156-3.61345 3.425156-2.824408 3.425156-2.125031C3.425156-1.416687 3.425156-.600747 2.465753-.600747Z"></path>
+<path id="tz_fig_projeto_borda_g2-112" d="M1.766376-.349689C2.169863 .09863 2.663014 .09863 2.788543 .09863C4.689415 .09863 4.689415-1.622914 4.689415-2.071233C4.689415-2.510585 4.689415-4.20523 3.066501-4.20523C2.537484-4.20523 2.062267-3.990037 1.739477-3.685181C1.739477-4.016936 1.613948-4.1066 1.309091-4.1066H.977335C.654545-4.1066 .546949-4.00797 .546949-3.676214V1.309091C.546949 1.63188 .645579 1.739477 .977335 1.739477H1.33599C1.676712 1.739477 1.766376 1.622914 1.766376 1.309091V-.349689ZM1.766376-3.209963C1.865006-3.299626 2.160897-3.505853 2.546451-3.505853C3.461021-3.505853 3.469988-2.447821 3.469988-2.0533C3.469988-1.694645 3.469988-.546949 2.456787-.546949C2.25056-.546949 2.089166-.61868 1.981569-.699377C1.766376-.851806 1.766376-.896638 1.766376-1.058032V-3.209963Z"></path>
+<path id="tz_fig_projeto_borda_g2-113" d="M4.474222-3.774844C4.474222-4.061768 4.411457-4.20523 4.043836-4.20523H3.71208C3.371357-4.20523 3.281694-4.088667 3.281694-3.774844V-3.604483C2.887173-4.20523 2.358157-4.20523 2.205729-4.20523C.475218-4.20523 .331756-2.761644 .331756-2.044334C.331756-1.344956 .475218 .09863 2.142964 .09863C2.618182 .09863 2.949938-.080697 3.254795-.430386V1.309091C3.254795 1.596015 3.317559 1.739477 3.685181 1.739477H4.043836C4.384558 1.739477 4.474222 1.622914 4.474222 1.309091V-3.774844ZM3.281694-1.031133C3.120299-.806974 2.878207-.546949 2.465753-.546949C1.551183-.546949 1.551183-1.685679 1.551183-2.035367C1.551183-2.394022 1.551183-3.505853 2.555417-3.505853C2.698879-3.505853 2.887173-3.469988 3.048568-3.299626C3.281694-3.075467 3.281694-2.914072 3.281694-2.806476V-1.031133Z"></path>
+<path id="tz_fig_projeto_borda_g2-114" d="M1.739477-2.062267C1.739477-2.914072 2.447821-3.263761 3.012702-3.299626C3.174097-3.308593 3.19203-3.308593 3.19203-3.541719V-3.963138C3.19203-4.142466 3.19203-4.20523 3.030635-4.20523C2.779577-4.20523 2.125031-4.115567 1.703611-3.147198H1.694645V-3.730012C1.694645-4.016936 1.63188-4.160399 1.264259-4.160399H.977335C.654545-4.160399 .546949-4.061768 .546949-3.730012V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-2.062267Z"></path>
+<path id="tz_fig_projeto_borda_g2-116" d="M1.95467-3.461021H2.752677C2.860274-3.461021 3.183064-3.461021 3.183064-3.783811S2.860274-4.1066 2.752677-4.1066H1.95467V-4.850809C1.95467-5.137733 1.891905-5.281196 1.524284-5.281196H1.246326C.923537-5.281196 .81594-5.182565 .81594-4.850809V-4.1066H.609714C.511083-4.1066 .179328-4.1066 .179328-3.783811S.502117-3.461021 .609714-3.461021H.789041V-1.192528C.789041-.286924 1.111831 .09863 1.730511 .09863C1.811208 .09863 2.205729 .09863 2.67198-.044832C2.824408-.089664 3.344458-.251059 3.344458-.42142C3.344458-.448319 3.326526-.511083 3.272727-.699377C3.227895-.878705 3.209963-.932503 3.129265-.932503C3.084433-.932503 3.075467-.923537 3.021669-.869738C2.923039-.798007 2.680946-.600747 2.304359-.600747C2.089166-.600747 1.95467-.753176 1.95467-1.344956V-3.461021Z"></path>
+<path id="tz_fig_projeto_borda_g2-117" d="M4.483188-3.676214C4.483188-3.963138 4.420423-4.1066 4.052802-4.1066H3.694147C3.353425-4.1066 3.263761-3.990037 3.263761-3.676214V-1.551183C3.263761-.959402 2.949938-.448319 2.313325-.448319C1.811208-.448319 1.75741-.573848 1.75741-1.049066V-3.676214C1.75741-3.963138 1.694645-4.1066 1.327024-4.1066H.968369C.645579-4.1066 .537983-4.00797 .537983-3.676214V-1.129763C.537983-.170361 1.058032 .09863 1.990535 .09863C2.232628 .09863 2.86924 .09863 3.29066-.663512V-.430386C3.29066-.143462 3.353425 0 3.721046 0H4.052802C4.393524 0 4.483188-.116563 4.483188-.430386V-3.676214Z"></path>
+<path id="tz_fig_projeto_borda_g3-12" d="M4.214197-6.231631H3.443088V-5.460523H4.214197V-6.231631ZM4.187298-3.981071H3.469988V0H4.187298V-3.981071ZM1.640847-3.425156H2.716812V-3.981071H1.613948V-5.039103C1.613948-5.612951 1.945704-5.738481 2.160897-5.738481C2.322291-5.738481 2.528518-5.702615 2.716812-5.56812V-6.222665C2.645081-6.249564 2.420922-6.321295 2.160897-6.321295C1.479452-6.321295 .923537-5.684682 .923537-4.779078V-3.981071H.251059V-3.425156H.923537V0H1.640847V-3.425156Z"></path>
+<path id="tz_fig_projeto_borda_g3-46" d="M1.65878-.771108H.887671V0H1.65878V-.771108Z"></path>
+<path id="tz_fig_projeto_borda_g3-48" d="M4.23213-2.914072C4.23213-3.765878 4.169365-4.554919 3.747945-5.263263C3.452055-5.756413 2.896139-6.06127 2.304359-6.06127C1.85604-6.06127 1.219427-5.890909 .81594-5.191532C.394521-4.483188 .367621-3.532752 .367621-2.914072C.367621-2.465753 .367621-1.443587 .771108-.71731C1.219427 .071731 1.900872 .19726 2.295392 .19726C2.815442 .19726 3.461021-.017933 3.846575-.762142C4.187298-1.416687 4.23213-2.196762 4.23213-2.914072ZM2.304359-.385554C1.111831-.385554 1.111831-2.178829 1.111831-3.021669C1.111831-3.58655 1.111831-4.043836 1.246326-4.510087C1.416687-5.128767 1.784309-5.478456 2.295392-5.478456C3.48792-5.478456 3.48792-3.855542 3.48792-3.021669C3.48792-2.411955 3.48792-1.793275 3.281694-1.210461C3.075467-.591781 2.654047-.385554 2.304359-.385554Z"></path>
+<path id="tz_fig_projeto_borda_g3-49" d="M2.77061-6.06127H2.582316C1.981569-5.478456 1.120797-5.478456 .806974-5.478456V-4.92254C1.058032-4.92254 1.515318-4.92254 2.008468-5.128767V-.555915H.860772V0H3.918306V-.555915H2.77061V-6.06127Z"></path>
+<path id="tz_fig_projeto_borda_g3-57" d="M.663512-.224159C1.066999 .09863 1.470486 .19726 1.891905 .19726C3.0934 .19726 4.214197-1.049066 4.214197-2.99477C4.214197-5.433624 3.165131-6.06127 2.331258-6.06127C1.820174-6.06127 1.380822-5.890909 .977335-5.451557C.537983-4.958406 .385554-4.545953 .385554-3.873474C.385554-3.254795 .502117-2.824408 .806974-2.367123C1.120797-1.882939 1.425654-1.712578 1.85604-1.712578C2.627148-1.712578 3.174097-2.160897 3.416189-2.456787C3.272727-.851806 2.483686-.385554 1.891905-.385554C1.640847-.385554 1.300125-.439352 .959402-.726276L.663512-.224159ZM3.38929-3.882441C3.398257-3.828643 3.398257-3.738979 3.398257-3.676214C3.398257-2.940971 2.940971-2.295392 2.241594-2.295392C1.75741-2.295392 1.542217-2.555417 1.398755-2.779577C1.174595-3.138232 1.165629-3.496887 1.165629-3.873474C1.165629-4.259029 1.174595-4.644583 1.461519-5.039103C1.569116-5.191532 1.802242-5.505355 2.331258-5.505355C3.263761-5.505355 3.380324-4.20523 3.38929-3.882441Z"></path>
+<path id="tz_fig_projeto_borda_g3-67" d="M5.361893-1.066999C4.832877-.654545 4.33076-.52005 3.58655-.52005C2.25056-.52005 1.452553-1.891905 1.452553-3.0934C1.452553-4.420423 2.286426-5.711582 3.58655-5.711582C4.20523-5.711582 4.752179-5.550187 5.182565-5.227397L5.326027-6.016438C4.859776-6.213699 4.276961-6.321295 3.658281-6.321295C1.882939-6.321295 .591781-4.877709 .591781-3.111333C.591781-1.398755 1.847073 .09863 3.649315 .09863C4.483188 .09863 4.814944-.035866 5.424658-.403487L5.361893-1.066999Z"></path>
+<path id="tz_fig_projeto_borda_g3-68" d="M.869738-6.222665V0H3.317559C4.877709 0 6.141968-1.362889 6.141968-3.057534C6.141968-4.814944 4.877709-6.222665 3.317559-6.222665H.869738ZM1.703611-.529016V-5.693649H3.084433C4.321793-5.693649 5.308095-4.680448 5.308095-3.057534C5.308095-1.488418 4.312827-.529016 3.0934-.529016H1.703611Z"></path>
+<path id="tz_fig_projeto_borda_g3-72" d="M5.657783-6.222665H4.797011V-3.523786H1.712578V-6.222665H.851806V0H1.712578V-2.940971H4.797011V0H5.657783V-6.222665Z"></path>
+<path id="tz_fig_projeto_borda_g3-73" d="M1.712578-6.222665H.851806V0H1.712578V-6.222665Z"></path>
+<path id="tz_fig_projeto_borda_g3-80" d="M3.19203-2.555417C4.456289-2.555417 5.370859-3.425156 5.370859-4.402491C5.370859-5.352927 4.465255-6.222665 3.19203-6.222665H.869738V0H1.730511V-2.555417H3.19203ZM2.976837-5.693649C4.00797-5.693649 4.590785-5.119801 4.590785-4.402491S4.016936-3.111333 2.976837-3.111333H1.703611V-5.693649H2.976837Z"></path>
+<path id="tz_fig_projeto_borda_g3-97" d="M3.694147-2.591283C3.694147-3.478954 3.039601-4.133499 2.15193-4.133499C1.569116-4.133499 1.13873-3.981071 .708344-3.738979L.762142-3.102366C1.210461-3.434122 1.649813-3.568618 2.142964-3.568618C2.645081-3.568618 2.949938-3.165131 2.949938-2.582316V-2.205729C1.407721-2.169863 .394521-1.766376 .394521-1.0401C.394521-.61868 .672478 .09863 1.452553 .09863C1.63188 .09863 2.411955 .080697 2.976837-.340722V0H3.694147V-2.591283ZM2.949938-1.255293C2.949938-1.066999 2.949938-.842839 2.627148-.654545C2.402989-.52005 2.107098-.484184 1.927771-.484184C1.470486-.484184 1.084932-.699377 1.084932-1.058032C1.084932-1.694645 2.833375-1.721544 2.949938-1.721544V-1.255293Z"></path>
+<path id="tz_fig_projeto_borda_g3-99" d="M3.774844-.968369C3.344458-.672478 2.86924-.511083 2.331258-.511083C1.569116-.511083 1.066999-1.147696 1.066999-1.999502C1.066999-2.689913 1.407721-3.523786 2.367123-3.523786C2.932005-3.523786 3.218929-3.416189 3.667248-3.111333L3.783811-3.738979C3.281694-4.025903 3.003736-4.133499 2.358157-4.133499C1.084932-4.133499 .32279-3.057534 .32279-1.990535C.32279-.878705 1.156663 .09863 2.322291 .09863C2.949938 .09863 3.425156-.089664 3.828643-.331756L3.774844-.968369Z"></path>
+<path id="tz_fig_projeto_borda_g3-100" d="M4.00797-6.222665H3.29066V-3.58655C2.788543-4.00797 2.214695-4.079701 1.927771-4.079701C1.022167-4.079701 .32279-3.138232 .32279-1.990535C.32279-.833873 1.0132 .09863 1.891905 .09863C2.160897 .09863 2.725778 .035866 3.263761-.466252V0H4.00797V-6.222665ZM3.263761-1.264259C3.263761-1.093898 3.263761-1.075965 3.165131-.950436C2.923039-.627646 2.618182-.484184 2.295392-.484184C1.712578-.484184 1.066999-.905604 1.066999-1.981569C1.066999-3.129265 1.829141-3.496887 2.394022-3.496887C2.806476-3.496887 3.0934-3.263761 3.263761-3.030635V-1.264259Z"></path>
+<path id="tz_fig_projeto_borda_g3-101" d="M3.828643-1.963636C3.828643-2.241594 3.819676-2.923039 3.469988-3.461021C3.0934-4.025903 2.519552-4.133499 2.178829-4.133499C1.13873-4.133499 .313823-3.174097 .313823-2.026401C.313823-.842839 1.192528 .09863 2.313325 .09863C2.743711 .09863 3.263761-.008966 3.783811-.340722L3.730012-.959402C3.165131-.555915 2.636115-.484184 2.322291-.484184C1.578082-.484184 1.004234-1.13873 .977335-1.963636H3.828643ZM1.031133-2.492653C1.174595-3.066501 1.613948-3.550685 2.178829-3.550685C2.510585-3.550685 3.120299-3.398257 3.29066-2.492653H1.031133Z"></path>
+<path id="tz_fig_projeto_borda_g3-108" d="M1.452553-6.222665H.735243V0H1.452553V-6.222665Z"></path>
+<path id="tz_fig_projeto_borda_g3-109" d="M6.58132-2.663014C6.58132-3.326526 6.401993-4.079701 5.317061-4.079701C4.563885-4.079701 4.142466-3.622416 3.927273-3.344458C3.864508-3.523786 3.676214-4.079701 2.761644-4.079701C2.0533-4.079701 1.622914-3.667248 1.416687-3.398257V-4.034869H.726276V0H1.470486V-2.187796C1.470486-2.779577 1.703611-3.496887 2.385056-3.496887C3.281694-3.496887 3.281694-2.860274 3.281694-2.600249V0H4.025903V-2.187796C4.025903-2.779577 4.259029-3.496887 4.940473-3.496887C5.837111-3.496887 5.837111-2.860274 5.837111-2.600249V0H6.58132V-2.663014Z"></path>
+<path id="tz_fig_projeto_borda_g3-111" d="M4.33076-1.972603C4.33076-3.147198 3.434122-4.133499 2.295392-4.133499C1.183562-4.133499 .268991-3.165131 .268991-1.972603C.268991-.789041 1.210461 .09863 2.295392 .09863C3.407223 .09863 4.33076-.806974 4.33076-1.972603ZM2.304359-.511083C1.613948-.511083 1.0132-1.049066 1.0132-2.062267C1.0132-3.111333 1.685679-3.550685 2.295392-3.550685C2.940971-3.550685 3.58655-3.0934 3.58655-2.062267C3.58655-1.022167 2.958904-.511083 2.304359-.511083Z"></path>
+<path id="tz_fig_projeto_borda_g3-112" d="M1.488418-.412453C1.820174-.09863 2.268493 .09863 2.734745 .09863C3.640349 .09863 4.42939-.789041 4.42939-1.999502C4.42939-3.075467 3.864508-4.079701 2.99477-4.079701C2.743711-4.079701 2.080199-4.034869 1.461519-3.550685V-3.981071H.744209V1.739477H1.488418V-.412453ZM1.488418-2.976837C1.604981-3.138232 1.936737-3.469988 2.447821-3.469988C3.120299-3.469988 3.685181-2.833375 3.685181-1.990535C3.685181-1.129763 3.057534-.484184 2.358157-.484184C2.071233-.484184 1.748443-.600747 1.488418-1.0401V-2.976837Z"></path>
+<path id="tz_fig_projeto_borda_g3-114" d="M1.461519-1.909838C1.461519-2.851308 2.196762-3.425156 3.012702-3.434122V-4.079701C2.367123-4.070735 1.775342-3.747945 1.407721-3.218929V-4.034869H.744209V0H1.461519V-1.909838Z"></path>
+<path id="tz_fig_projeto_borda_g3-115" d="M3.165131-3.846575C2.609215-4.097634 2.196762-4.133499 1.829141-4.133499C1.622914-4.133499 .304857-4.133499 .304857-2.949938C.304857-2.519552 .564882-2.25056 .663512-2.15193C1.004234-1.85604 1.23736-1.811208 1.847073-1.694645C2.133998-1.640847 2.645081-1.542217 2.645081-1.084932C2.645081-.502117 1.918804-.502117 1.802242-.502117C1.273225-.502117 .762142-.681445 .376588-.950436L.260025-.29589C.798007-.008966 1.344956 .09863 1.802242 .09863C2.385056 .09863 3.317559-.089664 3.317559-1.156663C3.317559-1.470486 3.19203-1.784309 2.878207-2.0533C2.57335-2.313325 2.304359-2.367123 1.748443-2.47472C1.425654-2.537484 .977335-2.618182 .977335-3.039601C.977335-3.568618 1.613948-3.568618 1.748443-3.568618C2.402989-3.568618 2.788543-3.362391 3.048568-3.218929L3.165131-3.846575Z"></path>
+<path id="tz_fig_projeto_borda_g3-116" d="M1.622914-3.425156H2.914072V-3.981071H1.622914V-5.119801H.959402V-3.981071H.170361V-3.425156H.932503V-1.129763C.932503-.600747 1.049066 .09863 1.703611 .09863C2.098132 .09863 2.564384 .017933 3.066501-.233126L2.914072-.798007C2.680946-.61868 2.367123-.511083 2.089166-.511083C1.739477-.511083 1.622914-.824907 1.622914-1.291158V-3.425156Z"></path>
+<path id="tz_fig_projeto_borda_g3-117" d="M4.025903-3.981071H3.281694V-1.389788C3.281694-.672478 2.716812-.430386 2.178829-.430386C1.53325-.430386 1.470486-.636613 1.470486-1.022167V-3.981071H.726276V-.977335C.726276-.215193 1.031133 .09863 1.667746 .09863C2.187796 .09863 2.887173-.053798 3.308593-.430386V0H4.025903V-3.981071Z"></path>
+<path id="tz_fig_projeto_borda_g3-118" d="M4.115567-3.981071H3.407223L2.698879-2.160897C2.519552-1.694645 2.187796-.824907 2.142964-.493151H2.125031C2.107098-.645579 2.080199-.81594 1.587049-2.107098C1.318057-2.833375 .878705-3.927273 .860772-3.981071H.125529L1.703611 0H2.537484L4.115567-3.981071Z"></path>
+<path id="tz_fig_projeto_borda_g3-123" d="M4.599751-2.169863V-2.752677H0V-2.169863H4.599751Z"></path>
+</defs>
+<g id="tz_fig_projeto_borda_page1">
+<g stroke-miterlimit="10" transform="translate(-22.832545,4.285291)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M44.95184 0C44.95184 8.6428 24.82652 15.649 0 15.649S-44.95184 8.6428-44.95184 0S-24.82652-15.649 0-15.649S44.95184-8.6428 44.95184 0ZM0 0"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-28.45274,-3.125)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.832545,4.285291)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-11.612702" y="4.285291" href="#tz_fig_projeto_borda_g3-80"></use>
+<use x="-5.71818" y="4.285291" href="#tz_fig_projeto_borda_g3-114"></use>
+<use x="-2.570282" y="4.285291" href="#tz_fig_projeto_borda_g3-111"></use>
+<use x="2.037408" y="4.285291" href="#tz_fig_projeto_borda_g3-118"></use>
+<use x="6.285333" y="4.285291" href="#tz_fig_projeto_borda_g3-101"></use>
+<use x="10.381075" y="4.285291" href="#tz_fig_projeto_borda_g3-100"></use>
+<use x="15.140965" y="4.285291" href="#tz_fig_projeto_borda_g3-111"></use>
+<use x="19.492673" y="4.285291" href="#tz_fig_projeto_borda_g3-114"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M208.95319 17.07164H122.92899C121.27211 17.07164 119.92899 15.72852 119.92899 14.07164V-14.07164C119.92899-15.72852 121.27211-17.07164 122.92899-17.07164H208.95319C210.61006-17.07164 211.95319-15.72852 211.95319-14.07164V14.07164C211.95319 15.72852 210.61006 17.07164 208.95319 17.07164ZM119.92899-17.07164"></path>
+</g>
+</g>
+</g>
+<g transform="translate(123.26196,-2.25)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.832545,4.285291)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-13.631803" y="4.285291" href="#tz_fig_projeto_borda_g2-99"></use>
+<use x="-9.248217" y="4.285291" href="#tz_fig_projeto_borda_g2-108"></use>
+<use x="-6.956796" y="4.285291" href="#tz_fig_projeto_borda_g2-105"></use>
+<use x="-4.665376" y="4.285291" href="#tz_fig_projeto_borda_g2-45"></use>
+<use x="-1.377686" y="4.285291" href="#tz_fig_projeto_borda_g2-112"></use>
+<use x="3.653476" y="4.285291" href="#tz_fig_projeto_borda_g2-97"></use>
+<use x="8.360854" y="4.285291" href="#tz_fig_projeto_borda_g2-111"></use>
+<use x="13.566355" y="4.285291" href="#tz_fig_projeto_borda_g2-113"></use>
+<use x="18.597517" y="4.285291" href="#tz_fig_projeto_borda_g2-117"></use>
+<use x="23.628679" y="4.285291" href="#tz_fig_projeto_borda_g2-101"></use>
+<use x="28.21152" y="4.285291" href="#tz_fig_projeto_borda_g2-110"></use>
+<use x="33.242682" y="4.285291" href="#tz_fig_projeto_borda_g2-116"></use>
+<use x="36.866614" y="4.285291" href="#tz_fig_projeto_borda_g2-101"></use>
+<use x="41.449455" y="4.285291" href="#tz_fig_projeto_borda_g2-45"></use>
+<use x="44.737145" y="4.285291" href="#tz_fig_projeto_borda_g2-114"></use>
+<use x="48.074652" y="4.285291" href="#tz_fig_projeto_borda_g2-49"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<path d="M353.39232 55.26016H278.74922C277.09235 55.26016 275.74922 53.91704 275.74922 52.26016V32.65271C275.74922 30.99583 277.09235 29.65271 278.74922 29.65271H353.39232C355.0492 29.65271 356.39232 30.99583 356.39232 32.65271V52.26016C356.39232 53.91704 355.0492 55.26016 353.39232 55.26016ZM275.74922 29.65271"></path>
+</g>
+</g>
+</g>
+<g transform="translate(279.0822,44.83144)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.832545,4.285291)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-13.471211" y="4.285291" href="#tz_fig_projeto_borda_g3-67"></use>
+<use x="-7.583607" y="4.285291" href="#tz_fig_projeto_borda_g3-111"></use>
+<use x="-2.975916" y="4.285291" href="#tz_fig_projeto_borda_g3-109"></use>
+<use x="4.343802" y="4.285291" href="#tz_fig_projeto_borda_g3-112"></use>
+<use x="9.103692" y="4.285291" href="#tz_fig_projeto_borda_g3-117"></use>
+<use x="13.863582" y="4.285291" href="#tz_fig_projeto_borda_g3-116"></use>
+<use x="17.191358" y="4.285291" href="#tz_fig_projeto_borda_g3-97"></use>
+<use x="21.61917" y="4.285291" href="#tz_fig_projeto_borda_g3-100"></use>
+<use x="26.37906" y="4.285291" href="#tz_fig_projeto_borda_g3-111"></use>
+<use x="30.730768" y="4.285291" href="#tz_fig_projeto_borda_g3-114"></use>
+<use x="33.878666" y="4.285291" href="#tz_fig_projeto_borda_g3-101"></use>
+<use x="37.974408" y="4.285291" href="#tz_fig_projeto_borda_g3-115"></use>
+<use x="-18.685514" y="15.244195" href="#tz_fig_projeto_borda_g3-68"></use>
+<use x="-12.023043" y="15.244195" href="#tz_fig_projeto_borda_g3-72"></use>
+<use x="-5.505854" y="15.244195" href="#tz_fig_projeto_borda_g3-67"></use>
+<use x=".381751" y="15.244195" href="#tz_fig_projeto_borda_g3-80"></use>
+<use x="9.347733" y="15.244195" href="#tz_fig_projeto_borda_g3-46"></use>
+<use x="11.907561" y="15.244195" href="#tz_fig_projeto_borda_g3-49"></use>
+<use x="16.515252" y="15.244195" href="#tz_fig_projeto_borda_g3-48"></use>
+<use x="21.122942" y="15.244195" href="#tz_fig_projeto_borda_g3-48"></use>
+<use x="25.730633" y="15.244195" href="#tz_fig_projeto_borda_g3-123"></use>
+<use x="30.338323" y="15.244195" href="#tz_fig_projeto_borda_g3-46"></use>
+<use x="32.898152" y="15.244195" href="#tz_fig_projeto_borda_g3-49"></use>
+<use x="37.505842" y="15.244195" href="#tz_fig_projeto_borda_g3-57"></use>
+<use x="42.113533" y="15.244195" href="#tz_fig_projeto_borda_g3-57"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<path d="M353.39232-29.65271H278.74922C277.09235-29.65271 275.74922-30.99583 275.74922-32.65271V-52.26016C275.74922-53.91704 277.09235-55.26016 278.74922-55.26016H353.39232C355.0492-55.26016 356.39232-53.91704 356.39232-52.26016V-32.65271C356.39232-30.99583 355.0492-29.65271 353.39232-29.65271ZM275.74922-55.26016"></path>
+</g>
+</g>
+</g>
+<g transform="translate(279.0822,-40.08144)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.832545,4.285291)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-17.432553" y="4.285291" href="#tz_fig_projeto_borda_g3-73"></use>
+<use x="-14.858889" y="4.285291" href="#tz_fig_projeto_borda_g3-109"></use>
+<use x="-7.539171" y="4.285291" href="#tz_fig_projeto_borda_g3-112"></use>
+<use x="-3.035264" y="4.285291" href="#tz_fig_projeto_borda_g3-114"></use>
+<use x=".112634" y="4.285291" href="#tz_fig_projeto_borda_g3-101"></use>
+<use x="4.208376" y="4.285291" href="#tz_fig_projeto_borda_g3-115"></use>
+<use x="7.740949" y="4.285291" href="#tz_fig_projeto_borda_g3-115"></use>
+<use x="11.273522" y="4.285291" href="#tz_fig_projeto_borda_g3-111"></use>
+<use x="15.62523" y="4.285291" href="#tz_fig_projeto_borda_g3-114"></use>
+<use x="18.773128" y="4.285291" href="#tz_fig_projeto_borda_g3-97"></use>
+<use x="26.272399" y="4.285291" href="#tz_fig_projeto_borda_g3-12"></use>
+<use x="31.212176" y="4.285291" href="#tz_fig_projeto_borda_g3-115"></use>
+<use x="34.744749" y="4.285291" href="#tz_fig_projeto_borda_g3-99"></use>
+<use x="38.840474" y="4.285291" href="#tz_fig_projeto_borda_g3-97"></use>
+<use x="43.268286" y="4.285291" href="#tz_fig_projeto_borda_g3-108"></use>
+<use x="-11.437046" y="15.244195" href="#tz_fig_projeto_borda_g3-114"></use>
+<use x="-8.289148" y="15.244195" href="#tz_fig_projeto_borda_g3-101"></use>
+<use x="-4.193406" y="15.244195" href="#tz_fig_projeto_borda_g3-115"></use>
+<use x="-.660833" y="15.244195" href="#tz_fig_projeto_borda_g3-101"></use>
+<use x="3.434909" y="15.244195" href="#tz_fig_projeto_borda_g3-114"></use>
+<use x="6.582807" y="15.244195" href="#tz_fig_projeto_borda_g3-118"></use>
+<use x="10.830731" y="15.244195" href="#tz_fig_projeto_borda_g3-97"></use>
+<use x="15.258543" y="15.244195" href="#tz_fig_projeto_borda_g3-100"></use>
+<use x="20.018433" y="15.244195" href="#tz_fig_projeto_borda_g3-111"></use>
+<use x="27.697583" y="15.244195" href="#tz_fig_projeto_borda_g3-46"></use>
+<use x="30.257411" y="15.244195" href="#tz_fig_projeto_borda_g3-49"></use>
+<use x="34.865102" y="15.244195" href="#tz_fig_projeto_borda_g3-48"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M45.35184 0H119.329" fill="none"></path>
+<g transform="translate(60.87834,5.68297)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.832545,4.285291)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-22.832545" y="4.285291" href="#tz_fig_projeto_borda_g1-79"></use>
+<use x="-17.359924" y="4.285291" href="#tz_fig_projeto_borda_g1-78"></use>
+<use x="-12.129472" y="4.285291" href="#tz_fig_projeto_borda_g1-85"></use>
+<use x="-4.574359" y="4.285291" href="#tz_fig_projeto_borda_g1-40"></use>
+<use x="-1.692762" y="4.285291" href="#tz_fig_projeto_borda_g1-98"></use>
+<use x="1.927386" y="4.285291" href="#tz_fig_projeto_borda_g1-114"></use>
+<use x="4.457862" y="4.285291" href="#tz_fig_projeto_borda_g1-105"></use>
+<use x="6.225559" y="4.285291" href="#tz_fig_projeto_borda_g1-100"></use>
+<use x="10.05154" y="4.285291" href="#tz_fig_projeto_borda_g1-103"></use>
+<use x="13.75645" y="4.285291" href="#tz_fig_projeto_borda_g1-101"></use>
+<use x="17.049703" y="4.285291" href="#tz_fig_projeto_borda_g1-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g transform="translate(56.38174,-8.79405)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.832545,4.285291)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-22.832545" y="4.285291" href="#tz_fig_projeto_borda_g1-101"></use>
+<use x="-19.539292" y="4.285291" href="#tz_fig_projeto_borda_g1-116"></use>
+<use x="-16.863523" y="4.285291" href="#tz_fig_projeto_borda_g1-104"></use>
+<use x="-13.037543" y="4.285291" href="#tz_fig_projeto_borda_g1-101"></use>
+<use x="-9.744289" y="4.285291" href="#tz_fig_projeto_borda_g1-114"></use>
+<use x="-7.213814" y="4.285291" href="#tz_fig_projeto_borda_g1-51"></use>
+<use x="-1.038964" y="4.285291" href="#tz_fig_projeto_borda_g1-124"></use>
+<use x="8.840796" y="4.285291" href="#tz_fig_projeto_borda_g1-68"></use>
+<use x="14.192333" y="4.285291" href="#tz_fig_projeto_borda_g1-72"></use>
+<use x="19.422785" y="4.285291" href="#tz_fig_projeto_borda_g1-67"></use>
+<use x="24.156837" y="4.285291" href="#tz_fig_projeto_borda_g1-80"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<g fill="#3fb618" stroke="#3fb618">
+<path d="M212.55318 0L275.14923 42.45644" fill="none"></path>
+<g transform="translate(212.54375,16.67001)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.832545,4.285291)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-22.832545" y="4.285291" href="#tz_fig_projeto_borda_g1-101"></use>
+<use x="-19.539292" y="4.285291" href="#tz_fig_projeto_borda_g1-116"></use>
+<use x="-16.863523" y="4.285291" href="#tz_fig_projeto_borda_g1-104"></use>
+<use x="-13.037543" y="4.285291" href="#tz_fig_projeto_borda_g1-101"></use>
+<use x="-9.744289" y="4.285291" href="#tz_fig_projeto_borda_g1-114"></use>
+<use x="-7.213814" y="4.285291" href="#tz_fig_projeto_borda_g1-50"></use>
+<use x="-1.038964" y="4.285291" href="#tz_fig_projeto_borda_g1-124"></use>
+<use x="8.840796" y="4.285291" href="#tz_fig_projeto_borda_g1-46"></use>
+<use x="10.899079" y="4.285291" href="#tz_fig_projeto_borda_g1-49"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<g fill="#3fb618" stroke="#3fb618">
+<path d="M212.55318 0L275.14923-42.45644" fill="none"></path>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M208.95319-40.83382H122.92899C121.27211-40.83382 119.92899-42.17694 119.92899-43.83382V-57.75072C119.92899-59.4076 121.27211-60.75072 122.92899-60.75072H208.95319C210.61006-60.75072 211.95319-59.4076 211.95319-57.75072V-43.83382C211.95319-42.17694 210.61006-40.83382 208.95319-40.83382ZM119.92899-60.75072"></path>
+</g>
+</g>
+</g>
+<g transform="translate(123.26196,-49.22281)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.832545,4.285291)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-2.683677" y="4.285291" href="#tz_fig_projeto_borda_g1-68"></use>
+<use x="2.66786" y="4.285291" href="#tz_fig_projeto_borda_g1-72"></use>
+<use x="7.898312" y="4.285291" href="#tz_fig_projeto_borda_g1-67"></use>
+<use x="12.632364" y="4.285291" href="#tz_fig_projeto_borda_g1-80"></use>
+<use x="19.836082" y="4.285291" href="#tz_fig_projeto_borda_g1-115"></use>
+<use x="22.67651" y="4.285291" href="#tz_fig_projeto_borda_g1-101"></use>
+<use x="25.969764" y="4.285291" href="#tz_fig_projeto_borda_g1-114"></use>
+<use x="28.500239" y="4.285291" href="#tz_fig_projeto_borda_g1-118"></use>
+<use x="31.914563" y="4.285291" href="#tz_fig_projeto_borda_g1-101"></use>
+<use x="35.207816" y="4.285291" href="#tz_fig_projeto_borda_g1-114"></use>
+<use x="40.207958" y="4.285291" href="#tz_fig_projeto_borda_g0-183"></use>
+<use x="-8.231203" y="12.255403" href="#tz_fig_projeto_borda_g1-68"></use>
+<use x="-2.879666" y="12.255403" href="#tz_fig_projeto_borda_g1-78"></use>
+<use x="2.350787" y="12.255403" href="#tz_fig_projeto_borda_g1-83"></use>
+<use x="8.93702" y="12.255403" href="#tz_fig_projeto_borda_g1-99"></use>
+<use x="12.230273" y="12.255403" href="#tz_fig_projeto_borda_g1-97"></use>
+<use x="15.78989" y="12.255403" href="#tz_fig_projeto_borda_g1-99"></use>
+<use x="19.083143" y="12.255403" href="#tz_fig_projeto_borda_g1-104"></use>
+<use x="22.909124" y="12.255403" href="#tz_fig_projeto_borda_g1-101"></use>
+<use x="28.672044" y="12.255403" href="#tz_fig_projeto_borda_g0-183"></use>
+<use x="32.991738" y="12.255403" href="#tz_fig_projeto_borda_g1-78"></use>
+<use x="38.22219" y="12.255403" href="#tz_fig_projeto_borda_g1-65"></use>
+<use x="42.544574" y="12.255403" href="#tz_fig_projeto_borda_g1-84"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g stroke-width="0.8">
+<g stroke-dasharray="3.0,3.0" stroke-dashoffset="0.0">
+<path d="M165.94109-17.67163V-40.43382" fill="none"></path>
+</g>
+</g>
+</g>
+<g transform="translate(282.2917,63.98839)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.832545,4.285291)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-22.832545" y="4.285291" href="#tz_fig_projeto_borda_g1-76"></use>
+<use x="-18.800723" y="4.285291" href="#tz_fig_projeto_borda_g1-65"></use>
+<use x="-13.860843" y="4.285291" href="#tz_fig_projeto_borda_g1-78"></use>
+<use x="-6.16045" y="4.285291" href="#tz_fig_projeto_borda_g1-49"></use>
+<use x="-2.45554" y="4.285291" href="#tz_fig_projeto_borda_g1-57"></use>
+<use x="1.24937" y="4.285291" href="#tz_fig_projeto_borda_g1-50"></use>
+<use x="4.95428" y="4.285291" href="#tz_fig_projeto_borda_g1-46"></use>
+<use x="7.012563" y="4.285291" href="#tz_fig_projeto_borda_g1-49"></use>
+<use x="10.717473" y="4.285291" href="#tz_fig_projeto_borda_g1-54"></use>
+<use x="14.422383" y="4.285291" href="#tz_fig_projeto_borda_g1-56"></use>
+<use x="18.127293" y="4.285291" href="#tz_fig_projeto_borda_g1-46"></use>
+<use x="20.185577" y="4.285291" href="#tz_fig_projeto_borda_g1-49"></use>
+<use x="23.890487" y="4.285291" href="#tz_fig_projeto_borda_g1-48"></use>
+<use x="27.595397" y="4.285291" href="#tz_fig_projeto_borda_g1-46"></use>
+<use x="29.65368" y="4.285291" href="#tz_fig_projeto_borda_g1-48"></use>
+<use x="33.35859" y="4.285291" href="#tz_fig_projeto_borda_g1-47"></use>
+<use x="37.0635" y="4.285291" href="#tz_fig_projeto_borda_g1-50"></use>
+<use x="40.76841" y="4.285291" href="#tz_fig_projeto_borda_g1-52"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-projeto-borda-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;14.1: O projeto do capítulo: um roteador de borda de cliente corporativo, com WAN por DHCP e LAN completa.
+</figcaption>
+</figure>
+</div>
+<p>Antes de digitar qualquer coisa, o hábito profissional: <strong>planejar a sequência</strong>. A ordem importa — cada camada depende da anterior, e é a mesma ordem em que se diagnostica depois:</p>
+<div id="tbl-plano-borda" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-plano-borda-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;14.1: O plano de execução
+</figcaption>
+<div aria-describedby="tbl-plano-borda-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">Etapa</th>
+<th style="text-align: left;">Capítulo de referência</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">Base limpa + identidade + segurança</td>
+<td style="text-align: left;"><a href="../v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="quarto-xref"><span>Capítulo 6</span></a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">WAN: DHCP client</td>
+<td style="text-align: left;"><a href="03-dhcp.html" class="quarto-xref"><span>Capítulo 11</span></a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">LAN: endereço do gateway</td>
+<td style="text-align: left;"><a href="02-enderecamento-ip-rota-padrao.html" class="quarto-xref"><span>Capítulo 10</span></a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">DHCP server (pool, network, server) + reserva</td>
+<td style="text-align: left;"><a href="03-dhcp.html" class="quarto-xref"><span>Capítulo 11</span></a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">DNS: upstream + cache para a LAN</td>
+<td style="text-align: left;"><a href="04-dns.html" class="quarto-xref"><span>Capítulo 12</span></a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">NAT masquerade</td>
+<td style="text-align: left;"><a href="05-nat-masquerade.html" class="quarto-xref"><span>Capítulo 13</span></a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">Verificação em camadas</td>
+<td style="text-align: left;">todos</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">Documentar: export + backup para fora</td>
+<td style="text-align: left;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Analogia para guardar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Configurar rede é construir prédio: fundação (acesso seguro), estrutura (endereços e rotas), instalações (DHCP, DNS, NAT) e a vistoria (verificação em camadas). Ninguém azuleja antes de rebocar — e quem pula a vistoria descobre o vazamento pelo telefone do cliente.</p>
+</div>
+</div>
+</section>
+<section id="laboratório" class="level2" data-number="14.2">
+<h2 data-number="14.2" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">14.2</span> 🧪 Laboratório</h2>
+<p>Este capítulo <strong>é</strong> o laboratório — o texto acima era o projeto; agora, mãos à obra.</p>
+<section id="ambiente" class="level3" data-number="14.2.1">
+<h3 data-number="14.2.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">14.2.1</span> Ambiente</h3>
+<p>Laboratório padrão (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>), com os papéis do projeto:</p>
+<ul>
+<li><strong><code>lab-r1</code></strong> é o roteador do cliente (<code>cli-paoquente-r1</code>): restaure o snapshot <strong><code>base-limpa</code></strong> — o projeto começa do zero de verdade, sem aproveitar nada dos capítulos anteriores. Adaptador NAT (<code>ether3</code>) habilitado: ele fará o papel da ONU/concentrador do provedor;</li>
+<li><strong><code>lab-r2</code></strong> é “um computador da padaria”: também em <code>base-limpa</code>, conectado pela <code>ether2</code> (rede <code>lab-a</code>).</li>
+</ul>
+<p>Acesso inicial ao r1 pelo console da VM (equipamento zerado não tem gerência configurada — como na vida real).</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="14.2.2">
+<h3 data-number="14.2.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">14.2.2</span> Comandos passo a passo</h3>
+<p><strong>Etapa 0 — base.</strong> Pelo console de <code>lab-r1</code>, o ritual do <a href="../v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="quarto-xref"><span>Capítulo 6</span></a>, condensado (adapte usuário e senha):</p>
+<pre class="routeros"><code>/system identity set name=cli-paoquente-r1
+/ip address add address=192.168.56.11/24 interface=ether1 comment="gerencia lab"
+/user add name=vitor group=full password=Lab!Segura2026 comment="tecnico"
+/user disable admin
+/ip service disable telnet,ftp,www,api,api-ssl
+/ip service set ssh address=192.168.56.0/24
+/ip service set winbox address=192.168.56.0/24
+/system clock set time-zone-name=America/Sao_Paulo</code></pre>
+<p>Daqui em diante, trabalhe por SSH (<code>ssh vitor@192.168.56.11</code>) — e lembre do Safe Mode (<code>Ctrl+X</code>) como cinto.</p>
+<p><strong>Etapa 1 — WAN.</strong> O link do provedor entrega endereço por DHCP:</p>
+<pre class="routeros"><code>/ip dhcp-client add interface=ether3 use-peer-dns=no comment="WAN via provedor"
+/ip dhcp-client print</code></pre>
+<p>Espere <code>bound</code> e valide a camada: <code>/ping 8.8.8.8 count=3</code> <strong>do roteador</strong> — a WAN funciona antes de existir LAN. (Repare no <code>use-peer-dns=no</code>: a ordem de serviço pede cache DNS com upstream nosso — um dono da verdade, <a href="04-dns.html" class="quarto-xref"><span>Capítulo 12</span></a>.)</p>
+<p><strong>Etapa 2 — LAN.</strong> O gateway da padaria:</p>
+<pre class="routeros"><code>/ip address add address=192.168.10.1/24 interface=ether2 comment="LAN cliente"</code></pre>
+<p><strong>Etapa 3 — DHCP server.</strong> Pool (repare: <code>.100–.199</code>, deixando o resto fixo), network e server — e o NTP aproveitando a WAN nova:</p>
+<pre class="routeros"><code>/ip pool add name=pool-lan ranges=192.168.10.100-192.168.10.199
+/ip dhcp-server network add address=192.168.10.0/24 gateway=192.168.10.1 dns-server=192.168.10.1
+/ip dhcp-server add name=dhcp-lan interface=ether2 address-pool=pool-lan lease-time=1h
+/system ntp client set enabled=yes
+/system ntp client servers add address=a.st1.ntp.br</code></pre>
+<p><strong>Etapa 4 — DNS.</strong> Upstreams e o modo servidor para a LAN:</p>
+<pre class="routeros"><code>/ip dns set servers=1.1.1.1,8.8.8.8 allow-remote-requests=yes</code></pre>
+<p><strong>Etapa 5 — NAT.</strong> A máscara na fronteira:</p>
+<pre class="routeros"><code>/ip firewall nat add chain=srcnat out-interface=ether3 action=masquerade comment="NAT LAN-&gt;WAN"</code></pre>
+<p><strong>Etapa 6 — o cliente chega.</strong> Em <code>lab-r2</code> (fazendo papel de computador):</p>
+<pre class="routeros"><code>/system identity set name=pc-padaria
+/ip dhcp-client add interface=ether2
+/ip dhcp-client print</code></pre>
+<p>Recebeu <code>192.168.10.1xx</code>? Então a prova final, na ordem das camadas — gateway, internet por IP, internet por nome:</p>
+<pre class="routeros"><code>/ping 192.168.10.1 count=2
+/ping 8.8.8.8 count=2
+/ping google.com count=2</code></pre>
+<p>Três pings limpos = serviço entregue. Falta a reserva da impressora: em <code>lab-r1</code>, fixe o lease do “computador” (na vida real seria o MAC da impressora) no <code>.10</code>:</p>
+<pre class="routeros"><code>/ip dhcp-server lease print
+/ip dhcp-server lease make-static numbers=0
+/ip dhcp-server lease set 0 address=192.168.10.10</code></pre>
+<p>Em <code>lab-r2</code>, renove (<code>/ip dhcp-client release numbers=0</code>) e confirme que veio o <code>.10</code>.</p>
+<p><strong>Etapa 7 — documentar.</strong> Em <code>lab-r1</code>:</p>
+<pre class="routeros"><code>/system backup save name=cli-paoquente-r1-entrega
+/export file=cli-paoquente-r1-entrega</code></pre>
+<p>E, do seu computador, <strong>para fora</strong> (1):</p>
+<pre class="routeros"><code>scp vitor@192.168.56.11:cli-paoquente-r1-entrega.backup .
+scp vitor@192.168.56.11:cli-paoquente-r1-entrega.rsc .</code></pre>
+<p>Abra o <code>.rsc</code>: ele é o projeto inteiro em uma página — e o gabarito para o próximo cliente igual.</p>
+</section>
+<section id="verificação" class="level3" data-number="14.2.3">
+<h3 data-number="14.2.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">14.2.3</span> Verificação</h3>
+<p>A vistoria de entrega, em camadas (decore esta ordem — ela é o seu roteiro de diagnóstico para sempre):</p>
+<ol type="1">
+<li><strong>Enlace</strong>: <code>/interface print</code> no r1 — <code>ether2</code> e <code>ether3</code> com flag <code>R</code>;</li>
+<li><strong>Endereço</strong>: <code>/ip address print</code> — gerência, LAN <code>.1</code> e WAN dinâmica (<code>D</code>);</li>
+<li><strong>Rota</strong>: <code>/ip route print</code> — conectadas <code>DAc</code> + padrão <code>DAd</code> via provedor;</li>
+<li><strong>Serviços</strong>: <code>bound</code> no dhcp-client; lease do “pc” no <code>.10</code> (estático); <code>/ip dns print</code> com upstreams e <code>allow-remote-requests=yes</code>;</li>
+<li><strong>Tradução</strong>: regra de masquerade presente; <code>/ip firewall connection print</code> mostrando conexões do <code>192.168.10.10</code> traduzidas;</li>
+<li><strong>Experiência do cliente</strong>: os três pings do <code>lab-r2</code> (gateway → IP → nome) sem perdas;</li>
+<li><strong>Documentação</strong>: <code>.backup</code> e <code>.rsc</code> <strong>no seu computador</strong>.</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="14.2.4">
+<h3 data-number="14.2.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">14.2.4</span> Desafios</h3>
+<ol type="1">
+<li>A padaria abriu uma filial — mesma ordem de serviço, mas LAN <code>192.168.20.0/24</code>. Liste <strong>apenas</strong> os comandos que mudam em relação ao projeto (e note quantos são: essa é a força do padrão).</li>
+<li>O dono quer WiFi para os clientes <strong>separado</strong> da rede do caixa. Com as ferramentas deste volume (sem VLANs ainda — Volume 4), como você atenderia usando a <code>ether4</code> do roteador? Esboce os comandos das etapas 2–5 para essa segunda LAN (<code>192.168.99.0/24</code>) e diga o que essa solução <strong>não</strong> separa de verdade.</li>
+<li>Simule o chamado clássico: em <code>lab-r1</code>, desabilite o dhcp-client da WAN (<code>/ip dhcp-client disable 0</code>) e, “sem saber disso”, diagnostique a partir do sintoma do cliente (“caiu a internet”) usando a vistoria em camadas. Em que camada o defeito aparece, e quais camadas continuam OK? Reabilite ao final.</li>
+<li>O <code>.rsc</code> exportado serve de gabarito, mas aplicá-lo cru num equipamento novo tem <strong>duas</strong> lacunas (pense no que o export não carrega —
+<ol class="example" type="1">
+<li>e <strong>um</strong> risco (pense no que é dinâmico no projeto). Quais?</li>
+</ol></li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> Mudam apenas os comandos com o endereço da LAN — identidade e cinco linhas:</p>
+<pre class="routeros"><code>/system identity set name=cli-paoquente-r2
+/ip address add address=192.168.20.1/24 interface=ether2 comment="LAN cliente"
+/ip pool add name=pool-lan ranges=192.168.20.100-192.168.20.199
+/ip dhcp-server network add address=192.168.20.0/24 gateway=192.168.20.1 dns-server=192.168.20.1
+/ip dhcp-server lease set 0 address=192.168.20.10</code></pre>
+<p>Todo o resto (usuários, serviços, DNS, NAT, NTP) é idêntico — é isso que um <code>.rsc</code>-gabarito bem feito captura.</p>
+<p><strong>2.</strong> Segunda LAN na <code>ether4</code>: repetir as etapas com <code>address=192.168.99.1/24 interface=ether4</code>, pool/network próprios, um segundo <code>/ip dhcp-server</code> na <code>ether4</code> — DNS e NAT existentes já atendem (o masquerade casa por <code>out-interface</code>, não por origem). O que <strong>não</strong> separa: tráfego entre as duas LANs — o roteador roteia entre elas livremente; um notebook no WiFi dos clientes alcança a impressora do caixa. Separação de verdade exige <strong>firewall entre as redes</strong> (Volume 3) — e, em escala, VLANs (Volume 4).</p>
+<p><strong>3.</strong> A vistoria denuncia na camada 2–3 <strong>da WAN</strong>: enlace OK (interfaces <code>R</code>), mas <code>/ip address print</code> perdeu o endereço <code>D</code> da ether3 e <code>/ip route print</code> perdeu a rota padrão <code>DAd</code> — enquanto a LAN continua perfeita (cliente pega IP, pinga o gateway). Sintoma no cliente: “pego WiFi mas não navego”; no roteador: <code>bound</code> sumiu do dhcp-client. Camadas OK: 1 (enlaces), LAN inteira; defeito: endereço/rota da WAN. É o padrão de raciocínio que separa “trocar cabo por desespero” de diagnóstico.</p>
+<p><strong>4.</strong> Lacunas do export: (a) <strong>senhas de usuários</strong> não vêm — o <code>/user add</code> precisa ser refeito (ou mantido num <code>.rsc</code>-gabarito escrito à mão); (b) itens <strong>dinâmicos</strong> não são configuração: o lease estático da impressora vem, mas o <code>bound</code> da WAN depende do provedor real. O risco: o export carrega o <code>allowed-address=192.168.56.0/24</code> dos serviços — aplicado num cliente sem essa rede de gerência, você se tranca para fora no momento do import. Gabarito se <strong>lê e adapta</strong>, não se despeja.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="14.3">
+<h2 data-number="14.3" class="anchored" data-anchor-id="resumo"><span class="header-section-number">14.3</span> Resumo</h2>
+<ul>
+<li>Projeto profissional = <strong>ordem de serviço → plano sequenciado → execução → vistoria → documentação</strong> (<a href="#tbl-plano-borda" class="quarto-xref">Tabela&nbsp;<span>14.1</span></a>) — nunca comandos soltos de memória.</li>
+<li>A sequência do roteador de borda: base segura → WAN (<code>dhcp-client</code>) → LAN (endereço) → DHCP server (pool menor que a rede + reservas) → DNS (um dono da verdade, cache para a LAN) → NAT (na fronteira) — validando <strong>cada camada antes da seguinte</strong>.</li>
+<li>A vistoria em camadas (enlace → endereço → rota → serviços → tradução → experiência) é o mesmo roteiro do <strong>diagnóstico</strong> — configurar bem é aprender a diagnosticar.</li>
+<li>Entrega termina com <code>.rsc</code> e <code>.backup</code> <strong>fora</strong> do equipamento — e o <code>.rsc</code> de hoje é o gabarito (adaptado, nunca despejado) do cliente de amanhã.</li>
+</ul>
+<p>Fecha-se o Volume 2: você domina o terminal e constrói um roteador de borda completo. Mas ele está <strong>nu</strong>: DNS aberto na WAN, WinBox exposto, nada filtrando o forward. O Volume 3 veste a armadura — firewall, do connection tracking ao hardening completo.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>Este capítulo integra os anteriores; as referências são as deles — em especial a documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> (páginas <em>First Time Configuration</em> e <em>Securing your router</em>, que espelham nossa sequência). <span class="citation" data-cites="discher-rosv7">Discher (<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">2016</a>)</span> traz projetos guiados semelhantes. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-discher-rosv7" class="csl-entry" role="listitem">
+DISCHER, Stephen R. W. <strong>RouterOS by Example</strong>. 2. ed. College Station: ISP Services, Inc., 2016.
+</div>
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="pagination-link" aria-label="NAT masquerade">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="pagination-link" aria-label="Connection tracking">
+        <span class="nav-page-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>

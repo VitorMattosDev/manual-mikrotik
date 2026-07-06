@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>12&nbsp; DNS no RouterOS – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" rel="next">
+<link href="../../volumes/v02-cli-configuracao/03-dhcp.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html">Volume 2 — CLI e configuração essencial</a></li><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/04-dns.html"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#o-catálogo-telefônico-da-internet" id="toc-o-catálogo-telefônico-da-internet" class="nav-link active" data-scroll-target="#o-catálogo-telefônico-da-internet"><span class="header-section-number">12.1</span> O catálogo telefônico da internet</a></li>
+  <li><a href="#configurando-o-resolvedor" id="toc-configurando-o-resolvedor" class="nav-link" data-scroll-target="#configurando-o-resolvedor"><span class="header-section-number">12.2</span> Configurando o resolvedor</a>
+  <ul class="collapse">
+  <li><a href="#allow-remote-requests-servidor-e-para-quem" id="toc-allow-remote-requests-servidor-e-para-quem" class="nav-link" data-scroll-target="#allow-remote-requests-servidor-e-para-quem"><span class="header-section-number">12.2.1</span> <code>allow-remote-requests</code>: servidor, e para quem?</a></li>
+  </ul></li>
+  <li><a href="#entradas-estáticas-o-dns-interno-do-provedor" id="toc-entradas-estáticas-o-dns-interno-do-provedor" class="nav-link" data-scroll-target="#entradas-estáticas-o-dns-interno-do-provedor"><span class="header-section-number">12.3</span> Entradas estáticas: o DNS interno do provedor</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">12.4</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">12.4.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">12.4.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">12.4.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">12.4.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">12.5</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v02-cli-configuracao/04-dns.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html">Volume 2 — CLI e configuração essencial</a></li><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/04-dns.html"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-dns" class="quarto-section-identifier"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Explicar o papel do DNS e o caminho de uma consulta — do dispositivo do cliente ao resolvedor upstream, passando pelo cache do roteador;</li>
+<li>Configurar o resolvedor do RouterOS (<code>/ip dns</code>): servidores upstream, cache e o significado exato de <code>allow-remote-requests=yes</code>;</li>
+<li>Reconhecer o risco do <strong>open resolver</strong> — por que um roteador respondendo DNS para a internet inteira é um problema seu e dos outros;</li>
+<li>Usar <strong>entradas estáticas</strong> para nomes internos da rede do provedor (e entender seus limites como ferramenta de bloqueio);</li>
+<li>Decidir entre os DNS da operadora (<code>use-peer-dns</code>), resolvedores públicos e resolvedor próprio.</li>
+</ul>
+</div>
+</div>
+<section id="o-catálogo-telefônico-da-internet" class="level2" data-number="12.1">
+<h2 data-number="12.1" class="anchored" data-anchor-id="o-catálogo-telefônico-da-internet"><span class="header-section-number">12.1</span> O catálogo telefônico da internet</h2>
+<p>Nenhum cliente digita <code>142.250.79.78</code>; ele digita <code>google.com</code>. O <strong>DNS</strong> (<em>Domain Name System</em>) é o serviço que traduz nomes em endereços — e para o assinante ele <strong>é</strong> a internet: quando o DNS falha, “a internet caiu”, mesmo com o link perfeito. Metade dos chamados de “internet lenta” de um provedor são, na verdade, DNS lento. Por isso este capítulo é curto no protocolo e longo na operação.</p>
+<p>O caminho de uma consulta na rede que estamos montando (<a href="#fig-dns-fluxo" class="quarto-xref">Figura&nbsp;<span>12.1</span></a>):</p>
+<div id="fig-dns-fluxo" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dns-fluxo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="395.171706pt" height="38.808508pt" viewbox="-68.014948 -68.014948 395.171706 38.808508">
+<defs>
+<path id="tz_fig_dns_fluxo_g0-34" d="M1.171606-3.989041V-4.651557C1.171606-4.832877 1.164633-4.839851 .983313-4.839851H.446326C.265006-4.839851 .258032-4.832877 .258032-4.651557V-4.11457C.258032-3.93325 .265006-3.926276 .495143-3.926276L.285928-3.368369C.278954-3.347447 .265006-3.305604 .265006-3.277709C.265006-3.187049 .334745-3.187049 .446326-3.187049H.530012C.669489-3.187049 .676463-3.194022 .732254-3.277709L1.171606-3.989041ZM2.726775-3.989041V-4.651557C2.726775-4.832877 2.719801-4.839851 2.538481-4.839851H2.001494C1.820174-4.839851 1.8132-4.832877 1.8132-4.651557V-4.11457C1.8132-3.93325 1.820174-3.926276 2.050311-3.926276L1.841096-3.368369C1.834122-3.347447 1.820174-3.305604 1.820174-3.277709C1.820174-3.187049 1.889913-3.187049 2.001494-3.187049H2.085181C2.224658-3.187049 2.231631-3.194022 2.287422-3.277709L2.726775-3.989041Z"></path>
+<path id="tz_fig_dns_fluxo_g0-46" d="M1.520299-.72528C1.520299-.9066 1.513325-.913574 1.332005-.913574H.795019C.613699-.913574 .606725-.9066 .606725-.72528V-.188294C.606725-.006974 .613699 0 .795019 0H1.332005C1.513325 0 1.520299-.006974 1.520299-.188294V-.72528Z"></path>
+<path id="tz_fig_dns_fluxo_g0-63" d="M2.064259-1.743462C2.064259-2.475716 2.559402-2.866252 2.803487-3.054545C3.005729-3.200996 3.187049-3.438107 3.187049-3.863512C3.187049-4.916563 2.099128-4.916563 1.743462-4.916563C1.583064-4.916563 1.12279-4.916563 .63462-4.651557C.54396-4.60274 .425405-4.539975 .425405-4.47721C.425405-4.470237 .425405-4.449315 .460274-4.365629L.585803-4.02391C.613699-3.940224 .627646-3.905355 .690411-3.905355C.732254-3.905355 .746202-3.919303 .781071-3.96812C1.053051-4.29589 1.380822-4.414446 1.72254-4.414446C2.182814-4.414446 2.238605-4.261021 2.238605-3.898381C2.238605-3.563636 2.175841-3.500872 2.02939-3.347447C1.332005-2.636115 1.332005-1.903861 1.332005-1.66675C1.332005-1.583064 1.332005-1.443587 1.338979-1.422665C1.366874-1.366874 1.408717-1.366874 1.527273-1.366874H1.868991C2.057285-1.366874 2.064259-1.373848 2.064259-1.555168V-1.743462ZM1.241345-.334745C1.241345-.083686 1.318057 0 1.57609 0H1.820174C2.085181 0 2.154919-.09066 2.154919-.334745V-.578829C2.154919-.801993 2.106102-.913574 1.820174-.913574H1.57609C1.311083-.913574 1.241345-.822914 1.241345-.578829V-.334745Z"></path>
+<path id="tz_fig_dns_fluxo_g0-67" d="M4.463263-.99726C4.463263-1.053051 4.414446-1.080946 4.38655-1.080946C4.219178-1.080946 4.016936-.627646 3.033624-.627646C1.806227-.627646 1.457534-1.380822 1.457534-2.426899C1.457534-3.466002 1.834122-4.219178 2.977833-4.219178C3.598506-4.219178 3.926276-3.975093 4.11457-3.821669C4.156413-3.7868 4.177335-3.758904 4.226152-3.758904C4.254047-3.758904 4.288917-3.793773 4.29589-3.821669L4.435367-4.595766C4.442341-4.623661 4.435367-4.651557 4.379577-4.672478C3.96812-4.825903 3.542715-4.923537 2.998755-4.923537C1.297136-4.923537 .425405-4.093649 .425405-2.433873C.425405-.72528 1.311083 .069738 3.005729 .069738C3.598506 .069738 3.96812-.013948 4.47721-.327771C4.533001-.36264 4.519054-.411457 4.519054-.411457L4.463263-.99726Z"></path>
+<path id="tz_fig_dns_fluxo_g0-68" d="M.969365-4.839851C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H2.810461C4.51208 0 5.104857-1.018182 5.104857-2.385056C5.104857-2.93599 5.014197-3.612453 4.623661-4.107597C4.100623-4.756164 3.263761-4.839851 2.810461-4.839851H.969365ZM1.638854-.599751V-4.2401H2.531507C4.037858-4.2401 4.100623-3.166127 4.100623-2.385056C4.100623-1.597011 4.02391-.599751 2.538481-.599751H1.638854Z"></path>
+<path id="tz_fig_dns_fluxo_g0-78" d="M2.113076-4.560897C1.966625-4.839851 1.75741-4.839851 1.617933-4.839851H.969365C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H1.157659C1.422665 0 1.492403-.09066 1.492403-.334745V-3.996015H1.499377L3.417186-.278954C3.563636 0 3.772852 0 3.912329 0H4.560897C4.825903 0 4.895641-.09066 4.895641-.334745V-4.505106C4.895641-4.728269 4.846824-4.839851 4.560897-4.839851H4.372603C4.107597-4.839851 4.037858-4.749191 4.037858-4.505106V-.843836H4.030884L2.113076-4.560897Z"></path>
+<path id="tz_fig_dns_fluxo_g0-82" d="M3.368369-2.231631C3.807721-2.336239 4.470237-2.601245 4.470237-3.466002C4.470237-4.839851 2.956912-4.839851 2.643088-4.839851H.969365C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H1.30411C1.569116 0 1.638854-.09066 1.638854-.334745V-2.168867H2.412951L3.556663-.167372C3.654296 0 3.731009 0 3.884433 0H4.29589C4.435367 0 4.553923 0 4.553923-.209215L3.368369-2.231631ZM1.638854-2.670984V-4.2401H2.545455C3.354421-4.2401 3.500872-3.919303 3.500872-3.459029C3.500872-3.047572 3.403238-2.670984 2.545455-2.670984H1.638854Z"></path>
+<path id="tz_fig_dns_fluxo_g0-83" d="M1.882939-3.075467C1.729514-3.110336 1.297136-3.270735 1.297136-3.668244C1.297136-4.261021 1.889913-4.274969 2.127024-4.274969C2.517559-4.274969 2.866252-4.184309 3.20797-3.849564C3.319552-3.744956 3.326526-3.737983 3.354421-3.737983C3.396264-3.737983 3.431133-3.758904 3.452055-3.863512L3.556663-4.470237C3.57061-4.526027 3.57061-4.539975 3.57061-4.560897C3.57061-4.616687 3.563636-4.623661 3.38929-4.714321C2.894147-4.958406 2.48269-4.993275 2.127024-4.993275C1.506351-4.993275 .425405-4.846824 .425405-3.542715C.425405-3.047572 .683437-2.726775 .81594-2.587298C1.171606-2.224658 1.499377-2.154919 2.043337-2.02939C2.433873-1.93873 2.587298-1.903861 2.740722-1.764384C2.810461-1.694645 2.956912-1.548194 2.956912-1.283188C2.956912-.627646 2.357161-.606725 2.127024-.606725C1.54122-.606725 1.03213-.843836 .683437-1.157659C.599751-1.241345 .585803-1.241345 .557908-1.241345C.516065-1.241345 .481196-1.220423 .460274-1.115816L.355666-.509091C.341719-.4533 .341719-.439352 .341719-.418431C.341719-.27198 1.066999-.020922 1.101868-.006974C1.569116 .139477 1.945704 .153425 2.127024 .153425C3.173101 .153425 3.828643-.313823 3.828643-1.39477C3.828643-2.175841 3.249813-2.761644 2.552428-2.922042L1.882939-3.075467Z"></path>
+<path id="tz_fig_dns_fluxo_g0-97" d="M3.235866-2.203736C3.235866-3.305604 2.175841-3.312578 1.827148-3.312578C1.499377-3.312578 1.150685-3.284682 .683437-3.089415C.536986-3.02665 .502117-3.005729 .502117-2.929016C.502117-2.880199 .54396-2.475716 .550934-2.419925C.557908-2.378082 .592777-2.343213 .641594-2.343213C.676463-2.343213 .697385-2.364134 .718306-2.385056C1.018182-2.698879 1.366874-2.852304 1.799253-2.852304C2.175841-2.852304 2.287422-2.622167 2.287422-2.21071V-1.966625C2.043337-1.966625 .216189-1.952677 .216189-.927522C.216189-.439352 .606725 .076712 1.220423 .076712C1.457534 .076712 1.980573 .006974 2.308344-.474222V-.334745C2.308344-.111582 2.357161 0 2.643088 0H2.901121C3.166127 0 3.235866-.09066 3.235866-.334745V-2.203736ZM2.287422-1.073973C2.287422-.425405 1.624907-.425405 1.603985-.425405C1.311083-.425405 1.12279-.676463 1.12279-.941469C1.12279-1.624907 2.092154-1.673724 2.287422-1.680697V-1.073973Z"></path>
+<path id="tz_fig_dns_fluxo_g0-99" d="M3.187049-.348692C3.187049-.425405 3.159153-.746202 3.145205-.836862C3.145205-.857783 3.131258-.927522 3.061519-.927522C3.033624-.927522 3.019676-.927522 2.949938-.857783C2.831382-.753176 2.503611-.467248 1.931756-.467248C1.206476-.467248 1.206476-1.171606 1.206476-1.617933C1.206476-2.182814 1.241345-2.768618 1.952677-2.768618C2.405978-2.768618 2.594271-2.657036 2.84533-2.447821C2.929016-2.371108 2.942964-2.371108 2.970859-2.371108C3.040598-2.371108 3.054545-2.433873 3.061519-2.461768C3.075467-2.517559 3.145205-2.908095 3.145205-2.942964C3.145205-3.005729 3.096389-3.033624 2.977833-3.089415C2.643088-3.242839 2.433873-3.312578 1.945704-3.312578C.9066-3.312578 .258032-2.824408 .258032-1.603985C.258032-.446326 .857783 .076712 1.910834 .076712C2.099128 .076712 2.517559 .069738 2.984807-.167372C3.180075-.27198 3.187049-.278954 3.187049-.348692Z"></path>
+<path id="tz_fig_dns_fluxo_g0-100" d="M3.47995-4.505106C3.47995-4.728269 3.431133-4.839851 3.145205-4.839851H2.887173C2.622167-4.839851 2.552428-4.749191 2.552428-4.505106V-2.922042C2.238605-3.221918 1.889913-3.270735 1.673724-3.270735C.258032-3.270735 .258032-1.931756 .258032-1.590037C.258032-1.26924 .258032 .076712 1.638854 .076712C1.931756 .076712 2.231631-.006974 2.531507-.327771C2.531507-.069738 2.629141 0 2.866252 0H3.145205C3.410212 0 3.47995-.09066 3.47995-.334745V-4.505106ZM2.531507-.871731C2.531507-.753176 2.531507-.690411 2.329265-.550934C2.154919-.439352 1.994521-.425405 1.910834-.425405C1.206476-.425405 1.206476-1.066999 1.206476-1.590037S1.206476-2.768618 1.987547-2.768618C2.189788-2.768618 2.378082-2.698879 2.531507-2.552428V-.871731Z"></path>
+<path id="tz_fig_dns_fluxo_g0-101" d="M3.005729-1.492403C3.166127-1.492403 3.340473-1.499377 3.340473-1.8132C3.340473-2.712827 2.922042-3.312578 1.882939-3.312578C.767123-3.312578 .216189-2.684932 .216189-1.624907C.216189-.481196 .878705 .076712 1.973599 .076712C2.238605 .076712 2.636115 .041843 3.096389-.188294C3.249813-.265006 3.29863-.285928 3.29863-.369614C3.29863-.418431 3.277709-.620672 3.270735-.676463C3.242839-.892653 3.235866-.899626 3.173101-.899626C3.145205-.899626 3.131258-.899626 3.054545-.829888C2.643088-.474222 2.224658-.425405 2.001494-.425405C1.21345-.425405 1.129763-1.046077 1.108842-1.492403H3.005729ZM1.115816-1.862017C1.136737-2.287422 1.276214-2.810461 1.882939-2.810461C2.440847-2.810461 2.545455-2.405978 2.566376-1.862017H1.115816Z"></path>
+<path id="tz_fig_dns_fluxo_g0-103" d="M1.39477-.641594C1.143711-.641594 1.046077-.641594 .948443-.72528C.920548-.753176 .801993-.857783 .801993-1.039103C.801993-1.08792 .808966-1.101868 .81594-1.143711C1.143711-.962391 1.555168-.962391 1.701619-.962391C1.994521-.962391 3.103362-.962391 3.103362-2.113076C3.103362-2.517559 2.949938-2.761644 2.887173-2.838356C3.005729-2.838356 3.249813-2.838356 3.535741-2.761644C3.563636-2.747696 3.612453-2.733748 3.633375-2.733748C3.689166-2.733748 3.724035-2.775592 3.724035-2.824408C3.724035-2.852304 3.689166-3.019676 3.675218-3.089415C3.647323-3.256787 3.647323-3.270735 3.521793-3.270735C3.305604-3.270735 2.956912-3.187049 2.691905-3.02665C2.364134-3.242839 2.001494-3.270735 1.701619-3.270735C1.408717-3.270735 .299875-3.270735 .299875-2.12005C.299875-1.841096 .376588-1.492403 .641594-1.262267C.4533-1.004234 .4533-.732254 .4533-.697385C.4533-.564882 .495143-.334745 .641594-.146451C.536986-.104608 .174346 .020922 .174346 .467248C.174346 .683437 .278954 1.046077 .718306 1.248319C1.115816 1.429639 1.583064 1.436613 1.910834 1.436613C2.322291 1.436613 3.654296 1.436613 3.654296 .446326C3.654296-.641594 2.670984-.641594 1.729514-.641594H1.39477ZM1.701619-1.464508C1.21345-1.464508 1.192528-1.729514 1.192528-2.113076S1.21345-2.768618 1.701619-2.768618S2.21071-2.503611 2.21071-2.12005S2.189788-1.464508 1.701619-1.464508ZM2.078207 .118555C2.643088 .118555 2.93599 .216189 2.93599 .467248C2.93599 .934496 2.140971 .934496 1.917808 .934496C1.638854 .934496 .892653 .934496 .892653 .446326C.892653 .118555 1.108842 .118555 1.26924 .118555H2.078207Z"></path>
+<path id="tz_fig_dns_fluxo_g0-104" d="M3.486924-2.266501C3.486924-2.984807 3.180075-3.270735 2.468742-3.270735C1.771357-3.270735 1.45056-2.789539 1.352927-2.594271H1.345953V-4.505106C1.345953-4.728269 1.297136-4.839851 1.011208-4.839851H.753176C.502117-4.839851 .418431-4.763138 .418431-4.505106V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.48269 1.771357-2.768618 2.133998-2.768618C2.468742-2.768618 2.538481-2.608219 2.538481-2.252553V-.334745C2.538481-.111582 2.587298 0 2.873225 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.266501Z"></path>
+<path id="tz_fig_dns_fluxo_g0-105" d="M.711333-4.846824C.488169-4.846824 .376588-4.804981 .376588-4.526027V-4.20523C.376588-3.982067 .446326-3.891407 .704359-3.891407H1.066999C1.401743-3.891407 1.401743-4.037858 1.401743-4.365629C1.401743-4.700374 1.401743-4.846824 1.066999-4.846824H.711333ZM1.352927-2.859278C1.352927-3.082441 1.30411-3.194022 1.018182-3.194022H.760149C.509091-3.194022 .425405-3.11731 .425405-2.859278V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-2.859278Z"></path>
+<path id="tz_fig_dns_fluxo_g0-108" d="M1.352927-4.505106C1.352927-4.728269 1.30411-4.839851 1.018182-4.839851H.760149C.509091-4.839851 .425405-4.763138 .425405-4.505106V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-4.505106Z"></path>
+<path id="tz_fig_dns_fluxo_g0-109" d="M5.620922-2.266501C5.620922-2.984807 5.314072-3.270735 4.60274-3.270735C4.107597-3.270735 3.724035-3.040598 3.472976-2.580324C3.361395-3.249813 2.768618-3.270735 2.475716-3.270735C2.343213-3.270735 2.050311-3.270735 1.736488-3.040598C1.520299-2.880199 1.380822-2.657036 1.332005-2.552428H1.325031V-2.901121C1.325031-3.124284 1.276214-3.235866 .990286-3.235866H.753176C.502117-3.235866 .418431-3.159153 .418431-2.901121V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.503611 1.792279-2.768618 2.133998-2.768618C2.468742-2.768618 2.545455-2.622167 2.545455-2.252553V-.334745C2.545455-.083686 2.622167 0 2.880199 0H3.159153C3.424159 0 3.493898-.09066 3.493898-.334745V-1.875965C3.493898-2.503611 3.919303-2.768618 4.261021-2.768618C4.595766-2.768618 4.672478-2.622167 4.672478-2.252553V-.334745C4.672478-.083686 4.749191 0 5.007223 0H5.286177C5.551183 0 5.620922-.09066 5.620922-.334745V-2.266501Z"></path>
+<path id="tz_fig_dns_fluxo_g0-110" d="M3.486924-2.266501C3.486924-2.984807 3.180075-3.270735 2.468742-3.270735C1.736488-3.270735 1.422665-2.740722 1.332005-2.552428H1.325031V-2.901121C1.325031-3.124284 1.276214-3.235866 .990286-3.235866H.753176C.502117-3.235866 .418431-3.159153 .418431-2.901121V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.48269 1.771357-2.768618 2.133998-2.768618C2.468742-2.768618 2.538481-2.608219 2.538481-2.252553V-.334745C2.538481-.111582 2.587298 0 2.873225 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.266501Z"></path>
+<path id="tz_fig_dns_fluxo_g0-111" d="M3.612453-1.569116C3.612453-2.712827 3.054545-3.312578 1.917808-3.312578C.753176-3.312578 .216189-2.691905 .216189-1.569116C.216189-.432379 .81594 .076712 1.910834 .076712S3.612453-.425405 3.612453-1.569116ZM1.917808-.467248C1.164633-.467248 1.164633-1.094894 1.164633-1.652802C1.164633-2.189788 1.164633-2.810461 1.910834-2.810461C2.66401-2.810461 2.66401-2.196762 2.66401-1.652802C2.66401-1.101868 2.66401-.467248 1.917808-.467248Z"></path>
+<path id="tz_fig_dns_fluxo_g0-114" d="M1.352927-1.603985C1.352927-2.266501 1.903861-2.538481 2.343213-2.566376C2.468742-2.57335 2.48269-2.57335 2.48269-2.75467V-3.082441C2.48269-3.221918 2.48269-3.270735 2.357161-3.270735C2.161893-3.270735 1.652802-3.200996 1.325031-2.447821H1.318057V-2.901121C1.318057-3.124284 1.26924-3.235866 .983313-3.235866H.760149C.509091-3.235866 .425405-3.159153 .425405-2.901121V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-1.603985Z"></path>
+<path id="tz_fig_dns_fluxo_g0-115" d="M2.761644-.983313C2.761644-1.373848 2.552428-1.617933 2.426899-1.729514C2.147945-1.980573 1.903861-2.022416 1.610959-2.078207C1.227397-2.147945 .948443-2.203736 .948443-2.475716C.948443-2.761644 1.17858-2.817435 1.45056-2.817435C1.917808-2.817435 2.168867-2.643088 2.350187-2.489664C2.419925-2.419925 2.433873-2.419925 2.461768-2.419925C2.531507-2.419925 2.545455-2.48269 2.552428-2.510585C2.566376-2.566376 2.636115-2.956912 2.636115-2.991781C2.636115-3.103362 2.266501-3.200996 2.189788-3.228892C1.910834-3.305604 1.687671-3.312578 1.506351-3.312578C1.192528-3.312578 .258032-3.312578 .258032-2.315318C.258032-1.973599 .411457-1.764384 .599751-1.597011C.843836-1.373848 1.115816-1.325031 1.513325-1.248319C1.715567-1.21345 2.071233-1.150685 2.071233-.843836C2.071233-.516065 1.799253-.467248 1.527273-.467248C1.220423-.467248 .829888-.557908 .502117-.948443C.467248-.983313 .446326-1.004234 .404483-1.004234C.334745-1.004234 .320797-.941469 .313823-.899626C.299875-.801993 .216189-.404483 .216189-.334745C.216189-.209215 .732254-.048817 .739228-.041843C1.12279 .076712 1.408717 .076712 1.527273 .076712C1.882939 .076712 2.761644 .048817 2.761644-.983313Z"></path>
+<path id="tz_fig_dns_fluxo_g0-116" d="M1.520299-2.691905H2.140971C2.224658-2.691905 2.475716-2.691905 2.475716-2.942964S2.224658-3.194022 2.140971-3.194022H1.520299V-3.772852C1.520299-3.996015 1.471482-4.107597 1.185554-4.107597H.969365C.718306-4.107597 .63462-4.030884 .63462-3.772852V-3.194022H.474222C.397509-3.194022 .139477-3.194022 .139477-2.942964S.390535-2.691905 .474222-2.691905H.613699V-.927522C.613699-.223163 .864757 .076712 1.345953 .076712C1.408717 .076712 1.715567 .076712 2.078207-.034869C2.196762-.069738 2.601245-.195268 2.601245-.327771C2.601245-.348692 2.587298-.397509 2.545455-.54396C2.510585-.683437 2.496638-.72528 2.433873-.72528C2.399004-.72528 2.39203-.718306 2.350187-.676463C2.273474-.620672 2.085181-.467248 1.792279-.467248C1.624907-.467248 1.520299-.585803 1.520299-1.046077V-2.691905Z"></path>
+<path id="tz_fig_dns_fluxo_g1-40" d="M2.127024-5.230386C2.008468-5.230386 1.994521-5.230386 1.910834-5.153674C1.03213-4.38655 .585803-3.145205 .585803-1.743462C.585803-.425405 .983313 .843836 1.903861 1.652802C1.994521 1.743462 2.008468 1.743462 2.127024 1.743462H2.461768C2.440847 1.729514 1.764384 1.150685 1.443587 .062765C1.276214-.481196 1.192528-1.053051 1.192528-1.743462C1.192528-4.156413 2.322291-5.111831 2.461768-5.230386H2.127024Z"></path>
+<path id="tz_fig_dns_fluxo_g1-41" d="M.746202 1.743462C.864757 1.743462 .878705 1.743462 .962391 1.66675C1.841096 .899626 2.287422-.341719 2.287422-1.743462C2.287422-3.061519 1.889913-4.33076 .969365-5.139726C.878705-5.230386 .864757-5.230386 .746202-5.230386H.411457C.432379-5.216438 1.108842-4.637609 1.429639-3.549689C1.597011-3.005729 1.680697-2.433873 1.680697-1.743462C1.680697 .669489 .550934 1.624907 .411457 1.743462H.746202Z"></path>
+<path id="tz_fig_dns_fluxo_g1-49" d="M2.238605-4.721295H2.085181C1.63188-4.302864 1.060025-4.274969 .641594-4.261021V-3.821669C.913574-3.828643 1.262267-3.84259 1.610959-3.982067V-.439352H.683437V0H3.166127V-.439352H2.238605V-4.721295Z"></path>
+<path id="tz_fig_dns_fluxo_g1-58" d="M1.338979-3.096389H.711333V-2.468742H1.338979V-3.096389ZM.711333-.627646V0H1.338979V-.627646H.711333Z"></path>
+<path id="tz_fig_dns_fluxo_g1-97" d="M2.970859-2.008468C2.970859-2.719801 2.426899-3.200996 1.736488-3.200996C1.297136-3.200996 .962391-3.110336 .571856-2.901121L.613699-2.39203C.843836-2.545455 1.185554-2.75467 1.736488-2.75467C2.043337-2.75467 2.364134-2.524533 2.364134-2.001494V-1.72254C1.332005-1.687671 .313823-1.471482 .313823-.822914C.313823-.474222 .550934 .069738 1.164633 .069738C1.464508 .069738 2.015442 .006974 2.385056-.265006V0H2.970859V-2.008468ZM2.364134-.990286C2.364134-.850809 2.364134-.669489 2.12005-.523039C1.896887-.397509 1.624907-.390535 1.548194-.390535C1.164633-.390535 .871731-.564882 .871731-.829888C.871731-1.276214 2.050311-1.318057 2.364134-1.332005V-.990286Z"></path>
+<path id="tz_fig_dns_fluxo_g1-99" d="M3.033624-.760149C2.684932-.536986 2.308344-.411457 1.875965-.411457C1.234371-.411457 .857783-.927522 .857783-1.555168C.857783-2.092154 1.136737-2.719801 1.896887-2.719801C2.371108-2.719801 2.594271-2.622167 2.949938-2.399004L3.040598-2.901121C2.622167-3.110336 2.440847-3.200996 1.896887-3.200996C.850809-3.200996 .251059-2.357161 .251059-1.548194C.251059-.697385 .920548 .069738 1.868991 .069738C2.357161 .069738 2.775592-.076712 3.075467-.251059L3.033624-.760149Z"></path>
+<path id="tz_fig_dns_fluxo_g1-100" d="M3.228892-4.839851H2.643088V-2.796513C2.196762-3.124284 1.743462-3.166127 1.54122-3.166127C.808966-3.166127 .251059-2.433873 .251059-1.548194S.801993 .069738 1.520299 .069738C1.952677 .069738 2.357161-.125529 2.622167-.36264V0H3.228892V-4.839851ZM2.622167-.864757C2.447821-.578829 2.182814-.390535 1.84807-.390535C1.3599-.390535 .857783-.732254 .857783-1.54122C.857783-2.412951 1.45056-2.705853 1.924782-2.705853C2.203736-2.705853 2.440847-2.587298 2.622167-2.350187V-.864757Z"></path>
+<path id="tz_fig_dns_fluxo_g1-101" d="M2.998755-.760149C2.608219-.481196 2.168867-.390535 1.868991-.390535C1.262267-.390535 .801993-.885679 .781071-1.527273H3.068493C3.068493-1.84807 3.033624-2.315318 2.761644-2.712827C2.510585-3.068493 2.092154-3.200996 1.750436-3.200996C.899626-3.200996 .244085-2.454795 .244085-1.569116C.244085-.676463 .941469 .069738 1.862017 .069738C2.266501 .069738 2.684932-.048817 3.040598-.265006L2.998755-.760149ZM.829888-1.945704C.990286-2.503611 1.401743-2.740722 1.750436-2.740722C2.057285-2.740722 2.510585-2.594271 2.643088-1.945704H.829888Z"></path>
+<path id="tz_fig_dns_fluxo_g1-103" d="M3.507846-3.166127C3.354421-3.166127 2.887173-3.159153 2.357161-2.956912L2.343213-2.949938C2.092154-3.11731 1.84807-3.166127 1.645828-3.166127C.962391-3.166127 .4533-2.629141 .4533-2.02939C.4533-1.785305 .536986-1.534247 .697385-1.338979C.599751-1.220423 .495143-1.025156 .495143-.760149C.495143-.488169 .606725-.313823 .669489-.230137C.285928-.006974 .209215 .313823 .209215 .481196C.209215 1.011208 .941469 1.429639 1.84807 1.429639C2.761644 1.429639 3.486924 1.011208 3.486924 .481196C3.486924-.502117 2.266501-.502117 1.966625-.502117H1.318057C1.206476-.502117 .9066-.502117 .9066-.864757C.9066-1.004234 .955417-1.073973 .962391-1.08792C1.206476-.934496 1.45056-.885679 1.638854-.885679C2.322291-.885679 2.831382-1.422665 2.831382-2.022416C2.831382-2.245579 2.768618-2.447821 2.643088-2.636115C2.615193-2.677958 2.615193-2.684932 2.615193-2.691905C2.615193-2.719801 3.033624-2.719801 3.068493-2.719801C3.075467-2.719801 3.340473-2.719801 3.591532-2.691905L3.507846-3.166127ZM1.645828-1.318057C1.26924-1.318057 .990286-1.555168 .990286-2.022416C.990286-2.566376 1.338979-2.733748 1.638854-2.733748C2.015442-2.733748 2.294396-2.496638 2.294396-2.02939C2.294396-1.48543 1.945704-1.318057 1.645828-1.318057ZM1.973599 .041843C2.133998 .041843 2.956912 .041843 2.956912 .488169C2.956912 .788045 2.433873 .99726 1.84807 .99726S.739228 .788045 .739228 .488169C.739228 .4533 .739228 .041843 1.30411 .041843H1.973599Z"></path>
+<path id="tz_fig_dns_fluxo_g1-104" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.624907-3.166127 1.30411-2.817435 1.164633-2.670984V-4.839851H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_dns_fluxo_g1-108" d="M1.171606-4.839851H.585803V0H1.171606V-4.839851Z"></path>
+<path id="tz_fig_dns_fluxo_g1-109" d="M5.300125-2.064259C5.300125-2.608219 5.139726-3.166127 4.281943-3.166127C3.696139-3.166127 3.333499-2.824408 3.166127-2.601245C3.096389-2.789539 2.922042-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-1.694645C3.242839-2.154919 3.438107-2.705853 3.975093-2.705853C4.6934-2.705853 4.6934-2.217684 4.6934-2.015442V0H5.300125V-2.064259Z"></path>
+<path id="tz_fig_dns_fluxo_g1-110" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_dns_fluxo_g1-111" d="M3.486924-1.527273C3.486924-2.447821 2.75467-3.200996 1.84807-3.200996S.209215-2.440847 .209215-1.527273C.209215-.641594 .948443 .069738 1.84807 .069738C2.75467 .069738 3.486924-.641594 3.486924-1.527273ZM1.84807-.411457C1.297136-.411457 .81594-.81594 .81594-1.603985S1.332005-2.740722 1.84807-2.740722C2.371108-2.740722 2.880199-2.378082 2.880199-1.603985C2.880199-.808966 2.385056-.411457 1.84807-.411457Z"></path>
+<path id="tz_fig_dns_fluxo_g1-112" d="M1.199502-.327771C1.569116 .006974 1.966625 .069738 2.203736 .069738C2.942964 .069738 3.57061-.63462 3.57061-1.555168C3.57061-2.39203 3.110336-3.166127 2.419925-3.166127C2.106102-3.166127 1.583064-3.075467 1.17858-2.761644V-3.096389H.592777V1.352927H1.199502V-.327771ZM1.199502-2.315318C1.3599-2.510585 1.63188-2.684932 1.966625-2.684932C2.524533-2.684932 2.963885-2.168867 2.963885-1.555168C2.963885-.864757 2.440847-.390535 1.896887-.390535C1.792279-.390535 1.617933-.404483 1.436613-.550934C1.227397-.711333 1.199502-.81594 1.199502-.948443V-2.315318Z"></path>
+<path id="tz_fig_dns_fluxo_g1-114" d="M1.17858-1.48543C1.17858-2.238605 1.806227-2.643088 2.419925-2.650062V-3.166127C1.834122-3.159153 1.408717-2.873225 1.129763-2.503611V-3.145205H.592777V0H1.17858V-1.48543Z"></path>
+<path id="tz_fig_dns_fluxo_g1-115" d="M2.545455-2.984807C2.071233-3.180075 1.72254-3.200996 1.471482-3.200996C1.297136-3.200996 .244085-3.200996 .244085-2.273474C.244085-1.945704 .425405-1.764384 .516065-1.680697C.760149-1.436613 1.053051-1.380822 1.422665-1.311083C1.750436-1.248319 2.127024-1.17858 2.127024-.843836C2.127024-.404483 1.548194-.404483 1.45056-.404483C1.004234-.404483 .585803-.564882 .306849-.760149L.209215-.237111C.446326-.118555 .871731 .069738 1.45056 .069738C1.764384 .069738 2.071233 .020922 2.329265-.167372C2.587298-.36264 2.670984-.669489 2.670984-.9066C2.670984-1.03213 2.657036-1.30411 2.364134-1.569116C2.106102-1.799253 1.855044-1.84807 1.520299-1.910834C1.108842-1.987547 .788045-2.050311 .788045-2.357161C.788045-2.75467 1.297136-2.75467 1.401743-2.75467C1.799253-2.75467 2.106102-2.670984 2.454795-2.489664L2.545455-2.984807Z"></path>
+<path id="tz_fig_dns_fluxo_g1-116" d="M1.311083-2.657036H2.343213V-3.096389H1.311083V-3.982067H.774097V-3.096389H.139477V-2.657036H.753176V-.892653C.753176-.425405 .871731 .069738 1.373848 .069738S2.259527-.09066 2.468742-.188294L2.350187-.63462C2.12005-.467248 1.875965-.411457 1.680697-.411457C1.387796-.411457 1.311083-.697385 1.311083-1.018182V-2.657036Z"></path>
+<path id="tz_fig_dns_fluxo_g1-117" d="M3.242839-3.096389H2.636115V-1.073973C2.636115-.516065 2.161893-.341719 1.75741-.341719C1.241345-.341719 1.185554-.481196 1.185554-.801993V-3.096389H.578829V-.760149C.578829-.139477 .850809 .069738 1.338979 .069738C1.624907 .069738 2.238605 .013948 2.657036-.320797V0H3.242839V-3.096389Z"></path>
+<path id="tz_fig_dns_fluxo_g1-122" d="M2.956912-2.803487V-3.096389H.306849V-2.650062H1.332005C1.415691-2.650062 1.499377-2.657036 1.583064-2.657036H2.127024L.209215-.306849V0H2.977833V-.467248H1.896887C1.8132-.467248 1.729514-.460274 1.645828-.460274H1.039103L2.956912-2.803487Z"></path>
+<use id="tz_fig_dns_fluxo_g2-34" href="#tz_fig_dns_fluxo_g0-34" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-46" href="#tz_fig_dns_fluxo_g0-46" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-63" href="#tz_fig_dns_fluxo_g0-63" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-67" href="#tz_fig_dns_fluxo_g0-67" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-68" href="#tz_fig_dns_fluxo_g0-68" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-78" href="#tz_fig_dns_fluxo_g0-78" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-82" href="#tz_fig_dns_fluxo_g0-82" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-83" href="#tz_fig_dns_fluxo_g0-83" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-97" href="#tz_fig_dns_fluxo_g0-97" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-99" href="#tz_fig_dns_fluxo_g0-99" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-100" href="#tz_fig_dns_fluxo_g0-100" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-101" href="#tz_fig_dns_fluxo_g0-101" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-103" href="#tz_fig_dns_fluxo_g0-103" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-104" href="#tz_fig_dns_fluxo_g0-104" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-105" href="#tz_fig_dns_fluxo_g0-105" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-108" href="#tz_fig_dns_fluxo_g0-108" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-109" href="#tz_fig_dns_fluxo_g0-109" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-110" href="#tz_fig_dns_fluxo_g0-110" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-111" href="#tz_fig_dns_fluxo_g0-111" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-114" href="#tz_fig_dns_fluxo_g0-114" transform="scale(1.285714)"></use>
+<use id="tz_fig_dns_fluxo_g2-116" href="#tz_fig_dns_fluxo_g0-116" transform="scale(1.285714)"></use>
+<path id="tz_fig_dns_fluxo_g3-46" d="M1.65878-.771108H.887671V0H1.65878V-.771108Z"></path>
+<path id="tz_fig_dns_fluxo_g3-49" d="M2.77061-6.06127H2.582316C1.981569-5.478456 1.120797-5.478456 .806974-5.478456V-4.92254C1.058032-4.92254 1.515318-4.92254 2.008468-5.128767V-.555915H.860772V0H3.918306V-.555915H2.77061V-6.06127Z"></path>
+<path id="tz_fig_dns_fluxo_g3-85" d="M5.478456-6.222665H4.734247V-2.089166C4.734247-.887671 3.954172-.331756 3.200996-.331756C2.456787-.331756 1.712578-.887671 1.712578-2.080199V-6.222665H.851806V-2.098132C.851806-.762142 1.95467 .19726 3.19203 .19726S5.478456-.789041 5.478456-2.089166V-6.222665Z"></path>
+<path id="tz_fig_dns_fluxo_g3-97" d="M3.694147-2.591283C3.694147-3.478954 3.039601-4.133499 2.15193-4.133499C1.569116-4.133499 1.13873-3.981071 .708344-3.738979L.762142-3.102366C1.210461-3.434122 1.649813-3.568618 2.142964-3.568618C2.645081-3.568618 2.949938-3.165131 2.949938-2.582316V-2.205729C1.407721-2.169863 .394521-1.766376 .394521-1.0401C.394521-.61868 .672478 .09863 1.452553 .09863C1.63188 .09863 2.411955 .080697 2.976837-.340722V0H3.694147V-2.591283ZM2.949938-1.255293C2.949938-1.066999 2.949938-.842839 2.627148-.654545C2.402989-.52005 2.107098-.484184 1.927771-.484184C1.470486-.484184 1.084932-.699377 1.084932-1.058032C1.084932-1.694645 2.833375-1.721544 2.949938-1.721544V-1.255293Z"></path>
+<path id="tz_fig_dns_fluxo_g3-101" d="M3.828643-1.963636C3.828643-2.241594 3.819676-2.923039 3.469988-3.461021C3.0934-4.025903 2.519552-4.133499 2.178829-4.133499C1.13873-4.133499 .313823-3.174097 .313823-2.026401C.313823-.842839 1.192528 .09863 2.313325 .09863C2.743711 .09863 3.263761-.008966 3.783811-.340722L3.730012-.959402C3.165131-.555915 2.636115-.484184 2.322291-.484184C1.578082-.484184 1.004234-1.13873 .977335-1.963636H3.828643ZM1.031133-2.492653C1.174595-3.066501 1.613948-3.550685 2.178829-3.550685C2.510585-3.550685 3.120299-3.398257 3.29066-2.492653H1.031133Z"></path>
+<path id="tz_fig_dns_fluxo_g3-109" d="M6.58132-2.663014C6.58132-3.326526 6.401993-4.079701 5.317061-4.079701C4.563885-4.079701 4.142466-3.622416 3.927273-3.344458C3.864508-3.523786 3.676214-4.079701 2.761644-4.079701C2.0533-4.079701 1.622914-3.667248 1.416687-3.398257V-4.034869H.726276V0H1.470486V-2.187796C1.470486-2.779577 1.703611-3.496887 2.385056-3.496887C3.281694-3.496887 3.281694-2.860274 3.281694-2.600249V0H4.025903V-2.187796C4.025903-2.779577 4.259029-3.496887 4.940473-3.496887C5.837111-3.496887 5.837111-2.860274 5.837111-2.600249V0H6.58132V-2.663014Z"></path>
+<path id="tz_fig_dns_fluxo_g3-112" d="M1.488418-.412453C1.820174-.09863 2.268493 .09863 2.734745 .09863C3.640349 .09863 4.42939-.789041 4.42939-1.999502C4.42939-3.075467 3.864508-4.079701 2.99477-4.079701C2.743711-4.079701 2.080199-4.034869 1.461519-3.550685V-3.981071H.744209V1.739477H1.488418V-.412453ZM1.488418-2.976837C1.604981-3.138232 1.936737-3.469988 2.447821-3.469988C3.120299-3.469988 3.685181-2.833375 3.685181-1.990535C3.685181-1.129763 3.057534-.484184 2.358157-.484184C2.071233-.484184 1.748443-.600747 1.488418-1.0401V-2.976837Z"></path>
+<path id="tz_fig_dns_fluxo_g3-114" d="M1.461519-1.909838C1.461519-2.851308 2.196762-3.425156 3.012702-3.434122V-4.079701C2.367123-4.070735 1.775342-3.747945 1.407721-3.218929V-4.034869H.744209V0H1.461519V-1.909838Z"></path>
+<path id="tz_fig_dns_fluxo_g3-115" d="M3.165131-3.846575C2.609215-4.097634 2.196762-4.133499 1.829141-4.133499C1.622914-4.133499 .304857-4.133499 .304857-2.949938C.304857-2.519552 .564882-2.25056 .663512-2.15193C1.004234-1.85604 1.23736-1.811208 1.847073-1.694645C2.133998-1.640847 2.645081-1.542217 2.645081-1.084932C2.645081-.502117 1.918804-.502117 1.802242-.502117C1.273225-.502117 .762142-.681445 .376588-.950436L.260025-.29589C.798007-.008966 1.344956 .09863 1.802242 .09863C2.385056 .09863 3.317559-.089664 3.317559-1.156663C3.317559-1.470486 3.19203-1.784309 2.878207-2.0533C2.57335-2.313325 2.304359-2.367123 1.748443-2.47472C1.425654-2.537484 .977335-2.618182 .977335-3.039601C.977335-3.568618 1.613948-3.568618 1.748443-3.568618C2.402989-3.568618 2.788543-3.362391 3.048568-3.218929L3.165131-3.846575Z"></path>
+<path id="tz_fig_dns_fluxo_g3-116" d="M1.622914-3.425156H2.914072V-3.981071H1.622914V-5.119801H.959402V-3.981071H.170361V-3.425156H.932503V-1.129763C.932503-.600747 1.049066 .09863 1.703611 .09863C2.098132 .09863 2.564384 .017933 3.066501-.233126L2.914072-.798007C2.680946-.61868 2.367123-.511083 2.089166-.511083C1.739477-.511083 1.622914-.824907 1.622914-1.291158V-3.425156Z"></path>
+<path id="tz_fig_dns_fluxo_g4-24" d="M5.683686-2.399004C5.683686-2.66401 5.586052-2.670984 5.565131-2.670984C5.460523-2.670984 5.446575-2.475716 5.446575-2.385056C5.41868-1.875965 5.042092-1.290162 4.393524-1.290162C3.898381-1.290162 3.542715-1.617933 3.159153-1.966625C2.789539-2.30137 2.371108-2.677958 1.827148-2.677958C1.03213-2.677958 .536986-1.862017 .536986-1.08792C.536986-.822914 .63462-.81594 .655542-.81594C.760149-.81594 .767123-.99726 .774097-1.101868C.801993-1.610959 1.171606-2.196762 1.827148-2.196762C2.322291-2.196762 2.677958-1.868991 3.061519-1.520299C3.431133-1.185554 3.849564-.808966 4.393524-.808966C5.188543-.808966 5.683686-1.624907 5.683686-2.399004Z"></path>
+</defs>
+<g id="tz_fig_dns_fluxo_page1">
+<g stroke-miterlimit="10" transform="translate(-30.080937,-48.998142)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<path d="M34.47627 14.22636H-34.47627C-36.13315 14.22636-37.47627 12.88324-37.47627 11.22636V-11.22636C-37.47627-12.88324-36.13315-14.22636-34.47627-14.22636H34.47627C36.13315-14.22636 37.47627-12.88324 37.47627-11.22636V11.22636C37.47627 12.88324 36.13315 14.22636 34.47627 14.22636ZM-37.47627-14.22636"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-34.1433,3.25)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-48.998142)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-10.417675" y="-48.998142" href="#tz_fig_dns_fluxo_g2-67"></use>
+<use x="-4.11627" y="-48.998142" href="#tz_fig_dns_fluxo_g2-108"></use>
+<use x="-1.82485" y="-48.998142" href="#tz_fig_dns_fluxo_g2-105"></use>
+<use x=".466571" y="-48.998142" href="#tz_fig_dns_fluxo_g2-101"></use>
+<use x="5.049413" y="-48.998142" href="#tz_fig_dns_fluxo_g2-110"></use>
+<use x="10.080575" y="-48.998142" href="#tz_fig_dns_fluxo_g2-116"></use>
+<use x="13.704507" y="-48.998142" href="#tz_fig_dns_fluxo_g2-101"></use>
+<use x="-26.750272" y="-38.039238" href="#tz_fig_dns_fluxo_g2-34"></use>
+<use x="-21.74402" y="-38.039238" href="#tz_fig_dns_fluxo_g2-103"></use>
+<use x="-16.812485" y="-38.039238" href="#tz_fig_dns_fluxo_g2-111"></use>
+<use x="-11.606985" y="-38.039238" href="#tz_fig_dns_fluxo_g2-111"></use>
+<use x="-6.67545" y="-38.039238" href="#tz_fig_dns_fluxo_g2-103"></use>
+<use x="-1.743916" y="-38.039238" href="#tz_fig_dns_fluxo_g2-108"></use>
+<use x=".547505" y="-38.039238" href="#tz_fig_dns_fluxo_g2-101"></use>
+<use x="5.130346" y="-38.039238" href="#tz_fig_dns_fluxo_g2-46"></use>
+<use x="7.870087" y="-38.039238" href="#tz_fig_dns_fluxo_g2-99"></use>
+<use x="12.253673" y="-38.039238" href="#tz_fig_dns_fluxo_g2-111"></use>
+<use x="17.185207" y="-38.039238" href="#tz_fig_dns_fluxo_g2-109"></use>
+<use x="24.956111" y="-38.039238" href="#tz_fig_dns_fluxo_g2-63"></use>
+<use x="29.613671" y="-38.039238" href="#tz_fig_dns_fluxo_g2-34"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M190.29651 14.22636H115.65341C113.99654 14.22636 112.65341 12.88324 112.65341 11.22636V-11.22636C112.65341-12.88324 113.99654-14.22636 115.65341-14.22636H190.29651C191.95338-14.22636 193.29651-12.88324 193.29651-11.22636V11.22636C193.29651 12.88324 191.95338 14.22636 190.29651 14.22636ZM112.65341-14.22636"></path>
+</g>
+</g>
+</g>
+<g transform="translate(115.98639,2.375)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-48.998142)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-11.817182" y="-48.998142" href="#tz_fig_dns_fluxo_g2-82"></use>
+<use x="-5.515777" y="-48.998142" href="#tz_fig_dns_fluxo_g2-111"></use>
+<use x="-.584243" y="-48.998142" href="#tz_fig_dns_fluxo_g2-116"></use>
+<use x="3.039689" y="-48.998142" href="#tz_fig_dns_fluxo_g2-101"></use>
+<use x="7.622531" y="-48.998142" href="#tz_fig_dns_fluxo_g2-97"></use>
+<use x="12.329909" y="-48.998142" href="#tz_fig_dns_fluxo_g2-100"></use>
+<use x="17.361071" y="-48.998142" href="#tz_fig_dns_fluxo_g2-111"></use>
+<use x="22.018624" y="-48.998142" href="#tz_fig_dns_fluxo_g2-114"></use>
+<use x="-16.281535" y="-38.039238" href="#tz_fig_dns_fluxo_g2-99"></use>
+<use x="-11.897949" y="-38.039238" href="#tz_fig_dns_fluxo_g2-97"></use>
+<use x="-7.19057" y="-38.039238" href="#tz_fig_dns_fluxo_g2-99"></use>
+<use x="-2.806984" y="-38.039238" href="#tz_fig_dns_fluxo_g2-104"></use>
+<use x="2.224178" y="-38.039238" href="#tz_fig_dns_fluxo_g2-101"></use>
+<use x="10.094344" y="-38.039238" href="#tz_fig_dns_fluxo_g2-68"></use>
+<use x="17.217671" y="-38.039238" href="#tz_fig_dns_fluxo_g2-78"></use>
+<use x="24.340998" y="-38.039238" href="#tz_fig_dns_fluxo_g2-83"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M358.17734 0C358.17734 9.33989 338.05202 16.91115 313.2255 16.91115C288.39897 16.91115 268.27365 9.33989 268.27365 0S288.39897-16.91115 313.2255-16.91115C338.05202-16.91115 358.17734-9.33989 358.17734 0ZM313.2255 0"></path>
+</g>
+</g>
+</g>
+<g transform="translate(284.77275,2.375)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-48.998142)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-20.208809" y="-48.998142" href="#tz_fig_dns_fluxo_g3-85"></use>
+<use x="-13.871507" y="-48.998142" href="#tz_fig_dns_fluxo_g3-112"></use>
+<use x="-9.111617" y="-48.998142" href="#tz_fig_dns_fluxo_g3-115"></use>
+<use x="-5.579044" y="-48.998142" href="#tz_fig_dns_fluxo_g3-116"></use>
+<use x="-2.251267" y="-48.998142" href="#tz_fig_dns_fluxo_g3-114"></use>
+<use x=".896631" y="-48.998142" href="#tz_fig_dns_fluxo_g3-101"></use>
+<use x="4.992373" y="-48.998142" href="#tz_fig_dns_fluxo_g3-97"></use>
+<use x="9.420184" y="-48.998142" href="#tz_fig_dns_fluxo_g3-109"></use>
+<use x="-14.789601" y="-38.039238" href="#tz_fig_dns_fluxo_g3-49"></use>
+<use x="-10.181911" y="-38.039238" href="#tz_fig_dns_fluxo_g3-46"></use>
+<use x="-7.622082" y="-38.039238" href="#tz_fig_dns_fluxo_g3-49"></use>
+<use x="-3.014392" y="-38.039238" href="#tz_fig_dns_fluxo_g3-46"></use>
+<use x="-.454564" y="-38.039238" href="#tz_fig_dns_fluxo_g3-49"></use>
+<use x="4.153127" y="-38.039238" href="#tz_fig_dns_fluxo_g3-46"></use>
+<use x="6.712955" y="-38.039238" href="#tz_fig_dns_fluxo_g3-49"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M38.07626 0C65.94223 7.46666 84.18745 7.46666 108.96246 .82811" fill="none"></path>
+<g transform="matrix(0.96593,-0.25879,0.25879,0.96593,108.96245,0.82813)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(62.27023,9.53294)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-48.998142)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-30.080937" y="-48.998142" href="#tz_fig_dns_fluxo_g1-99"></use>
+<use x="-26.787684" y="-48.998142" href="#tz_fig_dns_fluxo_g1-111"></use>
+<use x="-23.082774" y="-48.998142" href="#tz_fig_dns_fluxo_g1-110"></use>
+<use x="-19.256793" y="-48.998142" href="#tz_fig_dns_fluxo_g1-115"></use>
+<use x="-16.416365" y="-48.998142" href="#tz_fig_dns_fluxo_g1-117"></use>
+<use x="-12.590384" y="-48.998142" href="#tz_fig_dns_fluxo_g1-108"></use>
+<use x="-10.822687" y="-48.998142" href="#tz_fig_dns_fluxo_g1-116"></use>
+<use x="-8.146918" y="-48.998142" href="#tz_fig_dns_fluxo_g1-97"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#3fb618" stroke="#3fb618">
+<path d="M112.05342 0C84.18745-7.46666 65.94223-7.46666 41.16722-.82811" fill="none"></path>
+<g transform="matrix(-0.96593,0.25879,-0.25879,-0.96593,41.16724,-0.82813)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(25.66151,-14.78294)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-48.998142)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-30.080937" y="-48.998142" href="#tz_fig_dns_fluxo_g0-104"></use>
+<use x="-26.167811" y="-48.998142" href="#tz_fig_dns_fluxo_g0-105"></use>
+<use x="-24.385595" y="-48.998142" href="#tz_fig_dns_fluxo_g0-116"></use>
+<use x="-21.566981" y="-48.998142" href="#tz_fig_dns_fluxo_g1-58"></use>
+<use x="-16.215445" y="-48.998142" href="#tz_fig_dns_fluxo_g1-114"></use>
+<use x="-13.684969" y="-48.998142" href="#tz_fig_dns_fluxo_g1-101"></use>
+<use x="-10.391716" y="-48.998142" href="#tz_fig_dns_fluxo_g1-115"></use>
+<use x="-7.551288" y="-48.998142" href="#tz_fig_dns_fluxo_g1-112"></use>
+<use x="-3.51949" y="-48.998142" href="#tz_fig_dns_fluxo_g1-111"></use>
+<use x=".18542" y="-48.998142" href="#tz_fig_dns_fluxo_g1-115"></use>
+<use x="3.025848" y="-48.998142" href="#tz_fig_dns_fluxo_g1-116"></use>
+<use x="5.701617" y="-48.998142" href="#tz_fig_dns_fluxo_g1-97"></use>
+<use x="11.731174" y="-48.998142" href="#tz_fig_dns_fluxo_g1-100"></use>
+<use x="15.557154" y="-48.998142" href="#tz_fig_dns_fluxo_g1-111"></use>
+<use x="21.732004" y="-48.998142" href="#tz_fig_dns_fluxo_g1-99"></use>
+<use x="25.025258" y="-48.998142" href="#tz_fig_dns_fluxo_g1-97"></use>
+<use x="28.584875" y="-48.998142" href="#tz_fig_dns_fluxo_g1-99"></use>
+<use x="31.878128" y="-48.998142" href="#tz_fig_dns_fluxo_g1-104"></use>
+<use x="35.704109" y="-48.998142" href="#tz_fig_dns_fluxo_g1-101"></use>
+<use x="41.467302" y="-48.998142" href="#tz_fig_dns_fluxo_g1-40"></use>
+<use x="44.348899" y="-48.998142" href="#tz_fig_dns_fluxo_g4-24"></use>
+<use x="50.575578" y="-48.998142" href="#tz_fig_dns_fluxo_g1-49"></use>
+<use x="56.750428" y="-48.998142" href="#tz_fig_dns_fluxo_g1-109"></use>
+<use x="62.634693" y="-48.998142" href="#tz_fig_dns_fluxo_g1-115"></use>
+<use x="65.475121" y="-48.998142" href="#tz_fig_dns_fluxo_g1-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M193.8965 0C221.76247 7.46666 240.00769 7.46666 264.7827 .82811" fill="none"></path>
+<g transform="matrix(0.96593,-0.25879,0.25879,0.96593,264.78268,0.82813)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(192.97313,10.89404)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-48.998142)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-30.080937" y="-48.998142" href="#tz_fig_dns_fluxo_g0-109"></use>
+<use x="-24.036902" y="-48.998142" href="#tz_fig_dns_fluxo_g0-105"></use>
+<use x="-22.254685" y="-48.998142" href="#tz_fig_dns_fluxo_g0-115"></use>
+<use x="-19.31403" y="-48.998142" href="#tz_fig_dns_fluxo_g0-115"></use>
+<use x="-16.373374" y="-48.998142" href="#tz_fig_dns_fluxo_g1-58"></use>
+<use x="-11.021838" y="-48.998142" href="#tz_fig_dns_fluxo_g1-112"></use>
+<use x="-6.99004" y="-48.998142" href="#tz_fig_dns_fluxo_g1-101"></use>
+<use x="-3.696787" y="-48.998142" href="#tz_fig_dns_fluxo_g1-114"></use>
+<use x="-1.166311" y="-48.998142" href="#tz_fig_dns_fluxo_g1-103"></use>
+<use x="2.538599" y="-48.998142" href="#tz_fig_dns_fluxo_g1-117"></use>
+<use x="6.36458" y="-48.998142" href="#tz_fig_dns_fluxo_g1-110"></use>
+<use x="10.19056" y="-48.998142" href="#tz_fig_dns_fluxo_g1-116"></use>
+<use x="12.866329" y="-48.998142" href="#tz_fig_dns_fluxo_g1-97"></use>
+<use x="18.895886" y="-48.998142" href="#tz_fig_dns_fluxo_g1-101"></use>
+<use x="24.659079" y="-48.998142" href="#tz_fig_dns_fluxo_g1-103"></use>
+<use x="28.363989" y="-48.998142" href="#tz_fig_dns_fluxo_g1-117"></use>
+<use x="32.18997" y="-48.998142" href="#tz_fig_dns_fluxo_g1-97"></use>
+<use x="35.543755" y="-48.998142" href="#tz_fig_dns_fluxo_g1-114"></use>
+<use x="38.07423" y="-48.998142" href="#tz_fig_dns_fluxo_g1-100"></use>
+<use x="41.900211" y="-48.998142" href="#tz_fig_dns_fluxo_g1-97"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#3fb618" stroke="#3fb618">
+<path d="M267.87366 0C240.00769-7.46666 221.76247-7.46666 196.98746-.82811" fill="none"></path>
+<g transform="matrix(-0.96593,0.25879,-0.25879,-0.96593,196.98747,-0.82813)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(188.43686,-14.78294)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-48.998142)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-30.080937" y="-48.998142" href="#tz_fig_dns_fluxo_g1-114"></use>
+<use x="-27.550462" y="-48.998142" href="#tz_fig_dns_fluxo_g1-101"></use>
+<use x="-24.257209" y="-48.998142" href="#tz_fig_dns_fluxo_g1-115"></use>
+<use x="-21.41678" y="-48.998142" href="#tz_fig_dns_fluxo_g1-112"></use>
+<use x="-17.384983" y="-48.998142" href="#tz_fig_dns_fluxo_g1-111"></use>
+<use x="-13.680073" y="-48.998142" href="#tz_fig_dns_fluxo_g1-115"></use>
+<use x="-10.839644" y="-48.998142" href="#tz_fig_dns_fluxo_g1-116"></use>
+<use x="-8.163876" y="-48.998142" href="#tz_fig_dns_fluxo_g1-97"></use>
+<use x="-2.134319" y="-48.998142" href="#tz_fig_dns_fluxo_g1-40"></use>
+<use x=".747278" y="-48.998142" href="#tz_fig_dns_fluxo_g4-24"></use>
+<use x="6.973957" y="-48.998142" href="#tz_fig_dns_fluxo_g1-100"></use>
+<use x="10.799938" y="-48.998142" href="#tz_fig_dns_fluxo_g1-101"></use>
+<use x="14.093191" y="-48.998142" href="#tz_fig_dns_fluxo_g1-122"></use>
+<use x="17.313792" y="-48.998142" href="#tz_fig_dns_fluxo_g1-101"></use>
+<use x="20.607045" y="-48.998142" href="#tz_fig_dns_fluxo_g1-110"></use>
+<use x="24.433026" y="-48.998142" href="#tz_fig_dns_fluxo_g1-97"></use>
+<use x="27.992643" y="-48.998142" href="#tz_fig_dns_fluxo_g1-115"></use>
+<use x="33.303011" y="-48.998142" href="#tz_fig_dns_fluxo_g1-100"></use>
+<use x="37.128992" y="-48.998142" href="#tz_fig_dns_fluxo_g1-101"></use>
+<use x="42.892185" y="-48.998142" href="#tz_fig_dns_fluxo_g1-109"></use>
+<use x="48.776449" y="-48.998142" href="#tz_fig_dns_fluxo_g1-115"></use>
+<use x="51.616878" y="-48.998142" href="#tz_fig_dns_fluxo_g1-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dns-fluxo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;12.1: O roteador como intermediário com memória: cache hit responde na hora; cache miss consulta o upstream e guarda para o próximo.
+</figcaption>
+</figure>
+</div>
+<p>O RouterOS não é um resolvedor recursivo completo (ele não sai caçando a resposta pela hierarquia do DNS); ele é um <strong>encaminhador com cache</strong> (<em>caching forwarder</em>): repassa a consulta a servidores upstream que você define e <strong>guarda a resposta</strong> pelo tempo indicado (TTL). Esse cache é o que interessa ao provedor: a segunda consulta a <code>google.com</code> sai do POP em um milissegundo, sem viajar até o upstream.</p>
+</section>
+<section id="configurando-o-resolvedor" class="level2" data-number="12.2">
+<h2 data-number="12.2" class="anchored" data-anchor-id="configurando-o-resolvedor"><span class="header-section-number">12.2</span> Configurando o resolvedor</h2>
+<p>Tudo mora num menu só:</p>
+<pre class="routeros"><code>/ip dns set servers=1.1.1.1,8.8.8.8
+/ip dns print</code></pre>
+<pre class="routeros"><code>[vitor@lab-r1] &gt; /ip dns print
+                      servers: 1.1.1.1,8.8.8.8
+              dynamic-servers:
+        allow-remote-requests: no
+                   cache-size: 2048KiB
+                cache-max-ttl: 1w
+                   cache-used: 32KiB</code></pre>
+<p>Os campos que decidem a operação:</p>
+<ul>
+<li><strong><code>servers</code></strong> — os upstreams <strong>estáticos</strong> que você escolheu;</li>
+<li><strong><code>dynamic-servers</code></strong> — os que chegaram sozinhos pelo <code>use-peer-dns=yes</code> do DHCP client (<a href="03-dhcp.html" class="quarto-xref"><span>Capítulo 11</span></a>). Se ambos existem, o RouterOS usa todos — fonte clássica de comportamento “misterioso”: você configura <code>1.1.1.1</code> e as consultas continuam indo para o DNS lento da operadora. Decida <strong>um</strong> dono da verdade: ou <code>use-peer-dns=no</code> no client, ou nenhum servidor estático;</li>
+<li><strong><code>allow-remote-requests</code></strong> — o interruptor mais importante do menu, a seguir;</li>
+<li><strong><code>cache-size</code>/<code>cache-max-ttl</code></strong> — o tamanho e a validade máxima do cache; os padrões servem até redes médias.</li>
+</ul>
+<section id="allow-remote-requests-servidor-e-para-quem" class="level3" data-number="12.2.1">
+<h3 data-number="12.2.1" class="anchored" data-anchor-id="allow-remote-requests-servidor-e-para-quem"><span class="header-section-number">12.2.1</span> <code>allow-remote-requests</code>: servidor, e para quem?</h3>
+<p>Com <code>allow-remote-requests=no</code>, o resolvedor só atende o <strong>próprio roteador</strong> (pings e ferramentas locais). Com <code>yes</code>, o roteador vira <strong>servidor DNS</strong>: passa a ouvir na porta 53 e responder consultas de terceiros — e é isso que queremos para a LAN: foi por essa razão que o DHCP do <a href="03-dhcp.html" class="quarto-xref"><span>Capítulo 11</span></a> anunciou <code>dns-server=192.168.88.1</code> aos clientes.</p>
+<p>O problema: o RouterOS ouve na porta 53 de <strong>todas</strong> as interfaces — a LAN e a WAN. Um roteador com IP público e <code>allow-remote-requests=yes</code> sem proteção é um <strong>open resolver</strong>: a internet inteira pode usá-lo como DNS. Isso significa banda e CPU suas servindo estranhos e, pior, participação involuntária em <strong>ataques de amplificação</strong> — o atacante envia consultas pequenas com endereço de origem forjado (o da vítima), e seu roteador despeja respostas grandes na vítima. Seu provedor vira artilharia alheia, e o seu IP entra em listas de bloqueio.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Aviso
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>allow-remote-requests=yes</code> num roteador com interface pública <strong>exige</strong> regras de firewall bloqueando a porta 53 (UDP e TCP) vinda da WAN. Ainda não temos firewall — ele é o assunto do Volume 3, e este é um dos primeiros buracos que fecharemos lá (<a href="../v03-firewall/03-protegendo-o-roteador.html" class="quarto-xref"><span>Capítulo 17</span></a>). No laboratório estamos seguros: a “WAN” NAT do VirtualBox não é alcançável de fora.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="entradas-estáticas-o-dns-interno-do-provedor" class="level2" data-number="12.3">
+<h2 data-number="12.3" class="anchored" data-anchor-id="entradas-estáticas-o-dns-interno-do-provedor"><span class="header-section-number">12.3</span> Entradas estáticas: o DNS interno do provedor</h2>
+<p>O menu <code>/ip dns static</code> — nosso campo de treino no <a href="01-anatomia-terminal.html" class="quarto-xref"><span>Capítulo 9</span></a> — resolve nomes <strong>antes</strong> de consultar o upstream. Usos legítimos de provedor:</p>
+<pre class="routeros"><code>/ip dns static add name=core-r1.provedor.lan address=10.255.0.1 comment="gerencia core"
+/ip dns static add name=noc.provedor.lan address=10.255.0.50</code></pre>
+<p>Pronto: a equipe digita <code>ssh core-r1.provedor.lan</code> em vez de decorar endereços de gerência — um “DNS interno” de custo zero, servido pelo roteador que a equipe já usa. As entradas aceitam expressão regular no nome (<code>regexp=</code>), TTL próprio e tipos além de A (AAAA, CNAME, TXT…).</p>
+<p>E o uso tentador que exige honestidade: <strong>bloqueio por DNS</strong> (apontar <code>name=site-indesejado.com</code> para <code>127.0.0.1</code>). Funciona como filtro de conveniência — rede de escritório, controle parental básico — e falha como segurança: qualquer dispositivo com DNS alternativo configurado (ou DoH, o DNS sobre HTTPS dos navegadores modernos) passa por cima sem esforço. Bloqueio de verdade se faz no firewall, e mesmo lá tem limites — Volume 3.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>No provedor, o DNS é <strong>serviço de infraestrutura</strong>: escolha upstreams rápidos e confiáveis (e um só dono da verdade — estático <strong>ou</strong> <code>use-peer-dns</code>), sirva a LAN com cache local (<code>allow-remote-requests=yes</code>) e <strong>nunca</strong> deixe a porta 53 aberta para a WAN. DNS rápido = “internet rápida” na percepção do cliente; DNS aberto = seu roteador trabalhando para atacantes.</p>
+</div>
+</div>
+</section>
+<section id="laboratório" class="level2" data-number="12.4">
+<h2 data-number="12.4" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">12.4</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="12.4.1">
+<h3 data-number="12.4.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">12.4.1</span> Ambiente</h3>
+<p>Continuação direta do laboratório do <a href="03-dhcp.html" class="quarto-xref"><span>Capítulo 11</span></a> (se você o desfez, repita os Passos 1–3 de lá): <code>lab-r1</code> com WAN NAT (<code>ether3</code>) e DHCP server na LAN (<code>ether2</code>); <code>lab-r2</code> como cliente DHCP na <code>ether2</code>.</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="12.4.2">
+<h3 data-number="12.4.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">12.4.2</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — um só dono da verdade.</strong> O dhcp-client da WAN trouxe DNS dinâmico (<code>use-peer-dns=yes</code>). Vamos assumir o controle: upstreams explícitos e nada de dinâmico:</p>
+<pre class="routeros"><code>/ip dhcp-client set [find interface=ether3] use-peer-dns=no
+/ip dns set servers=1.1.1.1,8.8.8.8
+/ip dns print</code></pre>
+<p>Confira: <code>servers</code> com os dois endereços, <code>dynamic-servers</code> vazio.</p>
+<p><strong>Passo 2 — o roteador resolve (para si).</strong> Teste o resolvedor local:</p>
+<pre class="routeros"><code>/resolve mikrotik.com</code></pre>
+<pre class="routeros"><code>[vitor@lab-r1] &gt; /resolve mikrotik.com
+159.148.147.196</code></pre>
+<p>E veja a resposta guardada no cache:</p>
+<pre class="routeros"><code>/ip dns cache print where name~"mikrotik"</code></pre>
+<p><strong>Passo 3 — o roteador serve a LAN.</strong> Ligue o modo servidor:</p>
+<pre class="routeros"><code>/ip dns set allow-remote-requests=yes</code></pre>
+<p>Em <strong><code>lab-r2</code></strong> (que recebeu <code>dns-server=192.168.88.1</code> via DHCP no capítulo anterior — confira com <code>/ip dns print</code>, campo <code>dynamic-servers</code>), resolva um nome <strong>através do r1</strong>:</p>
+<pre class="routeros"><code>/ping google.com count=3</code></pre>
+<p>O ping traduz o nome (via r1) e sai pela rota padrão (via r1) — o mini-provedor do laboratório está completo até a camada de nomes.</p>
+<p><strong>Passo 4 — sentir o cache.</strong> Em <code>lab-r1</code>, meça a diferença entre miss e hit. Primeiro limpe o cache, depois resolva o mesmo nome duas vezes:</p>
+<pre class="routeros"><code>/ip dns cache flush
+/resolve wikipedia.org
+/resolve wikipedia.org</code></pre>
+<p>A primeira consulta demora dezenas de milissegundos (foi ao upstream); a segunda é instantânea (cache). Veja o estoque acumulado:</p>
+<pre class="routeros"><code>/ip dns cache print</code></pre>
+<p><strong>Passo 5 — DNS interno.</strong> Crie o nome de gerência do próprio laboratório e use-o de <code>lab-r2</code>:</p>
+<pre class="routeros"><code>/ip dns static add name=r1.lab address=192.168.88.1 comment="gerencia lab"</code></pre>
+<p>Em <code>lab-r2</code>:</p>
+<pre class="routeros"><code>/ping r1.lab count=2</code></pre>
+<p>O nome interno resolve — servido pela entrada estática do r1, sem consultar upstream nenhum.</p>
+</section>
+<section id="verificação" class="level3" data-number="12.4.3">
+<h3 data-number="12.4.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">12.4.3</span> Verificação</h3>
+<ol type="1">
+<li><code>/ip dns print</code> em <code>lab-r1</code>: <code>servers=1.1.1.1,8.8.8.8</code>, <code>dynamic-servers</code> vazio, <code>allow-remote-requests=yes</code>;</li>
+<li><code>/ping google.com</code> funciona em <code>lab-r2</code> (nome + rota, tudo via r1);</li>
+<li><code>/ip dns cache print</code> em <code>lab-r1</code> acumula entradas conforme você resolve nomes — e <code>flush</code> as zera;</li>
+<li><code>/ping r1.lab</code> responde em <code>lab-r2</code> (entrada estática servida à LAN).</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="12.4.4">
+<h3 data-number="12.4.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">12.4.4</span> Desafios</h3>
+<ol type="1">
+<li>Explique a sequência de consulta quando <code>lab-r2</code> pede <code>r1.lab</code> ao r1: por que a entrada estática responde mesmo com o upstream configurado? E se existisse um <code>r1.lab</code> real na internet?</li>
+<li>No cache (<code>/ip dns cache print detail</code>), localize o TTL de uma entrada. Resolva o mesmo nome de novo e observe o TTL. O que está acontecendo, e por que o <code>cache-max-ttl=1w</code> raramente “vale” na prática?</li>
+<li>Um colega sugere: “aponte <code>use-peer-dns=yes</code> de volta e deixe também os servers estáticos — redundância!”. Por que essa “redundância” costuma piorar o serviço em vez de melhorar?</li>
+<li>Projete (só em texto) o DNS de um provedor de 5 mil assinantes: o que você anunciaria via DHCP/PPPoE aos clientes, onde ficaria o cache, e que upstream escolheria? Considere: latência, privacidade dos dados de consulta dos clientes e o que acontece se o upstream cair.</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> A ordem do resolvedor é: <strong>estáticas primeiro</strong>, depois cache, depois upstream. <code>r1.lab</code> casa com a estática e a consulta morre ali — rápido e sem vazamento. Se existisse um <code>r1.lab</code> público, os clientes do seu roteador <strong>nunca</strong> o veriam: a estática o “sombreia” (é exatamente assim que o bloqueio por DNS funciona — e por que entradas estáticas erradas causam defeitos misteriosos).</p>
+<p><strong>2.</strong> O TTL exibido <strong>decresce</strong> a cada segundo: é o prazo restante da resposta, herdado do TTL original definido pelo dono do domínio (minutos a horas, tipicamente). O <code>cache-max-ttl=1w</code> é apenas um <strong>teto</strong>: o RouterOS guarda pelo menor entre o TTL da resposta e o teto — e como quase nenhum domínio publica TTL de uma semana, o teto quase nunca decide.</p>
+<p><strong>3.</strong> O RouterOS distribui consultas entre <strong>todos</strong> os servidores (estáticos + dinâmicos), sem preferência por qualidade: parte das consultas irá ao DNS da operadora mesmo com upstreams melhores configurados. Resultado: desempenho inconsistente (ora 5 ms, ora 80 ms) e diagnóstico difícil. Redundância boa é ter <strong>dois upstreams bons</strong> nos <code>servers</code> — não misturar bons e ruins.</p>
+<p><strong>4.</strong> Desenho razoável: anunciar aos assinantes <strong>o IP do próprio provedor</strong> (o cache no concentrador/POP, ou um par de resolvedores dedicados — dois CHRs com <code>allow-remote-requests=yes</code> atrás de firewall); upstreams <code>1.1.1.1</code>+<code>8.8.8.8</code> (latência baixa e independência entre si) — ou resolvedor recursivo próprio (ex.: Unbound em servidor Linux) se a privacidade das consultas dos clientes for requisito, pois upstream público vê tudo que seus clientes resolvem. Queda de upstream: com dois independentes, o cache segura o grosso; recursivo próprio elimina a dependência. O que <strong>não</strong> fazer: anunciar upstream público direto aos clientes (perde-se o cache local e o controle).</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="12.5">
+<h2 data-number="12.5" class="anchored" data-anchor-id="resumo"><span class="header-section-number">12.5</span> Resumo</h2>
+<ul>
+<li>O RouterOS é um <strong>encaminhador com cache</strong>: estáticas → cache → upstream (<a href="#fig-dns-fluxo" class="quarto-xref">Figura&nbsp;<span>12.1</span></a>); cache local faz a “internet do cliente” parecer rápida.</li>
+<li>Um só dono da verdade: <code>servers</code> estáticos <strong>ou</strong> <code>use-peer-dns</code> — os dois juntos misturam upstreams bons e ruins.</li>
+<li><code>allow-remote-requests=yes</code> liga o servidor DNS para a LAN — e abre a porta 53 em <strong>todas</strong> as interfaces: sem firewall na WAN, você é um <strong>open resolver</strong> servindo ataques de amplificação.</li>
+<li><code>/ip dns static</code>: DNS interno de gerência (ótimo), bloqueio de conteúdo (frágil — DoH e DNS alternativo passam por cima).</li>
+<li><code>/resolve</code>, <code>/ip dns cache print</code> e <code>flush</code> são o kit de diagnóstico.</li>
+</ul>
+<p>No próximo capítulo, a última peça que falta ao nosso roteador de borda: <strong>NAT masquerade</strong> — como uma LAN inteira de endereços privados navega na internet com um único IP público.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>A documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> cobre <code>/ip dns</code> (resolvedor, cache, entradas estáticas e tipos de registro). Sobre o funcionamento do DNS em profundidade (hierarquia, recursão, TTLs), <span class="citation" data-cites="tanenbaum-redes">Tanenbaum; Feamster; Wetherall (<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">2021</a>)</span> é a referência. O risco de open resolvers e amplificação é documentado pelo CERT.br em <code>cert.br/docs/</code> (recomendações para provedores brasileiros). As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+<div id="ref-tanenbaum-redes" class="csl-entry" role="listitem">
+TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Computadores</strong>. 6. ed. Porto Alegre: Bookman, 2021.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="pagination-link" aria-label="DHCP client e server">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="pagination-link" aria-label="NAT masquerade">
+        <span class="nav-page-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v02-cli-configuracao/04-dns.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>

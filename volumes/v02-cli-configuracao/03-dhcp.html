@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>11&nbsp; DHCP client e server – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v02-cli-configuracao/04-dns.html" rel="next">
+<link href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html">Volume 2 — CLI e configuração essencial</a></li><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/03-dhcp.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#o-empréstimo-de-endereços" id="toc-o-empréstimo-de-endereços" class="nav-link active" data-scroll-target="#o-empréstimo-de-endereços"><span class="header-section-number">11.1</span> O empréstimo de endereços</a></li>
+  <li><a href="#dhcp-client-a-wan-que-se-configura-sozinha" id="toc-dhcp-client-a-wan-que-se-configura-sozinha" class="nav-link" data-scroll-target="#dhcp-client-a-wan-que-se-configura-sozinha"><span class="header-section-number">11.2</span> DHCP client: a WAN que se configura sozinha</a></li>
+  <li><a href="#dhcp-server-a-lan-que-se-serve-sozinha" id="toc-dhcp-server-a-lan-que-se-serve-sozinha" class="nav-link" data-scroll-target="#dhcp-server-a-lan-que-se-serve-sozinha"><span class="header-section-number">11.3</span> DHCP server: a LAN que se serve sozinha</a>
+  <ul class="collapse">
+  <li><a href="#leases-o-livro-de-registros" id="toc-leases-o-livro-de-registros" class="nav-link" data-scroll-target="#leases-o-livro-de-registros"><span class="header-section-number">11.3.1</span> Leases: o livro de registros</a></li>
+  </ul></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">11.4</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">11.4.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">11.4.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">11.4.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">11.4.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">11.5</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v02-cli-configuracao/03-dhcp.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html">Volume 2 — CLI e configuração essencial</a></li><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/03-dhcp.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-dhcp" class="quarto-section-identifier"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Explicar o diálogo DHCP (Discover → Offer → Request → Ack) e o papel do <em>lease</em> (empréstimo com prazo);</li>
+<li>Configurar o <strong>DHCP client</strong> numa interface WAN e controlar o que ele aceita do provedor (<code>add-default-route</code>, <code>use-peer-dns</code>);</li>
+<li>Montar um <strong>DHCP server</strong> completo na LAN — pool, network e server — e explicar o papel de cada peça;</li>
+<li>Gerenciar <em>leases</em>: ler a lista, fixar endereço de um equipamento (<code>make-static</code>) e escolher o <code>lease-time</code> adequado;</li>
+<li>Reconhecer os dois lados na rede de um provedor: onde se é cliente (upstream) e onde se é servidor (clientes internos, gerência de CPEs).</li>
+</ul>
+</div>
+</div>
+<section id="o-empréstimo-de-endereços" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="o-empréstimo-de-endereços"><span class="header-section-number">11.1</span> O empréstimo de endereços</h2>
+<p>No capítulo anterior, cada endereço foi digitado à mão. Funciona para roteadores — são poucos e não mudam de lugar. Mas a LAN de uma casa tem celulares, TVs e notebooks chegando e saindo; ninguém vai digitar endereço em cada um. O <strong>DHCP</strong> (<em>Dynamic Host Configuration Protocol</em>) automatiza: o dispositivo pergunta “alguém me dá um endereço?” e um servidor responde com o pacote completo — endereço, máscara, gateway e DNS.</p>
+<p>O diálogo tem quatro passos, fáceis de lembrar pela sigla <strong>DORA</strong> (<a href="#fig-dhcp-dora" class="quarto-xref">Figura&nbsp;<span>11.1</span></a>):</p>
+<div id="fig-dhcp-dora" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dhcp-dora-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="355.830526pt" height="175.063771pt" viewbox="-68.014948 -68.014948 355.830526 175.063771">
+<defs>
+<path id="tz_fig_dhcp_dora_g0-16" d="M1.171606-3.096389H.585803V0H1.171606V-3.096389Z"></path>
+<path id="tz_fig_dhcp_dora_g0-19" d="M3.075467-4.839851H2.468742L1.513325-3.675218H1.973599L3.075467-4.839851Z"></path>
+<path id="tz_fig_dhcp_dora_g0-34" d="M.871731-4.219178V-4.839851H.244085V-4.212204H.439352L.237111-3.319552H.550934L.871731-4.219178ZM2.315318-4.219178V-4.839851H1.687671V-4.212204H1.882939L1.680697-3.319552H1.994521L2.315318-4.219178Z"></path>
+<path id="tz_fig_dhcp_dora_g0-43" d="M3.040598-1.583064H5.090909C5.188543-1.583064 5.341968-1.583064 5.341968-1.743462S5.188543-1.903861 5.090909-1.903861H3.040598V-3.961146C3.040598-4.05878 3.040598-4.212204 2.880199-4.212204S2.719801-4.05878 2.719801-3.961146V-1.903861H.662516C.564882-1.903861 .411457-1.903861 .411457-1.743462S.564882-1.583064 .662516-1.583064H2.719801V.474222C2.719801 .571856 2.719801 .72528 2.880199 .72528S3.040598 .571856 3.040598 .474222V-1.583064Z"></path>
+<path id="tz_fig_dhcp_dora_g0-44" d="M1.338979-.006974V-.627646H.711333V0H.9066L.704359 .892653H1.018182L1.338979-.006974Z"></path>
+<path id="tz_fig_dhcp_dora_g0-46" d="M1.338979-.627646H.711333V0H1.338979V-.627646Z"></path>
+<path id="tz_fig_dhcp_dora_g0-48" d="M3.403238-2.266501C3.403238-2.601245 3.403238-3.417186 3.075467-3.989041C2.719801-4.616687 2.182814-4.721295 1.84807-4.721295C1.534247-4.721295 .990286-4.623661 .641594-4.02391C.306849-3.466002 .292902-2.705853 .292902-2.266501C.292902-1.750436 .320797-1.115816 .613699-.585803C.920548-.020922 1.436613 .146451 1.84807 .146451C2.545455 .146451 2.929016-.258032 3.138232-.697385C3.382316-1.192528 3.403238-1.834122 3.403238-2.266501ZM1.84807-.313823C1.555168-.313823 1.220423-.481196 1.046077-.983313C.9066-1.408717 .899626-1.84807 .899626-2.357161C.899626-2.998755 .899626-4.261021 1.84807-4.261021S2.796513-2.998755 2.796513-2.357161C2.796513-1.896887 2.796513-1.373848 2.629141-.927522C2.433873-.425405 2.078207-.313823 1.84807-.313823Z"></path>
+<path id="tz_fig_dhcp_dora_g0-49" d="M2.238605-4.721295H2.085181C1.63188-4.302864 1.060025-4.274969 .641594-4.261021V-3.821669C.913574-3.828643 1.262267-3.84259 1.610959-3.982067V-.439352H.683437V0H3.166127V-.439352H2.238605V-4.721295Z"></path>
+<path id="tz_fig_dhcp_dora_g0-50" d="M1.973599-.536986C1.889913-.536986 1.806227-.530012 1.72254-.530012H.927522L2.008468-1.48543C2.133998-1.597011 2.475716-1.855044 2.608219-1.966625C2.915068-2.245579 3.326526-2.608219 3.326526-3.214944C3.326526-4.002989 2.740722-4.721295 1.743462-4.721295C1.004234-4.721295 .54396-4.323786 .306849-3.612453L.63462-3.200996C.795019-3.7868 1.039103-4.2401 1.645828-4.2401C2.231631-4.2401 2.677958-3.828643 2.677958-3.200996C2.677958-2.622167 2.336239-2.294396 1.917808-1.896887C1.778331-1.75741 1.401743-1.443587 1.255293-1.30411C1.053051-1.12279 .571856-.655542 .369614-.481196V0H3.326526V-.536986H1.973599Z"></path>
+<path id="tz_fig_dhcp_dora_g0-52" d="M2.761644-1.164633H3.486924V-1.624907H2.761644V-4.574844H2.071233L.209215-1.624907V-1.164633H2.161893V0H2.761644V-1.164633ZM.801993-1.624907C1.011208-1.952677 2.21071-3.814695 2.21071-4.233126V-1.624907H.801993Z"></path>
+<path id="tz_fig_dhcp_dora_g0-53" d="M1.143711-4.093649H3.075467V-4.574844H.585803V-1.966625H1.094894C1.262267-2.343213 1.590037-2.510585 1.903861-2.510585C2.189788-2.510585 2.622167-2.315318 2.622167-1.429639C2.622167-.516065 2.043337-.313823 1.687671-.313823C1.227397-.313823 .781071-.557908 .54396-.955417L.278954-.536986C.620672-.111582 1.136737 .146451 1.687671 .146451C2.608219 .146451 3.326526-.564882 3.326526-1.415691C3.326526-2.280448 2.684932-2.970859 1.917808-2.970859C1.617933-2.970859 1.352927-2.866252 1.143711-2.691905V-4.093649Z"></path>
+<path id="tz_fig_dhcp_dora_g0-54" d="M3.061519-4.581818C2.684932-4.721295 2.419925-4.721295 2.287422-4.721295C1.227397-4.721295 .306849-3.724035 .306849-2.252553C.306849-.36264 1.157659 .146451 1.862017 .146451C2.426899 .146451 2.719801-.118555 2.93599-.341719C3.382316-.81594 3.38929-1.311083 3.38929-1.555168C3.38929-2.468742 2.894147-3.228892 2.217684-3.228892C1.534247-3.228892 1.164633-2.873225 .962391-2.670984C1.053051-3.626401 1.54122-4.288917 2.294396-4.288917C2.433873-4.288917 2.712827-4.274969 3.061519-4.142466V-4.581818ZM.969365-1.534247C.969365-1.57609 .969365-1.680697 .976339-1.715567C.976339-2.189788 1.276214-2.768618 1.896887-2.768618C2.747696-2.768618 2.747696-1.792279 2.747696-1.555168C2.747696-1.290162 2.747696-.99726 2.559402-.704359C2.39203-.4533 2.182814-.313823 1.862017-.313823C1.12279-.313823 1.004234-1.227397 .969365-1.534247Z"></path>
+<path id="tz_fig_dhcp_dora_g0-56" d="M2.385056-2.468742C2.84533-2.615193 3.284682-2.984807 3.284682-3.500872C3.284682-4.135492 2.677958-4.721295 1.84807-4.721295S.411457-4.135492 .411457-3.500872C.411457-2.977833 .864757-2.608219 1.311083-2.468742C.697385-2.280448 .306849-1.806227 .306849-1.26924C.306849-.523039 .969365 .146451 1.84807 .146451S3.38929-.523039 3.38929-1.26924C3.38929-1.806227 2.991781-2.280448 2.385056-2.468742ZM1.84807-2.698879C1.352927-2.698879 .948443-2.984807 .948443-3.493898C.948443-3.940224 1.262267-4.288917 1.84807-4.288917C2.426899-4.288917 2.747696-3.940224 2.747696-3.493898C2.747696-2.998755 2.357161-2.698879 1.84807-2.698879ZM1.84807-.313823C1.366874-.313823 .941469-.620672 .941469-1.276214C.941469-1.903861 1.345953-2.238605 1.84807-2.238605S2.75467-1.896887 2.75467-1.276214C2.75467-.620672 2.322291-.313823 1.84807-.313823Z"></path>
+<path id="tz_fig_dhcp_dora_g0-57" d="M.536986-.174346C.878705 .076712 1.192528 .146451 1.520299 .146451C2.496638 .146451 3.38929-.836862 3.38929-2.336239C3.38929-4.2401 2.545455-4.721295 1.875965-4.721295C1.255293-4.721295 .969365-4.428394 .767123-4.226152C.320797-3.772852 .306849-3.291656 .306849-3.019676C.306849-2.12005 .795019-1.345953 1.478456-1.345953C2.266501-1.345953 2.698879-1.868991 2.733748-1.910834C2.636115-.801993 2.092154-.313823 1.520299-.313823C1.157659-.313823 .934496-.446326 .774097-.578829L.536986-.174346ZM2.712827-3.02665C2.719801-2.984807 2.719801-2.915068 2.719801-2.873225C2.719801-2.357161 2.405978-1.806227 1.799253-1.806227C1.534247-1.806227 1.325031-1.882939 1.143711-2.168867C.962391-2.440847 .948443-2.705853 .948443-3.019676C.948443-3.291656 .948443-3.605479 1.164633-3.912329C1.311083-4.121544 1.520299-4.288917 1.868991-4.288917C2.545455-4.288917 2.691905-3.472976 2.712827-3.02665Z"></path>
+<path id="tz_fig_dhcp_dora_g0-58" d="M1.338979-3.096389H.711333V-2.468742H1.338979V-3.096389ZM.711333-.627646V0H1.338979V-.627646H.711333Z"></path>
+<path id="tz_fig_dhcp_dora_g0-63" d="M1.896887-1.57609C1.896887-2.385056 2.496638-2.859278 2.705853-3.019676C2.956912-3.221918 3.082441-3.507846 3.082441-3.821669C3.082441-4.372603 2.719801-4.909589 1.659776-4.909589C1.234371-4.909589 .822914-4.804981 .411457-4.546949L.578829-4.072727C1.073973-4.449315 1.520299-4.449315 1.673724-4.449315C1.959651-4.449315 2.475716-4.42142 2.475716-3.835616C2.475716-3.542715 2.336239-3.424159 2.196762-3.312578C1.715567-2.922042 1.39477-2.30137 1.39477-1.603985V-1.255293H1.896887V-1.57609ZM1.332005 0H1.959651V-.627646H1.332005V0Z"></path>
+<path id="tz_fig_dhcp_dora_g0-68" d="M.683437-4.839851V0H2.66401C3.919303 0 4.930511-1.060025 4.930511-2.378082C4.930511-3.744956 3.912329-4.839851 2.66401-4.839851H.683437ZM1.366874-.411457V-4.428394H2.475716C3.431133-4.428394 4.247073-3.668244 4.247073-2.385056C4.247073-1.08792 3.396264-.411457 2.475716-.411457H1.366874Z"></path>
+<path id="tz_fig_dhcp_dora_g0-78" d="M1.645828-4.839851H.697385V0H1.283188V-4.288917H1.290162L3.577584 0H4.526027V-4.839851H3.940224V-.550934H3.93325L1.645828-4.839851Z"></path>
+<path id="tz_fig_dhcp_dora_g0-83" d="M3.445081-4.644583C2.998755-4.87472 2.601245-4.986301 2.085181-4.986301C1.03213-4.986301 .411457-4.274969 .411457-3.605479C.411457-3.319552 .502117-2.984807 .843836-2.66401C1.150685-2.378082 1.471482-2.308344 1.903861-2.203736C2.489664-2.064259 2.650062-2.02939 2.852304-1.820174C2.984807-1.687671 3.096389-1.492403 3.096389-1.255293C3.096389-.822914 2.705853-.376588 2.02939-.376588C1.63188-.376588 .990286-.495143 .439352-.962391L.327771-.334745C.676463-.132503 1.255293 .146451 2.036364 .146451C3.005729 .146451 3.696139-.557908 3.696139-1.338979C3.696139-1.903861 3.368369-2.224658 3.228892-2.371108C2.93599-2.657036 2.615193-2.733748 2.078207-2.859278C1.652802-2.956912 1.429639-3.012702 1.262267-3.173101C1.171606-3.263761 1.011208-3.424159 1.011208-3.689166C1.011208-4.079701 1.401743-4.484184 2.078207-4.484184C2.608219-4.484184 2.977833-4.316812 3.333499-4.016936L3.445081-4.644583Z"></path>
+<path id="tz_fig_dhcp_dora_g0-94" d="M2.092154-4.839851H1.603985L.585803-3.675218H1.046077L1.84807-4.519054L2.650062-3.675218H3.110336L2.092154-4.839851Z"></path>
+<path id="tz_fig_dhcp_dora_g0-97" d="M2.970859-2.008468C2.970859-2.719801 2.426899-3.200996 1.736488-3.200996C1.297136-3.200996 .962391-3.110336 .571856-2.901121L.613699-2.39203C.843836-2.545455 1.185554-2.75467 1.736488-2.75467C2.043337-2.75467 2.364134-2.524533 2.364134-2.001494V-1.72254C1.332005-1.687671 .313823-1.471482 .313823-.822914C.313823-.474222 .550934 .069738 1.164633 .069738C1.464508 .069738 2.015442 .006974 2.385056-.265006V0H2.970859V-2.008468ZM2.364134-.990286C2.364134-.850809 2.364134-.669489 2.12005-.523039C1.896887-.397509 1.624907-.390535 1.548194-.390535C1.164633-.390535 .871731-.564882 .871731-.829888C.871731-1.276214 2.050311-1.318057 2.364134-1.332005V-.990286Z"></path>
+<path id="tz_fig_dhcp_dora_g0-98" d="M1.17858-4.839851H.592777V0H1.199502V-.327771C1.352927-.195268 1.687671 .069738 2.196762 .069738C2.956912 .069738 3.57061-.641594 3.57061-1.555168C3.57061-2.399004 3.089415-3.166127 2.39203-3.166127C1.952677-3.166127 1.527273-3.02665 1.17858-2.768618V-4.839851ZM1.199502-2.196762C1.199502-2.308344 1.199502-2.39203 1.443587-2.552428C1.548194-2.615193 1.736488-2.705853 1.973599-2.705853C2.440847-2.705853 2.963885-2.39203 2.963885-1.555168C2.963885-.704359 2.385056-.390535 1.896887-.390535C1.638854-.390535 1.39477-.509091 1.199502-.822914V-2.196762Z"></path>
+<path id="tz_fig_dhcp_dora_g0-99" d="M3.033624-.760149C2.684932-.536986 2.308344-.411457 1.875965-.411457C1.234371-.411457 .857783-.927522 .857783-1.555168C.857783-2.092154 1.136737-2.719801 1.896887-2.719801C2.371108-2.719801 2.594271-2.622167 2.949938-2.399004L3.040598-2.901121C2.622167-3.110336 2.440847-3.200996 1.896887-3.200996C.850809-3.200996 .251059-2.357161 .251059-1.548194C.251059-.697385 .920548 .069738 1.868991 .069738C2.357161 .069738 2.775592-.076712 3.075467-.251059L3.033624-.760149Z"></path>
+<path id="tz_fig_dhcp_dora_g0-100" d="M3.228892-4.839851H2.643088V-2.796513C2.196762-3.124284 1.743462-3.166127 1.54122-3.166127C.808966-3.166127 .251059-2.433873 .251059-1.548194S.801993 .069738 1.520299 .069738C1.952677 .069738 2.357161-.125529 2.622167-.36264V0H3.228892V-4.839851ZM2.622167-.864757C2.447821-.578829 2.182814-.390535 1.84807-.390535C1.3599-.390535 .857783-.732254 .857783-1.54122C.857783-2.412951 1.45056-2.705853 1.924782-2.705853C2.203736-2.705853 2.440847-2.587298 2.622167-2.350187V-.864757Z"></path>
+<path id="tz_fig_dhcp_dora_g0-101" d="M2.998755-.760149C2.608219-.481196 2.168867-.390535 1.868991-.390535C1.262267-.390535 .801993-.885679 .781071-1.527273H3.068493C3.068493-1.84807 3.033624-2.315318 2.761644-2.712827C2.510585-3.068493 2.092154-3.200996 1.750436-3.200996C.899626-3.200996 .244085-2.454795 .244085-1.569116C.244085-.676463 .941469 .069738 1.862017 .069738C2.266501 .069738 2.684932-.048817 3.040598-.265006L2.998755-.760149ZM.829888-1.945704C.990286-2.503611 1.401743-2.740722 1.750436-2.740722C2.057285-2.740722 2.510585-2.594271 2.643088-1.945704H.829888Z"></path>
+<path id="tz_fig_dhcp_dora_g0-103" d="M3.507846-3.166127C3.354421-3.166127 2.887173-3.159153 2.357161-2.956912L2.343213-2.949938C2.092154-3.11731 1.84807-3.166127 1.645828-3.166127C.962391-3.166127 .4533-2.629141 .4533-2.02939C.4533-1.785305 .536986-1.534247 .697385-1.338979C.599751-1.220423 .495143-1.025156 .495143-.760149C.495143-.488169 .606725-.313823 .669489-.230137C.285928-.006974 .209215 .313823 .209215 .481196C.209215 1.011208 .941469 1.429639 1.84807 1.429639C2.761644 1.429639 3.486924 1.011208 3.486924 .481196C3.486924-.502117 2.266501-.502117 1.966625-.502117H1.318057C1.206476-.502117 .9066-.502117 .9066-.864757C.9066-1.004234 .955417-1.073973 .962391-1.08792C1.206476-.934496 1.45056-.885679 1.638854-.885679C2.322291-.885679 2.831382-1.422665 2.831382-2.022416C2.831382-2.245579 2.768618-2.447821 2.643088-2.636115C2.615193-2.677958 2.615193-2.684932 2.615193-2.691905C2.615193-2.719801 3.033624-2.719801 3.068493-2.719801C3.075467-2.719801 3.340473-2.719801 3.591532-2.691905L3.507846-3.166127ZM1.645828-1.318057C1.26924-1.318057 .990286-1.555168 .990286-2.022416C.990286-2.566376 1.338979-2.733748 1.638854-2.733748C2.015442-2.733748 2.294396-2.496638 2.294396-2.02939C2.294396-1.48543 1.945704-1.318057 1.645828-1.318057ZM1.973599 .041843C2.133998 .041843 2.956912 .041843 2.956912 .488169C2.956912 .788045 2.433873 .99726 1.84807 .99726S.739228 .788045 .739228 .488169C.739228 .4533 .739228 .041843 1.30411 .041843H1.973599Z"></path>
+<path id="tz_fig_dhcp_dora_g0-104" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.624907-3.166127 1.30411-2.817435 1.164633-2.670984V-4.839851H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_dhcp_dora_g0-105" d="M1.227397-4.78406H.523039V-4.079701H1.227397V-4.78406ZM1.171606-3.096389H.585803V0H1.171606V-3.096389Z"></path>
+<path id="tz_fig_dhcp_dora_g0-108" d="M1.171606-4.839851H.585803V0H1.171606V-4.839851Z"></path>
+<path id="tz_fig_dhcp_dora_g0-109" d="M5.300125-2.064259C5.300125-2.608219 5.139726-3.166127 4.281943-3.166127C3.696139-3.166127 3.333499-2.824408 3.166127-2.601245C3.096389-2.789539 2.922042-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-1.694645C3.242839-2.154919 3.438107-2.705853 3.975093-2.705853C4.6934-2.705853 4.6934-2.217684 4.6934-2.015442V0H5.300125V-2.064259Z"></path>
+<path id="tz_fig_dhcp_dora_g0-110" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_dhcp_dora_g0-111" d="M3.486924-1.527273C3.486924-2.447821 2.75467-3.200996 1.84807-3.200996S.209215-2.440847 .209215-1.527273C.209215-.641594 .948443 .069738 1.84807 .069738C2.75467 .069738 3.486924-.641594 3.486924-1.527273ZM1.84807-.411457C1.297136-.411457 .81594-.81594 .81594-1.603985S1.332005-2.740722 1.84807-2.740722C2.371108-2.740722 2.880199-2.378082 2.880199-1.603985C2.880199-.808966 2.385056-.411457 1.84807-.411457Z"></path>
+<path id="tz_fig_dhcp_dora_g0-112" d="M1.199502-.327771C1.569116 .006974 1.966625 .069738 2.203736 .069738C2.942964 .069738 3.57061-.63462 3.57061-1.555168C3.57061-2.39203 3.110336-3.166127 2.419925-3.166127C2.106102-3.166127 1.583064-3.075467 1.17858-2.761644V-3.096389H.592777V1.352927H1.199502V-.327771ZM1.199502-2.315318C1.3599-2.510585 1.63188-2.684932 1.966625-2.684932C2.524533-2.684932 2.963885-2.168867 2.963885-1.555168C2.963885-.864757 2.440847-.390535 1.896887-.390535C1.792279-.390535 1.617933-.404483 1.436613-.550934C1.227397-.711333 1.199502-.81594 1.199502-.948443V-2.315318Z"></path>
+<path id="tz_fig_dhcp_dora_g0-114" d="M1.17858-1.48543C1.17858-2.238605 1.806227-2.643088 2.419925-2.650062V-3.166127C1.834122-3.159153 1.408717-2.873225 1.129763-2.503611V-3.145205H.592777V0H1.17858V-1.48543Z"></path>
+<path id="tz_fig_dhcp_dora_g0-115" d="M2.545455-2.984807C2.071233-3.180075 1.72254-3.200996 1.471482-3.200996C1.297136-3.200996 .244085-3.200996 .244085-2.273474C.244085-1.945704 .425405-1.764384 .516065-1.680697C.760149-1.436613 1.053051-1.380822 1.422665-1.311083C1.750436-1.248319 2.127024-1.17858 2.127024-.843836C2.127024-.404483 1.548194-.404483 1.45056-.404483C1.004234-.404483 .585803-.564882 .306849-.760149L.209215-.237111C.446326-.118555 .871731 .069738 1.45056 .069738C1.764384 .069738 2.071233 .020922 2.329265-.167372C2.587298-.36264 2.670984-.669489 2.670984-.9066C2.670984-1.03213 2.657036-1.30411 2.364134-1.569116C2.106102-1.799253 1.855044-1.84807 1.520299-1.910834C1.108842-1.987547 .788045-2.050311 .788045-2.357161C.788045-2.75467 1.297136-2.75467 1.401743-2.75467C1.799253-2.75467 2.106102-2.670984 2.454795-2.489664L2.545455-2.984807Z"></path>
+<path id="tz_fig_dhcp_dora_g0-116" d="M1.311083-2.657036H2.343213V-3.096389H1.311083V-3.982067H.774097V-3.096389H.139477V-2.657036H.753176V-.892653C.753176-.425405 .871731 .069738 1.373848 .069738S2.259527-.09066 2.468742-.188294L2.350187-.63462C2.12005-.467248 1.875965-.411457 1.680697-.411457C1.387796-.411457 1.311083-.697385 1.311083-1.018182V-2.657036Z"></path>
+<path id="tz_fig_dhcp_dora_g0-117" d="M3.242839-3.096389H2.636115V-1.073973C2.636115-.516065 2.161893-.341719 1.75741-.341719C1.241345-.341719 1.185554-.481196 1.185554-.801993V-3.096389H.578829V-.760149C.578829-.139477 .850809 .069738 1.338979 .069738C1.624907 .069738 2.238605 .013948 2.657036-.320797V0H3.242839V-3.096389Z"></path>
+<path id="tz_fig_dhcp_dora_g0-118" d="M3.305604-3.096389H2.747696C1.792279-.760149 1.750436-.571856 1.72254-.411457H1.715567C1.659776-.683437 1.464508-1.171606 1.248319-1.708593L.690411-3.096389H.104608L1.380822 0H2.02939L3.305604-3.096389Z"></path>
+<path id="tz_fig_dhcp_dora_g0-119" d="M4.951432-3.096389H4.407472C4.344707-2.901121 3.954172-1.72254 3.737983-.99726C3.682192-.795019 3.612453-.571856 3.591532-.411457H3.584558C3.542715-.697385 3.29863-1.45056 3.284682-1.499377L2.768618-3.096389H2.238605C2.036364-2.496638 1.513325-.934496 1.457534-.425405H1.45056C1.39477-.920548 .878705-2.461768 .767123-2.796513C.711333-2.963885 .711333-2.977833 .676463-3.096389H.104608L1.12279 0H1.708593C1.715567-.027895 1.903861-.578829 2.147945-1.352927C2.252553-1.694645 2.461768-2.364134 2.496638-2.670984L2.503611-2.677958C2.517559-2.531507 2.559402-2.378082 2.608219-2.203736S2.705853-1.841096 2.75467-1.680697L3.291656 0H3.93325L4.951432-3.096389Z"></path>
+<path id="tz_fig_dhcp_dora_g0-121" d="M3.305604-3.096389H2.740722C2.175841-1.764384 1.785305-.864757 1.75741-.439352C1.743462-.63462 1.617933-.983313 1.492403-1.311083C1.380822-1.590037 1.26924-1.868991 1.143711-2.140971L.704359-3.096389H.104608L1.548194 0C1.464508 .202242 1.325031 .523039 1.283188 .613699C1.136737 .9066 1.039103 1.004234 .850809 1.004234C.822914 1.004234 .564882 1.004234 .265006 .878705L.306849 1.366874C.369614 1.380822 .627646 1.422665 .843836 1.422665C1.12279 1.422665 1.373848 1.318057 1.66675 .648568L3.305604-3.096389Z"></path>
+<path id="tz_fig_dhcp_dora_g1-11" d="M1.963636-3.461021H2.402989C2.510585-3.461021 2.833375-3.461021 2.833375-3.783811S2.510585-4.1066 2.402989-4.1066H1.936737V-5.083935C1.936737-5.317061 1.936737-5.675716 2.528518-5.675716C2.815442-5.675716 2.99477-5.595019 3.174097-5.424658C3.236862-5.352927 3.263761-5.334994 3.308593-5.334994C3.425156-5.334994 3.425156-5.424658 3.425156-5.56812V-5.980573C3.425156-6.195766 3.416189-6.204732 3.111333-6.267497C2.851308-6.321295 2.663014-6.321295 2.528518-6.321295C1.766376-6.321295 .771108-6.115068 .771108-4.82391V-4.1066C.582814-4.1066 .268991-4.1066 .268991-3.783811S.573848-3.461021 .771108-3.461021V-.430386C.771108-.107597 .869738 0 1.201494 0H1.53325C1.873973 0 1.963636-.116563 1.963636-.430386V-3.461021ZM4.698381-3.461021H5.137733C5.24533-3.461021 5.56812-3.461021 5.56812-3.783811S5.24533-4.1066 5.137733-4.1066H4.671482V-5.083935C4.671482-5.317061 4.671482-5.675716 5.263263-5.675716C5.550187-5.675716 5.729514-5.595019 5.908842-5.424658C5.971606-5.352927 5.998506-5.334994 6.043337-5.334994C6.1599-5.334994 6.1599-5.424658 6.1599-5.56812V-5.980573C6.1599-6.195766 6.150934-6.204732 5.846077-6.267497C5.586052-6.321295 5.397758-6.321295 5.263263-6.321295C4.501121-6.321295 3.505853-6.115068 3.505853-4.82391V-.430386C3.505853-.143462 3.568618 0 3.936239 0H4.267995C4.608717 0 4.698381-.116563 4.698381-.430386V-3.461021Z"></path>
+<path id="tz_fig_dhcp_dora_g1-24" d="M2.734745 .475218C2.779577 .358655 2.779577 .340722 2.779577 .331756C2.779577 .215193 2.689913 .215193 2.546451 .215193H2.385056C2.196762 .215193 2.187796 .224159 2.071233 .403487C1.972603 .555915 1.318057 1.551183 1.318057 1.604981C1.318057 1.721544 1.407721 1.721544 1.551183 1.721544H1.999502C2.196762 1.721544 2.205729 1.721544 2.27746 1.560149L2.734745 .475218Z"></path>
+<path id="tz_fig_dhcp_dora_g1-40" d="M2.878207-6.724782C2.716812-6.724782 2.698879-6.724782 2.537484-6.58132C1.461519-5.675716 .771108-4.142466 .771108-2.241594C.771108-1.156663 .995268 .71731 2.492653 2.071233C2.680946 2.241594 2.698879 2.241594 2.878207 2.241594H3.039601C3.183064 2.241594 3.281694 2.241594 3.281694 2.125031C3.281694 2.098132 3.281694 2.080199 3.174097 1.963636C2.609215 1.273225 1.990535 .170361 1.990535-2.241594C1.990535-4.877709 2.734745-5.917808 3.227895-6.509589C3.263761-6.554421 3.281694-6.572354 3.281694-6.608219C3.281694-6.724782 3.183064-6.724782 3.039601-6.724782H2.878207Z"></path>
+<path id="tz_fig_dhcp_dora_g1-41" d="M.789041-6.724782C.645579-6.724782 .546949-6.724782 .546949-6.608219C.546949-6.58132 .546949-6.563387 .654545-6.446824C1.210461-5.756413 1.838107-4.653549 1.838107-2.241594C1.838107 .385554 1.093898 1.425654 .600747 2.026401C.546949 2.089166 .546949 2.107098 .546949 2.125031C.546949 2.241594 .645579 2.241594 .789041 2.241594H.950436C1.111831 2.241594 1.129763 2.241594 1.291158 2.098132C2.367123 1.192528 3.057534-.340722 3.057534-2.241594C3.057534-3.326526 2.833375-5.200498 1.33599-6.554421C1.147696-6.724782 1.129763-6.724782 .950436-6.724782H.789041Z"></path>
+<path id="tz_fig_dhcp_dora_g1-46" d="M1.95467-.932503C1.95467-1.165629 1.945704-1.174595 1.712578-1.174595H1.022167C.789041-1.174595 .780075-1.165629 .780075-.932503V-.242092C.780075-.008966 .789041 0 1.022167 0H1.712578C1.945704 0 1.95467-.008966 1.95467-.242092V-.932503Z"></path>
+<path id="tz_fig_dhcp_dora_g1-49" d="M3.183064-5.989539C3.183064-6.1599 3.183064-6.419925 2.788543-6.419925C2.609215-6.419925 2.57335-6.401993 2.465753-6.294396C2.304359-6.150934 1.963636-5.819178 1.075965-5.801245C.91457-5.801245 .681445-5.738481 .681445-5.478456C.681445-5.155666 .995268-5.155666 1.111831-5.155666C1.380822-5.155666 1.694645-5.200498 1.95467-5.272229V-.645579H1.255293C1.13873-.645579 .824907-.645579 .824907-.32279S1.13873 0 1.255293 0H3.81071C3.90934 0 4.241096 0 4.241096-.32279S3.90934-.645579 3.81071-.645579H3.183064V-5.989539Z"></path>
+<path id="tz_fig_dhcp_dora_g1-50" d="M.582814-.762142C.493151-.672478 .493151-.654545 .493151-.502117V-.430386C.493151-.107597 .591781 0 .923537 0H3.999004C4.339726 0 4.42939-.116563 4.42939-.430386V-.537983C4.42939-.681445 4.42939-.851806 4.241096-.932503C4.178331-.968369 3.891407-.968369 3.71208-.968369C3.514819-.968369 3.299626-.959402 3.102366-.959402H1.649813L2.833375-2.080199C2.96787-2.196762 3.308593-2.47472 3.443088-2.600249C3.936239-3.084433 4.42939-3.559651 4.42939-4.357659C4.42939-5.451557 3.640349-6.419925 2.322291-6.419925C2.008468-6.419925 1.497385-6.375093 1.066999-6.025405C.986301-5.96264 .573848-5.639851 .412453-5.039103L.860772-4.465255C.91457-4.393524 .941469-4.357659 1.004234-4.357659C1.084932-4.357659 1.102864-4.420423 1.129763-4.52802C1.309091-5.1467 1.613948-5.523288 2.187796-5.523288C2.887173-5.523288 3.174097-4.886675 3.174097-4.339726C3.174097-3.765878 2.833375-3.165131 2.295392-2.591283L.582814-.762142Z"></path>
+<path id="tz_fig_dhcp_dora_g1-51" d="M.860772-4.976339C.932503-4.868742 .977335-4.868742 .995268-4.868742C1.058032-4.868742 1.075965-4.904608 1.120797-4.967372C1.578082-5.621918 2.214695-5.621918 2.331258-5.621918C2.905106-5.621918 2.985803-5.326027 2.985803-4.886675C2.985803-4.761146 2.985803-4.33076 2.707846-3.990037C2.492653-3.738979 2.268493-3.721046 1.999502-3.703113C1.900872-3.694147 1.730511-3.685181 1.703611-3.667248C1.640847-3.640349 1.640847-3.58655 1.640847-3.443088V-3.281694C1.640847-3.048568 1.649813-3.039601 1.882939-3.039601H2.27746C3.0934-3.039601 3.19203-2.528518 3.19203-1.838107C3.19203-1.23736 3.129265-.645579 2.313325-.645579C2.026401-.645579 1.362889-.708344 .762142-1.273225C.681445-1.353923 .672478-1.362889 .636613-1.362889C.546949-1.362889 .529016-1.282192 .52005-1.264259C.52005-1.255293 .412453-.690411 .412453-.645579C.412453-.529016 1.183562 .19726 2.358157 .19726C3.900374 .19726 4.510087-.627646 4.510087-1.820174C4.510087-2.627148 4.079701-3.174097 3.272727-3.380324C3.999004-3.774844 4.241096-4.357659 4.241096-4.868742C4.241096-6.303362 2.958904-6.419925 2.37609-6.419925C1.147696-6.419925 .546949-5.54122 .546949-5.469489C.546949-5.415691 .600747-5.34396 .609714-5.334994L.860772-4.976339Z"></path>
+<path id="tz_fig_dhcp_dora_g1-52" d="M.349689-2.349191C.277958-2.214695 .277958-2.187796 .277958-2.026401V-1.802242C.277958-1.515318 .340722-1.371856 .708344-1.371856H2.725778V-.430386C2.725778-.143462 2.788543 0 3.156164 0H3.407223C3.747945 0 3.837609-.116563 3.837609-.430386V-1.371856H4.214197C4.492154-1.371856 4.644583-1.43462 4.644583-1.793275C4.644583-2.125031 4.52802-2.214695 4.214197-2.214695H3.837609V-5.792279C3.837609-6.115068 3.738979-6.222665 3.407223-6.222665H2.752677C2.582316-6.222665 2.447821-6.222665 2.340224-6.016438L.349689-2.349191ZM1.210461-2.214695C2.645081-4.850809 2.725778-5.128767 2.77061-5.281196H2.779577V-2.214695H1.210461Z"></path>
+<path id="tz_fig_dhcp_dora_g1-65" d="M4.250062-5.837111C4.115567-6.222665 3.855542-6.222665 3.676214-6.222665H2.887173C2.707846-6.222665 2.447821-6.222665 2.313325-5.837111L.42142-.42142C.376588-.304857 .376588-.286924 .376588-.242092C.376588 0 .600747 0 .726276 0H1.049066C1.210461 0 1.488418 0 1.613948-.358655L1.963636-1.353923H4.447323L4.752179-.493151C4.859776-.179328 4.92254 0 5.352927 0H5.837111C5.96264 0 6.1868 0 6.1868-.242092C6.1868-.286924 6.1868-.304857 6.141968-.42142L4.250062-5.837111ZM2.878207-4.025903C3.012702-4.420423 3.129265-4.761146 3.200996-5.083935H3.209963C3.254795-4.868742 3.254795-4.850809 3.326526-4.644583L4.178331-2.125031H2.232628L2.878207-4.025903Z"></path>
+<path id="tz_fig_dhcp_dora_g1-67" d="M5.738481-1.282192C5.738481-1.353923 5.675716-1.389788 5.639851-1.389788C5.424658-1.389788 5.164633-.806974 3.900374-.806974C2.322291-.806974 1.873973-1.775342 1.873973-3.120299C1.873973-4.456289 2.358157-5.424658 3.828643-5.424658C4.62665-5.424658 5.04807-5.110834 5.290162-4.913574C5.34396-4.868742 5.370859-4.832877 5.433624-4.832877C5.469489-4.832877 5.514321-4.877709 5.523288-4.913574L5.702615-5.908842C5.711582-5.944707 5.702615-5.980573 5.630884-6.007472C5.101868-6.204732 4.554919-6.330262 3.855542-6.330262C1.667746-6.330262 .546949-5.263263 .546949-3.129265C.546949-.932503 1.685679 .089664 3.864508 .089664C4.62665 .089664 5.101868-.017933 5.756413-.42142C5.828144-.466252 5.810212-.529016 5.810212-.529016L5.738481-1.282192Z"></path>
+<path id="tz_fig_dhcp_dora_g1-68" d="M1.246326-6.222665C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H3.61345C5.801245 0 6.563387-1.309091 6.563387-3.066501C6.563387-3.774844 6.446824-4.644583 5.944707-5.281196C5.272229-6.115068 4.196264-6.222665 3.61345-6.222665H1.246326ZM2.107098-.771108V-5.451557H3.254795C5.191532-5.451557 5.272229-4.070735 5.272229-3.066501C5.272229-2.0533 5.173599-.771108 3.263761-.771108H2.107098Z"></path>
+<path id="tz_fig_dhcp_dora_g1-72" d="M6.294396-5.792279C6.294396-6.079203 6.231631-6.222665 5.86401-6.222665H5.406725C5.066002-6.222665 4.976339-6.106102 4.976339-5.792279V-3.658281H2.133998V-5.792279C2.133998-6.079203 2.071233-6.222665 1.703611-6.222665H1.246326C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H1.703611C2.044334 0 2.133998-.116563 2.133998-.430386V-2.815442H4.976339V-.430386C4.976339-.143462 5.039103 0 5.406725 0H5.86401C6.204732 0 6.294396-.116563 6.294396-.430386V-5.792279Z"></path>
+<path id="tz_fig_dhcp_dora_g1-79" d="M6.563387-3.066501C6.563387-4.868742 5.908842-6.419925 3.559651-6.419925C1.075965-6.419925 .546949-4.707347 .546949-3.066501C.546949-1.389788 1.129763 .19726 3.550685 .19726C5.86401 .19726 6.563387-1.228394 6.563387-3.066501ZM3.559651-.52005C1.865006-.52005 1.865006-2.394022 1.865006-3.209963C1.865006-3.999004 1.865006-5.720548 3.550685-5.720548C5.24533-5.720548 5.24533-4.016936 5.24533-3.209963C5.24533-2.411955 5.24533-.52005 3.559651-.52005Z"></path>
+<path id="tz_fig_dhcp_dora_g1-80" d="M2.133998-2.402989H3.496887C4.904608-2.402989 5.747447-2.99477 5.747447-4.285928C5.747447-5.639851 4.868742-6.222665 3.48792-6.222665H1.246326C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H1.703611C2.044334 0 2.133998-.116563 2.133998-.430386V-2.402989ZM3.209963-5.451557C4.384558-5.451557 4.501121-4.913574 4.501121-4.285928C4.501121-3.685181 4.402491-3.111333 3.200996-3.111333H2.107098V-5.451557H3.209963Z"></path>
+<path id="tz_fig_dhcp_dora_g1-82" d="M4.33076-2.86924C4.895641-3.003736 5.747447-3.344458 5.747447-4.456289C5.747447-6.222665 3.801743-6.222665 3.398257-6.222665H1.246326C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H1.676712C2.017435 0 2.107098-.116563 2.107098-.430386V-2.788543H3.102366L4.572852-.215193C4.698381 0 4.797011 0 4.994271 0H5.523288C5.702615 0 5.855044 0 5.855044-.268991L4.33076-2.86924ZM2.107098-3.434122V-5.451557H3.272727C4.312827-5.451557 4.501121-5.039103 4.501121-4.447323C4.501121-3.918306 4.375592-3.434122 3.272727-3.434122H2.107098Z"></path>
+<path id="tz_fig_dhcp_dora_g1-83" d="M2.420922-3.954172C2.223661-3.999004 1.667746-4.20523 1.667746-4.716314C1.667746-5.478456 2.429888-5.496389 2.734745-5.496389C3.236862-5.496389 3.685181-5.379826 4.124533-4.94944C4.267995-4.814944 4.276961-4.805978 4.312827-4.805978C4.366625-4.805978 4.411457-4.832877 4.438356-4.967372L4.572852-5.747447C4.590785-5.819178 4.590785-5.837111 4.590785-5.86401C4.590785-5.935741 4.581818-5.944707 4.357659-6.06127C3.721046-6.375093 3.19203-6.419925 2.734745-6.419925C1.936737-6.419925 .546949-6.231631 .546949-4.554919C.546949-3.918306 .878705-3.505853 1.049066-3.326526C1.506351-2.860274 1.927771-2.77061 2.627148-2.609215C3.129265-2.492653 3.326526-2.447821 3.523786-2.268493C3.61345-2.178829 3.801743-1.990535 3.801743-1.649813C3.801743-.806974 3.030635-.780075 2.734745-.780075C1.981569-.780075 1.327024-1.084932 .878705-1.488418C.771108-1.596015 .753176-1.596015 .71731-1.596015C.663512-1.596015 .61868-1.569116 .591781-1.43462L.457285-.654545C.439352-.582814 .439352-.564882 .439352-.537983C.439352-.349689 1.371856-.026899 1.416687-.008966C2.017435 .179328 2.501619 .19726 2.734745 .19726C4.079701 .19726 4.92254-.403487 4.92254-1.793275C4.92254-2.797509 4.178331-3.550685 3.281694-3.756912L2.420922-3.954172Z"></path>
+<path id="tz_fig_dhcp_dora_g1-99" d="M4.097634-.448319C4.097634-.546949 4.061768-.959402 4.043836-1.075965C4.043836-1.102864 4.025903-1.192528 3.936239-1.192528C3.900374-1.192528 3.882441-1.192528 3.792777-1.102864C3.640349-.968369 3.218929-.600747 2.483686-.600747C1.551183-.600747 1.551183-1.506351 1.551183-2.080199C1.551183-2.806476 1.596015-3.559651 2.510585-3.559651C3.0934-3.559651 3.335492-3.416189 3.658281-3.147198C3.765878-3.048568 3.783811-3.048568 3.819676-3.048568C3.90934-3.048568 3.927273-3.129265 3.936239-3.165131C3.954172-3.236862 4.043836-3.738979 4.043836-3.783811C4.043836-3.864508 3.981071-3.900374 3.828643-3.972105C3.398257-4.169365 3.129265-4.259029 2.501619-4.259029C1.165629-4.259029 .331756-3.631382 .331756-2.062267C.331756-.573848 1.102864 .09863 2.456787 .09863C2.698879 .09863 3.236862 .089664 3.837609-.215193C4.088667-.349689 4.097634-.358655 4.097634-.448319Z"></path>
+<path id="tz_fig_dhcp_dora_g1-100" d="M4.474222-5.792279C4.474222-6.079203 4.411457-6.222665 4.043836-6.222665H3.71208C3.371357-6.222665 3.281694-6.106102 3.281694-5.792279V-3.756912C2.878207-4.142466 2.429888-4.20523 2.15193-4.20523C.331756-4.20523 .331756-2.483686 .331756-2.044334C.331756-1.63188 .331756 .09863 2.107098 .09863C2.483686 .09863 2.86924-.008966 3.254795-.42142C3.254795-.089664 3.380324 0 3.685181 0H4.043836C4.384558 0 4.474222-.116563 4.474222-.430386V-5.792279ZM3.254795-1.120797C3.254795-.968369 3.254795-.887671 2.99477-.708344C2.77061-.564882 2.564384-.546949 2.456787-.546949C1.551183-.546949 1.551183-1.371856 1.551183-2.044334S1.551183-3.559651 2.555417-3.559651C2.815442-3.559651 3.057534-3.469988 3.254795-3.281694V-1.120797Z"></path>
+<path id="tz_fig_dhcp_dora_g1-101" d="M3.864508-1.918804C4.070735-1.918804 4.294894-1.927771 4.294894-2.331258C4.294894-3.48792 3.756912-4.259029 2.420922-4.259029C.986301-4.259029 .277958-3.452055 .277958-2.089166C.277958-.61868 1.129763 .09863 2.537484 .09863C2.878207 .09863 3.38929 .053798 3.981071-.242092C4.178331-.340722 4.241096-.367621 4.241096-.475218C4.241096-.537983 4.214197-.798007 4.20523-.869738C4.169365-1.147696 4.160399-1.156663 4.079701-1.156663C4.043836-1.156663 4.025903-1.156663 3.927273-1.066999C3.398257-.609714 2.860274-.546949 2.57335-.546949C1.560149-.546949 1.452553-1.344956 1.425654-1.918804H3.864508ZM1.43462-2.394022C1.461519-2.940971 1.640847-3.61345 2.420922-3.61345C3.138232-3.61345 3.272727-3.0934 3.299626-2.394022H1.43462Z"></path>
+<path id="tz_fig_dhcp_dora_g1-105" d="M.91457-6.231631C.627646-6.231631 .484184-6.177833 .484184-5.819178V-5.406725C.484184-5.119801 .573848-5.003238 .905604-5.003238H1.371856C1.802242-5.003238 1.802242-5.191532 1.802242-5.612951C1.802242-6.043337 1.802242-6.231631 1.371856-6.231631H.91457ZM1.739477-3.676214C1.739477-3.963138 1.676712-4.1066 1.309091-4.1066H.977335C.654545-4.1066 .546949-4.00797 .546949-3.676214V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-3.676214Z"></path>
+<path id="tz_fig_dhcp_dora_g1-107" d="M2.806476-2.438854L4.187298-3.721046C4.294894-3.819676 4.321793-3.846575 4.321793-3.918306C4.321793-4.1066 4.142466-4.1066 4.016936-4.1066H3.496887C3.335492-4.1066 3.165131-4.1066 2.958904-3.918306L1.667746-2.716812V-5.792279C1.667746-6.079203 1.604981-6.222665 1.23736-6.222665H1.049066C.726276-6.222665 .61868-6.124035 .61868-5.792279V-.430386C.61868-.107597 .71731 0 1.049066 0H1.210461C1.551183 0 1.640847-.116563 1.640847-.430386V-1.362889L2.062267-1.748443L3.227895-.224159C3.380324-.026899 3.443088 0 3.703113 0H4.133499C4.259029 0 4.456289 0 4.456289-.19726C4.456289-.215193 4.456289-.277958 4.366625-.394521L2.806476-2.438854Z"></path>
+<path id="tz_fig_dhcp_dora_g1-108" d="M1.739477-5.792279C1.739477-6.079203 1.676712-6.222665 1.309091-6.222665H.977335C.654545-6.222665 .546949-6.124035 .546949-5.792279V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-5.792279Z"></path>
+<path id="tz_fig_dhcp_dora_g1-109" d="M7.226899-2.914072C7.226899-3.837609 6.832379-4.20523 5.917808-4.20523C5.281196-4.20523 4.788045-3.90934 4.465255-3.317559C4.321793-4.178331 3.559651-4.20523 3.183064-4.20523C3.012702-4.20523 2.636115-4.20523 2.232628-3.90934C1.95467-3.703113 1.775342-3.416189 1.712578-3.281694H1.703611V-3.730012C1.703611-4.016936 1.640847-4.160399 1.273225-4.160399H.968369C.645579-4.160399 .537983-4.061768 .537983-3.730012V-.430386C.537983-.107597 .636613 0 .968369 0H1.327024C1.667746 0 1.75741-.116563 1.75741-.430386V-2.411955C1.75741-3.218929 2.304359-3.559651 2.743711-3.559651C3.174097-3.559651 3.272727-3.371357 3.272727-2.896139V-.430386C3.272727-.107597 3.371357 0 3.703113 0H4.061768C4.402491 0 4.492154-.116563 4.492154-.430386V-2.411955C4.492154-3.218929 5.039103-3.559651 5.478456-3.559651C5.908842-3.559651 6.007472-3.371357 6.007472-2.896139V-.430386C6.007472-.107597 6.106102 0 6.437858 0H6.796513C7.137235 0 7.226899-.116563 7.226899-.430386V-2.914072Z"></path>
+<path id="tz_fig_dhcp_dora_g1-110" d="M4.483188-2.914072C4.483188-3.837609 4.088667-4.20523 3.174097-4.20523C2.232628-4.20523 1.829141-3.523786 1.712578-3.281694H1.703611V-3.730012C1.703611-4.016936 1.640847-4.160399 1.273225-4.160399H.968369C.645579-4.160399 .537983-4.061768 .537983-3.730012V-.430386C.537983-.107597 .636613 0 .968369 0H1.327024C1.667746 0 1.75741-.116563 1.75741-.430386V-2.411955C1.75741-3.19203 2.27746-3.559651 2.743711-3.559651C3.174097-3.559651 3.263761-3.353425 3.263761-2.896139V-.430386C3.263761-.143462 3.326526 0 3.694147 0H4.052802C4.393524 0 4.483188-.116563 4.483188-.430386V-2.914072Z"></path>
+<path id="tz_fig_dhcp_dora_g1-111" d="M4.644583-2.017435C4.644583-3.48792 3.927273-4.259029 2.465753-4.259029C.968369-4.259029 .277958-3.461021 .277958-2.017435C.277958-.555915 1.049066 .09863 2.456787 .09863S4.644583-.546949 4.644583-2.017435ZM2.465753-.600747C1.497385-.600747 1.497385-1.407721 1.497385-2.125031C1.497385-2.815442 1.497385-3.61345 2.456787-3.61345C3.425156-3.61345 3.425156-2.824408 3.425156-2.125031C3.425156-1.416687 3.425156-.600747 2.465753-.600747Z"></path>
+<path id="tz_fig_dhcp_dora_g1-113" d="M4.474222-3.774844C4.474222-4.061768 4.411457-4.20523 4.043836-4.20523H3.71208C3.371357-4.20523 3.281694-4.088667 3.281694-3.774844V-3.604483C2.887173-4.20523 2.358157-4.20523 2.205729-4.20523C.475218-4.20523 .331756-2.761644 .331756-2.044334C.331756-1.344956 .475218 .09863 2.142964 .09863C2.618182 .09863 2.949938-.080697 3.254795-.430386V1.309091C3.254795 1.596015 3.317559 1.739477 3.685181 1.739477H4.043836C4.384558 1.739477 4.474222 1.622914 4.474222 1.309091V-3.774844ZM3.281694-1.031133C3.120299-.806974 2.878207-.546949 2.465753-.546949C1.551183-.546949 1.551183-1.685679 1.551183-2.035367C1.551183-2.394022 1.551183-3.505853 2.555417-3.505853C2.698879-3.505853 2.887173-3.469988 3.048568-3.299626C3.281694-3.075467 3.281694-2.914072 3.281694-2.806476V-1.031133Z"></path>
+<path id="tz_fig_dhcp_dora_g1-114" d="M1.739477-2.062267C1.739477-2.914072 2.447821-3.263761 3.012702-3.299626C3.174097-3.308593 3.19203-3.308593 3.19203-3.541719V-3.963138C3.19203-4.142466 3.19203-4.20523 3.030635-4.20523C2.779577-4.20523 2.125031-4.115567 1.703611-3.147198H1.694645V-3.730012C1.694645-4.016936 1.63188-4.160399 1.264259-4.160399H.977335C.654545-4.160399 .546949-4.061768 .546949-3.730012V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-2.062267Z"></path>
+<path id="tz_fig_dhcp_dora_g1-115" d="M3.550685-1.264259C3.550685-1.766376 3.281694-2.080199 3.120299-2.223661C2.761644-2.546451 2.447821-2.600249 2.071233-2.67198C1.578082-2.761644 1.219427-2.833375 1.219427-3.183064C1.219427-3.550685 1.515318-3.622416 1.865006-3.622416C2.465753-3.622416 2.788543-3.398257 3.021669-3.200996C3.111333-3.111333 3.129265-3.111333 3.165131-3.111333C3.254795-3.111333 3.272727-3.19203 3.281694-3.227895C3.299626-3.299626 3.38929-3.801743 3.38929-3.846575C3.38929-3.990037 2.914072-4.115567 2.815442-4.151432C2.456787-4.250062 2.169863-4.259029 1.936737-4.259029C1.53325-4.259029 .331756-4.259029 .331756-2.976837C.331756-2.537484 .529016-2.268493 .771108-2.0533C1.084932-1.766376 1.43462-1.703611 1.945704-1.604981C2.205729-1.560149 2.663014-1.479452 2.663014-1.084932C2.663014-.663512 2.313325-.600747 1.963636-.600747C1.569116-.600747 1.066999-.71731 .645579-1.219427C.600747-1.264259 .573848-1.291158 .52005-1.291158C.430386-1.291158 .412453-1.210461 .403487-1.156663C.385554-1.031133 .277958-.52005 .277958-.430386C.277958-.268991 .941469-.062765 .950436-.053798C1.443587 .09863 1.811208 .09863 1.963636 .09863C2.420922 .09863 3.550685 .062765 3.550685-1.264259Z"></path>
+<path id="tz_fig_dhcp_dora_g1-116" d="M1.95467-3.461021H2.752677C2.860274-3.461021 3.183064-3.461021 3.183064-3.783811S2.860274-4.1066 2.752677-4.1066H1.95467V-4.850809C1.95467-5.137733 1.891905-5.281196 1.524284-5.281196H1.246326C.923537-5.281196 .81594-5.182565 .81594-4.850809V-4.1066H.609714C.511083-4.1066 .179328-4.1066 .179328-3.783811S.502117-3.461021 .609714-3.461021H.789041V-1.192528C.789041-.286924 1.111831 .09863 1.730511 .09863C1.811208 .09863 2.205729 .09863 2.67198-.044832C2.824408-.089664 3.344458-.251059 3.344458-.42142C3.344458-.448319 3.326526-.511083 3.272727-.699377C3.227895-.878705 3.209963-.932503 3.129265-.932503C3.084433-.932503 3.075467-.923537 3.021669-.869738C2.923039-.798007 2.680946-.600747 2.304359-.600747C2.089166-.600747 1.95467-.753176 1.95467-1.344956V-3.461021Z"></path>
+<path id="tz_fig_dhcp_dora_g1-117" d="M4.483188-3.676214C4.483188-3.963138 4.420423-4.1066 4.052802-4.1066H3.694147C3.353425-4.1066 3.263761-3.990037 3.263761-3.676214V-1.551183C3.263761-.959402 2.949938-.448319 2.313325-.448319C1.811208-.448319 1.75741-.573848 1.75741-1.049066V-3.676214C1.75741-3.963138 1.694645-4.1066 1.327024-4.1066H.968369C.645579-4.1066 .537983-4.00797 .537983-3.676214V-1.129763C.537983-.170361 1.058032 .09863 1.990535 .09863C2.232628 .09863 2.86924 .09863 3.29066-.663512V-.430386C3.29066-.143462 3.353425 0 3.721046 0H4.052802C4.393524 0 4.483188-.116563 4.483188-.430386V-3.676214Z"></path>
+<path id="tz_fig_dhcp_dora_g1-118" d="M4.196264-3.685181C4.241096-3.81071 4.241096-3.828643 4.241096-3.855542C4.241096-4.1066 4.016936-4.1066 3.882441-4.1066H3.694147C3.317559-4.1066 3.218929-3.972105 3.138232-3.721046L2.25056-1.0132L1.362889-3.721046C1.300125-3.90934 1.23736-4.1066 .806974-4.1066H.591781C.457285-4.1066 .233126-4.1066 .233126-3.855542C.233126-3.828643 .233126-3.81071 .277958-3.685181L1.344956-.376588C1.470486 0 1.748443 0 1.909838 0H2.564384C2.725778 0 3.003736 0 3.129265-.376588L4.196264-3.685181Z"></path>
+</defs>
+<g id="tz_fig_dhcp_dora_page1">
+<g stroke-miterlimit="10" transform="translate(-30.080937,-54.3831)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M34.47627 13.08298H-34.47627C-36.13315 13.08298-37.47627 11.73985-37.47627 10.08298V-10.08298C-37.47627-11.73985-36.13315-13.08298-34.47627-13.08298H34.47627C36.13315-13.08298 37.47627-11.73985 37.47627-10.08298V10.08298C37.47627 11.73985 36.13315 13.08298 34.47627 13.08298ZM-37.47627-13.08298"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-34.1433,3.5)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-10.417675" y="-54.3831" href="#tz_fig_dhcp_dora_g1-67"></use>
+<use x="-4.11627" y="-54.3831" href="#tz_fig_dhcp_dora_g1-108"></use>
+<use x="-1.82485" y="-54.3831" href="#tz_fig_dhcp_dora_g1-105"></use>
+<use x=".466571" y="-54.3831" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="5.049413" y="-54.3831" href="#tz_fig_dhcp_dora_g1-110"></use>
+<use x="10.080575" y="-54.3831" href="#tz_fig_dhcp_dora_g1-116"></use>
+<use x="13.704507" y="-54.3831" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="-27.843493" y="-43.424195" href="#tz_fig_dhcp_dora_g1-40"></use>
+<use x="-24.007856" y="-43.424195" href="#tz_fig_dhcp_dora_g1-115"></use>
+<use x="-20.227013" y="-43.424195" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="-15.644171" y="-43.424195" href="#tz_fig_dhcp_dora_g1-109"></use>
+<use x="-4.585944" y="-43.424195" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="-.003102" y="-43.424195" href="#tz_fig_dhcp_dora_g1-110"></use>
+<use x="5.02806" y="-43.424195" href="#tz_fig_dhcp_dora_g1-100"></use>
+<use x="10.059222" y="-43.424195" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="14.642063" y="-43.424195" href="#tz_fig_dhcp_dora_g1-114"></use>
+<use x="17.979571" y="-43.424195" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="22.562412" y="-43.424195" href="#tz_fig_dhcp_dora_g1-24"></use>
+<use x="22.562412" y="-43.424195" href="#tz_fig_dhcp_dora_g1-99"></use>
+<use x="26.945998" y="-43.424195" href="#tz_fig_dhcp_dora_g1-111"></use>
+<use x="31.877532" y="-43.424195" href="#tz_fig_dhcp_dora_g1-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M315.48863 12.80373H246.53609C244.87921 12.80373 243.53609 11.4606 243.53609 9.80373V-9.80373C243.53609-11.4606 244.87921-12.80373 246.53609-12.80373H315.48863C317.14551-12.80373 318.48863-11.4606 318.48863-9.80373V9.80373C318.48863 11.4606 317.14551 12.80373 315.48863 12.80373ZM243.53609-12.80373"></path>
+</g>
+</g>
+</g>
+<g transform="translate(246.86906,-3.125)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-27.733904" y="-54.3831" href="#tz_fig_dhcp_dora_g1-83"></use>
+<use x="-22.254421" y="-54.3831" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="-17.67158" y="-54.3831" href="#tz_fig_dhcp_dora_g1-114"></use>
+<use x="-14.334072" y="-54.3831" href="#tz_fig_dhcp_dora_g1-118"></use>
+<use x="-9.850859" y="-54.3831" href="#tz_fig_dhcp_dora_g1-105"></use>
+<use x="-7.559438" y="-54.3831" href="#tz_fig_dhcp_dora_g1-100"></use>
+<use x="-2.528276" y="-54.3831" href="#tz_fig_dhcp_dora_g1-111"></use>
+<use x="2.129277" y="-54.3831" href="#tz_fig_dhcp_dora_g1-114"></use>
+<use x="8.754109" y="-54.3831" href="#tz_fig_dhcp_dora_g1-68"></use>
+<use x="15.877436" y="-54.3831" href="#tz_fig_dhcp_dora_g1-72"></use>
+<use x="23.000763" y="-54.3831" href="#tz_fig_dhcp_dora_g1-67"></use>
+<use x="29.302168" y="-54.3831" href="#tz_fig_dhcp_dora_g1-80"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g stroke-width="0.8">
+<path d="M0-13.68297V-161.6373" fill="none"></path>
+</g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g stroke-width="0.8">
+<path d="M281.01236-13.40372V-161.35805" fill="none"></path>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M0-36.44516L277.81242-36.16902" fill="none"></path>
+<g transform="matrix(0.99998,0.00098,-0.00098,0.99998,277.81242,-36.16904)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(116.93356,-32.37257)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#2780e3">
+<g stroke="none">
+<g fill="#2780e3">
+<use x="-30.080937" y="-54.3831" href="#tz_fig_dhcp_dora_g1-49"></use>
+<use x="-25.149403" y="-54.3831" href="#tz_fig_dhcp_dora_g1-46"></use>
+<use x="-18.026076" y="-54.3831" href="#tz_fig_dhcp_dora_g1-68"></use>
+<use x="-10.902749" y="-54.3831" href="#tz_fig_dhcp_dora_g1-105"></use>
+<use x="-8.611328" y="-54.3831" href="#tz_fig_dhcp_dora_g1-115"></use>
+<use x="-4.830485" y="-54.3831" href="#tz_fig_dhcp_dora_g1-99"></use>
+<use x="-.446899" y="-54.3831" href="#tz_fig_dhcp_dora_g1-111"></use>
+<use x="4.484635" y="-54.3831" href="#tz_fig_dhcp_dora_g1-118"></use>
+<use x="8.967849" y="-54.3831" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="13.55069" y="-54.3831" href="#tz_fig_dhcp_dora_g1-114"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g transform="translate(91.03044,-45.09961)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-30.080937" y="-54.3831" href="#tz_fig_dhcp_dora_g0-98"></use>
+<use x="-26.460789" y="-54.3831" href="#tz_fig_dhcp_dora_g0-114"></use>
+<use x="-23.930313" y="-54.3831" href="#tz_fig_dhcp_dora_g0-111"></use>
+<use x="-20.225403" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="-16.665786" y="-54.3831" href="#tz_fig_dhcp_dora_g0-100"></use>
+<use x="-12.839805" y="-54.3831" href="#tz_fig_dhcp_dora_g0-99"></use>
+<use x="-9.546552" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="-5.986935" y="-54.3831" href="#tz_fig_dhcp_dora_g0-115"></use>
+<use x="-3.146507" y="-54.3831" href="#tz_fig_dhcp_dora_g0-116"></use>
+<use x="-.470738" y="-54.3831" href="#tz_fig_dhcp_dora_g0-58"></use>
+<use x="4.880798" y="-54.3831" href="#tz_fig_dhcp_dora_g0-34"></use>
+<use x="8.585708" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="12.145325" y="-54.3831" href="#tz_fig_dhcp_dora_g0-108"></use>
+<use x="13.913023" y="-54.3831" href="#tz_fig_dhcp_dora_g0-103"></use>
+<use x="17.617933" y="-54.3831" href="#tz_fig_dhcp_dora_g0-117"></use>
+<use x="21.443914" y="-54.3831" href="#tz_fig_dhcp_dora_g0-109"></use>
+<use x="29.798118" y="-54.3831" href="#tz_fig_dhcp_dora_g0-115"></use>
+<use x="32.638546" y="-54.3831" href="#tz_fig_dhcp_dora_g0-101"></use>
+<use x="35.931799" y="-54.3831" href="#tz_fig_dhcp_dora_g0-114"></use>
+<use x="38.462275" y="-54.3831" href="#tz_fig_dhcp_dora_g0-118"></use>
+<use x="41.876599" y="-54.3831" href="#tz_fig_dhcp_dora_g0-105"></use>
+<use x="43.644296" y="-54.3831" href="#tz_fig_dhcp_dora_g0-100"></use>
+<use x="47.470277" y="-54.3831" href="#tz_fig_dhcp_dora_g0-111"></use>
+<use x="50.969355" y="-54.3831" href="#tz_fig_dhcp_dora_g0-114"></use>
+<use x="55.96977" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="58.560775" y="-54.3831" href="#tz_fig_dhcp_dora_g0-19"></use>
+<use x="59.529395" y="-54.3831" href="#tz_fig_dhcp_dora_g0-16"></use>
+<use x="61.297092" y="-54.3831" href="#tz_fig_dhcp_dora_g0-63"></use>
+<use x="64.796174" y="-54.3831" href="#tz_fig_dhcp_dora_g0-34"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<g fill="#3fb618" stroke="#3fb618">
+<path d="M281.01236-70.30922L3.19994-70.58536" fill="none"></path>
+<g transform="matrix(-0.99998,-0.00098,0.00098,-0.99998,3.19994,-70.58534)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(124.0186,-66.51587)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#3fb618">
+<g stroke="none">
+<g fill="#3fb618">
+<use x="-30.080937" y="-54.3831" href="#tz_fig_dhcp_dora_g1-50"></use>
+<use x="-25.149403" y="-54.3831" href="#tz_fig_dhcp_dora_g1-46"></use>
+<use x="-18.026076" y="-54.3831" href="#tz_fig_dhcp_dora_g1-79"></use>
+<use x="-10.902749" y="-54.3831" href="#tz_fig_dhcp_dora_g1-11"></use>
+<use x="-5.149292" y="-54.3831" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="-.566451" y="-54.3831" href="#tz_fig_dhcp_dora_g1-114"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g transform="translate(84.08015,-79.2429)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-30.080937" y="-54.3831" href="#tz_fig_dhcp_dora_g0-34"></use>
+<use x="-26.376027" y="-54.3831" href="#tz_fig_dhcp_dora_g0-116"></use>
+<use x="-23.700259" y="-54.3831" href="#tz_fig_dhcp_dora_g0-101"></use>
+<use x="-20.407006" y="-54.3831" href="#tz_fig_dhcp_dora_g0-110"></use>
+<use x="-16.581025" y="-54.3831" href="#tz_fig_dhcp_dora_g0-104"></use>
+<use x="-12.755044" y="-54.3831" href="#tz_fig_dhcp_dora_g0-111"></use>
+<use x="-6.580194" y="-54.3831" href="#tz_fig_dhcp_dora_g0-111"></use>
+<use x="-.405344" y="-54.3831" href="#tz_fig_dhcp_dora_g0-49"></use>
+<use x="3.299566" y="-54.3831" href="#tz_fig_dhcp_dora_g0-57"></use>
+<use x="7.004476" y="-54.3831" href="#tz_fig_dhcp_dora_g0-50"></use>
+<use x="10.709386" y="-54.3831" href="#tz_fig_dhcp_dora_g0-46"></use>
+<use x="12.767669" y="-54.3831" href="#tz_fig_dhcp_dora_g0-49"></use>
+<use x="16.472579" y="-54.3831" href="#tz_fig_dhcp_dora_g0-54"></use>
+<use x="20.177489" y="-54.3831" href="#tz_fig_dhcp_dora_g0-56"></use>
+<use x="23.882399" y="-54.3831" href="#tz_fig_dhcp_dora_g0-46"></use>
+<use x="25.940682" y="-54.3831" href="#tz_fig_dhcp_dora_g0-56"></use>
+<use x="29.645592" y="-54.3831" href="#tz_fig_dhcp_dora_g0-56"></use>
+<use x="33.350502" y="-54.3831" href="#tz_fig_dhcp_dora_g0-46"></use>
+<use x="35.408786" y="-54.3831" href="#tz_fig_dhcp_dora_g0-50"></use>
+<use x="39.113696" y="-54.3831" href="#tz_fig_dhcp_dora_g0-53"></use>
+<use x="42.818606" y="-54.3831" href="#tz_fig_dhcp_dora_g0-52"></use>
+<use x="48.993456" y="-54.3831" href="#tz_fig_dhcp_dora_g0-112"></use>
+<use x="52.819437" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="56.173221" y="-54.3831" href="#tz_fig_dhcp_dora_g0-114"></use>
+<use x="58.703697" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="64.733254" y="-54.3831" href="#tz_fig_dhcp_dora_g0-118"></use>
+<use x="68.147578" y="-54.3831" href="#tz_fig_dhcp_dora_g0-111"></use>
+<use x="72.058305" y="-54.3831" href="#tz_fig_dhcp_dora_g0-99"></use>
+<use x="75.145726" y="-54.3831" href="#tz_fig_dhcp_dora_g0-94"></use>
+<use x="75.351566" y="-54.3831" href="#tz_fig_dhcp_dora_g0-101"></use>
+<use x="78.644819" y="-54.3831" href="#tz_fig_dhcp_dora_g0-34"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M0-104.73178L277.81242-104.45564" fill="none"></path>
+<g transform="matrix(0.99998,0.00098,-0.00098,0.99998,277.81242,-104.45566)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(117.92734,-98.9092)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#2780e3">
+<g stroke="none">
+<g fill="#2780e3">
+<use x="-30.080937" y="-54.3831" href="#tz_fig_dhcp_dora_g1-51"></use>
+<use x="-25.149403" y="-54.3831" href="#tz_fig_dhcp_dora_g1-46"></use>
+<use x="-18.026076" y="-54.3831" href="#tz_fig_dhcp_dora_g1-82"></use>
+<use x="-11.724671" y="-54.3831" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="-7.14183" y="-54.3831" href="#tz_fig_dhcp_dora_g1-113"></use>
+<use x="-2.110668" y="-54.3831" href="#tz_fig_dhcp_dora_g1-117"></use>
+<use x="2.920494" y="-54.3831" href="#tz_fig_dhcp_dora_g1-101"></use>
+<use x="7.503336" y="-54.3831" href="#tz_fig_dhcp_dora_g1-115"></use>
+<use x="11.284179" y="-54.3831" href="#tz_fig_dhcp_dora_g1-116"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g transform="translate(99.71489,-113.38622)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-30.080937" y="-54.3831" href="#tz_fig_dhcp_dora_g0-34"></use>
+<use x="-26.376027" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="-22.81641" y="-54.3831" href="#tz_fig_dhcp_dora_g0-99"></use>
+<use x="-19.523157" y="-54.3831" href="#tz_fig_dhcp_dora_g0-101"></use>
+<use x="-16.229904" y="-54.3831" href="#tz_fig_dhcp_dora_g0-105"></use>
+<use x="-14.462206" y="-54.3831" href="#tz_fig_dhcp_dora_g0-116"></use>
+<use x="-11.786438" y="-54.3831" href="#tz_fig_dhcp_dora_g0-111"></use>
+<use x="-5.611588" y="-54.3831" href="#tz_fig_dhcp_dora_g0-111"></use>
+<use x=".563262" y="-54.3831" href="#tz_fig_dhcp_dora_g0-49"></use>
+<use x="4.268172" y="-54.3831" href="#tz_fig_dhcp_dora_g0-57"></use>
+<use x="7.973082" y="-54.3831" href="#tz_fig_dhcp_dora_g0-50"></use>
+<use x="11.677992" y="-54.3831" href="#tz_fig_dhcp_dora_g0-46"></use>
+<use x="13.736275" y="-54.3831" href="#tz_fig_dhcp_dora_g0-49"></use>
+<use x="17.441185" y="-54.3831" href="#tz_fig_dhcp_dora_g0-54"></use>
+<use x="21.146095" y="-54.3831" href="#tz_fig_dhcp_dora_g0-56"></use>
+<use x="24.851005" y="-54.3831" href="#tz_fig_dhcp_dora_g0-46"></use>
+<use x="26.909289" y="-54.3831" href="#tz_fig_dhcp_dora_g0-56"></use>
+<use x="30.614199" y="-54.3831" href="#tz_fig_dhcp_dora_g0-56"></use>
+<use x="34.319109" y="-54.3831" href="#tz_fig_dhcp_dora_g0-46"></use>
+<use x="36.377392" y="-54.3831" href="#tz_fig_dhcp_dora_g0-50"></use>
+<use x="40.082302" y="-54.3831" href="#tz_fig_dhcp_dora_g0-53"></use>
+<use x="43.787212" y="-54.3831" href="#tz_fig_dhcp_dora_g0-52"></use>
+<use x="47.492122" y="-54.3831" href="#tz_fig_dhcp_dora_g0-34"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<g fill="#3fb618" stroke="#3fb618">
+<path d="M281.01236-138.59584L3.19994-138.87198" fill="none"></path>
+<g transform="matrix(-0.99998,-0.00098,0.00098,-0.99998,3.19994,-138.87196)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(126.5686,-134.80249)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#3fb618">
+<g stroke="none">
+<g fill="#3fb618">
+<use x="-30.080937" y="-54.3831" href="#tz_fig_dhcp_dora_g1-52"></use>
+<use x="-25.149403" y="-54.3831" href="#tz_fig_dhcp_dora_g1-46"></use>
+<use x="-18.026076" y="-54.3831" href="#tz_fig_dhcp_dora_g1-65"></use>
+<use x="-11.450697" y="-54.3831" href="#tz_fig_dhcp_dora_g1-99"></use>
+<use x="-7.067111" y="-54.3831" href="#tz_fig_dhcp_dora_g1-107"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g transform="translate(83.17354,-147.52953)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-30.080937,-54.3831)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-30.080937" y="-54.3831" href="#tz_fig_dhcp_dora_g0-108"></use>
+<use x="-28.31324" y="-54.3831" href="#tz_fig_dhcp_dora_g0-101"></use>
+<use x="-25.019987" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="-21.460369" y="-54.3831" href="#tz_fig_dhcp_dora_g0-115"></use>
+<use x="-18.619941" y="-54.3831" href="#tz_fig_dhcp_dora_g0-101"></use>
+<use x="-12.856748" y="-54.3831" href="#tz_fig_dhcp_dora_g0-49"></use>
+<use x="-9.151838" y="-54.3831" href="#tz_fig_dhcp_dora_g0-48"></use>
+<use x="-5.446928" y="-54.3831" href="#tz_fig_dhcp_dora_g0-109"></use>
+<use x="2.907276" y="-54.3831" href="#tz_fig_dhcp_dora_g0-43"></use>
+<use x="11.14041" y="-54.3831" href="#tz_fig_dhcp_dora_g0-109"></use>
+<use x="16.952024" y="-54.3831" href="#tz_fig_dhcp_dora_g0-19"></use>
+<use x="17.024681" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="20.584298" y="-54.3831" href="#tz_fig_dhcp_dora_g0-115"></use>
+<use x="23.424727" y="-54.3831" href="#tz_fig_dhcp_dora_g0-99"></use>
+<use x="26.71798" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="30.071765" y="-54.3831" href="#tz_fig_dhcp_dora_g0-114"></use>
+<use x="32.60224" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="36.161857" y="-54.3831" href="#tz_fig_dhcp_dora_g0-44"></use>
+<use x="40.690081" y="-54.3831" href="#tz_fig_dhcp_dora_g0-103"></use>
+<use x="44.394991" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="47.954608" y="-54.3831" href="#tz_fig_dhcp_dora_g0-116"></use>
+<use x="50.630376" y="-54.3831" href="#tz_fig_dhcp_dora_g0-101"></use>
+<use x="53.923629" y="-54.3831" href="#tz_fig_dhcp_dora_g0-119"></use>
+<use x="58.778748" y="-54.3831" href="#tz_fig_dhcp_dora_g0-97"></use>
+<use x="62.132533" y="-54.3831" href="#tz_fig_dhcp_dora_g0-121"></use>
+<use x="64.929361" y="-54.3831" href="#tz_fig_dhcp_dora_g0-44"></use>
+<use x="69.457584" y="-54.3831" href="#tz_fig_dhcp_dora_g0-68"></use>
+<use x="74.809121" y="-54.3831" href="#tz_fig_dhcp_dora_g0-78"></use>
+<use x="80.039573" y="-54.3831" href="#tz_fig_dhcp_dora_g0-83"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dhcp-dora-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.1: O diálogo DORA: o cliente descobre, o servidor oferece, o cliente pede, o servidor confirma — e o endereço vem emprestado, com prazo.
+</figcaption>
+</figure>
+</div>
+<p>O detalhe que muda a operação: o endereço é um <strong>empréstimo</strong> (<em>lease</em>) com prazo de validade. Na metade do prazo o cliente pede renovação; se o servidor sumir, o endereço expira e volta ao estoque. Esse prazo — o <code>lease-time</code> — será uma decisão sua adiante.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Analogia para guardar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>DHCP é o balcão de um hotel: o hóspede chega sem quarto (Discover), a recepção oferece o 254 (Offer), o hóspede aceita (Request) e recebe a chave com data de saída (Ack + lease). Hóspede que renova a diária fica; quarto de quem partiu volta ao estoque. E o VIP (seu servidor, sua impressora) tem <strong>quarto reservado</strong> — o lease estático.</p>
+</div>
+</div>
+<p>No dia a dia do provedor você vive <strong>os dois lados do balcão</strong>:</p>
+<ul>
+<li><strong>Cliente DHCP</strong>: sua WAN recebendo endereço de um upstream — o link da operadora, uma ONU em modo bridge… e o nosso adaptador NAT do VirtualBox, que faz papel de operadora no laboratório;</li>
+<li><strong>Servidor DHCP</strong>: distribuindo endereços na LAN do cliente final (o hAP na casa do assinante), na rede de gerência dos rádios de uma torre, na rede dos técnicos no POP.</li>
+</ul>
+</section>
+<section id="dhcp-client-a-wan-que-se-configura-sozinha" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="dhcp-client-a-wan-que-se-configura-sozinha"><span class="header-section-number">11.2</span> DHCP client: a WAN que se configura sozinha</h2>
+<p>Você já rodou o comando no desafio do <a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>; agora com entendimento completo:</p>
+<pre class="routeros"><code>/ip dhcp-client add interface=ether3
+/ip dhcp-client print</code></pre>
+<pre class="routeros"><code>[vitor@lab-r1] &gt; /ip dhcp-client print
+Columns: INTERFACE, USE-PEER-DNS, ADD-DEFAULT-ROUTE, STATUS, ADDRESS
+# INTERFACE  USE-PEER-DNS  ADD-DEFAULT-ROUTE  STATUS  ADDRESS
+0 ether3     yes           yes                bound   10.0.2.15/24</code></pre>
+<p><code>STATUS: bound</code> = DORA completo, endereço emprestado. E repare no que veio de brinde — confira <code>/ip address print</code> e <code>/ip route print</code>: um endereço com flag <strong><code>D</code></strong> (dinâmico) e uma rota padrão <strong><code>DAd</code></strong> apontando para o gateway da operadora. É o <a href="02-enderecamento-ip-rota-padrao.html" class="quarto-xref"><span>Capítulo 10</span></a> acontecendo sozinho.</p>
+<p>Os dois botões que importam num roteador de provedor:</p>
+<ul>
+<li><strong><code>add-default-route</code></strong> (<code>yes</code>/<code>no</code>) — aceitar a rota padrão oferecida? No roteador de borda simples, sim. Num equipamento <strong>interno</strong> que só usa aquela WAN para um serviço específico, não: a rota padrão da casa é outra, e uma rota intrusa de distância 1 causa estragos;</li>
+<li><strong><code>use-peer-dns</code></strong> (<code>yes</code>/<code>no</code>) — aceitar os servidores DNS oferecidos? Veremos no <a href="04-dns.html" class="quarto-xref"><span>Capítulo 12</span></a> por que um provedor frequentemente prefere <code>no</code> e seus próprios resolvedores.</li>
+</ul>
+<p>O contrato de leitura: <strong>configuração dinâmica se gerencia na origem</strong>. O endereço <code>D</code> e a rota <code>D</code> não se editam; ajusta-se o dhcp-client que os criou (<code>release</code>/<code>renew</code> estão lá também, para forçar renegociação).</p>
+</section>
+<section id="dhcp-server-a-lan-que-se-serve-sozinha" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="dhcp-server-a-lan-que-se-serve-sozinha"><span class="header-section-number">11.3</span> DHCP server: a LAN que se serve sozinha</h2>
+<p>O servidor tem três peças, e entender a divisão evita 90% das confusões:</p>
+<ol type="1">
+<li><p><strong>O pool</strong> (<code>/ip pool</code>) — o estoque de endereços para emprestar:</p>
+<pre class="routeros"><code>/ip pool add name=pool-lan ranges=192.168.88.100-192.168.88.254</code></pre>
+<p>Repare que o pool <strong>não</strong> cobre a rede inteira: <code>192.168.88.1</code> é o roteador, e a faixa <code>.2–.99</code> fica reservada para endereços fixos (impressoras, câmeras, APs) fora do alcance do sorteio.</p></li>
+<li><p><strong>O network</strong> (<code>/ip dhcp-server network</code>) — o que dizer aos clientes daquela rede (gateway, DNS, máscara):</p>
+<pre class="routeros"><code>/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1</code></pre></li>
+<li><p><strong>O server</strong> (<code>/ip dhcp-server</code>) — quem atende o balcão, em qual interface, com qual pool e prazo:</p>
+<pre class="routeros"><code>/ip dhcp-server add name=dhcp-lan interface=ether2 address-pool=pool-lan lease-time=1h</code></pre></li>
+</ol>
+<p>Pré-requisito que o RouterOS exige: o roteador precisa <strong>ter endereço na rede servida</strong> (<code>192.168.88.1/24</code> na <code>ether2</code>) — afinal, ele é o gateway que o network anuncia. (Existe um assistente, <code>/ip dhcp-server setup</code>, que faz as três peças em sequência interativa; conhecendo as peças, você sabe o que ele monta — e sabe consertar quando alguém o usou errado.)</p>
+<section id="leases-o-livro-de-registros" class="level3" data-number="11.3.1">
+<h3 data-number="11.3.1" class="anchored" data-anchor-id="leases-o-livro-de-registros"><span class="header-section-number">11.3.1</span> Leases: o livro de registros</h3>
+<p>Cada empréstimo vivo aparece em:</p>
+<pre class="routeros"><code>/ip dhcp-server lease print</code></pre>
+<pre class="routeros"><code>[vitor@lab-r1] &gt; /ip dhcp-server lease print
+Columns: ADDRESS, MAC-ADDRESS, HOST-NAME, SERVER, STATUS
+# ADDRESS         MAC-ADDRESS        HOST-NAME  SERVER    STATUS
+0 192.168.88.254  08:00:27:3B:71:9E  lab-r2     dhcp-lan  bound</code></pre>
+<p>Dois usos de operação:</p>
+<ul>
+<li><p><strong>Fixar o VIP</strong>: <code>make-static</code> transforma o lease dinâmico em reserva — aquele MAC receberá <strong>sempre</strong> aquele endereço:</p>
+<pre class="routeros"><code>/ip dhcp-server lease make-static numbers=0</code></pre>
+<p>É assim que se garante endereço previsível para a câmera, o AP, o servidor do cliente corporativo — sem configurar nada no dispositivo;</p></li>
+<li><p><strong><code>lease-time</code> com critério</strong>: prazo curto (10m–1h) em redes de alta rotatividade (hotspot, eventos) devolve endereços rápido ao estoque; prazo longo (1d+) em LANs estáveis reduz tráfego de renovação e mantém endereços previsíveis. O padrão de 10 minutos do RouterOS é conservador — em LAN de cliente, 1h a 1d é o usual.</p></li>
+</ul>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Aviso
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Nunca ative um DHCP server “para testar” numa interface ligada a uma rede que <strong>já tem</strong> servidor DHCP — inclusive a sua rede de gerência do laboratório ou o escritório do provedor. Dois servidores na mesma rede = clientes recebendo configurações conflitantes, aleatoriamente — o clássico <em>rogue DHCP</em>, um dos defeitos mais confusos de diagnosticar em campo. (O RouterOS ajuda a caçá-los: <code>/ip dhcp-server alert</code>.)</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>DHCP é <strong>estado emprestado com prazo</strong>: o client materializa endereço e rota dinâmicos (flag <code>D</code>) que se gerenciam na origem; o server é pool + network + server, com o pool desenhado para <strong>sobrar espaço fixo</strong> fora do sorteio e leases estáticos para quem precisa de endereço previsível. Provedor opera os dois lados do balcão — e nunca deixa dois balcões na mesma rede.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="laboratório" class="level2" data-number="11.4">
+<h2 data-number="11.4" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">11.4</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="11.4.1">
+<h3 data-number="11.4.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">11.4.1</span> Ambiente</h3>
+<p>Laboratório padrão (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>): <strong><code>lab-r1</code> e <code>lab-r2</code></strong>, snapshot <code>base-limpa</code> (+ <code>seguranca-inicial</code> no r1, se preferir). Adaptador NAT (<code>ether3</code>) do <code>lab-r1</code> habilitado. Papéis: <code>lab-r1</code> será <strong>cliente</strong> DHCP na WAN (ether3, NAT do VirtualBox) e <strong>servidor</strong> DHCP na LAN (ether2, rede <code>lab-a</code>); <code>lab-r2</code> fará o papel do dispositivo do cliente final, pedindo endereço pela <code>ether2</code>.</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="11.4.2">
+<h3 data-number="11.4.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">11.4.2</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — r1 como cliente (WAN).</strong> Em <code>lab-r1</code>:</p>
+<pre class="routeros"><code>/ip dhcp-client add interface=ether3 comment="WAN do lab (NAT VirtualBox)"
+/ip dhcp-client print</code></pre>
+<p>Aguarde <code>STATUS: bound</code> e inspecione as criações dinâmicas:</p>
+<pre class="routeros"><code>/ip address print where dynamic
+/ip route print where dst-address=0.0.0.0/0
+/ping 8.8.8.8 count=3</code></pre>
+<p>O ping sai para a internet de verdade: WAN pronta, sem digitar um endereço.</p>
+<p><strong>Passo 2 — r1 como servidor (LAN).</strong> Ainda em <code>lab-r1</code>, as quatro peças na ordem: endereço do gateway, pool, network, server:</p>
+<pre class="routeros"><code>/ip address add address=192.168.88.1/24 interface=ether2 comment="LAN do lab"
+/ip pool add name=pool-lan ranges=192.168.88.100-192.168.88.254
+/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1
+/ip dhcp-server add name=dhcp-lan interface=ether2 address-pool=pool-lan lease-time=1h</code></pre>
+<p><strong>Passo 3 — r2 como “cliente da casa”.</strong> Em <code>lab-r2</code>:</p>
+<pre class="routeros"><code>/ip dhcp-client add interface=ether2 comment="simula dispositivo na LAN"
+/ip dhcp-client print</code></pre>
+<pre class="routeros"><code>[admin@lab-r2] &gt; /ip dhcp-client print
+Columns: INTERFACE, USE-PEER-DNS, ADD-DEFAULT-ROUTE, STATUS, ADDRESS
+# INTERFACE  USE-PEER-DNS  ADD-DEFAULT-ROUTE  STATUS  ADDRESS
+0 ether2     yes           yes                bound   192.168.88.254/24</code></pre>
+<p>O r2 recebeu endereço <strong>do seu servidor</strong> — DORA completo dentro do seu laboratório. Confira o que veio junto (<code>/ip route print</code>: rota padrão via <code>192.168.88.1</code>).</p>
+<p><strong>Passo 4 — o livro de registros.</strong> De volta a <code>lab-r1</code>:</p>
+<pre class="routeros"><code>/ip dhcp-server lease print</code></pre>
+<p>O lease do r2 está lá, com MAC e hostname. Fixe-o e renove do lado do cliente para ver a reserva funcionando:</p>
+<pre class="routeros"><code>/ip dhcp-server lease make-static [find mac-address~":"]
+/ip dhcp-server lease print</code></pre>
+<p>Em <code>lab-r2</code>, force a renegociação e confirme que o endereço <strong>se manteve</strong>:</p>
+<pre class="routeros"><code>/ip dhcp-client release numbers=0
+/ip dhcp-client print</code></pre>
+</section>
+<section id="verificação" class="level3" data-number="11.4.3">
+<h3 data-number="11.4.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">11.4.3</span> Verificação</h3>
+<ol type="1">
+<li>Em <code>lab-r1</code>: dhcp-client <code>bound</code> na ether3, <code>/ping 8.8.8.8</code> com 0% de perda;</li>
+<li>Em <code>lab-r1</code>: <code>/ip pool print</code>, <code>/ip dhcp-server network print</code> e <code>/ip dhcp-server print</code> mostram as três peças com os nomes do laboratório;</li>
+<li>Em <code>lab-r2</code>: endereço dinâmico <code>192.168.88.x</code> na ether2 e rota padrão <code>D</code> via <code>192.168.88.1</code>;</li>
+<li>Em <code>lab-r1</code>: o lease aparece <strong>sem</strong> a flag <code>D</code> após o <code>make-static</code> (virou configuração), e o release/renew do r2 devolveu o mesmo endereço.</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="11.4.4">
+<h3 data-number="11.4.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">11.4.4</span> Desafios</h3>
+<ol type="1">
+<li>Por que o pool (<code>.100–.254</code>) não começa no <code>.2</code>? Dê dois exemplos de equipamentos de um cliente corporativo que você colocaria na faixa fixa.</li>
+<li><code>lab-r2</code> recebeu rota padrão via <code>192.168.88.1</code> — mas o r2 é um roteador do <strong>seu</strong> laboratório, com a própria rota padrão via enlace <code>lab-a</code> em outros capítulos. Que parâmetro do dhcp-client evitaria a rota intrusa, e quando você o usaria em produção?</li>
+<li>No <code>lab-r1</code>, o que acontece se você apontar o <code>address-pool</code> do server para um pool de <strong>outra</strong> rede (ex.: <code>10.50.0.100-10.50.0.200</code>)? Raciocine antes; se testar, observe o <code>/log print</code> e desfaça.</li>
+<li>Um cliente reclama: “de vez em quando meu computador pega IP <code>169.254.x.x</code> e a internet some”. O que esse endereço significa e quais as duas causas mais prováveis do lado do provedor?</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> A faixa fora do pool é o território dos endereços <strong>previsíveis</strong>: o <code>.1</code> é o gateway; <code>.2–.99</code> ficam para leases estáticos e configurações manuais — ex.: a impressora de rede e o DVR de câmeras do cliente corporativo (ambos precisam de endereço fixo para port forwarding, assunto do Volume 3). Se o pool cobrisse tudo, um lease dinâmico poderia colidir com um fixo configurado à mão.</p>
+<p><strong>2.</strong> <code>add-default-route=no</code> no dhcp-client. Em produção: qualquer equipamento que usa uma WAN DHCP apenas como <strong>serviço secundário</strong> — ex.: um concentrador que recebe uma ONU de backup, um roteador interno que pega endereço de gerência via DHCP — e cuja rota padrão verdadeira vem de outro lugar (estática ou OSPF/BGP).</p>
+<p><strong>3.</strong> O server entrega um endereço do pool, mas o <strong>network</strong> continua sendo o <code>192.168.88.0/24</code> — e um cliente com endereço <code>10.50.0.x</code>, gateway <code>192.168.88.1</code>, fica incomunicável (gateway fora da própria rede). O RouterOS registra reclamações no log. Moral: pool, network e o endereço do roteador na interface precisam contar <strong>a mesma história</strong>.</p>
+<p><strong>4.</strong> <code>169.254.0.0/16</code> é <em>link-local</em> (APIPA): o sistema se autoendereça quando <strong>nenhum servidor DHCP respondeu</strong> dentro do prazo. Causas prováveis: (a) o DHCP server do CPE/concentrador fora do ar ou sem pool disponível (estoque esgotado — pool pequeno demais para a rotatividade); (b) problema de camada 2 entre o cliente e o servidor (porta, VLAN, rádio) engolindo o broadcast do Discover. Em ambas, o DORA nunca completa.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="11.5">
+<h2 data-number="11.5" class="anchored" data-anchor-id="resumo"><span class="header-section-number">11.5</span> Resumo</h2>
+<ul>
+<li>DHCP = <strong>DORA</strong> (Discover, Offer, Request, Ack) e endereço <strong>emprestado</strong> com prazo (<code>lease-time</code>) — renovado na metade do prazo (<a href="#fig-dhcp-dora" class="quarto-xref">Figura&nbsp;<span>11.1</span></a>).</li>
+<li><strong>Client</strong> (<code>/ip dhcp-client</code>): WAN automática; controle o que aceita com <code>add-default-route</code> e <code>use-peer-dns</code>; o que ele cria tem flag <code>D</code> e se gerencia na origem.</li>
+<li><strong>Server</strong> = três peças: <code>pool</code> (estoque, <strong>menor</strong> que a rede), <code>network</code> (gateway/DNS anunciados) e <code>server</code> (interface + pool + prazo) — mais o endereço do próprio roteador na interface.</li>
+<li><strong>Leases</strong>: <code>print</code> é o livro de registros; <code>make-static</code> reserva endereço por MAC; <code>lease-time</code> curto para rotatividade, longo para estabilidade.</li>
+<li>Dois servidores na mesma rede = caos (<em>rogue DHCP</em>); há <code>/ip dhcp-server alert</code> para caçar intrusos.</li>
+</ul>
+<p>No próximo capítulo, o terceiro serviço que toda LAN espera do roteador: <strong>DNS</strong> — resolver nomes, cachear respostas e as decisões de segurança que vêm junto.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>A documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> cobre <code>/ip dhcp-client</code>, <code>/ip dhcp-server</code> (com o assistente <code>setup</code> e os alertas de rogue server) e <code>/ip pool</code>. O funcionamento do protocolo (DORA, renovação, opções) está em <span class="citation" data-cites="tanenbaum-redes">Tanenbaum; Feamster; Wetherall (<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">2021</a>)</span>. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+<div id="ref-tanenbaum-redes" class="csl-entry" role="listitem">
+TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Computadores</strong>. 6. ed. Porto Alegre: Bookman, 2021.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="pagination-link" aria-label="Endereçamento IP e rota padrão">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="pagination-link" aria-label="DNS no RouterOS">
+        <span class="nav-page-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v02-cli-configuracao/03-dhcp.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>

@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>19&nbsp; dstnat e port forwarding – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v03-firewall/06-mangle-raw.html" rel="next">
+<link href="../../volumes/v03-firewall/04-forward-address-lists.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v03-firewall/01-connection-tracking.html">Volume 3 — Firewall</a></li><li class="breadcrumb-item"><a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#o-espelho-do-masquerade" id="toc-o-espelho-do-masquerade" class="nav-link active" data-scroll-target="#o-espelho-do-masquerade"><span class="header-section-number">19.1</span> O espelho do masquerade</a></li>
+  <li><a href="#firewall-e-dstnat-aceitando-com-precisão" id="toc-firewall-e-dstnat-aceitando-com-precisão" class="nav-link" data-scroll-target="#firewall-e-dstnat-aceitando-com-precisão"><span class="header-section-number">19.2</span> Firewall e dstnat: aceitando com precisão</a></li>
+  <li><a href="#hairpin-nat-o-defeito-clássico" id="toc-hairpin-nat-o-defeito-clássico" class="nav-link" data-scroll-target="#hairpin-nat-o-defeito-clássico"><span class="header-section-number">19.3</span> Hairpin NAT: o defeito clássico</a></li>
+  <li><a href="#redirect-dstnat-para-o-próprio-roteador" id="toc-redirect-dstnat-para-o-próprio-roteador" class="nav-link" data-scroll-target="#redirect-dstnat-para-o-próprio-roteador"><span class="header-section-number">19.4</span> <code>redirect</code>: dstnat para o próprio roteador</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">19.5</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">19.5.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">19.5.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">19.5.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">19.5.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">19.6</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v03-firewall/05-dstnat-port-forwarding.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v03-firewall/01-connection-tracking.html">Volume 3 — Firewall</a></li><li class="breadcrumb-item"><a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-dstnat" class="quarto-section-identifier"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Explicar o <strong>dstnat</strong> como o espelho do srcnat: troca de <strong>destino</strong> na entrada, para publicar serviços internos;</li>
+<li>Escrever a regra clássica de <strong>port forwarding</strong> e entender o momento em que ela age (antes do roteamento — e antes do filter);</li>
+<li>Fazer firewall e dstnat conversarem: por que o <code>forward</code> enxerga o pacote <strong>já traduzido</strong> e como aceitá-lo com precisão (<code>connection-nat-state</code>);</li>
+<li>Diagnosticar e resolver o <strong>hairpin NAT</strong> — o clássico “funciona de fora, mas não funciona de dentro”;</li>
+<li>Usar <code>redirect</code> (dstnat para o próprio roteador) e publicar serviços com o mínimo de exposição.</li>
+</ul>
+</div>
+</div>
+<section id="o-espelho-do-masquerade" class="level2" data-number="19.1">
+<h2 data-number="19.1" class="anchored" data-anchor-id="o-espelho-do-masquerade"><span class="header-section-number">19.1</span> O espelho do masquerade</h2>
+<p>O <a href="../v02-cli-configuracao/05-nat-masquerade.html" class="quarto-xref"><span>Capítulo 13</span></a> encerrou com uma porta fechada: ninguém de fora inicia conexão com quem está atrás do NAT — o fim a fim está quebrado, por design. Mas a padaria quer ver as câmeras do celular; o cliente corporativo quer publicar o sistema da empresa; você quer alcançar um equipamento na LAN de um cliente. A resposta é o <strong>dstnat</strong>: se o srcnat troca o <em>remetente</em> na saída, o dstnat troca o <strong>destinatário na entrada</strong>.</p>
+<p>A regra clássica — o <strong>port forwarding</strong> — diz: “o que chegar ao meu IP público na porta X, entregue ao IP interno Y, porta Z”:</p>
+<pre class="routeros"><code>/ip firewall nat add chain=dstnat in-interface-list=WAN protocol=tcp dst-port=8080 action=dst-nat to-addresses=192.168.10.10 to-ports=80 comment="publica DVR da padaria"</code></pre>
+<p>Lendo por partes, como sempre: <code>chain=dstnat</code> (tradução de destino, na entrada), matchers (<code>in-interface-list=WAN protocol=tcp dst-port=8080</code> — só o que chega da fronteira àquela porta), action <code>dst-nat</code> com o destino real (<code>to-addresses</code>/<code>to-ports</code> — que podem diferir da porta pública, como aqui: 8080 fora, 80 dentro).</p>
+<p>O detalhe de arquitetura que explica tudo neste capítulo: <strong>o dstnat age antes da decisão de roteamento</strong> (e o srcnat, depois). A ordem completa da travessia:</p>
+<pre><code>chegada → dstnat → decisão de roteamento → filter forward → srcnat → saída</code></pre>
+<p>Duas consequências imediatas:</p>
+<ol type="1">
+<li>É <em>por isso</em> que o dstnat funciona: o destino é trocado <strong>antes</strong> de o roteador decidir para onde encaminhar — a decisão já vê o endereço interno;</li>
+<li>O <strong>filter forward enxerga o pacote traduzido</strong>: destino <code>192.168.10.10:80</code>, não <code>IP-público:8080</code>. Suas regras de filtro devem casar com o mundo <em>pós</em>-dstnat.</li>
+</ol>
+</section>
+<section id="firewall-e-dstnat-aceitando-com-precisão" class="level2" data-number="19.2">
+<h2 data-number="19.2" class="anchored" data-anchor-id="firewall-e-dstnat-aceitando-com-precisão"><span class="header-section-number">19.2</span> Firewall e dstnat: aceitando com precisão</h2>
+<p>E o nosso forward aceita esse pacote? Revise o esqueleto do <a href="04-forward-address-lists.html" class="quarto-xref"><span>Capítulo 18</span></a>: conversas novas vindas da WAN não têm accept — na política permissiva de fábrica passariam, mas o hardening completo do <a href="07-hardening-completo.html" class="quarto-xref"><span>Capítulo 21</span></a> fechará o forward com drop all. O jeito <strong>errado</strong> de liberar é abrir <code>dst-address=192.168.10.10 dst-port=80</code> — funciona, mas duplica a informação (regra de NAT + regra de filtro dizendo o mesmo, que alguém um dia atualiza pela metade). O jeito certo usa o conntrack, que marca conexões traduzidas:</p>
+<pre class="routeros"><code>/ip firewall filter add chain=forward connection-state=new connection-nat-state=dstnat in-interface-list=WAN action=accept comment="aceita o que o dstnat publicou"</code></pre>
+<p><code>connection-nat-state=dstnat</code> casa com <strong>qualquer</strong> conexão que passou pelo dstnat: uma regra de filtro serve todas as publicações, presentes e futuras — a lista de “o que está publicado” mora num lugar só (o NAT). É o mesmo princípio das address lists: política estável, dados num ponto único.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Aviso
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Todo port forwarding é um <strong>portão na muralha</strong>: o serviço interno passa a receber a internet inteira — inclusive os robôs que varrem portas 24/7. Antes de publicar, pergunte: (1) o serviço precisa mesmo ser público, ou uma VPN de gerência resolve (Volume 10)? (2) o destino aguenta exposição (DVRs e câmeras antigos são o recheio favorito das botnets)? (3) dá para restringir a origem (<code>src-address-list</code> de IPs confiáveis)? Porta “escondida” (8080 em vez de 80) <strong>não é segurança</strong> — scanners acham em minutos; é só higiene contra ruído.</p>
+</div>
+</div>
+</section>
+<section id="hairpin-nat-o-defeito-clássico" class="level2" data-number="19.3">
+<h2 data-number="19.3" class="anchored" data-anchor-id="hairpin-nat-o-defeito-clássico"><span class="header-section-number">19.3</span> Hairpin NAT: o defeito clássico</h2>
+<p>Publique o DVR e teste <strong>de dentro da LAN</strong> pelo IP público: não abre. De fora (4G), abre. Bem-vindo ao defeito mais famoso do NAT — e à pergunta de entrevista favorita do mundo ISP. A <a href="#fig-hairpin" class="quarto-xref">Figura&nbsp;<span>19.1</span></a> mostra o porquê:</p>
+<div id="fig-hairpin" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hairpin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="434.750625pt" height="98.556045pt" viewbox="-68.014948 -68.01495 434.750625 98.556045">
+<defs>
+<path id="tz_fig_hairpin_g0-33" d="M1.48543-4.839851H.857783L.920548-1.255293H1.422665L1.48543-4.839851ZM.857783 0H1.48543V-.627646H.857783V0Z"></path>
+<path id="tz_fig_hairpin_g0-40" d="M2.127024-5.230386C2.008468-5.230386 1.994521-5.230386 1.910834-5.153674C1.03213-4.38655 .585803-3.145205 .585803-1.743462C.585803-.425405 .983313 .843836 1.903861 1.652802C1.994521 1.743462 2.008468 1.743462 2.127024 1.743462H2.461768C2.440847 1.729514 1.764384 1.150685 1.443587 .062765C1.276214-.481196 1.192528-1.053051 1.192528-1.743462C1.192528-4.156413 2.322291-5.111831 2.461768-5.230386H2.127024Z"></path>
+<path id="tz_fig_hairpin_g0-41" d="M.746202 1.743462C.864757 1.743462 .878705 1.743462 .962391 1.66675C1.841096 .899626 2.287422-.341719 2.287422-1.743462C2.287422-3.061519 1.889913-4.33076 .969365-5.139726C.878705-5.230386 .864757-5.230386 .746202-5.230386H.411457C.432379-5.216438 1.108842-4.637609 1.429639-3.549689C1.597011-3.005729 1.680697-2.433873 1.680697-1.743462C1.680697 .669489 .550934 1.624907 .411457 1.743462H.746202Z"></path>
+<path id="tz_fig_hairpin_g0-46" d="M1.338979-.627646H.711333V0H1.338979V-.627646Z"></path>
+<path id="tz_fig_hairpin_g0-48" d="M3.403238-2.266501C3.403238-2.601245 3.403238-3.417186 3.075467-3.989041C2.719801-4.616687 2.182814-4.721295 1.84807-4.721295C1.534247-4.721295 .990286-4.623661 .641594-4.02391C.306849-3.466002 .292902-2.705853 .292902-2.266501C.292902-1.750436 .320797-1.115816 .613699-.585803C.920548-.020922 1.436613 .146451 1.84807 .146451C2.545455 .146451 2.929016-.258032 3.138232-.697385C3.382316-1.192528 3.403238-1.834122 3.403238-2.266501ZM1.84807-.313823C1.555168-.313823 1.220423-.481196 1.046077-.983313C.9066-1.408717 .899626-1.84807 .899626-2.357161C.899626-2.998755 .899626-4.261021 1.84807-4.261021S2.796513-2.998755 2.796513-2.357161C2.796513-1.896887 2.796513-1.373848 2.629141-.927522C2.433873-.425405 2.078207-.313823 1.84807-.313823Z"></path>
+<path id="tz_fig_hairpin_g0-49" d="M2.238605-4.721295H2.085181C1.63188-4.302864 1.060025-4.274969 .641594-4.261021V-3.821669C.913574-3.828643 1.262267-3.84259 1.610959-3.982067V-.439352H.683437V0H3.166127V-.439352H2.238605V-4.721295Z"></path>
+<path id="tz_fig_hairpin_g0-50" d="M1.973599-.536986C1.889913-.536986 1.806227-.530012 1.72254-.530012H.927522L2.008468-1.48543C2.133998-1.597011 2.475716-1.855044 2.608219-1.966625C2.915068-2.245579 3.326526-2.608219 3.326526-3.214944C3.326526-4.002989 2.740722-4.721295 1.743462-4.721295C1.004234-4.721295 .54396-4.323786 .306849-3.612453L.63462-3.200996C.795019-3.7868 1.039103-4.2401 1.645828-4.2401C2.231631-4.2401 2.677958-3.828643 2.677958-3.200996C2.677958-2.622167 2.336239-2.294396 1.917808-1.896887C1.778331-1.75741 1.401743-1.443587 1.255293-1.30411C1.053051-1.12279 .571856-.655542 .369614-.481196V0H3.326526V-.536986H1.973599Z"></path>
+<path id="tz_fig_hairpin_g0-51" d="M.697385-3.577584C.983313-4.135492 1.48543-4.288917 1.820174-4.288917C2.231631-4.288917 2.538481-4.051806 2.538481-3.654296C2.538481-3.284682 2.287422-2.831382 1.75741-2.740722C1.72254-2.733748 1.694645-2.733748 1.234371-2.698879V-2.238605H1.778331C2.440847-2.238605 2.684932-1.715567 2.684932-1.276214C2.684932-.732254 2.350187-.313823 1.806227-.313823C1.311083-.313823 .746202-.550934 .397509-.99726L.306849-.54396C.711333-.09066 1.276214 .146451 1.820174 .146451C2.733748 .146451 3.38929-.536986 3.38929-1.26924C3.38929-1.841096 2.929016-2.30137 2.378082-2.461768C2.908095-2.733748 3.180075-3.200996 3.180075-3.654296C3.180075-4.247073 2.57335-4.721295 1.827148-4.721295C1.21345-4.721295 .704359-4.400498 .411457-3.982067L.697385-3.577584Z"></path>
+<path id="tz_fig_hairpin_g0-53" d="M1.143711-4.093649H3.075467V-4.574844H.585803V-1.966625H1.094894C1.262267-2.343213 1.590037-2.510585 1.903861-2.510585C2.189788-2.510585 2.622167-2.315318 2.622167-1.429639C2.622167-.516065 2.043337-.313823 1.687671-.313823C1.227397-.313823 .781071-.557908 .54396-.955417L.278954-.536986C.620672-.111582 1.136737 .146451 1.687671 .146451C2.608219 .146451 3.326526-.564882 3.326526-1.415691C3.326526-2.280448 2.684932-2.970859 1.917808-2.970859C1.617933-2.970859 1.352927-2.866252 1.143711-2.691905V-4.093649Z"></path>
+<path id="tz_fig_hairpin_g0-55" d="M1.72254-4.037858C1.806227-4.037858 1.889913-4.044832 1.973599-4.044832H2.852304C1.792279-3.005729 1.115816-1.548194 1.115816 .069738H1.771357C1.771357-1.966625 2.761644-3.431133 3.38929-4.086675V-4.574844H.306849V-4.037858H1.72254Z"></path>
+<path id="tz_fig_hairpin_g0-56" d="M2.385056-2.468742C2.84533-2.615193 3.284682-2.984807 3.284682-3.500872C3.284682-4.135492 2.677958-4.721295 1.84807-4.721295S.411457-4.135492 .411457-3.500872C.411457-2.977833 .864757-2.608219 1.311083-2.468742C.697385-2.280448 .306849-1.806227 .306849-1.26924C.306849-.523039 .969365 .146451 1.84807 .146451S3.38929-.523039 3.38929-1.26924C3.38929-1.806227 2.991781-2.280448 2.385056-2.468742ZM1.84807-2.698879C1.352927-2.698879 .948443-2.984807 .948443-3.493898C.948443-3.940224 1.262267-4.288917 1.84807-4.288917C2.426899-4.288917 2.747696-3.940224 2.747696-3.493898C2.747696-2.998755 2.357161-2.698879 1.84807-2.698879ZM1.84807-.313823C1.366874-.313823 .941469-.620672 .941469-1.276214C.941469-1.903861 1.345953-2.238605 1.84807-2.238605S2.75467-1.896887 2.75467-1.276214C2.75467-.620672 2.322291-.313823 1.84807-.313823Z"></path>
+<path id="tz_fig_hairpin_g0-58" d="M1.338979-3.096389H.711333V-2.468742H1.338979V-3.096389ZM.711333-.627646V0H1.338979V-.627646H.711333Z"></path>
+<path id="tz_fig_hairpin_g0-97" d="M2.970859-2.008468C2.970859-2.719801 2.426899-3.200996 1.736488-3.200996C1.297136-3.200996 .962391-3.110336 .571856-2.901121L.613699-2.39203C.843836-2.545455 1.185554-2.75467 1.736488-2.75467C2.043337-2.75467 2.364134-2.524533 2.364134-2.001494V-1.72254C1.332005-1.687671 .313823-1.471482 .313823-.822914C.313823-.474222 .550934 .069738 1.164633 .069738C1.464508 .069738 2.015442 .006974 2.385056-.265006V0H2.970859V-2.008468ZM2.364134-.990286C2.364134-.850809 2.364134-.669489 2.12005-.523039C1.896887-.397509 1.624907-.390535 1.548194-.390535C1.164633-.390535 .871731-.564882 .871731-.829888C.871731-1.276214 2.050311-1.318057 2.364134-1.332005V-.990286Z"></path>
+<path id="tz_fig_hairpin_g0-99" d="M3.033624-.760149C2.684932-.536986 2.308344-.411457 1.875965-.411457C1.234371-.411457 .857783-.927522 .857783-1.555168C.857783-2.092154 1.136737-2.719801 1.896887-2.719801C2.371108-2.719801 2.594271-2.622167 2.949938-2.399004L3.040598-2.901121C2.622167-3.110336 2.440847-3.200996 1.896887-3.200996C.850809-3.200996 .251059-2.357161 .251059-1.548194C.251059-.697385 .920548 .069738 1.868991 .069738C2.357161 .069738 2.775592-.076712 3.075467-.251059L3.033624-.760149Z"></path>
+<path id="tz_fig_hairpin_g0-100" d="M3.228892-4.839851H2.643088V-2.796513C2.196762-3.124284 1.743462-3.166127 1.54122-3.166127C.808966-3.166127 .251059-2.433873 .251059-1.548194S.801993 .069738 1.520299 .069738C1.952677 .069738 2.357161-.125529 2.622167-.36264V0H3.228892V-4.839851ZM2.622167-.864757C2.447821-.578829 2.182814-.390535 1.84807-.390535C1.3599-.390535 .857783-.732254 .857783-1.54122C.857783-2.412951 1.45056-2.705853 1.924782-2.705853C2.203736-2.705853 2.440847-2.587298 2.622167-2.350187V-.864757Z"></path>
+<path id="tz_fig_hairpin_g0-101" d="M2.998755-.760149C2.608219-.481196 2.168867-.390535 1.868991-.390535C1.262267-.390535 .801993-.885679 .781071-1.527273H3.068493C3.068493-1.84807 3.033624-2.315318 2.761644-2.712827C2.510585-3.068493 2.092154-3.200996 1.750436-3.200996C.899626-3.200996 .244085-2.454795 .244085-1.569116C.244085-.676463 .941469 .069738 1.862017 .069738C2.266501 .069738 2.684932-.048817 3.040598-.265006L2.998755-.760149ZM.829888-1.945704C.990286-2.503611 1.401743-2.740722 1.750436-2.740722C2.057285-2.740722 2.510585-2.594271 2.643088-1.945704H.829888Z"></path>
+<path id="tz_fig_hairpin_g0-103" d="M3.507846-3.166127C3.354421-3.166127 2.887173-3.159153 2.357161-2.956912L2.343213-2.949938C2.092154-3.11731 1.84807-3.166127 1.645828-3.166127C.962391-3.166127 .4533-2.629141 .4533-2.02939C.4533-1.785305 .536986-1.534247 .697385-1.338979C.599751-1.220423 .495143-1.025156 .495143-.760149C.495143-.488169 .606725-.313823 .669489-.230137C.285928-.006974 .209215 .313823 .209215 .481196C.209215 1.011208 .941469 1.429639 1.84807 1.429639C2.761644 1.429639 3.486924 1.011208 3.486924 .481196C3.486924-.502117 2.266501-.502117 1.966625-.502117H1.318057C1.206476-.502117 .9066-.502117 .9066-.864757C.9066-1.004234 .955417-1.073973 .962391-1.08792C1.206476-.934496 1.45056-.885679 1.638854-.885679C2.322291-.885679 2.831382-1.422665 2.831382-2.022416C2.831382-2.245579 2.768618-2.447821 2.643088-2.636115C2.615193-2.677958 2.615193-2.684932 2.615193-2.691905C2.615193-2.719801 3.033624-2.719801 3.068493-2.719801C3.075467-2.719801 3.340473-2.719801 3.591532-2.691905L3.507846-3.166127ZM1.645828-1.318057C1.26924-1.318057 .990286-1.555168 .990286-2.022416C.990286-2.566376 1.338979-2.733748 1.638854-2.733748C2.015442-2.733748 2.294396-2.496638 2.294396-2.02939C2.294396-1.48543 1.945704-1.318057 1.645828-1.318057ZM1.973599 .041843C2.133998 .041843 2.956912 .041843 2.956912 .488169C2.956912 .788045 2.433873 .99726 1.84807 .99726S.739228 .788045 .739228 .488169C.739228 .4533 .739228 .041843 1.30411 .041843H1.973599Z"></path>
+<path id="tz_fig_hairpin_g0-105" d="M1.227397-4.78406H.523039V-4.079701H1.227397V-4.78406ZM1.171606-3.096389H.585803V0H1.171606V-3.096389Z"></path>
+<path id="tz_fig_hairpin_g0-108" d="M1.171606-4.839851H.585803V0H1.171606V-4.839851Z"></path>
+<path id="tz_fig_hairpin_g0-109" d="M5.300125-2.064259C5.300125-2.608219 5.139726-3.166127 4.281943-3.166127C3.696139-3.166127 3.333499-2.824408 3.166127-2.601245C3.096389-2.789539 2.922042-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-1.694645C3.242839-2.154919 3.438107-2.705853 3.975093-2.705853C4.6934-2.705853 4.6934-2.217684 4.6934-2.015442V0H5.300125V-2.064259Z"></path>
+<path id="tz_fig_hairpin_g0-110" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_hairpin_g0-111" d="M3.486924-1.527273C3.486924-2.447821 2.75467-3.200996 1.84807-3.200996S.209215-2.440847 .209215-1.527273C.209215-.641594 .948443 .069738 1.84807 .069738C2.75467 .069738 3.486924-.641594 3.486924-1.527273ZM1.84807-.411457C1.297136-.411457 .81594-.81594 .81594-1.603985S1.332005-2.740722 1.84807-2.740722C2.371108-2.740722 2.880199-2.378082 2.880199-1.603985C2.880199-.808966 2.385056-.411457 1.84807-.411457Z"></path>
+<path id="tz_fig_hairpin_g0-112" d="M1.199502-.327771C1.569116 .006974 1.966625 .069738 2.203736 .069738C2.942964 .069738 3.57061-.63462 3.57061-1.555168C3.57061-2.39203 3.110336-3.166127 2.419925-3.166127C2.106102-3.166127 1.583064-3.075467 1.17858-2.761644V-3.096389H.592777V1.352927H1.199502V-.327771ZM1.199502-2.315318C1.3599-2.510585 1.63188-2.684932 1.966625-2.684932C2.524533-2.684932 2.963885-2.168867 2.963885-1.555168C2.963885-.864757 2.440847-.390535 1.896887-.390535C1.792279-.390535 1.617933-.404483 1.436613-.550934C1.227397-.711333 1.199502-.81594 1.199502-.948443V-2.315318Z"></path>
+<path id="tz_fig_hairpin_g0-114" d="M1.17858-1.48543C1.17858-2.238605 1.806227-2.643088 2.419925-2.650062V-3.166127C1.834122-3.159153 1.408717-2.873225 1.129763-2.503611V-3.145205H.592777V0H1.17858V-1.48543Z"></path>
+<path id="tz_fig_hairpin_g0-115" d="M2.545455-2.984807C2.071233-3.180075 1.72254-3.200996 1.471482-3.200996C1.297136-3.200996 .244085-3.200996 .244085-2.273474C.244085-1.945704 .425405-1.764384 .516065-1.680697C.760149-1.436613 1.053051-1.380822 1.422665-1.311083C1.750436-1.248319 2.127024-1.17858 2.127024-.843836C2.127024-.404483 1.548194-.404483 1.45056-.404483C1.004234-.404483 .585803-.564882 .306849-.760149L.209215-.237111C.446326-.118555 .871731 .069738 1.45056 .069738C1.764384 .069738 2.071233 .020922 2.329265-.167372C2.587298-.36264 2.670984-.669489 2.670984-.9066C2.670984-1.03213 2.657036-1.30411 2.364134-1.569116C2.106102-1.799253 1.855044-1.84807 1.520299-1.910834C1.108842-1.987547 .788045-2.050311 .788045-2.357161C.788045-2.75467 1.297136-2.75467 1.401743-2.75467C1.799253-2.75467 2.106102-2.670984 2.454795-2.489664L2.545455-2.984807Z"></path>
+<path id="tz_fig_hairpin_g0-116" d="M1.311083-2.657036H2.343213V-3.096389H1.311083V-3.982067H.774097V-3.096389H.139477V-2.657036H.753176V-.892653C.753176-.425405 .871731 .069738 1.373848 .069738S2.259527-.09066 2.468742-.188294L2.350187-.63462C2.12005-.467248 1.875965-.411457 1.680697-.411457C1.387796-.411457 1.311083-.697385 1.311083-1.018182V-2.657036Z"></path>
+<path id="tz_fig_hairpin_g0-117" d="M3.242839-3.096389H2.636115V-1.073973C2.636115-.516065 2.161893-.341719 1.75741-.341719C1.241345-.341719 1.185554-.481196 1.185554-.801993V-3.096389H.578829V-.760149C.578829-.139477 .850809 .069738 1.338979 .069738C1.624907 .069738 2.238605 .013948 2.657036-.320797V0H3.242839V-3.096389Z"></path>
+<path id="tz_fig_hairpin_g0-118" d="M3.305604-3.096389H2.747696C1.792279-.760149 1.750436-.571856 1.72254-.411457H1.715567C1.659776-.683437 1.464508-1.171606 1.248319-1.708593L.690411-3.096389H.104608L1.380822 0H2.02939L3.305604-3.096389Z"></path>
+<path id="tz_fig_hairpin_g0-124" d="M7.406227-1.680697V-2.140971H0V-1.680697H7.406227Z"></path>
+<path id="tz_fig_hairpin_g1-19" d="M3.999004-5.971606C4.043836-6.007472 4.097634-6.052304 4.097634-6.106102C4.097634-6.222665 3.999004-6.222665 3.855542-6.222665H3.120299C2.940971-6.222665 2.932005-6.213699 2.851308-6.115068L2.080199-5.066002C1.999502-4.967372 1.999502-4.94944 1.999502-4.931507C1.999502-4.814944 2.098132-4.814944 2.241594-4.814944H2.57335L3.999004-5.971606Z"></path>
+<path id="tz_fig_hairpin_g1-46" d="M1.95467-.932503C1.95467-1.165629 1.945704-1.174595 1.712578-1.174595H1.022167C.789041-1.174595 .780075-1.165629 .780075-.932503V-.242092C.780075-.008966 .789041 0 1.022167 0H1.712578C1.945704 0 1.95467-.008966 1.95467-.242092V-.932503Z"></path>
+<path id="tz_fig_hairpin_g1-48" d="M4.536986-3.075467C4.536986-4.303861 4.536986-6.419925 2.465753-6.419925C.385554-6.419925 .385554-4.321793 .385554-3.075467C.385554-1.847073 .385554 .19726 2.456787 .19726C4.536986 .19726 4.536986-1.829141 4.536986-3.075467ZM2.456787-.448319C1.793275-.448319 1.694645-1.273225 1.667746-1.515318C1.604981-1.990535 1.604981-2.833375 1.604981-3.200996C1.604981-3.730012 1.604981-4.303861 1.65878-4.743213C1.685679-4.985305 1.775342-5.774346 2.456787-5.774346C3.120299-5.774346 3.227895-5.021171 3.254795-4.841843C3.317559-4.384558 3.317559-3.676214 3.317559-3.200996C3.317559-2.689913 3.317559-1.990535 3.254795-1.497385C3.227895-1.264259 3.129265-.448319 2.456787-.448319Z"></path>
+<path id="tz_fig_hairpin_g1-49" d="M3.183064-5.989539C3.183064-6.1599 3.183064-6.419925 2.788543-6.419925C2.609215-6.419925 2.57335-6.401993 2.465753-6.294396C2.304359-6.150934 1.963636-5.819178 1.075965-5.801245C.91457-5.801245 .681445-5.738481 .681445-5.478456C.681445-5.155666 .995268-5.155666 1.111831-5.155666C1.380822-5.155666 1.694645-5.200498 1.95467-5.272229V-.645579H1.255293C1.13873-.645579 .824907-.645579 .824907-.32279S1.13873 0 1.255293 0H3.81071C3.90934 0 4.241096 0 4.241096-.32279S3.90934-.645579 3.81071-.645579H3.183064V-5.989539Z"></path>
+<path id="tz_fig_hairpin_g1-50" d="M.582814-.762142C.493151-.672478 .493151-.654545 .493151-.502117V-.430386C.493151-.107597 .591781 0 .923537 0H3.999004C4.339726 0 4.42939-.116563 4.42939-.430386V-.537983C4.42939-.681445 4.42939-.851806 4.241096-.932503C4.178331-.968369 3.891407-.968369 3.71208-.968369C3.514819-.968369 3.299626-.959402 3.102366-.959402H1.649813L2.833375-2.080199C2.96787-2.196762 3.308593-2.47472 3.443088-2.600249C3.936239-3.084433 4.42939-3.559651 4.42939-4.357659C4.42939-5.451557 3.640349-6.419925 2.322291-6.419925C2.008468-6.419925 1.497385-6.375093 1.066999-6.025405C.986301-5.96264 .573848-5.639851 .412453-5.039103L.860772-4.465255C.91457-4.393524 .941469-4.357659 1.004234-4.357659C1.084932-4.357659 1.102864-4.420423 1.129763-4.52802C1.309091-5.1467 1.613948-5.523288 2.187796-5.523288C2.887173-5.523288 3.174097-4.886675 3.174097-4.339726C3.174097-3.765878 2.833375-3.165131 2.295392-2.591283L.582814-.762142Z"></path>
+<path id="tz_fig_hairpin_g1-51" d="M.860772-4.976339C.932503-4.868742 .977335-4.868742 .995268-4.868742C1.058032-4.868742 1.075965-4.904608 1.120797-4.967372C1.578082-5.621918 2.214695-5.621918 2.331258-5.621918C2.905106-5.621918 2.985803-5.326027 2.985803-4.886675C2.985803-4.761146 2.985803-4.33076 2.707846-3.990037C2.492653-3.738979 2.268493-3.721046 1.999502-3.703113C1.900872-3.694147 1.730511-3.685181 1.703611-3.667248C1.640847-3.640349 1.640847-3.58655 1.640847-3.443088V-3.281694C1.640847-3.048568 1.649813-3.039601 1.882939-3.039601H2.27746C3.0934-3.039601 3.19203-2.528518 3.19203-1.838107C3.19203-1.23736 3.129265-.645579 2.313325-.645579C2.026401-.645579 1.362889-.708344 .762142-1.273225C.681445-1.353923 .672478-1.362889 .636613-1.362889C.546949-1.362889 .529016-1.282192 .52005-1.264259C.52005-1.255293 .412453-.690411 .412453-.645579C.412453-.529016 1.183562 .19726 2.358157 .19726C3.900374 .19726 4.510087-.627646 4.510087-1.820174C4.510087-2.627148 4.079701-3.174097 3.272727-3.380324C3.999004-3.774844 4.241096-4.357659 4.241096-4.868742C4.241096-6.303362 2.958904-6.419925 2.37609-6.419925C1.147696-6.419925 .546949-5.54122 .546949-5.469489C.546949-5.415691 .600747-5.34396 .609714-5.334994L.860772-4.976339Z"></path>
+<path id="tz_fig_hairpin_g1-53" d="M1.909838-5.326027H3.667248C4.088667-5.326027 4.097634-5.532254 4.097634-5.774346C4.097634-6.007472 4.097634-6.222665 3.667248-6.222665H1.174595C.887671-6.222665 .744209-6.168867 .744209-5.810212V-3.066501C.744209-2.663014 .950436-2.654047 1.192528-2.654047C1.425654-2.654047 1.506351-2.654047 1.63188-2.86924C1.847073-3.218929 2.15193-3.398257 2.528518-3.398257C3.111333-3.398257 3.111333-2.716812 3.111333-2.017435C3.111333-1.327024 3.111333-.645579 2.169863-.645579C1.891905-.645579 1.282192-.726276 .923537-1.43462C.896638-1.488418 .869738-1.542217 .806974-1.542217C.735243-1.542217 .71731-1.497385 .663512-1.425654C.537983-1.219427 .331756-.905604 .331756-.842839C.331756-.771108 .91457 .19726 2.196762 .19726C3.640349 .19726 4.42939-.529016 4.42939-1.981569C4.42939-3.165131 3.936239-4.043836 2.564384-4.043836C2.340224-4.043836 2.125031-4.00797 1.909838-3.927273V-5.326027Z"></path>
+<path id="tz_fig_hairpin_g1-54" d="M3.873474-5.989539C3.873474-6.204732 3.873474-6.213699 3.559651-6.330262C3.326526-6.419925 3.084433-6.419925 2.99477-6.419925C.412453-6.419925 .412453-3.837609 .412453-3.048568C.412453-2.125031 .412453 .19726 2.501619 .19726C3.19203 .19726 3.622416 .026899 3.990037-.385554C4.456289-.905604 4.510087-1.416687 4.510087-2.116065C4.510087-2.627148 4.510087-4.294894 2.761644-4.294894C2.268493-4.294894 1.909838-4.016936 1.667746-3.496887C1.712578-4.303861 1.721544-4.501121 1.85604-4.859776C2.116065-5.54122 2.707846-5.621918 3.021669-5.621918C3.183064-5.621918 3.416189-5.595019 3.631382-5.478456C3.694147-5.433624 3.721046-5.415691 3.765878-5.415691C3.873474-5.415691 3.873474-5.523288 3.873474-5.657783V-5.989539ZM2.492653-.645579C1.784309-.645579 1.685679-1.452553 1.685679-2.223661C1.685679-2.96787 1.900872-3.649315 2.537484-3.649315C3.254795-3.649315 3.254795-3.012702 3.254795-2.125031C3.254795-1.246326 3.254795-.645579 2.492653-.645579Z"></path>
+<path id="tz_fig_hairpin_g1-55" d="M3.29066-5.263263C1.282192-3.048568 1.282192-.789041 1.282192-.331756C1.282192-.044832 1.344956 .09863 1.712578 .09863H2.125031C2.268493 .09863 2.555417 .09863 2.555417-.251059C2.582316-2.47472 3.362391-4.097634 4.438356-5.451557C4.510087-5.54122 4.510087-5.612951 4.510087-5.774346C4.510087-5.971606 4.510087-6.213699 4.133499-6.222665C3.828643-6.231631 2.026401-6.231631 1.587049-6.231631H1.022167C.591781-6.231631 .412453-6.231631 .412453-5.801245V-5.684682C.412453-5.54122 .412453-5.370859 .600747-5.290162C.663512-5.254296 .959402-5.254296 1.147696-5.254296C1.353923-5.254296 1.569116-5.263263 1.775342-5.263263H3.29066Z"></path>
+<path id="tz_fig_hairpin_g1-56" d="M3.407223-3.353425C4.267995-3.640349 4.375592-4.267995 4.375592-4.671482C4.375592-5.989539 3.532752-6.419925 2.465753-6.419925C1.488418-6.419925 .546949-6.070237 .546949-4.671482C.546949-4.196264 .708344-3.622416 1.515318-3.353425C.591781-3.0934 .412453-2.385056 .412453-1.820174C.412453-.42142 1.165629 .19726 2.456787 .19726C3.81071 .19726 4.510087-.475218 4.510087-1.820174C4.510087-2.636115 4.124533-3.147198 3.407223-3.353425ZM2.465753-3.685181C1.712578-3.685181 1.694645-4.124533 1.694645-4.662516C1.694645-5.281196 1.748443-5.621918 2.456787-5.621918S3.227895-5.299128 3.227895-4.662516C3.227895-4.142466 3.218929-3.685181 2.465753-3.685181ZM2.465753-.645579C1.676712-.645579 1.65878-1.147696 1.65878-1.838107C1.65878-2.420922 1.65878-3.039601 2.456787-3.039601C3.263761-3.039601 3.263761-2.429888 3.263761-1.838107C3.263761-1.165629 3.245828-.645579 2.465753-.645579Z"></path>
+<path id="tz_fig_hairpin_g1-57" d="M3.254795-2.734745C3.245828-2.654047 3.254795-2.483686 3.227895-2.098132C3.183064-1.551183 3.021669-.645579 2.035367-.645579C1.75741-.645579 1.497385-.71731 1.255293-.941469C1.210461-.995268 1.183562-1.0132 1.13873-1.0132C1.066999-1.0132 1.049066-.968369 1.004234-.896638C.833873-.609714 .708344-.403487 .708344-.349689C.708344-.277958 1.174595 .19726 2.0533 .19726C4.510087 .19726 4.510087-2.385056 4.510087-3.19203C4.510087-4.151432 4.501121-6.419925 2.465753-6.419925C1.909838-6.419925 1.318057-6.321295 .851806-5.747447C.475218-5.254296 .412453-4.805978 .412453-4.115567C.412453-3.550685 .430386-3.039601 .81594-2.528518C1.174595-2.062267 1.587049-1.927771 2.160897-1.927771C2.824408-1.927771 3.138232-2.456787 3.254795-2.734745ZM2.385056-2.57335C1.667746-2.57335 1.667746-3.218929 1.667746-4.1066C1.667746-4.976339 1.667746-5.621918 2.483686-5.621918C3.102366-5.621918 3.245828-4.931507 3.245828-3.990037C3.245828-3.864508 3.245828-2.57335 2.385056-2.57335Z"></path>
+<path id="tz_fig_hairpin_g1-65" d="M4.250062-5.837111C4.115567-6.222665 3.855542-6.222665 3.676214-6.222665H2.887173C2.707846-6.222665 2.447821-6.222665 2.313325-5.837111L.42142-.42142C.376588-.304857 .376588-.286924 .376588-.242092C.376588 0 .600747 0 .726276 0H1.049066C1.210461 0 1.488418 0 1.613948-.358655L1.963636-1.353923H4.447323L4.752179-.493151C4.859776-.179328 4.92254 0 5.352927 0H5.837111C5.96264 0 6.1868 0 6.1868-.242092C6.1868-.286924 6.1868-.304857 6.141968-.42142L4.250062-5.837111ZM2.878207-4.025903C3.012702-4.420423 3.129265-4.761146 3.200996-5.083935H3.209963C3.254795-4.868742 3.254795-4.850809 3.326526-4.644583L4.178331-2.125031H2.232628L2.878207-4.025903Z"></path>
+<path id="tz_fig_hairpin_g1-67" d="M5.738481-1.282192C5.738481-1.353923 5.675716-1.389788 5.639851-1.389788C5.424658-1.389788 5.164633-.806974 3.900374-.806974C2.322291-.806974 1.873973-1.775342 1.873973-3.120299C1.873973-4.456289 2.358157-5.424658 3.828643-5.424658C4.62665-5.424658 5.04807-5.110834 5.290162-4.913574C5.34396-4.868742 5.370859-4.832877 5.433624-4.832877C5.469489-4.832877 5.514321-4.877709 5.523288-4.913574L5.702615-5.908842C5.711582-5.944707 5.702615-5.980573 5.630884-6.007472C5.101868-6.204732 4.554919-6.330262 3.855542-6.330262C1.667746-6.330262 .546949-5.263263 .546949-3.129265C.546949-.932503 1.685679 .089664 3.864508 .089664C4.62665 .089664 5.101868-.017933 5.756413-.42142C5.828144-.466252 5.810212-.529016 5.810212-.529016L5.738481-1.282192Z"></path>
+<path id="tz_fig_hairpin_g1-76" d="M2.133998-.905604V-5.792279C2.133998-6.079203 2.071233-6.222665 1.703611-6.222665H1.246326C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H4.357659C4.698381 0 4.788045-.116563 4.788045-.430386V-.511083C4.788045-.71731 4.779078-.941469 4.366625-.941469L2.133998-.905604Z"></path>
+<path id="tz_fig_hairpin_g1-78" d="M2.716812-5.86401C2.528518-6.222665 2.259527-6.222665 2.080199-6.222665H1.246326C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H1.488418C1.829141 0 1.918804-.116563 1.918804-.430386V-5.137733H1.927771L4.393524-.358655C4.581818 0 4.850809 0 5.030137 0H5.86401C6.204732 0 6.294396-.116563 6.294396-.430386V-5.792279C6.294396-6.079203 6.231631-6.222665 5.86401-6.222665H5.621918C5.281196-6.222665 5.191532-6.106102 5.191532-5.792279V-1.084932H5.182565L2.716812-5.86401Z"></path>
+<path id="tz_fig_hairpin_g1-82" d="M4.33076-2.86924C4.895641-3.003736 5.747447-3.344458 5.747447-4.456289C5.747447-6.222665 3.801743-6.222665 3.398257-6.222665H1.246326C.923537-6.222665 .81594-6.124035 .81594-5.792279V-.430386C.81594-.107597 .91457 0 1.246326 0H1.676712C2.017435 0 2.107098-.116563 2.107098-.430386V-2.788543H3.102366L4.572852-.215193C4.698381 0 4.797011 0 4.994271 0H5.523288C5.702615 0 5.855044 0 5.855044-.268991L4.33076-2.86924ZM2.107098-3.434122V-5.451557H3.272727C4.312827-5.451557 4.501121-5.039103 4.501121-4.447323C4.501121-3.918306 4.375592-3.434122 3.272727-3.434122H2.107098Z"></path>
+<path id="tz_fig_hairpin_g1-83" d="M2.420922-3.954172C2.223661-3.999004 1.667746-4.20523 1.667746-4.716314C1.667746-5.478456 2.429888-5.496389 2.734745-5.496389C3.236862-5.496389 3.685181-5.379826 4.124533-4.94944C4.267995-4.814944 4.276961-4.805978 4.312827-4.805978C4.366625-4.805978 4.411457-4.832877 4.438356-4.967372L4.572852-5.747447C4.590785-5.819178 4.590785-5.837111 4.590785-5.86401C4.590785-5.935741 4.581818-5.944707 4.357659-6.06127C3.721046-6.375093 3.19203-6.419925 2.734745-6.419925C1.936737-6.419925 .546949-6.231631 .546949-4.554919C.546949-3.918306 .878705-3.505853 1.049066-3.326526C1.506351-2.860274 1.927771-2.77061 2.627148-2.609215C3.129265-2.492653 3.326526-2.447821 3.523786-2.268493C3.61345-2.178829 3.801743-1.990535 3.801743-1.649813C3.801743-.806974 3.030635-.780075 2.734745-.780075C1.981569-.780075 1.327024-1.084932 .878705-1.488418C.771108-1.596015 .753176-1.596015 .71731-1.596015C.663512-1.596015 .61868-1.569116 .591781-1.43462L.457285-.654545C.439352-.582814 .439352-.564882 .439352-.537983C.439352-.349689 1.371856-.026899 1.416687-.008966C2.017435 .179328 2.501619 .19726 2.734745 .19726C4.079701 .19726 4.92254-.403487 4.92254-1.793275C4.92254-2.797509 4.178331-3.550685 3.281694-3.756912L2.420922-3.954172Z"></path>
+<path id="tz_fig_hairpin_g1-97" d="M4.160399-2.833375C4.160399-4.250062 2.797509-4.259029 2.349191-4.259029C1.927771-4.259029 1.479452-4.223163 .878705-3.972105C.690411-3.891407 .645579-3.864508 .645579-3.765878C.645579-3.703113 .699377-3.183064 .708344-3.111333C.71731-3.057534 .762142-3.012702 .824907-3.012702C.869738-3.012702 .896638-3.039601 .923537-3.066501C1.309091-3.469988 1.75741-3.667248 2.313325-3.667248C2.797509-3.667248 2.940971-3.371357 2.940971-2.842341V-2.528518C2.627148-2.528518 .277958-2.510585 .277958-1.192528C.277958-.564882 .780075 .09863 1.569116 .09863C1.873973 .09863 2.546451 .008966 2.96787-.609714V-.430386C2.96787-.143462 3.030635 0 3.398257 0H3.730012C4.070735 0 4.160399-.116563 4.160399-.430386V-2.833375ZM2.940971-1.380822C2.940971-.546949 2.089166-.546949 2.062267-.546949C1.685679-.546949 1.443587-.869738 1.443587-1.210461C1.443587-2.089166 2.689913-2.15193 2.940971-2.160897V-1.380822Z"></path>
+<path id="tz_fig_hairpin_g1-98" d="M1.739477-5.792279C1.739477-6.079203 1.676712-6.222665 1.309091-6.222665H.977335C.654545-6.222665 .546949-6.124035 .546949-5.792279V-.430386C.546949-.107597 .645579 0 .977335 0H1.33599C1.488418 0 1.75741 0 1.766376-.349689C2.178829 .09863 2.636115 .09863 2.779577 .09863C4.689415 .09863 4.689415-1.622914 4.689415-2.071233C4.689415-2.501619 4.689415-4.20523 3.003736-4.20523C2.268493-4.20523 1.820174-3.792777 1.739477-3.703113V-5.792279ZM1.766376-3.245828C1.882939-3.353425 2.15193-3.559651 2.564384-3.559651C3.469988-3.559651 3.469988-2.734745 3.469988-2.062267C3.469988-1.398755 3.469988-.546949 2.465753-.546949C2.089166-.546949 1.865006-.771108 1.766376-.896638V-3.245828Z"></path>
+<path id="tz_fig_hairpin_g1-99" d="M4.097634-.448319C4.097634-.546949 4.061768-.959402 4.043836-1.075965C4.043836-1.102864 4.025903-1.192528 3.936239-1.192528C3.900374-1.192528 3.882441-1.192528 3.792777-1.102864C3.640349-.968369 3.218929-.600747 2.483686-.600747C1.551183-.600747 1.551183-1.506351 1.551183-2.080199C1.551183-2.806476 1.596015-3.559651 2.510585-3.559651C3.0934-3.559651 3.335492-3.416189 3.658281-3.147198C3.765878-3.048568 3.783811-3.048568 3.819676-3.048568C3.90934-3.048568 3.927273-3.129265 3.936239-3.165131C3.954172-3.236862 4.043836-3.738979 4.043836-3.783811C4.043836-3.864508 3.981071-3.900374 3.828643-3.972105C3.398257-4.169365 3.129265-4.259029 2.501619-4.259029C1.165629-4.259029 .331756-3.631382 .331756-2.062267C.331756-.573848 1.102864 .09863 2.456787 .09863C2.698879 .09863 3.236862 .089664 3.837609-.215193C4.088667-.349689 4.097634-.358655 4.097634-.448319Z"></path>
+<path id="tz_fig_hairpin_g1-100" d="M4.474222-5.792279C4.474222-6.079203 4.411457-6.222665 4.043836-6.222665H3.71208C3.371357-6.222665 3.281694-6.106102 3.281694-5.792279V-3.756912C2.878207-4.142466 2.429888-4.20523 2.15193-4.20523C.331756-4.20523 .331756-2.483686 .331756-2.044334C.331756-1.63188 .331756 .09863 2.107098 .09863C2.483686 .09863 2.86924-.008966 3.254795-.42142C3.254795-.089664 3.380324 0 3.685181 0H4.043836C4.384558 0 4.474222-.116563 4.474222-.430386V-5.792279ZM3.254795-1.120797C3.254795-.968369 3.254795-.887671 2.99477-.708344C2.77061-.564882 2.564384-.546949 2.456787-.546949C1.551183-.546949 1.551183-1.371856 1.551183-2.044334S1.551183-3.559651 2.555417-3.559651C2.815442-3.559651 3.057534-3.469988 3.254795-3.281694V-1.120797Z"></path>
+<path id="tz_fig_hairpin_g1-101" d="M3.864508-1.918804C4.070735-1.918804 4.294894-1.927771 4.294894-2.331258C4.294894-3.48792 3.756912-4.259029 2.420922-4.259029C.986301-4.259029 .277958-3.452055 .277958-2.089166C.277958-.61868 1.129763 .09863 2.537484 .09863C2.878207 .09863 3.38929 .053798 3.981071-.242092C4.178331-.340722 4.241096-.367621 4.241096-.475218C4.241096-.537983 4.214197-.798007 4.20523-.869738C4.169365-1.147696 4.160399-1.156663 4.079701-1.156663C4.043836-1.156663 4.025903-1.156663 3.927273-1.066999C3.398257-.609714 2.860274-.546949 2.57335-.546949C1.560149-.546949 1.452553-1.344956 1.425654-1.918804H3.864508ZM1.43462-2.394022C1.461519-2.940971 1.640847-3.61345 2.420922-3.61345C3.138232-3.61345 3.272727-3.0934 3.299626-2.394022H1.43462Z"></path>
+<path id="tz_fig_hairpin_g1-105" d="M.91457-6.231631C.627646-6.231631 .484184-6.177833 .484184-5.819178V-5.406725C.484184-5.119801 .573848-5.003238 .905604-5.003238H1.371856C1.802242-5.003238 1.802242-5.191532 1.802242-5.612951C1.802242-6.043337 1.802242-6.231631 1.371856-6.231631H.91457ZM1.739477-3.676214C1.739477-3.963138 1.676712-4.1066 1.309091-4.1066H.977335C.654545-4.1066 .546949-4.00797 .546949-3.676214V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-3.676214Z"></path>
+<path id="tz_fig_hairpin_g1-108" d="M1.739477-5.792279C1.739477-6.079203 1.676712-6.222665 1.309091-6.222665H.977335C.654545-6.222665 .546949-6.124035 .546949-5.792279V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-5.792279Z"></path>
+<path id="tz_fig_hairpin_g1-110" d="M4.483188-2.914072C4.483188-3.837609 4.088667-4.20523 3.174097-4.20523C2.232628-4.20523 1.829141-3.523786 1.712578-3.281694H1.703611V-3.730012C1.703611-4.016936 1.640847-4.160399 1.273225-4.160399H.968369C.645579-4.160399 .537983-4.061768 .537983-3.730012V-.430386C.537983-.107597 .636613 0 .968369 0H1.327024C1.667746 0 1.75741-.116563 1.75741-.430386V-2.411955C1.75741-3.19203 2.27746-3.559651 2.743711-3.559651C3.174097-3.559651 3.263761-3.353425 3.263761-2.896139V-.430386C3.263761-.143462 3.326526 0 3.694147 0H4.052802C4.393524 0 4.483188-.116563 4.483188-.430386V-2.914072Z"></path>
+<path id="tz_fig_hairpin_g1-111" d="M4.644583-2.017435C4.644583-3.48792 3.927273-4.259029 2.465753-4.259029C.968369-4.259029 .277958-3.461021 .277958-2.017435C.277958-.555915 1.049066 .09863 2.456787 .09863S4.644583-.546949 4.644583-2.017435ZM2.465753-.600747C1.497385-.600747 1.497385-1.407721 1.497385-2.125031C1.497385-2.815442 1.497385-3.61345 2.456787-3.61345C3.425156-3.61345 3.425156-2.824408 3.425156-2.125031C3.425156-1.416687 3.425156-.600747 2.465753-.600747Z"></path>
+<path id="tz_fig_hairpin_g1-112" d="M1.766376-.349689C2.169863 .09863 2.663014 .09863 2.788543 .09863C4.689415 .09863 4.689415-1.622914 4.689415-2.071233C4.689415-2.510585 4.689415-4.20523 3.066501-4.20523C2.537484-4.20523 2.062267-3.990037 1.739477-3.685181C1.739477-4.016936 1.613948-4.1066 1.309091-4.1066H.977335C.654545-4.1066 .546949-4.00797 .546949-3.676214V1.309091C.546949 1.63188 .645579 1.739477 .977335 1.739477H1.33599C1.676712 1.739477 1.766376 1.622914 1.766376 1.309091V-.349689ZM1.766376-3.209963C1.865006-3.299626 2.160897-3.505853 2.546451-3.505853C3.461021-3.505853 3.469988-2.447821 3.469988-2.0533C3.469988-1.694645 3.469988-.546949 2.456787-.546949C2.25056-.546949 2.089166-.61868 1.981569-.699377C1.766376-.851806 1.766376-.896638 1.766376-1.058032V-3.209963Z"></path>
+<path id="tz_fig_hairpin_g1-114" d="M1.739477-2.062267C1.739477-2.914072 2.447821-3.263761 3.012702-3.299626C3.174097-3.308593 3.19203-3.308593 3.19203-3.541719V-3.963138C3.19203-4.142466 3.19203-4.20523 3.030635-4.20523C2.779577-4.20523 2.125031-4.115567 1.703611-3.147198H1.694645V-3.730012C1.694645-4.016936 1.63188-4.160399 1.264259-4.160399H.977335C.654545-4.160399 .546949-4.061768 .546949-3.730012V-.430386C.546949-.107597 .645579 0 .977335 0H1.309091C1.649813 0 1.739477-.116563 1.739477-.430386V-2.062267Z"></path>
+<path id="tz_fig_hairpin_g1-116" d="M1.95467-3.461021H2.752677C2.860274-3.461021 3.183064-3.461021 3.183064-3.783811S2.860274-4.1066 2.752677-4.1066H1.95467V-4.850809C1.95467-5.137733 1.891905-5.281196 1.524284-5.281196H1.246326C.923537-5.281196 .81594-5.182565 .81594-4.850809V-4.1066H.609714C.511083-4.1066 .179328-4.1066 .179328-3.783811S.502117-3.461021 .609714-3.461021H.789041V-1.192528C.789041-.286924 1.111831 .09863 1.730511 .09863C1.811208 .09863 2.205729 .09863 2.67198-.044832C2.824408-.089664 3.344458-.251059 3.344458-.42142C3.344458-.448319 3.326526-.511083 3.272727-.699377C3.227895-.878705 3.209963-.932503 3.129265-.932503C3.084433-.932503 3.075467-.923537 3.021669-.869738C2.923039-.798007 2.680946-.600747 2.304359-.600747C2.089166-.600747 1.95467-.753176 1.95467-1.344956V-3.461021Z"></path>
+<path id="tz_fig_hairpin_g1-117" d="M4.483188-3.676214C4.483188-3.963138 4.420423-4.1066 4.052802-4.1066H3.694147C3.353425-4.1066 3.263761-3.990037 3.263761-3.676214V-1.551183C3.263761-.959402 2.949938-.448319 2.313325-.448319C1.811208-.448319 1.75741-.573848 1.75741-1.049066V-3.676214C1.75741-3.963138 1.694645-4.1066 1.327024-4.1066H.968369C.645579-4.1066 .537983-4.00797 .537983-3.676214V-1.129763C.537983-.170361 1.058032 .09863 1.990535 .09863C2.232628 .09863 2.86924 .09863 3.29066-.663512V-.430386C3.29066-.143462 3.353425 0 3.721046 0H4.052802C4.393524 0 4.483188-.116563 4.483188-.430386V-3.676214Z"></path>
+<path id="tz_fig_hairpin_g1-118" d="M4.196264-3.685181C4.241096-3.81071 4.241096-3.828643 4.241096-3.855542C4.241096-4.1066 4.016936-4.1066 3.882441-4.1066H3.694147C3.317559-4.1066 3.218929-3.972105 3.138232-3.721046L2.25056-1.0132L1.362889-3.721046C1.300125-3.90934 1.23736-4.1066 .806974-4.1066H.591781C.457285-4.1066 .233126-4.1066 .233126-3.855542C.233126-3.828643 .233126-3.81071 .277958-3.685181L1.344956-.376588C1.470486 0 1.748443 0 1.909838 0H2.564384C2.725778 0 3.003736 0 3.129265-.376588L4.196264-3.685181Z"></path>
+</defs>
+<g id="tz_fig_hairpin_page1">
+<g stroke-miterlimit="10" transform="translate(61.18836,-50.024444)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M37.32155 14.22636H-37.32155C-38.97842 14.22636-40.32155 12.88324-40.32155 11.22636V-11.22636C-40.32155-12.88324-38.97842-14.22636-37.32155-14.22636H37.32155C38.97842-14.22636 40.32155-12.88324 40.32155-11.22636V11.22636C40.32155 12.88324 38.97842 14.22636 37.32155 14.22636ZM-40.32155-14.22636"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-36.98857,2.375)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(61.18836,-50.024444)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="72.590502" y="-50.024444" href="#tz_fig_hairpin_g1-67"></use>
+<use x="78.891907" y="-50.024444" href="#tz_fig_hairpin_g1-108"></use>
+<use x="81.183328" y="-50.024444" href="#tz_fig_hairpin_g1-105"></use>
+<use x="83.474749" y="-50.024444" href="#tz_fig_hairpin_g1-101"></use>
+<use x="88.05759" y="-50.024444" href="#tz_fig_hairpin_g1-110"></use>
+<use x="93.088752" y="-50.024444" href="#tz_fig_hairpin_g1-116"></use>
+<use x="96.712684" y="-50.024444" href="#tz_fig_hairpin_g1-101"></use>
+<use x="104.58285" y="-50.024444" href="#tz_fig_hairpin_g1-76"></use>
+<use x="109.788358" y="-50.024444" href="#tz_fig_hairpin_g1-65"></use>
+<use x="116.363737" y="-50.024444" href="#tz_fig_hairpin_g1-78"></use>
+<use x="69.271467" y="-39.06554" href="#tz_fig_hairpin_g1-49"></use>
+<use x="74.203001" y="-39.06554" href="#tz_fig_hairpin_g1-57"></use>
+<use x="79.134535" y="-39.06554" href="#tz_fig_hairpin_g1-50"></use>
+<use x="84.066069" y="-39.06554" href="#tz_fig_hairpin_g1-46"></use>
+<use x="86.805811" y="-39.06554" href="#tz_fig_hairpin_g1-49"></use>
+<use x="91.737345" y="-39.06554" href="#tz_fig_hairpin_g1-54"></use>
+<use x="96.668879" y="-39.06554" href="#tz_fig_hairpin_g1-56"></use>
+<use x="101.600413" y="-39.06554" href="#tz_fig_hairpin_g1-46"></use>
+<use x="104.340154" y="-39.06554" href="#tz_fig_hairpin_g1-49"></use>
+<use x="109.271689" y="-39.06554" href="#tz_fig_hairpin_g1-48"></use>
+<use x="114.203223" y="-39.06554" href="#tz_fig_hairpin_g1-46"></use>
+<use x="116.942964" y="-39.06554" href="#tz_fig_hairpin_g1-53"></use>
+<use x="121.874498" y="-39.06554" href="#tz_fig_hairpin_g1-48"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M244.35675 17.45798H169.71365C168.05678 17.45798 166.71365 16.11485 166.71365 14.45798V-14.45798C166.71365-16.11485 168.05678-17.45798 169.71365-17.45798H244.35675C246.01363-17.45798 247.35675-16.11485 247.35675-14.45798V14.45798C247.35675 16.11485 246.01363 17.45798 244.35675 17.45798ZM166.71365-17.45798"></path>
+</g>
+</g>
+</g>
+<g transform="translate(170.04663,7.875)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(61.18836,-50.024444)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="79.452116" y="-50.024444" href="#tz_fig_hairpin_g1-82"></use>
+<use x="85.75352" y="-50.024444" href="#tz_fig_hairpin_g1-111"></use>
+<use x="90.685055" y="-50.024444" href="#tz_fig_hairpin_g1-116"></use>
+<use x="94.308987" y="-50.024444" href="#tz_fig_hairpin_g1-101"></use>
+<use x="98.891828" y="-50.024444" href="#tz_fig_hairpin_g1-97"></use>
+<use x="103.599206" y="-50.024444" href="#tz_fig_hairpin_g1-100"></use>
+<use x="108.630368" y="-50.024444" href="#tz_fig_hairpin_g1-111"></use>
+<use x="113.287921" y="-50.024444" href="#tz_fig_hairpin_g1-114"></use>
+<use x="83.543052" y="-39.06554" href="#tz_fig_hairpin_g1-112"></use>
+<use x="88.62403" y="-39.06554" href="#tz_fig_hairpin_g1-19"></use>
+<use x="88.574214" y="-39.06554" href="#tz_fig_hairpin_g1-117"></use>
+<use x="93.605376" y="-39.06554" href="#tz_fig_hairpin_g1-98"></use>
+<use x="98.636538" y="-39.06554" href="#tz_fig_hairpin_g1-108"></use>
+<use x="100.927959" y="-39.06554" href="#tz_fig_hairpin_g1-105"></use>
+<use x="103.219379" y="-39.06554" href="#tz_fig_hairpin_g1-99"></use>
+<use x="107.602965" y="-39.06554" href="#tz_fig_hairpin_g1-111"></use>
+<use x="74.203001" y="-28.106636" href="#tz_fig_hairpin_g1-50"></use>
+<use x="79.134535" y="-28.106636" href="#tz_fig_hairpin_g1-48"></use>
+<use x="84.066069" y="-28.106636" href="#tz_fig_hairpin_g1-51"></use>
+<use x="88.997604" y="-28.106636" href="#tz_fig_hairpin_g1-46"></use>
+<use x="91.737345" y="-28.106636" href="#tz_fig_hairpin_g1-48"></use>
+<use x="96.668879" y="-28.106636" href="#tz_fig_hairpin_g1-46"></use>
+<use x="99.40862" y="-28.106636" href="#tz_fig_hairpin_g1-49"></use>
+<use x="104.340154" y="-28.106636" href="#tz_fig_hairpin_g1-49"></use>
+<use x="109.271689" y="-28.106636" href="#tz_fig_hairpin_g1-51"></use>
+<use x="114.203223" y="-28.106636" href="#tz_fig_hairpin_g1-46"></use>
+<use x="116.942964" y="-28.106636" href="#tz_fig_hairpin_g1-55"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M140.83914-51.81494H66.19604C64.53917-51.81494 63.19604-53.15807 63.19604-54.81494V-77.26767C63.19604-78.92455 64.53917-80.26767 66.19604-80.26767H140.83914C142.49602-80.26767 143.83914-78.92455 143.83914-77.26767V-54.81494C143.83914-53.15807 142.49602-51.81494 140.83914-51.81494ZM63.19604-80.26767"></path>
+</g>
+</g>
+</g>
+<g transform="translate(66.52902,-63.6663)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(61.18836,-50.024444)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="81.438426" y="-50.024444" href="#tz_fig_hairpin_g1-83"></use>
+<use x="86.917909" y="-50.024444" href="#tz_fig_hairpin_g1-101"></use>
+<use x="91.50075" y="-50.024444" href="#tz_fig_hairpin_g1-114"></use>
+<use x="94.838258" y="-50.024444" href="#tz_fig_hairpin_g1-118"></use>
+<use x="99.321471" y="-50.024444" href="#tz_fig_hairpin_g1-105"></use>
+<use x="101.612892" y="-50.024444" href="#tz_fig_hairpin_g1-100"></use>
+<use x="106.644054" y="-50.024444" href="#tz_fig_hairpin_g1-111"></use>
+<use x="111.301606" y="-50.024444" href="#tz_fig_hairpin_g1-114"></use>
+<use x="69.271467" y="-39.06554" href="#tz_fig_hairpin_g1-49"></use>
+<use x="74.203001" y="-39.06554" href="#tz_fig_hairpin_g1-57"></use>
+<use x="79.134535" y="-39.06554" href="#tz_fig_hairpin_g1-50"></use>
+<use x="84.066069" y="-39.06554" href="#tz_fig_hairpin_g1-46"></use>
+<use x="86.805811" y="-39.06554" href="#tz_fig_hairpin_g1-49"></use>
+<use x="91.737345" y="-39.06554" href="#tz_fig_hairpin_g1-54"></use>
+<use x="96.668879" y="-39.06554" href="#tz_fig_hairpin_g1-56"></use>
+<use x="101.600413" y="-39.06554" href="#tz_fig_hairpin_g1-46"></use>
+<use x="104.340154" y="-39.06554" href="#tz_fig_hairpin_g1-49"></use>
+<use x="109.271689" y="-39.06554" href="#tz_fig_hairpin_g1-48"></use>
+<use x="114.203223" y="-39.06554" href="#tz_fig_hairpin_g1-46"></use>
+<use x="116.942964" y="-39.06554" href="#tz_fig_hairpin_g1-49"></use>
+<use x="121.874498" y="-39.06554" href="#tz_fig_hairpin_g1-48"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M40.92154 0H162.91367" fill="none"></path>
+<g transform="translate(162.91367,0.0)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(64.62825,5.29405)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(61.18836,-50.024444)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="61.18836" y="-50.024444" href="#tz_fig_hairpin_g0-49"></use>
+<use x="64.89327" y="-50.024444" href="#tz_fig_hairpin_g0-46"></use>
+<use x="70.244806" y="-50.024444" href="#tz_fig_hairpin_g0-112"></use>
+<use x="74.070787" y="-50.024444" href="#tz_fig_hairpin_g0-97"></use>
+<use x="77.424572" y="-50.024444" href="#tz_fig_hairpin_g0-114"></use>
+<use x="79.955048" y="-50.024444" href="#tz_fig_hairpin_g0-97"></use>
+<use x="85.984605" y="-50.024444" href="#tz_fig_hairpin_g0-50"></use>
+<use x="89.689515" y="-50.024444" href="#tz_fig_hairpin_g0-48"></use>
+<use x="93.394425" y="-50.024444" href="#tz_fig_hairpin_g0-51"></use>
+<use x="97.099335" y="-50.024444" href="#tz_fig_hairpin_g0-46"></use>
+<use x="99.157618" y="-50.024444" href="#tz_fig_hairpin_g0-48"></use>
+<use x="102.862528" y="-50.024444" href="#tz_fig_hairpin_g0-46"></use>
+<use x="104.920811" y="-50.024444" href="#tz_fig_hairpin_g0-49"></use>
+<use x="108.625721" y="-50.024444" href="#tz_fig_hairpin_g0-49"></use>
+<use x="112.330631" y="-50.024444" href="#tz_fig_hairpin_g0-51"></use>
+<use x="116.035541" y="-50.024444" href="#tz_fig_hairpin_g0-46"></use>
+<use x="118.093825" y="-50.024444" href="#tz_fig_hairpin_g0-55"></use>
+<use x="121.798735" y="-50.024444" href="#tz_fig_hairpin_g0-58"></use>
+<use x="123.857018" y="-50.024444" href="#tz_fig_hairpin_g0-56"></use>
+<use x="127.561928" y="-50.024444" href="#tz_fig_hairpin_g0-48"></use>
+<use x="131.266838" y="-50.024444" href="#tz_fig_hairpin_g0-56"></use>
+<use x="134.971748" y="-50.024444" href="#tz_fig_hairpin_g0-48"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M207.0352-18.05797L146.97867-64.09464" fill="none"></path>
+<g transform="matrix(-0.79361,-0.60834,0.60834,-0.79361,146.97867,-64.09464)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(179.67014,-43.79964)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(61.18836,-50.024444)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="61.18836" y="-50.024444" href="#tz_fig_hairpin_g0-50"></use>
+<use x="64.89327" y="-50.024444" href="#tz_fig_hairpin_g0-46"></use>
+<use x="70.244806" y="-50.024444" href="#tz_fig_hairpin_g0-100"></use>
+<use x="74.070787" y="-50.024444" href="#tz_fig_hairpin_g0-115"></use>
+<use x="76.911216" y="-50.024444" href="#tz_fig_hairpin_g0-116"></use>
+<use x="79.586984" y="-50.024444" href="#tz_fig_hairpin_g0-110"></use>
+<use x="83.412965" y="-50.024444" href="#tz_fig_hairpin_g0-97"></use>
+<use x="86.972582" y="-50.024444" href="#tz_fig_hairpin_g0-116"></use>
+<use x="89.64835" y="-50.024444" href="#tz_fig_hairpin_g0-58"></use>
+<use x="94.999887" y="-50.024444" href="#tz_fig_hairpin_g0-100"></use>
+<use x="98.825868" y="-50.024444" href="#tz_fig_hairpin_g0-115"></use>
+<use x="101.666296" y="-50.024444" href="#tz_fig_hairpin_g0-116"></use>
+<use x="106.812004" y="-50.024444" href="#tz_fig_hairpin_g0-118"></use>
+<use x="110.226328" y="-50.024444" href="#tz_fig_hairpin_g0-105"></use>
+<use x="111.994026" y="-50.024444" href="#tz_fig_hairpin_g0-114"></use>
+<use x="114.524501" y="-50.024444" href="#tz_fig_hairpin_g0-97"></use>
+<use x="120.554058" y="-50.024444" href="#tz_fig_hairpin_g0-46"></use>
+<use x="122.612342" y="-50.024444" href="#tz_fig_hairpin_g0-49"></use>
+<use x="126.317252" y="-50.024444" href="#tz_fig_hairpin_g0-48"></use>
+</g>
+<g fill="black">
+<g fill="#d7433b">
+<use x="130.022162" y="-50.024444" href="#tz_fig_hairpin_g0-111"></use>
+<use x="133.521239" y="-50.024444" href="#tz_fig_hairpin_g0-114"></use>
+<use x="136.051715" y="-50.024444" href="#tz_fig_hairpin_g0-105"></use>
+<use x="137.819412" y="-50.024444" href="#tz_fig_hairpin_g0-103"></use>
+<use x="141.524322" y="-50.024444" href="#tz_fig_hairpin_g0-101"></use>
+<use x="144.817576" y="-50.024444" href="#tz_fig_hairpin_g0-109"></use>
+<use x="153.17178" y="-50.024444" href="#tz_fig_hairpin_g0-115"></use>
+<use x="156.012208" y="-50.024444" href="#tz_fig_hairpin_g0-101"></use>
+<use x="159.305461" y="-50.024444" href="#tz_fig_hairpin_g0-103"></use>
+<use x="163.010371" y="-50.024444" href="#tz_fig_hairpin_g0-117"></use>
+<use x="166.836352" y="-50.024444" href="#tz_fig_hairpin_g0-101"></use>
+<use x="172.599545" y="-50.024444" href="#tz_fig_hairpin_g0-46"></use>
+<use x="174.657829" y="-50.024444" href="#tz_fig_hairpin_g0-53"></use>
+<use x="178.362739" y="-50.024444" href="#tz_fig_hairpin_g0-48"></use>
+<use x="182.067649" y="-50.024444" href="#tz_fig_hairpin_g0-33"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#d7433b" stroke="#d7433b">
+<g stroke-dasharray="3.0,3.0" stroke-dashoffset="0.0">
+<path d="M62.59605-66.0413L2.4765-16.85257" fill="none"></path>
+<g transform="matrix(-0.77391,0.6332,-0.6332,-0.77391,2.47652,-16.85257)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(-126.35484,-42.18384)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(61.18836,-50.024444)scale(-1,-1)">
+<g fill="#d7433b">
+<g stroke="none">
+<g fill="#d7433b">
+<use x="61.18836" y="-50.024444" href="#tz_fig_hairpin_g0-51"></use>
+<use x="64.89327" y="-50.024444" href="#tz_fig_hairpin_g0-46"></use>
+<use x="70.244806" y="-50.024444" href="#tz_fig_hairpin_g0-114"></use>
+<use x="72.775282" y="-50.024444" href="#tz_fig_hairpin_g0-101"></use>
+<use x="76.068535" y="-50.024444" href="#tz_fig_hairpin_g0-115"></use>
+<use x="78.908964" y="-50.024444" href="#tz_fig_hairpin_g0-112"></use>
+<use x="82.940761" y="-50.024444" href="#tz_fig_hairpin_g0-111"></use>
+<use x="86.645671" y="-50.024444" href="#tz_fig_hairpin_g0-115"></use>
+<use x="89.4861" y="-50.024444" href="#tz_fig_hairpin_g0-116"></use>
+<use x="92.161868" y="-50.024444" href="#tz_fig_hairpin_g0-97"></use>
+<use x="98.191425" y="-50.024444" href="#tz_fig_hairpin_g0-100"></use>
+<use x="102.017406" y="-50.024444" href="#tz_fig_hairpin_g0-105"></use>
+<use x="103.785103" y="-50.024444" href="#tz_fig_hairpin_g0-114"></use>
+<use x="106.315579" y="-50.024444" href="#tz_fig_hairpin_g0-101"></use>
+<use x="109.608832" y="-50.024444" href="#tz_fig_hairpin_g0-116"></use>
+<use x="112.2846" y="-50.024444" href="#tz_fig_hairpin_g0-97"></use>
+<use x="115.844217" y="-50.024444" href="#tz_fig_hairpin_g0-40"></use>
+<use x="118.725814" y="-50.024444" href="#tz_fig_hairpin_g0-111"></use>
+<use x="122.224892" y="-50.024444" href="#tz_fig_hairpin_g0-114"></use>
+<use x="124.755367" y="-50.024444" href="#tz_fig_hairpin_g0-105"></use>
+<use x="126.523065" y="-50.024444" href="#tz_fig_hairpin_g0-103"></use>
+<use x="130.227975" y="-50.024444" href="#tz_fig_hairpin_g0-101"></use>
+<use x="133.521228" y="-50.024444" href="#tz_fig_hairpin_g0-109"></use>
+<use x="141.875432" y="-50.024444" href="#tz_fig_hairpin_g0-46"></use>
+<use x="143.933715" y="-50.024444" href="#tz_fig_hairpin_g0-49"></use>
+<use x="147.638625" y="-50.024444" href="#tz_fig_hairpin_g0-48"></use>
+<use x="153.813475" y="-50.024444" href="#tz_fig_hairpin_g0-124"></use>
+<use x="163.693235" y="-50.024444" href="#tz_fig_hairpin_g0-99"></use>
+<use x="166.986489" y="-50.024444" href="#tz_fig_hairpin_g0-108"></use>
+<use x="168.754186" y="-50.024444" href="#tz_fig_hairpin_g0-105"></use>
+<use x="170.521884" y="-50.024444" href="#tz_fig_hairpin_g0-101"></use>
+<use x="173.815137" y="-50.024444" href="#tz_fig_hairpin_g0-110"></use>
+<use x="177.641118" y="-50.024444" href="#tz_fig_hairpin_g0-116"></use>
+<use x="180.316886" y="-50.024444" href="#tz_fig_hairpin_g0-101"></use>
+<use x="186.080079" y="-50.024444" href="#tz_fig_hairpin_g0-100"></use>
+<use x="189.90606" y="-50.024444" href="#tz_fig_hairpin_g0-101"></use>
+<use x="193.199314" y="-50.024444" href="#tz_fig_hairpin_g0-115"></use>
+<use x="196.039742" y="-50.024444" href="#tz_fig_hairpin_g0-99"></use>
+<use x="199.332995" y="-50.024444" href="#tz_fig_hairpin_g0-97"></use>
+<use x="202.68678" y="-50.024444" href="#tz_fig_hairpin_g0-114"></use>
+<use x="205.217256" y="-50.024444" href="#tz_fig_hairpin_g0-116"></use>
+<use x="207.893024" y="-50.024444" href="#tz_fig_hairpin_g0-97"></use>
+<use x="211.452641" y="-50.024444" href="#tz_fig_hairpin_g0-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hairpin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;19.1: O hairpin: a ida faz a volta pelo roteador, mas a resposta corta caminho pela LAN — e chega com o remetente “errado”.
+</figcaption>
+</figure>
+</div>
+<p>Siga os passos: o cliente da LAN mira o IP público (1); o dstnat troca o destino, mas <strong>a origem continua sendo o vizinho de LAN</strong> (2); o servidor responde <strong>direto</strong> pela rede local (3) — e o cliente descarta: ele esperava resposta de <code>203.0.113.7:8080</code>, recebeu de <code>192.168.10.10:80</code>. Conversa assimétrica, conexão morta.</p>
+<p>A solução: forçar a volta a passar pelo roteador, mascarando <strong>também</strong> a origem quando cliente e servidor são da mesma LAN:</p>
+<pre class="routeros"><code>/ip firewall nat add chain=srcnat src-address=192.168.10.0/24 dst-address=192.168.10.10 protocol=tcp dst-port=80 out-interface-list=LAN action=masquerade comment="hairpin: forca resposta via roteador"</code></pre>
+<p>Agora o servidor vê a conexão vinda <strong>do roteador</strong> (<code>192.168.10.1</code>) e responde a ele — que desfaz as duas traduções e entrega ao cliente com o remetente esperado. (O preço: o servidor perde o IP real do cliente interno nos logs — todos parecem vir do gateway. A alternativa elegante é <em>split DNS</em>: o nome do serviço resolvendo para o IP <strong>interno</strong> quando consultado de dentro — uma entrada em <code>/ip dns static</code>, <a href="../v02-cli-configuracao/04-dns.html" class="quarto-xref"><span>Capítulo 12</span></a>.)</p>
+</section>
+<section id="redirect-dstnat-para-o-próprio-roteador" class="level2" data-number="19.4">
+<h2 data-number="19.4" class="anchored" data-anchor-id="redirect-dstnat-para-o-próprio-roteador"><span class="header-section-number">19.4</span> <code>redirect</code>: dstnat para o próprio roteador</h2>
+<p>Uma variação com usos de provedor: <code>action=redirect</code> traduz o destino para <strong>o próprio roteador</strong>, na porta indicada:</p>
+<pre class="routeros"><code>/ip firewall nat add chain=dstnat in-interface-list=LAN protocol=udp dst-port=53 action=redirect to-ports=53 comment="forca DNS local"</code></pre>
+<p>Essa regra intercepta <strong>qualquer</strong> consulta DNS da LAN — mesmo a do dispositivo teimoso configurado com <code>8.8.8.8</code> — e a entrega ao resolvedor local (<a href="../v02-cli-configuracao/04-dns.html" class="quarto-xref"><span>Capítulo 12</span></a>). Todos usam o cache do provedor, queira o dispositivo ou não. (Com a chegada do DoH essa técnica perdeu alcance — TLS na 443 não se intercepta — mas segue útil para a massa de consultas UDP/53.) O mesmo <code>redirect</code> é a base do <em>transparent proxy</em> e de portais de captura de hotspot.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Grave a linha do tempo: <strong>dstnat → roteamento → filter → srcnat</strong>. Dela saem as três lições do capítulo: port forwarding funciona porque o destino muda <em>antes</em> do roteamento; o filter deve casar com o pacote <em>já traduzido</em> (e <code>connection-nat-state=dstnat</code> aceita tudo que o NAT publicou, sem duplicar dados); e o hairpin existe porque a <em>volta</em> não repassa pelo roteador — até você mascarar a origem interna também.</p>
+</div>
+</div>
+</section>
+<section id="laboratório" class="level2" data-number="19.5">
+<h2 data-number="19.5" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">19.5</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="19.5.1">
+<h3 data-number="19.5.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">19.5.1</span> Ambiente</h3>
+<p>Os três CHRs (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>), com um ajuste <strong>só para este capítulo</strong>: no VirtualBox, mova o Adaptador 2 de <code>lab-r3</code> da rede interna <code>lab-b</code> para a <strong><code>lab-a</code></strong> — o r3 vira um segundo dispositivo na LAN da padaria (cliente do teste de hairpin). Papéis: <code>lab-r1</code> = borda (como está), <code>lab-r2</code> = “DVR” (servidor a publicar), <code>lab-r3</code> = “notebook do dono”.</p>
+<p>Em <code>lab-r3</code> (console): <code>/ip dhcp-client add interface=ether2</code> — ele deve receber um IP <code>192.168.10.1xx</code> do r1.</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="19.5.2">
+<h3 data-number="19.5.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">19.5.2</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — o “DVR”.</strong> O r2 será o servidor: seu WebFig (porta 80) fará papel da interface do DVR. Em <code>lab-r2</code>, garanta o serviço ativo e anote o IP (nos passos abaixo usamos <code>.105</code> — substitua pelo real):</p>
+<pre class="routeros"><code>/ip service enable www
+/ip address print where interface=ether2</code></pre>
+<p><strong>Passo 2 — publicar.</strong> Em <code>lab-r1</code>, descubra o IP da WAN e crie o port forwarding (8080 fora → 80 dentro):</p>
+<pre class="routeros"><code>/ip address print where interface=ether3
+/ip firewall nat add chain=dstnat in-interface-list=WAN protocol=tcp dst-port=8080 action=dst-nat to-addresses=192.168.10.105 to-ports=80 comment="publica DVR (WebFig do r2)"</code></pre>
+<p>E a regra de filtro que aceita o publicado (entra antes de futuros drops do forward):</p>
+<pre class="routeros"><code>/ip firewall filter add chain=forward connection-state=new connection-nat-state=dstnat in-interface-list=WAN action=accept comment="fwd: aceita publicados" place-before=[find chain=forward comment~"antispoofing"]</code></pre>
+<p><strong>Passo 3 — testar “de fora” (opcional, mas ótimo).</strong> O NAT do VirtualBox esconde o r1 do mundo, mas o próprio VirtualBox faz port forward: com a VM <code>lab-r1</code> selecionada, <strong>Configurações → Rede → Adaptador 3 → Avançado → Redirecionamento de portas</strong>: adicione TCP, porta do hospedeiro <code>18080</code>, porta do convidado <code>8080</code>. No navegador do <strong>seu computador</strong>: <code>http://localhost:18080</code> → deve abrir o WebFig do <strong>r2</strong>. Você atravessou dois NATs até o “DVR” — de fora, funciona.</p>
+<p><strong>Passo 4 — o defeito de dentro.</strong> Em <code>lab-r3</code> (o notebook do dono), acesse pelo IP <strong>público</strong> do r1 (o da ether3, ex.: <code>10.0.2.15</code>):</p>
+<pre class="routeros"><code>/tool fetch url=http://10.0.2.15:8080 keep-result=no</code></pre>
+<p>Trava e expira — o hairpin da <a href="#fig-hairpin" class="quarto-xref">Figura&nbsp;<span>19.1</span></a>, ao vivo. (Em <code>lab-r1</code>, a tabela de conexões mostra a conexão <code>d</code> presa em <code>SYN</code>: <code>/ip firewall connection print where dst-port=80</code>.)</p>
+<p><strong>Passo 5 — a cura.</strong> Em <code>lab-r1</code>, o masquerade do hairpin:</p>
+<pre class="routeros"><code>/ip firewall nat add chain=srcnat src-address=192.168.10.0/24 dst-address=192.168.10.105 protocol=tcp dst-port=80 action=masquerade comment="hairpin DVR"</code></pre>
+<p>Repita o fetch no r3: <code>status: finished</code>. De dentro e de fora, o mesmo endereço funciona.</p>
+<p><strong>Passo 6 — desfazer o especial.</strong> Ao terminar: remova o port forward do VirtualBox (Passo 3), devolva o Adaptador 2 do r3 para <code>lab-b</code> e desative o <code>www</code> no r2 (<code>/ip service disable www</code>) — o laboratório volta ao padrão.</p>
+</section>
+<section id="verificação" class="level3" data-number="19.5.3">
+<h3 data-number="19.5.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">19.5.3</span> Verificação</h3>
+<ol type="1">
+<li><code>http://localhost:18080</code> no hospedeiro abriu o WebFig do r2 (se fez o Passo 3) — dstnat + filtro por <code>connection-nat-state</code> funcionando;</li>
+<li>O fetch do r3 ao IP público <strong>falhou</strong> antes do Passo 5 e <strong>funcionou</strong> depois — hairpin demonstrado e curado;</li>
+<li><code>/ip firewall nat print</code> no r1: masquerade original, dst-nat da publicação e o masquerade do hairpin, todos comentados;</li>
+<li>A tabela de conexões mostrou a flag <code>d</code> (dstnat) nas conexões publicadas.</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="19.5.4">
+<h3 data-number="19.5.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">19.5.4</span> Desafios</h3>
+<ol type="1">
+<li>Sem executar: um pacote chega da WAN para <code>IP-público:8080</code>. Escreva a sequência completa de processamento no r1 (chains e traduções) até sair para o r2 — e a da resposta.</li>
+<li>O dono quer as câmeras acessíveis <strong>só do celular dele</strong> (IP móvel muda, mas a operadora publica as faixas). Melhore a publicação do laboratório com uma address list <code>acesso-dvr</code> — quais regras mudam?</li>
+<li>Explique por que o split DNS (entrada em <code>/ip dns static</code> apontando o nome do serviço para o IP interno) elimina o hairpin — e cite a desvantagem operacional que ele traz num parque com muitos clientes publicados.</li>
+<li>Um técnico publicou o WinBox do próprio r1 na WAN (“pra facilitar”): <code>chain=dstnat dst-port=8291 action=redirect to-ports=8291</code>. Aponte os dois erros — um de segurança, um conceitual.</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> Ida: chega pela ether3 → <strong>dstnat</strong> casa (dst vira <code>192.168.10.105:80</code>) → decisão de roteamento (destino é a LAN) → <strong>filter forward</strong> (o pacote já traduzido casa com <code>connection-nat-state=dstnat</code> → accept; conexão anotada com flag <code>d</code>) → srcnat (masquerade não casa — <code>out-interface</code> é LAN, e a regra de hairpin só casa se a origem for da LAN) → entrega ao r2. Volta: r2 responde ao cliente externo → forward (established) → na saída pela WAN o conntrack <strong>desfaz</strong> o dstnat (origem volta a ser <code>IP-público:8080</code>). Simetria por estado, não por regra.</p>
+<p><strong>2.</strong> Cria-se a lista e aperta-se <strong>o filtro</strong> (o NAT pode ficar):</p>
+<pre class="routeros"><code>/ip firewall address-list add list=acesso-dvr address=177.0.0.0/8 comment="faixa da operadora do dono"
+/ip firewall filter set [find comment="fwd: aceita publicados"] src-address-list=acesso-dvr</code></pre>
+<p>(Se houver mais publicações com políticas distintas, regras de filtro separadas por serviço — a genérica deixa de servir.)</p>
+<p><strong>3.</strong> De dentro, o nome resolve para <code>192.168.10.105</code>: o cliente fala <strong>direto</strong> com o servidor, sem tocar no IP público — não há tradução, não há assimetria, e os logs do servidor veem o IP real do cliente interno (o que o hairpin-masquerade esconde). Desvantagem: é <strong>um cadastro a mais</strong> por serviço/cliente, no DNS de cada roteador envolvido — esquecer de atualizar ao mudar o IP interno gera o defeito inverso (“de fora funciona, de dentro abre a coisa errada”). Automação (Volume 12) ou disciplina.</p>
+<p><strong>4.</strong> Segurança: expor a <strong>gerência</strong> do roteador à internet é o pecado capital — força bruta e exploits contra WinBox são varredura de rotina; gerência remota se faz por VPN (Volume 10). Conceitual: <code>redirect</code> já entrega ao próprio roteador — mas o WinBox <strong>já escuta</strong> na 8291; a regra é inútil (não fosse o <code>/ip service</code> com <code>allowed-address</code> e o input com drop all, que — felizmente — continuam barrando o acesso; defesa em camadas salvando o dia de novo).</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="19.6">
+<h2 data-number="19.6" class="anchored" data-anchor-id="resumo"><span class="header-section-number">19.6</span> Resumo</h2>
+<ul>
+<li><strong>dstnat</strong> troca o destino <strong>na entrada, antes do roteamento</strong> — a linha do tempo <code>dstnat → roteamento → filter → srcnat</code> explica o capítulo inteiro.</li>
+<li>Port forwarding: <code>chain=dstnat in-interface-list=WAN dst-port=X action=dst-nat to-addresses=interno to-ports=Z</code> — e o filtro aceita por <strong><code>connection-nat-state=dstnat</code></strong>, sem duplicar dados.</li>
+<li>Publicar é abrir portão: questione a necessidade (VPN?), restrinja origem quando possível, e lembre que porta alta não é segurança.</li>
+<li><strong>Hairpin</strong>: de dentro, a resposta corta caminho e chega com remetente errado (<a href="#fig-hairpin" class="quarto-xref">Figura&nbsp;<span>19.1</span></a>) — cura-se mascarando a origem interna (ou, mais elegante, com split DNS).</li>
+<li><strong><code>redirect</code></strong> entrega ao próprio roteador: interceptação de DNS, proxy transparente, portais de hotspot.</li>
+</ul>
+<p>No próximo capítulo, as duas tabelas que faltam no arsenal: <strong>mangle</strong> (marcar pacotes e conexões — a fundação do QoS do Volume 7) e <strong>RAW</strong> (agir antes do conntrack — a defesa barata contra floods).</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>A documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> cobre <code>/ip firewall nat</code> (actions <code>dst-nat</code>, <code>redirect</code>, <code>netmap</code>) e o diagrama de packet flow que fundamenta a linha do tempo do capítulo; a página <em>Hairpin NAT</em> traz o caso clássico com variações. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="pagination-link" aria-label="Forward e address-lists">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="pagination-link" aria-label="Mangle e RAW">
+        <span class="nav-page-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v03-firewall/05-dstnat-port-forwarding.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>

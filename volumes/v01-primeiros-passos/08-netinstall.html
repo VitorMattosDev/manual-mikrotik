@@ -23,7 +23,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -33,7 +53,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<link href="../../referencias.html" rel="next">
+<link href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" rel="next">
 <link href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" rel="prev">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -182,12 +202,112 @@ ul.task-list li input[type="checkbox"] {
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
- <span class="menu-text">Apêndices</span></a>
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
@@ -201,15 +321,31 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#quando-o-reset-não-basta" id="toc-quando-o-reset-não-basta" class="nav-link active" data-scroll-target="#quando-o-reset-não-basta"><span class="header-section-number">8.1</span> Quando o reset não basta</a></li>
+  <li><a href="#como-funciona-por-baixo" id="toc-como-funciona-por-baixo" class="nav-link" data-scroll-target="#como-funciona-por-baixo"><span class="header-section-number">8.2</span> Como funciona por baixo</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">8.3</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">8.3.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">8.3.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">8.3.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">8.3.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">8.4</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/08-netinstall.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html">Volume 1 — Primeiros passos</a></li><li class="breadcrumb-item"><a href="../../volumes/v01-primeiros-passos/08-netinstall.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></h1>
+<h1 class="title"><span id="sec-netinstall" class="quarto-section-identifier"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></h1>
 </div>
 
 
@@ -232,15 +368,697 @@ ul.task-list li input[type="checkbox"] {
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Nota</span>Em construção
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Este capítulo ainda não foi escrito. Ele ensinará a usar o Netinstall para reinstalar o RouterOS e recuperar equipamentos que não inicializam. Consulte o <code>ROADMAP.md</code> para acompanhar o progresso.</p>
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Explicar o que o Netinstall faz e em que ele difere do reset do capítulo anterior — reinstalação do <strong>sistema</strong>, não só da configuração;</li>
+<li>Reconhecer as situações em que ele é o único caminho: equipamento que não dá boot, senha perdida, suspeita de comprometimento, downgrade;</li>
+<li>Descrever o mecanismo: RouterBOOT em modo <em>etherboot</em> + o aplicativo Netinstall respondendo na rede;</li>
+<li>Executar o procedimento completo num equipamento físico, incluindo os preparos que evitam as armadilhas clássicas (cabo direto, IP fixo, firewall do notebook);</li>
+<li>Usar os recursos extras: <em>keep old configuration</em>, pacotes por arquitetura, provisionamento com configuração inicial.</li>
+</ul>
 </div>
 </div>
+<section id="quando-o-reset-não-basta" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="quando-o-reset-não-basta"><span class="header-section-number">8.1</span> Quando o reset não basta</h2>
+<p>O 2 encerrou com o reset: apaga-se a configuração, o <strong>sistema</strong> permanece. Mas há defeitos que moram no sistema — e para eles existe o <strong>Netinstall</strong>, a reinstalação completa do RouterOS pela rede. Casos clássicos do provedor:</p>
+<ul>
+<li>o equipamento <strong>não completa o boot</strong> (atualização interrompida por queda de energia na torre, armazenamento corrompido);</li>
+<li>a <strong>senha se perdeu</strong> e não há backup — sem ela não há reset remoto, e o Netinstall zera tudo, sistema e senha juntos;</li>
+<li>suspeita de <strong>comprometimento</strong>: roteador invadido não se “limpa” com reset — a única higiene confiável é reinstalar o sistema de fora;</li>
+<li><strong>downgrade</strong> controlado ou troca de <em>release channel</em> que o upgrade normal não resolve.</li>
+</ul>
+<p>A analogia direta: o reset é a <em>restauração de fábrica</em> do celular; o Netinstall é <em>reinstalar o sistema operacional com um cabo no computador</em>. Um mexe nos dados; o outro regrava a própria plataforma.</p>
+<p>O CHR fica de fora deste capítulo por natureza: sendo uma máquina virtual, “reinstalar o sistema” é simplesmente trocar o disco <code>.vdi</code> por um novo (<a href="05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>). O Netinstall é ferramenta do mundo <strong>físico</strong>, das RouterBOARD — e por isso este é o único capítulo do livro cujo laboratório pede um equipamento de verdade (qualquer RouterBOARD barata serve, e um hEX usado é um ótimo investimento de estudo).</p>
+</section>
+<section id="como-funciona-por-baixo" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="como-funciona-por-baixo"><span class="header-section-number">8.2</span> Como funciona por baixo</h2>
+<p>O truque está no RouterBOOT (<a href="03-licencas-routerboot.html" class="quarto-xref"><span>Capítulo 3</span></a>). Além de dar boot pelo armazenamento interno, ele sabe dar boot <strong>pela rede</strong> — o modo <em>etherboot</em>: o equipamento liga, envia pedidos de boot pela porta Ethernet e espera que alguém na rede lhe entregue um sistema.</p>
+<p>Esse “alguém” é o aplicativo <strong>Netinstall</strong>, da MikroTik, rodando no seu computador, com dois papéis: servir o boot de rede e, em seguida, regravar o RouterOS escolhido no armazenamento do equipamento (<a href="#fig-netinstall-fluxo" class="quarto-xref">Figura&nbsp;<span>8.1</span></a>).</p>
+<div id="fig-netinstall-fluxo" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-netinstall-fluxo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="304.806914pt" height="169.56254pt" viewbox="-68.014948 -68.014953 304.806914 169.56254">
+<defs>
+<path id="tz_fig_netinstall_fluxo_g0-12" d="M3.66127-4.51208C3.66127-4.735243 3.612453-4.846824 3.326526-4.846824H3.047572C2.782565-4.846824 2.712827-4.756164 2.712827-4.51208V-4.233126C2.712827-4.009963 2.761644-3.898381 3.047572-3.898381H3.326526C3.591532-3.898381 3.66127-3.989041 3.66127-4.233126V-4.51208ZM2.726775-.334745C2.726775-.111582 2.775592 0 3.061519 0H3.319552C3.584558 0 3.654296-.09066 3.654296-.334745V-2.859278C3.654296-3.082441 3.605479-3.194022 3.319552-3.194022H3.061519C2.796513-3.194022 2.726775-3.103362 2.726775-2.859278V-.334745ZM1.506351-3.989041C1.506351-4.184309 1.520299-4.414446 1.736488-4.414446C1.973599-4.414446 2.043337-4.261021 2.085181-4.177335C2.099128-4.14944 2.12005-4.107597 2.168867-4.107597C2.259527-4.107597 2.259527-4.184309 2.259527-4.29589V-4.651557C2.259527-4.811955 2.259527-4.825903 2.085181-4.867746C1.910834-4.916563 1.827148-4.916563 1.72254-4.916563C.99726-4.916563 .599751-4.533001 .599751-3.765878V-3.194022C.4533-3.194022 .209215-3.194022 .209215-2.942964S.446326-2.691905 .599751-2.691905V-.334745C.599751-.083686 .676463 0 .934496 0H1.192528C1.457534 0 1.527273-.09066 1.527273-.334745V-2.691905H1.924782C2.008468-2.691905 2.259527-2.691905 2.259527-2.942964S2.008468-3.194022 1.924782-3.194022H1.506351V-3.989041Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-46" d="M1.520299-.72528C1.520299-.9066 1.513325-.913574 1.332005-.913574H.795019C.613699-.913574 .606725-.9066 .606725-.72528V-.188294C.606725-.006974 .613699 0 .795019 0H1.332005C1.513325 0 1.520299-.006974 1.520299-.188294V-.72528Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-49" d="M2.475716-4.658531C2.475716-4.791034 2.475716-4.993275 2.168867-4.993275C2.02939-4.993275 2.001494-4.979328 1.917808-4.895641C1.792279-4.78406 1.527273-4.526027 .836862-4.51208C.711333-4.51208 .530012-4.463263 .530012-4.261021C.530012-4.009963 .774097-4.009963 .864757-4.009963C1.073973-4.009963 1.318057-4.044832 1.520299-4.100623V-.502117H.976339C.885679-.502117 .641594-.502117 .641594-.251059S.885679 0 .976339 0H2.963885C3.040598 0 3.29863 0 3.29863-.251059S3.040598-.502117 2.963885-.502117H2.475716V-4.658531Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-50" d="M.4533-.592777C.383562-.523039 .383562-.509091 .383562-.390535V-.334745C.383562-.083686 .460274 0 .718306 0H3.110336C3.375342 0 3.445081-.09066 3.445081-.334745V-.418431C3.445081-.530012 3.445081-.662516 3.29863-.72528C3.249813-.753176 3.02665-.753176 2.887173-.753176C2.733748-.753176 2.566376-.746202 2.412951-.746202H1.283188L2.203736-1.617933C2.308344-1.708593 2.57335-1.924782 2.677958-2.022416C3.061519-2.399004 3.445081-2.768618 3.445081-3.38929C3.445081-4.2401 2.831382-4.993275 1.806227-4.993275C1.562142-4.993275 1.164633-4.958406 .829888-4.686426C.767123-4.637609 .446326-4.38655 .320797-3.919303L.669489-3.472976C.711333-3.417186 .732254-3.38929 .781071-3.38929C.843836-3.38929 .857783-3.438107 .878705-3.521793C1.018182-4.002989 1.255293-4.29589 1.701619-4.29589C2.245579-4.29589 2.468742-3.800747 2.468742-3.375342C2.468742-2.929016 2.203736-2.461768 1.785305-2.015442L.4533-.592777Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-51" d="M.669489-3.870486C.72528-3.7868 .760149-3.7868 .774097-3.7868C.822914-3.7868 .836862-3.814695 .871731-3.863512C1.227397-4.372603 1.72254-4.372603 1.8132-4.372603C2.259527-4.372603 2.322291-4.142466 2.322291-3.800747C2.322291-3.703113 2.322291-3.368369 2.106102-3.103362C1.93873-2.908095 1.764384-2.894147 1.555168-2.880199C1.478456-2.873225 1.345953-2.866252 1.325031-2.852304C1.276214-2.831382 1.276214-2.789539 1.276214-2.677958V-2.552428C1.276214-2.371108 1.283188-2.364134 1.464508-2.364134H1.771357C2.405978-2.364134 2.48269-1.966625 2.48269-1.429639C2.48269-.962391 2.433873-.502117 1.799253-.502117C1.57609-.502117 1.060025-.550934 .592777-.990286C.530012-1.053051 .523039-1.060025 .495143-1.060025C.425405-1.060025 .411457-.99726 .404483-.983313C.404483-.976339 .320797-.536986 .320797-.502117C.320797-.411457 .920548 .153425 1.834122 .153425C3.033624 .153425 3.507846-.488169 3.507846-1.415691C3.507846-2.043337 3.173101-2.468742 2.545455-2.629141C3.110336-2.93599 3.29863-3.38929 3.29863-3.7868C3.29863-4.902615 2.30137-4.993275 1.84807-4.993275C.892653-4.993275 .425405-4.309838 .425405-4.254047C.425405-4.212204 .467248-4.156413 .474222-4.14944L.669489-3.870486Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-52" d="M.27198-1.827148C.216189-1.72254 .216189-1.701619 .216189-1.57609V-1.401743C.216189-1.17858 .265006-1.066999 .550934-1.066999H2.12005V-.334745C2.12005-.111582 2.168867 0 2.454795 0H2.650062C2.915068 0 2.984807-.09066 2.984807-.334745V-1.066999H3.277709C3.493898-1.066999 3.612453-1.115816 3.612453-1.39477C3.612453-1.652802 3.521793-1.72254 3.277709-1.72254H2.984807V-4.505106C2.984807-4.756164 2.908095-4.839851 2.650062-4.839851H2.140971C2.008468-4.839851 1.903861-4.839851 1.820174-4.679452L.27198-1.827148ZM.941469-1.72254C2.057285-3.772852 2.12005-3.989041 2.154919-4.107597H2.161893V-1.72254H.941469Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-54" d="M3.012702-4.658531C3.012702-4.825903 3.012702-4.832877 2.768618-4.923537C2.587298-4.993275 2.399004-4.993275 2.329265-4.993275C.320797-4.993275 .320797-2.984807 .320797-2.371108C.320797-1.652802 .320797 .153425 1.945704 .153425C2.48269 .153425 2.817435 .020922 3.103362-.299875C3.466002-.704359 3.507846-1.101868 3.507846-1.645828C3.507846-2.043337 3.507846-3.340473 2.147945-3.340473C1.764384-3.340473 1.48543-3.124284 1.297136-2.719801C1.332005-3.347447 1.338979-3.500872 1.443587-3.779826C1.645828-4.309838 2.106102-4.372603 2.350187-4.372603C2.475716-4.372603 2.657036-4.351681 2.824408-4.261021C2.873225-4.226152 2.894147-4.212204 2.929016-4.212204C3.012702-4.212204 3.012702-4.29589 3.012702-4.400498V-4.658531ZM1.93873-.502117C1.387796-.502117 1.311083-1.129763 1.311083-1.729514C1.311083-2.308344 1.478456-2.838356 1.973599-2.838356C2.531507-2.838356 2.531507-2.343213 2.531507-1.652802C2.531507-.969365 2.531507-.502117 1.93873-.502117Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-56" d="M2.650062-2.608219C3.319552-2.831382 3.403238-3.319552 3.403238-3.633375C3.403238-4.658531 2.747696-4.993275 1.917808-4.993275C1.157659-4.993275 .425405-4.721295 .425405-3.633375C.425405-3.263761 .550934-2.817435 1.17858-2.608219C.460274-2.405978 .320797-1.855044 .320797-1.415691C.320797-.327771 .9066 .153425 1.910834 .153425C2.963885 .153425 3.507846-.369614 3.507846-1.415691C3.507846-2.050311 3.20797-2.447821 2.650062-2.608219ZM1.917808-2.866252C1.332005-2.866252 1.318057-3.20797 1.318057-3.626401C1.318057-4.107597 1.3599-4.372603 1.910834-4.372603S2.510585-4.121544 2.510585-3.626401C2.510585-3.221918 2.503611-2.866252 1.917808-2.866252ZM1.917808-.502117C1.30411-.502117 1.290162-.892653 1.290162-1.429639C1.290162-1.882939 1.290162-2.364134 1.910834-2.364134C2.538481-2.364134 2.538481-1.889913 2.538481-1.429639C2.538481-.9066 2.524533-.502117 1.917808-.502117Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-57" d="M2.531507-2.127024C2.524533-2.064259 2.531507-1.931756 2.510585-1.63188C2.475716-1.206476 2.350187-.502117 1.583064-.502117C1.366874-.502117 1.164633-.557908 .976339-.732254C.941469-.774097 .920548-.788045 .885679-.788045C.829888-.788045 .81594-.753176 .781071-.697385C.648568-.474222 .550934-.313823 .550934-.27198C.550934-.216189 .913574 .153425 1.597011 .153425C3.507846 .153425 3.507846-1.855044 3.507846-2.48269C3.507846-3.228892 3.500872-4.993275 1.917808-4.993275C1.48543-4.993275 1.025156-4.916563 .662516-4.470237C.369614-4.086675 .320797-3.737983 .320797-3.200996C.320797-2.761644 .334745-2.364134 .63462-1.966625C.913574-1.603985 1.234371-1.499377 1.680697-1.499377C2.196762-1.499377 2.440847-1.910834 2.531507-2.127024ZM1.855044-2.001494C1.297136-2.001494 1.297136-2.503611 1.297136-3.194022C1.297136-3.870486 1.297136-4.372603 1.931756-4.372603C2.412951-4.372603 2.524533-3.835616 2.524533-3.103362C2.524533-3.005729 2.524533-2.001494 1.855044-2.001494Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-65" d="M3.305604-4.539975C3.200996-4.839851 2.998755-4.839851 2.859278-4.839851H2.245579C2.106102-4.839851 1.903861-4.839851 1.799253-4.539975L.327771-.327771C.292902-.237111 .292902-.223163 .292902-.188294C.292902 0 .467248 0 .564882 0H.81594C.941469 0 1.157659 0 1.255293-.278954L1.527273-1.053051H3.459029L3.696139-.383562C3.779826-.139477 3.828643 0 4.163387 0H4.539975C4.637609 0 4.811955 0 4.811955-.188294C4.811955-.223163 4.811955-.237111 4.777086-.327771L3.305604-4.539975ZM2.238605-3.131258C2.343213-3.438107 2.433873-3.703113 2.489664-3.954172H2.496638C2.531507-3.7868 2.531507-3.772852 2.587298-3.612453L3.249813-1.652802H1.736488L2.238605-3.131258Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-66" d="M.969365-4.839851C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H2.880199C3.396264 0 4.679452-.09066 4.679452-1.352927C4.679452-2.336239 3.710087-2.489664 3.452055-2.531507C4.093649-2.677958 4.463263-3.040598 4.463263-3.584558C4.463263-4.839851 2.977833-4.839851 2.684932-4.839851H.969365ZM1.617933-2.768618V-4.2401H2.433873C2.705853-4.2401 3.514819-4.219178 3.514819-3.563636C3.514819-2.768618 2.601245-2.768618 2.426899-2.768618H1.617933ZM1.617933-.599751V-2.266501H2.496638C2.740722-2.266501 3.710087-2.266501 3.710087-1.366874C3.710087-.648568 2.963885-.599751 2.629141-.599751H1.617933Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-68" d="M.969365-4.839851C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H2.810461C4.51208 0 5.104857-1.018182 5.104857-2.385056C5.104857-2.93599 5.014197-3.612453 4.623661-4.107597C4.100623-4.756164 3.263761-4.839851 2.810461-4.839851H.969365ZM1.638854-.599751V-4.2401H2.531507C4.037858-4.2401 4.100623-3.166127 4.100623-2.385056C4.100623-1.597011 4.02391-.599751 2.538481-.599751H1.638854Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-73" d="M1.66675-4.505106C1.66675-4.728269 1.617933-4.839851 1.332005-4.839851H.976339C.72528-4.839851 .641594-4.763138 .641594-4.505106V-.334745C.641594-.083686 .718306 0 .976339 0H1.332005C1.597011 0 1.66675-.09066 1.66675-.334745V-4.505106Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-78" d="M2.113076-4.560897C1.966625-4.839851 1.75741-4.839851 1.617933-4.839851H.969365C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H1.157659C1.422665 0 1.492403-.09066 1.492403-.334745V-3.996015H1.499377L3.417186-.278954C3.563636 0 3.772852 0 3.912329 0H4.560897C4.825903 0 4.895641-.09066 4.895641-.334745V-4.505106C4.895641-4.728269 4.846824-4.839851 4.560897-4.839851H4.372603C4.107597-4.839851 4.037858-4.749191 4.037858-4.505106V-.843836H4.030884L2.113076-4.560897Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-79" d="M5.104857-2.385056C5.104857-3.7868 4.595766-4.993275 2.768618-4.993275C.836862-4.993275 .425405-3.66127 .425405-2.385056C.425405-1.080946 .878705 .153425 2.761644 .153425C4.560897 .153425 5.104857-.955417 5.104857-2.385056ZM2.768618-.404483C1.45056-.404483 1.45056-1.862017 1.45056-2.496638C1.45056-3.110336 1.45056-4.449315 2.761644-4.449315C4.079701-4.449315 4.079701-3.124284 4.079701-2.496638C4.079701-1.875965 4.079701-.404483 2.768618-.404483Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-80" d="M1.659776-1.868991H2.719801C3.814695-1.868991 4.470237-2.329265 4.470237-3.333499C4.470237-4.38655 3.7868-4.839851 2.712827-4.839851H.969365C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H1.325031C1.590037 0 1.659776-.09066 1.659776-.334745V-1.868991ZM2.496638-4.2401C3.410212-4.2401 3.500872-3.821669 3.500872-3.333499C3.500872-2.866252 3.424159-2.419925 2.489664-2.419925H1.638854V-4.2401H2.496638Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-82" d="M3.368369-2.231631C3.807721-2.336239 4.470237-2.601245 4.470237-3.466002C4.470237-4.839851 2.956912-4.839851 2.643088-4.839851H.969365C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H1.30411C1.569116 0 1.638854-.09066 1.638854-.334745V-2.168867H2.412951L3.556663-.167372C3.654296 0 3.731009 0 3.884433 0H4.29589C4.435367 0 4.553923 0 4.553923-.209215L3.368369-2.231631ZM1.638854-2.670984V-4.2401H2.545455C3.354421-4.2401 3.500872-3.919303 3.500872-3.459029C3.500872-3.047572 3.403238-2.670984 2.545455-2.670984H1.638854Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-97" d="M3.235866-2.203736C3.235866-3.305604 2.175841-3.312578 1.827148-3.312578C1.499377-3.312578 1.150685-3.284682 .683437-3.089415C.536986-3.02665 .502117-3.005729 .502117-2.929016C.502117-2.880199 .54396-2.475716 .550934-2.419925C.557908-2.378082 .592777-2.343213 .641594-2.343213C.676463-2.343213 .697385-2.364134 .718306-2.385056C1.018182-2.698879 1.366874-2.852304 1.799253-2.852304C2.175841-2.852304 2.287422-2.622167 2.287422-2.21071V-1.966625C2.043337-1.966625 .216189-1.952677 .216189-.927522C.216189-.439352 .606725 .076712 1.220423 .076712C1.457534 .076712 1.980573 .006974 2.308344-.474222V-.334745C2.308344-.111582 2.357161 0 2.643088 0H2.901121C3.166127 0 3.235866-.09066 3.235866-.334745V-2.203736ZM2.287422-1.073973C2.287422-.425405 1.624907-.425405 1.603985-.425405C1.311083-.425405 1.12279-.676463 1.12279-.941469C1.12279-1.624907 2.092154-1.673724 2.287422-1.680697V-1.073973Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-98" d="M1.352927-4.505106C1.352927-4.728269 1.30411-4.839851 1.018182-4.839851H.760149C.509091-4.839851 .425405-4.763138 .425405-4.505106V-.334745C.425405-.083686 .502117 0 .760149 0H1.039103C1.157659 0 1.366874 0 1.373848-.27198C1.694645 .076712 2.050311 .076712 2.161893 .076712C3.647323 .076712 3.647323-1.262267 3.647323-1.610959C3.647323-1.945704 3.647323-3.270735 2.336239-3.270735C1.764384-3.270735 1.415691-2.949938 1.352927-2.880199V-4.505106ZM1.373848-2.524533C1.464508-2.608219 1.673724-2.768618 1.994521-2.768618C2.698879-2.768618 2.698879-2.127024 2.698879-1.603985C2.698879-1.08792 2.698879-.425405 1.917808-.425405C1.624907-.425405 1.45056-.599751 1.373848-.697385V-2.524533Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-101" d="M3.005729-1.492403C3.166127-1.492403 3.340473-1.499377 3.340473-1.8132C3.340473-2.712827 2.922042-3.312578 1.882939-3.312578C.767123-3.312578 .216189-2.684932 .216189-1.624907C.216189-.481196 .878705 .076712 1.973599 .076712C2.238605 .076712 2.636115 .041843 3.096389-.188294C3.249813-.265006 3.29863-.285928 3.29863-.369614C3.29863-.418431 3.277709-.620672 3.270735-.676463C3.242839-.892653 3.235866-.899626 3.173101-.899626C3.145205-.899626 3.131258-.899626 3.054545-.829888C2.643088-.474222 2.224658-.425405 2.001494-.425405C1.21345-.425405 1.129763-1.046077 1.108842-1.492403H3.005729ZM1.115816-1.862017C1.136737-2.287422 1.276214-2.810461 1.882939-2.810461C2.440847-2.810461 2.545455-2.405978 2.566376-1.862017H1.115816Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-104" d="M3.486924-2.266501C3.486924-2.984807 3.180075-3.270735 2.468742-3.270735C1.771357-3.270735 1.45056-2.789539 1.352927-2.594271H1.345953V-4.505106C1.345953-4.728269 1.297136-4.839851 1.011208-4.839851H.753176C.502117-4.839851 .418431-4.763138 .418431-4.505106V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.48269 1.771357-2.768618 2.133998-2.768618C2.468742-2.768618 2.538481-2.608219 2.538481-2.252553V-.334745C2.538481-.111582 2.587298 0 2.873225 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.266501Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-105" d="M.711333-4.846824C.488169-4.846824 .376588-4.804981 .376588-4.526027V-4.20523C.376588-3.982067 .446326-3.891407 .704359-3.891407H1.066999C1.401743-3.891407 1.401743-4.037858 1.401743-4.365629C1.401743-4.700374 1.401743-4.846824 1.066999-4.846824H.711333ZM1.352927-2.859278C1.352927-3.082441 1.30411-3.194022 1.018182-3.194022H.760149C.509091-3.194022 .425405-3.11731 .425405-2.859278V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-2.859278Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-107" d="M2.182814-1.896887L3.256787-2.894147C3.340473-2.970859 3.361395-2.991781 3.361395-3.047572C3.361395-3.194022 3.221918-3.194022 3.124284-3.194022H2.719801C2.594271-3.194022 2.461768-3.194022 2.30137-3.047572L1.297136-2.113076V-4.505106C1.297136-4.728269 1.248319-4.839851 .962391-4.839851H.81594C.564882-4.839851 .481196-4.763138 .481196-4.505106V-.334745C.481196-.083686 .557908 0 .81594 0H.941469C1.206476 0 1.276214-.09066 1.276214-.334745V-1.060025L1.603985-1.3599L2.510585-.174346C2.629141-.020922 2.677958 0 2.880199 0H3.214944C3.312578 0 3.466002 0 3.466002-.153425C3.466002-.167372 3.466002-.216189 3.396264-.306849L2.182814-1.896887Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-108" d="M1.352927-4.505106C1.352927-4.728269 1.30411-4.839851 1.018182-4.839851H.760149C.509091-4.839851 .425405-4.763138 .425405-4.505106V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-4.505106Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-110" d="M3.486924-2.266501C3.486924-2.984807 3.180075-3.270735 2.468742-3.270735C1.736488-3.270735 1.422665-2.740722 1.332005-2.552428H1.325031V-2.901121C1.325031-3.124284 1.276214-3.235866 .990286-3.235866H.753176C.502117-3.235866 .418431-3.159153 .418431-2.901121V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.48269 1.771357-2.768618 2.133998-2.768618C2.468742-2.768618 2.538481-2.608219 2.538481-2.252553V-.334745C2.538481-.111582 2.587298 0 2.873225 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.266501Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-111" d="M3.612453-1.569116C3.612453-2.712827 3.054545-3.312578 1.917808-3.312578C.753176-3.312578 .216189-2.691905 .216189-1.569116C.216189-.432379 .81594 .076712 1.910834 .076712S3.612453-.425405 3.612453-1.569116ZM1.917808-.467248C1.164633-.467248 1.164633-1.094894 1.164633-1.652802C1.164633-2.189788 1.164633-2.810461 1.910834-2.810461C2.66401-2.810461 2.66401-2.196762 2.66401-1.652802C2.66401-1.101868 2.66401-.467248 1.917808-.467248Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-112" d="M1.373848-.27198C1.687671 .076712 2.071233 .076712 2.168867 .076712C3.647323 .076712 3.647323-1.262267 3.647323-1.610959C3.647323-1.952677 3.647323-3.270735 2.385056-3.270735C1.973599-3.270735 1.603985-3.103362 1.352927-2.866252C1.352927-3.124284 1.255293-3.194022 1.018182-3.194022H.760149C.509091-3.194022 .425405-3.11731 .425405-2.859278V1.018182C.425405 1.26924 .502117 1.352927 .760149 1.352927H1.039103C1.30411 1.352927 1.373848 1.262267 1.373848 1.018182V-.27198ZM1.373848-2.496638C1.45056-2.566376 1.680697-2.726775 1.980573-2.726775C2.691905-2.726775 2.698879-1.903861 2.698879-1.597011C2.698879-1.318057 2.698879-.425405 1.910834-.425405C1.750436-.425405 1.624907-.481196 1.54122-.54396C1.373848-.662516 1.373848-.697385 1.373848-.822914V-2.496638Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-114" d="M1.352927-1.603985C1.352927-2.266501 1.903861-2.538481 2.343213-2.566376C2.468742-2.57335 2.48269-2.57335 2.48269-2.75467V-3.082441C2.48269-3.221918 2.48269-3.270735 2.357161-3.270735C2.161893-3.270735 1.652802-3.200996 1.325031-2.447821H1.318057V-2.901121C1.318057-3.124284 1.26924-3.235866 .983313-3.235866H.760149C.509091-3.235866 .425405-3.159153 .425405-2.901121V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-1.603985Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-115" d="M2.761644-.983313C2.761644-1.373848 2.552428-1.617933 2.426899-1.729514C2.147945-1.980573 1.903861-2.022416 1.610959-2.078207C1.227397-2.147945 .948443-2.203736 .948443-2.475716C.948443-2.761644 1.17858-2.817435 1.45056-2.817435C1.917808-2.817435 2.168867-2.643088 2.350187-2.489664C2.419925-2.419925 2.433873-2.419925 2.461768-2.419925C2.531507-2.419925 2.545455-2.48269 2.552428-2.510585C2.566376-2.566376 2.636115-2.956912 2.636115-2.991781C2.636115-3.103362 2.266501-3.200996 2.189788-3.228892C1.910834-3.305604 1.687671-3.312578 1.506351-3.312578C1.192528-3.312578 .258032-3.312578 .258032-2.315318C.258032-1.973599 .411457-1.764384 .599751-1.597011C.843836-1.373848 1.115816-1.325031 1.513325-1.248319C1.715567-1.21345 2.071233-1.150685 2.071233-.843836C2.071233-.516065 1.799253-.467248 1.527273-.467248C1.220423-.467248 .829888-.557908 .502117-.948443C.467248-.983313 .446326-1.004234 .404483-1.004234C.334745-1.004234 .320797-.941469 .313823-.899626C.299875-.801993 .216189-.404483 .216189-.334745C.216189-.209215 .732254-.048817 .739228-.041843C1.12279 .076712 1.408717 .076712 1.527273 .076712C1.882939 .076712 2.761644 .048817 2.761644-.983313Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-116" d="M1.520299-2.691905H2.140971C2.224658-2.691905 2.475716-2.691905 2.475716-2.942964S2.224658-3.194022 2.140971-3.194022H1.520299V-3.772852C1.520299-3.996015 1.471482-4.107597 1.185554-4.107597H.969365C.718306-4.107597 .63462-4.030884 .63462-3.772852V-3.194022H.474222C.397509-3.194022 .139477-3.194022 .139477-2.942964S.390535-2.691905 .474222-2.691905H.613699V-.927522C.613699-.223163 .864757 .076712 1.345953 .076712C1.408717 .076712 1.715567 .076712 2.078207-.034869C2.196762-.069738 2.601245-.195268 2.601245-.327771C2.601245-.348692 2.587298-.397509 2.545455-.54396C2.510585-.683437 2.496638-.72528 2.433873-.72528C2.399004-.72528 2.39203-.718306 2.350187-.676463C2.273474-.620672 2.085181-.467248 1.792279-.467248C1.624907-.467248 1.520299-.585803 1.520299-1.046077V-2.691905Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-117" d="M3.486924-2.859278C3.486924-3.082441 3.438107-3.194022 3.152179-3.194022H2.873225C2.608219-3.194022 2.538481-3.103362 2.538481-2.859278V-1.206476C2.538481-.746202 2.294396-.348692 1.799253-.348692C1.408717-.348692 1.366874-.446326 1.366874-.81594V-2.859278C1.366874-3.082441 1.318057-3.194022 1.03213-3.194022H.753176C.502117-3.194022 .418431-3.11731 .418431-2.859278V-.878705C.418431-.132503 .822914 .076712 1.548194 .076712C1.736488 .076712 2.231631 .076712 2.559402-.516065V-.334745C2.559402-.111582 2.608219 0 2.894147 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.859278Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-120" d="M2.099128-1.652802L3.110336-2.894147C3.180075-2.977833 3.180075-3.005729 3.180075-3.040598C3.180075-3.194022 3.040598-3.194022 2.93599-3.194022H2.636115C2.510585-3.194022 2.426899-3.194022 2.329265-3.089415C2.294396-3.054545 1.841096-2.447821 1.72254-2.287422L1.12279-3.040598C1.004234-3.187049 .927522-3.194022 .767123-3.194022H.460274C.369614-3.194022 .216189-3.194022 .216189-3.040598C.216189-2.991781 .237111-2.963885 .285928-2.908095L1.338979-1.652802L.237111-.292902C.195268-.244085 .167372-.209215 .167372-.153425C.167372 0 .320797 0 .418431 0H.718306C.948443 0 .962391-.020922 1.115816-.251059L1.715567-1.143711L2.426899-.139477C2.524533 0 2.608219 0 2.75467 0H3.061519C3.159153 0 3.305604 0 3.305604-.153425C3.305604-.209215 3.277709-.237111 3.228892-.299875L2.099128-1.652802Z"></path>
+<path id="tz_fig_netinstall_fluxo_g0-124" d="M7.329514-1.72254C7.4132-1.72254 7.664259-1.72254 7.664259-1.973599S7.4132-2.224658 7.329514-2.224658H.334745C.251059-2.224658 0-2.224658 0-1.973599S.251059-1.72254 .334745-1.72254H7.329514Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-19" d="M3.075467-4.839851H2.468742L1.513325-3.675218H1.973599L3.075467-4.839851Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-24" d="M2.078207 .160399H1.617933L1.066999 1.332005H1.597011L2.078207 .160399Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-40" d="M2.127024-5.230386C2.008468-5.230386 1.994521-5.230386 1.910834-5.153674C1.03213-4.38655 .585803-3.145205 .585803-1.743462C.585803-.425405 .983313 .843836 1.903861 1.652802C1.994521 1.743462 2.008468 1.743462 2.127024 1.743462H2.461768C2.440847 1.729514 1.764384 1.150685 1.443587 .062765C1.276214-.481196 1.192528-1.053051 1.192528-1.743462C1.192528-4.156413 2.322291-5.111831 2.461768-5.230386H2.127024Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-41" d="M.746202 1.743462C.864757 1.743462 .878705 1.743462 .962391 1.66675C1.841096 .899626 2.287422-.341719 2.287422-1.743462C2.287422-3.061519 1.889913-4.33076 .969365-5.139726C.878705-5.230386 .864757-5.230386 .746202-5.230386H.411457C.432379-5.216438 1.108842-4.637609 1.429639-3.549689C1.597011-3.005729 1.680697-2.433873 1.680697-1.743462C1.680697 .669489 .550934 1.624907 .411457 1.743462H.746202Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-45" d="M2.050311-1.332005V-1.771357H.083686V-1.332005H2.050311Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-59" d="M1.338979-3.096389H.711333V-2.468742H1.338979V-3.096389ZM.704359 .892653H1.018182L1.338979-.006974V-.627646H.711333V0H.9066L.704359 .892653Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-66" d="M.697385-4.839851V0H2.684932C3.717061 0 4.519054-.613699 4.519054-1.311083C4.519054-1.924782 3.870486-2.419925 3.096389-2.531507C3.821669-2.705853 4.309838-3.124284 4.309838-3.626401C4.309838-4.267995 3.507846-4.839851 2.48269-4.839851H.697385ZM1.352927-2.747696V-4.428394H2.273474C3.054545-4.428394 3.703113-4.065753 3.703113-3.619427C3.703113-3.152179 3.068493-2.747696 2.280448-2.747696H1.352927ZM1.352927-.411457V-2.287422H2.350187C3.228892-2.287422 3.884433-1.841096 3.884433-1.318057C3.884433-.801993 3.235866-.411457 2.468742-.411457H1.352927Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-76" d="M1.380822-4.839851H.676463V0H3.717061V-.495143C3.054545-.495143 2.39203-.481196 1.729514-.481196H1.380822V-4.839851Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-78" d="M1.645828-4.839851H.697385V0H1.283188V-4.288917H1.290162L3.577584 0H4.526027V-4.839851H3.940224V-.550934H3.93325L1.645828-4.839851Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-79" d="M5.05604-2.399004C5.05604-3.84259 3.996015-4.986301 2.733748-4.986301S.411457-3.84259 .411457-2.399004S1.48543 .146451 2.733748 .146451C3.989041 .146451 5.05604-.962391 5.05604-2.399004ZM2.733748-.348692C1.889913-.348692 1.115816-1.192528 1.115816-2.510585C1.115816-3.744956 1.896887-4.505106 2.733748-4.505106S4.351681-3.744956 4.351681-2.510585C4.351681-1.185554 3.577584-.348692 2.733748-.348692Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-80" d="M2.615193-1.987547C3.514819-1.987547 4.316812-2.622167 4.316812-3.424159C4.316812-4.170361 3.577584-4.839851 2.566376-4.839851H.683437V0H1.387796V-1.987547H2.615193ZM2.39203-4.428394C3.180075-4.428394 3.682192-4.009963 3.682192-3.424159C3.682192-2.852304 3.20797-2.419925 2.39203-2.419925H1.366874V-4.428394H2.39203Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-82" d="M3.131258-2.259527C4.128518-2.552428 4.379577-3.159153 4.379577-3.535741C4.379577-4.261021 3.528767-4.839851 2.517559-4.839851H.683437V0H1.366874V-2.189788H2.517559L3.87746 0H4.581818L3.131258-2.259527ZM1.366874-2.650062V-4.428394H2.426899C3.228892-4.428394 3.744956-4.051806 3.744956-3.535741C3.744956-3.047572 3.263761-2.650062 2.426899-2.650062H1.366874Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-83" d="M3.445081-4.644583C2.998755-4.87472 2.601245-4.986301 2.085181-4.986301C1.03213-4.986301 .411457-4.274969 .411457-3.605479C.411457-3.319552 .502117-2.984807 .843836-2.66401C1.150685-2.378082 1.471482-2.308344 1.903861-2.203736C2.489664-2.064259 2.650062-2.02939 2.852304-1.820174C2.984807-1.687671 3.096389-1.492403 3.096389-1.255293C3.096389-.822914 2.705853-.376588 2.02939-.376588C1.63188-.376588 .990286-.495143 .439352-.962391L.327771-.334745C.676463-.132503 1.255293 .146451 2.036364 .146451C3.005729 .146451 3.696139-.557908 3.696139-1.338979C3.696139-1.903861 3.368369-2.224658 3.228892-2.371108C2.93599-2.657036 2.615193-2.733748 2.078207-2.859278C1.652802-2.956912 1.429639-3.012702 1.262267-3.173101C1.171606-3.263761 1.011208-3.424159 1.011208-3.689166C1.011208-4.079701 1.401743-4.484184 2.078207-4.484184C2.608219-4.484184 2.977833-4.316812 3.333499-4.016936L3.445081-4.644583Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-84" d="M2.880199-4.309838H3.535741C3.619427-4.309838 3.703113-4.302864 3.7868-4.302864H4.791034V-4.791034H.265006V-4.302864H1.26924C1.352927-4.302864 1.436613-4.309838 1.520299-4.309838H2.175841V0H2.880199V-4.309838Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-97" d="M2.970859-2.008468C2.970859-2.719801 2.426899-3.200996 1.736488-3.200996C1.297136-3.200996 .962391-3.110336 .571856-2.901121L.613699-2.39203C.843836-2.545455 1.185554-2.75467 1.736488-2.75467C2.043337-2.75467 2.364134-2.524533 2.364134-2.001494V-1.72254C1.332005-1.687671 .313823-1.471482 .313823-.822914C.313823-.474222 .550934 .069738 1.164633 .069738C1.464508 .069738 2.015442 .006974 2.385056-.265006V0H2.970859V-2.008468ZM2.364134-.990286C2.364134-.850809 2.364134-.669489 2.12005-.523039C1.896887-.397509 1.624907-.390535 1.548194-.390535C1.164633-.390535 .871731-.564882 .871731-.829888C.871731-1.276214 2.050311-1.318057 2.364134-1.332005V-.990286Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-98" d="M1.17858-4.839851H.592777V0H1.199502V-.327771C1.352927-.195268 1.687671 .069738 2.196762 .069738C2.956912 .069738 3.57061-.641594 3.57061-1.555168C3.57061-2.399004 3.089415-3.166127 2.39203-3.166127C1.952677-3.166127 1.527273-3.02665 1.17858-2.768618V-4.839851ZM1.199502-2.196762C1.199502-2.308344 1.199502-2.39203 1.443587-2.552428C1.548194-2.615193 1.736488-2.705853 1.973599-2.705853C2.440847-2.705853 2.963885-2.39203 2.963885-1.555168C2.963885-.704359 2.385056-.390535 1.896887-.390535C1.638854-.390535 1.39477-.509091 1.199502-.822914V-2.196762Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-99" d="M3.033624-.760149C2.684932-.536986 2.308344-.411457 1.875965-.411457C1.234371-.411457 .857783-.927522 .857783-1.555168C.857783-2.092154 1.136737-2.719801 1.896887-2.719801C2.371108-2.719801 2.594271-2.622167 2.949938-2.399004L3.040598-2.901121C2.622167-3.110336 2.440847-3.200996 1.896887-3.200996C.850809-3.200996 .251059-2.357161 .251059-1.548194C.251059-.697385 .920548 .069738 1.868991 .069738C2.357161 .069738 2.775592-.076712 3.075467-.251059L3.033624-.760149Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-100" d="M3.228892-4.839851H2.643088V-2.796513C2.196762-3.124284 1.743462-3.166127 1.54122-3.166127C.808966-3.166127 .251059-2.433873 .251059-1.548194S.801993 .069738 1.520299 .069738C1.952677 .069738 2.357161-.125529 2.622167-.36264V0H3.228892V-4.839851ZM2.622167-.864757C2.447821-.578829 2.182814-.390535 1.84807-.390535C1.3599-.390535 .857783-.732254 .857783-1.54122C.857783-2.412951 1.45056-2.705853 1.924782-2.705853C2.203736-2.705853 2.440847-2.587298 2.622167-2.350187V-.864757Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-101" d="M2.998755-.760149C2.608219-.481196 2.168867-.390535 1.868991-.390535C1.262267-.390535 .801993-.885679 .781071-1.527273H3.068493C3.068493-1.84807 3.033624-2.315318 2.761644-2.712827C2.510585-3.068493 2.092154-3.200996 1.750436-3.200996C.899626-3.200996 .244085-2.454795 .244085-1.569116C.244085-.676463 .941469 .069738 1.862017 .069738C2.266501 .069738 2.684932-.048817 3.040598-.265006L2.998755-.760149ZM.829888-1.945704C.990286-2.503611 1.401743-2.740722 1.750436-2.740722C2.057285-2.740722 2.510585-2.594271 2.643088-1.945704H.829888Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-103" d="M3.507846-3.166127C3.354421-3.166127 2.887173-3.159153 2.357161-2.956912L2.343213-2.949938C2.092154-3.11731 1.84807-3.166127 1.645828-3.166127C.962391-3.166127 .4533-2.629141 .4533-2.02939C.4533-1.785305 .536986-1.534247 .697385-1.338979C.599751-1.220423 .495143-1.025156 .495143-.760149C.495143-.488169 .606725-.313823 .669489-.230137C.285928-.006974 .209215 .313823 .209215 .481196C.209215 1.011208 .941469 1.429639 1.84807 1.429639C2.761644 1.429639 3.486924 1.011208 3.486924 .481196C3.486924-.502117 2.266501-.502117 1.966625-.502117H1.318057C1.206476-.502117 .9066-.502117 .9066-.864757C.9066-1.004234 .955417-1.073973 .962391-1.08792C1.206476-.934496 1.45056-.885679 1.638854-.885679C2.322291-.885679 2.831382-1.422665 2.831382-2.022416C2.831382-2.245579 2.768618-2.447821 2.643088-2.636115C2.615193-2.677958 2.615193-2.684932 2.615193-2.691905C2.615193-2.719801 3.033624-2.719801 3.068493-2.719801C3.075467-2.719801 3.340473-2.719801 3.591532-2.691905L3.507846-3.166127ZM1.645828-1.318057C1.26924-1.318057 .990286-1.555168 .990286-2.022416C.990286-2.566376 1.338979-2.733748 1.638854-2.733748C2.015442-2.733748 2.294396-2.496638 2.294396-2.02939C2.294396-1.48543 1.945704-1.318057 1.645828-1.318057ZM1.973599 .041843C2.133998 .041843 2.956912 .041843 2.956912 .488169C2.956912 .788045 2.433873 .99726 1.84807 .99726S.739228 .788045 .739228 .488169C.739228 .4533 .739228 .041843 1.30411 .041843H1.973599Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-104" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.624907-3.166127 1.30411-2.817435 1.164633-2.670984V-4.839851H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-105" d="M1.227397-4.78406H.523039V-4.079701H1.227397V-4.78406ZM1.171606-3.096389H.585803V0H1.171606V-3.096389Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-108" d="M1.171606-4.839851H.585803V0H1.171606V-4.839851Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-109" d="M5.300125-2.064259C5.300125-2.608219 5.139726-3.166127 4.281943-3.166127C3.696139-3.166127 3.333499-2.824408 3.166127-2.601245C3.096389-2.789539 2.922042-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-1.694645C3.242839-2.154919 3.438107-2.705853 3.975093-2.705853C4.6934-2.705853 4.6934-2.217684 4.6934-2.015442V0H5.300125V-2.064259Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-110" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-111" d="M3.486924-1.527273C3.486924-2.447821 2.75467-3.200996 1.84807-3.200996S.209215-2.440847 .209215-1.527273C.209215-.641594 .948443 .069738 1.84807 .069738C2.75467 .069738 3.486924-.641594 3.486924-1.527273ZM1.84807-.411457C1.297136-.411457 .81594-.81594 .81594-1.603985S1.332005-2.740722 1.84807-2.740722C2.371108-2.740722 2.880199-2.378082 2.880199-1.603985C2.880199-.808966 2.385056-.411457 1.84807-.411457Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-112" d="M1.199502-.327771C1.569116 .006974 1.966625 .069738 2.203736 .069738C2.942964 .069738 3.57061-.63462 3.57061-1.555168C3.57061-2.39203 3.110336-3.166127 2.419925-3.166127C2.106102-3.166127 1.583064-3.075467 1.17858-2.761644V-3.096389H.592777V1.352927H1.199502V-.327771ZM1.199502-2.315318C1.3599-2.510585 1.63188-2.684932 1.966625-2.684932C2.524533-2.684932 2.963885-2.168867 2.963885-1.555168C2.963885-.864757 2.440847-.390535 1.896887-.390535C1.792279-.390535 1.617933-.404483 1.436613-.550934C1.227397-.711333 1.199502-.81594 1.199502-.948443V-2.315318Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-113" d="M3.228892-3.166127H2.643088V-2.698879C2.39203-2.977833 2.022416-3.166127 1.617933-3.166127C.878705-3.166127 .251059-2.468742 .251059-1.54122C.251059-.669489 .781071 .069738 1.478456 .069738C1.715567 .069738 2.182814 .013948 2.622167-.341719V1.352927H3.228892V-3.166127ZM2.643088-.857783C2.39203-.467248 2.057285-.390535 1.855044-.390535C1.290162-.390535 .857783-.920548 .857783-1.54122C.857783-2.224658 1.380822-2.684932 1.924782-2.684932C2.385056-2.684932 2.643088-2.231631 2.643088-1.93873V-.857783Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-114" d="M1.17858-1.48543C1.17858-2.238605 1.806227-2.643088 2.419925-2.650062V-3.166127C1.834122-3.159153 1.408717-2.873225 1.129763-2.503611V-3.145205H.592777V0H1.17858V-1.48543Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-115" d="M2.545455-2.984807C2.071233-3.180075 1.72254-3.200996 1.471482-3.200996C1.297136-3.200996 .244085-3.200996 .244085-2.273474C.244085-1.945704 .425405-1.764384 .516065-1.680697C.760149-1.436613 1.053051-1.380822 1.422665-1.311083C1.750436-1.248319 2.127024-1.17858 2.127024-.843836C2.127024-.404483 1.548194-.404483 1.45056-.404483C1.004234-.404483 .585803-.564882 .306849-.760149L.209215-.237111C.446326-.118555 .871731 .069738 1.45056 .069738C1.764384 .069738 2.071233 .020922 2.329265-.167372C2.587298-.36264 2.670984-.669489 2.670984-.9066C2.670984-1.03213 2.657036-1.30411 2.364134-1.569116C2.106102-1.799253 1.855044-1.84807 1.520299-1.910834C1.108842-1.987547 .788045-2.050311 .788045-2.357161C.788045-2.75467 1.297136-2.75467 1.401743-2.75467C1.799253-2.75467 2.106102-2.670984 2.454795-2.489664L2.545455-2.984807Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-116" d="M1.311083-2.657036H2.343213V-3.096389H1.311083V-3.982067H.774097V-3.096389H.139477V-2.657036H.753176V-.892653C.753176-.425405 .871731 .069738 1.373848 .069738S2.259527-.09066 2.468742-.188294L2.350187-.63462C2.12005-.467248 1.875965-.411457 1.680697-.411457C1.387796-.411457 1.311083-.697385 1.311083-1.018182V-2.657036Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-117" d="M3.242839-3.096389H2.636115V-1.073973C2.636115-.516065 2.161893-.341719 1.75741-.341719C1.241345-.341719 1.185554-.481196 1.185554-.801993V-3.096389H.578829V-.760149C.578829-.139477 .850809 .069738 1.338979 .069738C1.624907 .069738 2.238605 .013948 2.657036-.320797V0H3.242839V-3.096389Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-118" d="M3.305604-3.096389H2.747696C1.792279-.760149 1.750436-.571856 1.72254-.411457H1.715567C1.659776-.683437 1.464508-1.171606 1.248319-1.708593L.690411-3.096389H.104608L1.380822 0H2.02939L3.305604-3.096389Z"></path>
+<path id="tz_fig_netinstall_fluxo_g1-126" d="M2.615193-4.742217C2.608219-4.519054 2.531507-4.33076 2.336239-4.33076C2.161893-4.33076 1.987547-4.449315 1.910834-4.505106C1.701619-4.637609 1.54122-4.742217 1.345953-4.742217C.990286-4.742217 .627646-4.42142 .620672-3.870486H1.080946C1.08792-4.093649 1.164633-4.281943 1.3599-4.281943C1.534247-4.281943 1.708593-4.163387 1.785305-4.107597C1.994521-3.975093 2.154919-3.870486 2.350187-3.870486C2.705853-3.870486 3.068493-4.191283 3.075467-4.742217H2.615193Z"></path>
+<use id="tz_fig_netinstall_fluxo_g2-12" href="#tz_fig_netinstall_fluxo_g0-12" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-46" href="#tz_fig_netinstall_fluxo_g0-46" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-49" href="#tz_fig_netinstall_fluxo_g0-49" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-50" href="#tz_fig_netinstall_fluxo_g0-50" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-54" href="#tz_fig_netinstall_fluxo_g0-54" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-56" href="#tz_fig_netinstall_fluxo_g0-56" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-57" href="#tz_fig_netinstall_fluxo_g0-57" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-65" href="#tz_fig_netinstall_fluxo_g0-65" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-66" href="#tz_fig_netinstall_fluxo_g0-66" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-68" href="#tz_fig_netinstall_fluxo_g0-68" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-73" href="#tz_fig_netinstall_fluxo_g0-73" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-78" href="#tz_fig_netinstall_fluxo_g0-78" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-79" href="#tz_fig_netinstall_fluxo_g0-79" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-80" href="#tz_fig_netinstall_fluxo_g0-80" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-82" href="#tz_fig_netinstall_fluxo_g0-82" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-97" href="#tz_fig_netinstall_fluxo_g0-97" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-98" href="#tz_fig_netinstall_fluxo_g0-98" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-101" href="#tz_fig_netinstall_fluxo_g0-101" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-104" href="#tz_fig_netinstall_fluxo_g0-104" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-105" href="#tz_fig_netinstall_fluxo_g0-105" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-107" href="#tz_fig_netinstall_fluxo_g0-107" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-108" href="#tz_fig_netinstall_fluxo_g0-108" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-110" href="#tz_fig_netinstall_fluxo_g0-110" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-111" href="#tz_fig_netinstall_fluxo_g0-111" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-112" href="#tz_fig_netinstall_fluxo_g0-112" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-114" href="#tz_fig_netinstall_fluxo_g0-114" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-115" href="#tz_fig_netinstall_fluxo_g0-115" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-116" href="#tz_fig_netinstall_fluxo_g0-116" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-117" href="#tz_fig_netinstall_fluxo_g0-117" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-120" href="#tz_fig_netinstall_fluxo_g0-120" transform="scale(1.285714)"></use>
+<use id="tz_fig_netinstall_fluxo_g2-124" href="#tz_fig_netinstall_fluxo_g0-124" transform="scale(1.285714)"></use>
+</defs>
+<g id="tz_fig_netinstall_fluxo_page1">
+<g stroke-miterlimit="10" transform="translate(-15.907708,-50.024444)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M48.70265 17.45798H-48.70265C-50.35953 17.45798-51.70265 16.11485-51.70265 14.45798V-14.45798C-51.70265-16.11485-50.35953-17.45798-48.70265-17.45798H48.70265C50.35953-17.45798 51.70265-16.11485 51.70265-14.45798V14.45798C51.70265 16.11485 50.35953 17.45798 48.70265 17.45798ZM-51.70265-17.45798"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-48.36967,7.875)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-15.907708,-50.024444)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="12.050787" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-78"></use>
+<use x="19.174115" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-111"></use>
+<use x="24.105649" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-116"></use>
+<use x="27.729581" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-101"></use>
+<use x="32.312422" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-98"></use>
+<use x="37.617551" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-111"></use>
+<use x="42.823051" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-111"></use>
+<use x="47.754586" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-107"></use>
+<use x="-.244034" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-78"></use>
+<use x="6.879293" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-101"></use>
+<use x="11.462134" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-116"></use>
+<use x="15.086066" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-105"></use>
+<use x="17.377487" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-110"></use>
+<use x="22.408649" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-115"></use>
+<use x="26.189492" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-116"></use>
+<use x="29.813424" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-97"></use>
+<use x="34.520802" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-108"></use>
+<use x="36.812223" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-108"></use>
+<use x="42.390968" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-124"></use>
+<use x="55.541361" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-73"></use>
+<use x="58.505259" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-80"></use>
+<use x="-2.998932" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-12"></use>
+<use x="2.256395" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-120"></use>
+<use x="6.739609" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-111"></use>
+<use x="14.958467" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-49"></use>
+<use x="19.890002" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-57"></use>
+<use x="24.821536" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-50"></use>
+<use x="29.75307" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-46"></use>
+<use x="32.492811" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-49"></use>
+<use x="37.424345" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-54"></use>
+<use x="42.35588" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-56"></use>
+<use x="47.287414" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-46"></use>
+<use x="50.027155" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-56"></use>
+<use x="54.958689" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-56"></use>
+<use x="59.890224" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-46"></use>
+<use x="62.629965" y="-28.106636" href="#tz_fig_netinstall_fluxo_g2-50"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M250.0473 15.649H152.642C150.98512 15.649 149.642 14.30588 149.642 12.649V-12.649C149.642-14.30588 150.98512-15.649 152.642-15.649H250.0473C251.70418-15.649 253.0473-14.30588 253.0473-12.649V12.649C253.0473 14.30588 251.70418 15.649 250.0473 15.649ZM149.642-15.649"></path>
+</g>
+</g>
+</g>
+<g transform="translate(152.97498,3.25)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-15.907708,-50.024444)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="1.664686" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-82"></use>
+<use x="7.966091" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-111"></use>
+<use x="12.897625" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-117"></use>
+<use x="17.928787" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-116"></use>
+<use x="21.552719" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-101"></use>
+<use x="26.135561" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-114"></use>
+<use x="29.473068" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-66"></use>
+<use x="36.048447" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-79"></use>
+<use x="42.897793" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-65"></use>
+<use x="49.473172" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-82"></use>
+<use x="55.774577" y="-50.024444" href="#tz_fig_netinstall_fluxo_g2-68"></use>
+<use x="-12.606473" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-101"></use>
+<use x="-8.023632" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-116"></use>
+<use x="-4.3997" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-104"></use>
+<use x=".631462" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-101"></use>
+<use x="5.214304" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-114"></use>
+<use x="8.551811" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-98"></use>
+<use x="13.85694" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-111"></use>
+<use x="19.06244" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-111"></use>
+<use x="23.993975" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-116"></use>
+<use x="30.905231" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-112"></use>
+<use x="36.21036" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-101"></use>
+<use x="40.793201" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-108"></use>
+<use x="43.084622" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-97"></use>
+<use x="51.079325" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-101"></use>
+<use x="55.662166" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-116"></use>
+<use x="59.286098" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-104"></use>
+<use x="64.31726" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-101"></use>
+<use x="68.900101" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-114"></use>
+<use x="72.237609" y="-39.06554" href="#tz_fig_netinstall_fluxo_g2-49"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M52.30264 0H149.042" fill="none"></path>
+<g transform="translate(83.17819,3.93297)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-15.907708,-50.024444)scale(-1,-1)">
+<g fill="#2780e3">
+<g stroke="none">
+<g fill="#2780e3">
+<use x="-15.907708" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-99"></use>
+<use x="-12.614454" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="-9.054837" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-98"></use>
+<use x="-5.023039" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="1.151811" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-100"></use>
+<use x="4.977791" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-105"></use>
+<use x="6.745489" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="9.275964" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="12.569218" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="15.244986" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M99.71762-41.22015H-48.90265C-50.55952-41.22015-51.90265-42.56328-51.90265-44.22015V-60.98233C-51.90265-62.6392-50.55952-63.98233-48.90265-63.98233H99.71762C101.3745-63.98233 102.71762-62.6392 102.71762-60.98233V-44.22015C102.71762-42.56328 101.3745-41.22015 99.71762-41.22015ZM-51.90265-63.98233"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-48.56967,-50.35124)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-15.907708,-50.024444)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-15.907708" y="-50.024444" href="#tz_fig_netinstall_fluxo_g0-49"></use>
+<use x="-12.07207" y="-50.024444" href="#tz_fig_netinstall_fluxo_g0-46"></use>
+<use x="-6.236258" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-76"></use>
+<use x="-2.204435" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-105"></use>
+<use x="-.436738" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-103"></use>
+<use x="3.268172" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="6.621957" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="11.622099" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="17.796675" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="21.089929" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-113"></use>
+<use x="24.915909" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-117"></use>
+<use x="28.74189" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-105"></use>
+<use x="30.509588" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-112"></use>
+<use x="34.335568" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="37.895186" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-109"></use>
+<use x="43.77945" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="47.072703" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-110"></use>
+<use x="50.898684" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="53.574452" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="59.749028" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-99"></use>
+<use x="63.042282" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="66.747192" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-109"></use>
+<use x="75.101122" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="81.275699" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-98"></use>
+<use x="85.307496" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="89.012406" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="91.615525" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-126"></use>
+<use x="91.688182" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="95.247799" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="101.422376" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-100"></use>
+<use x="105.248356" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="111.011276" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="113.541752" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="116.835005" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-115"></use>
+<use x="119.675433" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="122.968687" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="-15.907708" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-112"></use>
+<use x="-12.287559" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="-9.757083" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="-6.46383" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-115"></use>
+<use x="-3.623402" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-115"></use>
+<use x="-.782974" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-105"></use>
+<use x=".984724" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="4.689634" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-110"></use>
+<use x="8.515615" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="12.075232" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-100"></use>
+<use x="15.901213" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="22.075789" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="25.635406" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="28.105342" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-19"></use>
+<use x="28.311182" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="34.074102" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="40.248678" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="43.541931" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="46.2177" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-104"></use>
+<use x="50.04368" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="53.336934" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="55.867409" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-98"></use>
+<use x="59.899207" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="63.809934" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="67.514844" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M99.71762-70.47285H-48.90265C-50.55952-70.47285-51.90265-71.81598-51.90265-73.47285V-90.23503C-51.90265-91.8919-50.55952-93.23503-48.90265-93.23503H99.71762C101.3745-93.23503 102.71762-91.8919 102.71762-90.23503V-73.47285C102.71762-71.81598 101.3745-70.47285 99.71762-70.47285ZM-51.90265-93.23503"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-48.56967,-79.40948)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-15.907708,-50.024444)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-15.907708" y="-50.024444" href="#tz_fig_netinstall_fluxo_g0-50"></use>
+<use x="-12.07207" y="-50.024444" href="#tz_fig_netinstall_fluxo_g0-46"></use>
+<use x="-6.236258" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-79"></use>
+<use x="1.70603" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="4.999283" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-113"></use>
+<use x="8.825264" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-117"></use>
+<use x="12.651244" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-105"></use>
+<use x="14.418942" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-112"></use>
+<use x="18.244923" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="21.80454" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-109"></use>
+<use x="27.688804" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="30.982057" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-110"></use>
+<use x="34.808038" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="37.483806" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="43.658383" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-112"></use>
+<use x="47.69018" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="50.983434" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-100"></use>
+<use x="54.809414" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="60.572334" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-98"></use>
+<use x="64.604132" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="68.514859" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="72.219769" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="77.365204" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-112"></use>
+<use x="81.397001" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="84.690255" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-108"></use>
+<use x="86.457952" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="92.487235" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="95.017711" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="98.310964" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-100"></use>
+<use x="102.136945" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="-15.907708" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-40"></use>
+<use x="-13.026111" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-66"></use>
+<use x="-8.086231" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-79"></use>
+<use x="-2.61361" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-79"></use>
+<use x="2.859011" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-84"></use>
+<use x="7.919975" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-80"></use>
+<use x="12.654026" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M99.71762-99.72556H-48.90265C-50.55952-99.72556-51.90265-101.06868-51.90265-102.72556V-119.48773C-51.90265-121.1446-50.55952-122.48773-48.90265-122.48773H99.71762C101.3745-122.48773 102.71762-121.1446 102.71762-119.48773V-102.72556C102.71762-101.06868 101.3745-99.72556 99.71762-99.72556ZM-51.90265-122.48773"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-48.56967,-108.85664)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-15.907708,-50.024444)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-15.907708" y="-50.024444" href="#tz_fig_netinstall_fluxo_g0-51"></use>
+<use x="-12.07207" y="-50.024444" href="#tz_fig_netinstall_fluxo_g0-46"></use>
+<use x="-6.236258" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-79"></use>
+<use x="1.70603" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-78"></use>
+<use x="6.936482" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="10.229735" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="12.905504" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-105"></use>
+<use x="14.673201" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-110"></use>
+<use x="18.499182" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-115"></use>
+<use x="21.33961" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="24.015379" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="27.574996" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-108"></use>
+<use x="29.342693" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-108"></use>
+<use x="33.580057" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="36.110532" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="39.403786" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-115"></use>
+<use x="42.244214" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-112"></use>
+<use x="46.276012" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="49.980922" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-110"></use>
+<use x="53.806903" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-100"></use>
+<use x="57.632883" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="60.926137" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-59"></use>
+<use x="65.454086" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="71.628663" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="74.921916" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-113"></use>
+<use x="78.747897" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-117"></use>
+<use x="82.573878" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-105"></use>
+<use x="84.341575" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-112"></use>
+<use x="88.167556" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="91.727173" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-109"></use>
+<use x="97.611437" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="100.90469" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-110"></use>
+<use x="104.730671" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="107.406439" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="-15.907708" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="-12.34809" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-112"></use>
+<use x="-8.52211" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="-5.168325" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="-2.637849" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x=".655404" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-99"></use>
+<use x="3.948657" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="9.711577" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-110"></use>
+<use x="13.537558" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="19.566841" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-108"></use>
+<use x="21.334539" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-105"></use>
+<use x="23.102236" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-115"></use>
+<use x="25.942664" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="28.618433" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M99.71762-128.97826H-48.90265C-50.55952-128.97826-51.90265-130.32138-51.90265-131.97826V-148.74043C-51.90265-150.39731-50.55952-151.74043-48.90265-151.74043H99.71762C101.3745-151.74043 102.71762-150.39731 102.71762-148.74043V-131.97826C102.71762-130.32138 101.3745-128.97826 99.71762-128.97826ZM-51.90265-151.74043"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-48.56967,-138.78989)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-15.907708,-50.024444)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-15.907708" y="-50.024444" href="#tz_fig_netinstall_fluxo_g0-52"></use>
+<use x="-12.07207" y="-50.024444" href="#tz_fig_netinstall_fluxo_g0-46"></use>
+<use x="-6.236258" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-82"></use>
+<use x="-1.441671" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="1.851583" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-103"></use>
+<use x="5.556493" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="8.086968" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="11.646585" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-118"></use>
+<use x="15.060909" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="18.620526" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-24"></use>
+<use x="18.620526" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-99"></use>
+<use x="21.84113" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-126"></use>
+<use x="21.913787" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="25.473404" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="31.647981" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-100"></use>
+<use x="35.473962" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="41.648538" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-82"></use>
+<use x="46.443125" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="50.148035" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-117"></use>
+<use x="53.974016" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="56.649784" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="59.943037" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="62.473513" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-79"></use>
+<use x="67.946134" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-83"></use>
+<use x="74.532367" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="80.295286" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-114"></use>
+<use x="82.825762" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="86.119015" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-98"></use>
+<use x="90.150813" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="94.06154" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="97.76645" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="102.911884" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-99"></use>
+<use x="106.205138" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="109.910048" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-109"></use>
+<use x="118.263978" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-115"></use>
+<use x="121.104406" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-105"></use>
+<use x="122.872104" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-115"></use>
+<use x="125.712532" y="-50.024444" href="#tz_fig_netinstall_fluxo_g1-45"></use>
+<use x="-15.907708" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-116"></use>
+<use x="-13.231939" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-101"></use>
+<use x="-9.938686" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-109"></use>
+<use x="-4.054422" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-97"></use>
+<use x="1.974862" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-110"></use>
+<use x="5.800842" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+<use x="9.505752" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-118"></use>
+<use x="12.920077" y="-42.054332" href="#tz_fig_netinstall_fluxo_g1-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#6c757d" stroke="#6c757d">
+<path d="M103.11761-52.60124C107.55585-52.60124 110.06047-52.60124 114.4987-52.60124V-81.85394H106.31761" fill="none"></path>
+<g transform="matrix(-1.0,0.0,0.0,-1.0,106.31761,-81.85394)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-netinstall-fluxo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;8.1: O fluxo do Netinstall: notebook e equipamento sozinhos num cabo, boot de rede e regravação do sistema.
+</figcaption>
+</figure>
+</div>
+<p>Desse mecanismo derivam as regras práticas que evitam 90% das frustrações:</p>
+<ol type="1">
+<li><strong>Cabo direto, rede exclusiva.</strong> O boot de rede fala com quem responder primeiro. Notebook e equipamento sozinhos (cabo ponta a ponta) — nunca através da rede do provedor, onde um DHCP alheio atropela o processo. Em muitos modelos, o etherboot só funciona pela <strong>ether1/boot port</strong>.</li>
+<li><strong>IP fixo no notebook.</strong> O Netinstall precisa de um endereço estável — o consagrado é <code>192.168.88.2/24</code>. No aplicativo, configura-se o <em>Client IP</em> (ex.: <code>192.168.88.3</code>) que será oferecido ao equipamento.</li>
+<li><strong>Firewall do notebook fora do caminho.</strong> O Windows adora bloquear BOOTP/TFTP silenciosamente; desative o firewall na interface do cabo durante o procedimento.</li>
+<li><strong>Pacote da arquitetura certa.</strong> O RouterOS é distribuído por arquitetura (<code>arm</code>, <code>arm64</code>, <code>mipsbe</code>, <code>tile</code>…). Baixe o <em>main package</em> correspondente ao seu modelo (a ficha do produto informa;
+<ol class="example" type="1">
+<li>— o Netinstall só lista pacotes compatíveis com o equipamento detectado.</li>
+</ol></li>
+</ol>
+<p>O procedimento em si, com os preparos feitos: abrir o Netinstall (como administrador), <em>Net booting</em> ativado com o Client IP, ligar o equipamento com o <strong>botão de reset pressionado</strong> até ele entrar em etherboot (os beeps e LEDs indicam; ~15–20 s), o equipamento aparece na lista, seleciona-se o pacote e <strong>Install</strong>. Minutos depois, reboot com sistema zerado — usuário <code>admin</code>, sem senha, configuração de fábrica.</p>
+<p>Recursos que valem conhecer na janela do aplicativo:</p>
+<ul>
+<li><strong><em>Keep old configuration</em></strong>: tenta preservar a configuração através da reinstalação — útil quando o objetivo é só regravar um sistema corrompido (mas lembre: se a hipótese é invasão, o objetivo é justamente <strong>não</strong> preservar nada);</li>
+<li><strong><em>Configure script</em></strong>: aplica um script de configuração inicial após a instalação — o irmão do <code>run-after-reset</code> do capítulo anterior, e a base de provisionamento em massa (equipamento novo → Netinstall → nasce com a configuração-base do parque);</li>
+<li><strong>Downgrade</strong>: instalar versão mais antiga é tão simples quanto escolher outro pacote — o caminho limpo quando um equipamento específico não se dá bem com uma versão nova.</li>
+</ul>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Aviso
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O Netinstall <strong>apaga tudo</strong>: sistema, configuração, usuários, arquivos — inclusive backups guardados no armazenamento interno (mais um motivo para a regra do 2: backup mora <strong>fora</strong> do equipamento). Sem <em>keep old configuration</em>, o equipamento volta absolutamente virgem. E não interrompa a gravação no meio — energia estável e paciência; um Netinstall interrompido só se resolve com… outro Netinstall.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Com o Netinstall no cinto de ferramentas, <strong>não existe RouterBOARD perdida</strong>: enquanto o hardware estiver são, qualquer estado de software — boot quebrado, senha esquecida, sistema comprometido — se resolve com um cabo, o aplicativo e alguns minutos. É a rede de segurança final de tudo o que você fará com MikroTik daqui em diante.</p>
+</div>
+</div>
+</section>
+<section id="laboratório" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">8.3</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="8.3.1">
+<h3 data-number="8.3.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">8.3.1</span> Ambiente</h3>
+<p>Excepcionalmente, este laboratório é <strong>físico</strong>: uma RouterBOARD qualquer (um hEX/hAP usado serve perfeitamente), um cabo Ethernet e um computador Windows com o aplicativo Netinstall (baixe de <code>mikrotik.com/download</code>, seção <em>Netinstall</em>) e o <em>main package</em> da arquitetura do seu equipamento.</p>
+<p><strong>Sem equipamento físico?</strong> Faça o “laboratório seco”: leia os passos executando cada preparo possível no seu computador (aplicativo aberto, IP fixo configurado, pacote baixado) e responda os desafios — o procedimento estará ensaiado para o dia em que a torre chamar.</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="8.3.2">
+<h3 data-number="8.3.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">8.3.2</span> Comandos passo a passo</h3>
+<p><strong>Preparo do notebook.</strong> Configure IP fixo na interface Ethernet: <code>192.168.88.2</code>, máscara <code>255.255.255.0</code> (sem gateway). Desative o firewall dessa interface. Conecte o cabo direto na <strong>ether1</strong> do equipamento (desligado). Abra o Netinstall como administrador, ative <em>Net booting</em> e defina o Client IP como <code>192.168.88.3</code>.</p>
+<p><strong>Etherboot.</strong> Desconecte a energia do equipamento, pressione e <strong>segure</strong> o botão de reset, reconecte a energia mantendo o botão até o equipamento sinalizar o boot de rede (beep/LEDs, ou até ele aparecer na lista do aplicativo).</p>
+<p><strong>Instalação.</strong> O equipamento surge na lista do Netinstall com MAC e modelo. Selecione-o, marque o pacote RouterOS baixado e clique <strong>Install</strong>. Acompanhe a barra; ao final, <em>Installation finished</em> — e o equipamento reinicia.</p>
+<p><strong>Primeiro contato pós-instalação.</strong> O equipamento está de fábrica. Reconfigure o IP do notebook para DHCP (a default configuration entrega IP na LAN) ou use o WinBox por MAC (<a href="04-formas-de-acesso.html" class="quarto-xref"><span>Capítulo 4</span></a>) e aplique o ritual completo: remoção da default config se for o caso, checklist de segurança do <a href="06-primeiro-acesso-seguranca.html" class="quarto-xref"><span>Capítulo 6</span></a>, backup do 2. O ciclo do Volume 1, fechado num equipamento real.</p>
+</section>
+<section id="verificação" class="level3" data-number="8.3.3">
+<h3 data-number="8.3.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">8.3.3</span> Verificação</h3>
+<ol type="1">
+<li>O equipamento apareceu na lista do Netinstall (prova do etherboot + cabo
+<ul>
+<li>IP corretos);</li>
+</ul></li>
+<li>A instalação concluiu sem interrupção e o equipamento reiniciou;</li>
+<li>O login pós-instalação é <code>admin</code> sem senha, e <code>/system resource print</code> mostra a versão que você instalou;</li>
+<li>Ao final, o equipamento está com o checklist de segurança aplicado e um backup baixado — pronto para uso (ou para a próxima brincadeira).</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="8.3.4">
+<h3 data-number="8.3.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">8.3.4</span> Desafios</h3>
+<ol type="1">
+<li>Por que o Netinstall pede cabo <strong>direto</strong> entre notebook e equipamento, em vez de usar a rede normal do escritório? Cite os dois problemas que a rede compartilhada introduz.</li>
+<li>Um técnico esqueceu a senha de um rádio na torre, e o rádio <strong>funciona</strong> (clientes navegando). Netinstall já? Monte a árvore de decisão, considerando o que você sabe de acesso (<a href="04-formas-de-acesso.html" class="quarto-xref"><span>Capítulo 4</span></a>), backup
+<ol start="2" class="example" type="1">
+<li>e as proteções do RouterBOOT (<a href="03-licencas-routerboot.html" class="quarto-xref"><span>Capítulo 3</span></a>).</li>
+</ol></li>
+<li>Você suspeita que um roteador de borda foi invadido. Por que <em>keep old configuration</em> seria um erro nesse caso — e qual é o fluxo correto de recuperação, do Netinstall ao retorno à produção?</li>
+<li>Desenhe (em texto) a “bancada de provisionamento” de um provedor que ativa 30 rádios por mês: como Netinstall + <em>configure script</em> + o checklist do <a href="06-primeiro-acesso-seguranca.html" class="quarto-xref"><span>Capítulo 6</span></a> viram uma linha de montagem.</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> (a) <strong>Concorrência de servidores</strong>: na rede do escritório há DHCP e outros serviços que respondem ao boot de rede antes/junto do Netinstall, confundindo o processo; (b) <strong>caminho não confiável</strong>: switches, VLANs e firewalls no meio podem filtrar BOOTP/TFTP. O cabo direto elimina as duas variáveis — e é por isso que é o primeiro item de qualquer checklist de Netinstall que falhou.</p>
+<p><strong>2.</strong> Netinstall é a <strong>última</strong> parada, porque exige subir na torre e derruba os clientes durante o procedimento. Antes: (1) tentar as vias que não dependem de senha esquecida — outra credencial da equipe, acesso por outro usuário <code>full</code>; (2) se há backup binário recente <strong>e</strong> acesso físico fácil: reset + restaurar backup pode ser mais rápido; (3) sem nada disso — e sem <code>protected-routerboot</code> ativo —, Netinstall com janela de manutenção programada. Se <code>protected-routerboot</code> estiver ativo, nem o Netinstall entra: é o cenário de RMA que o capítulo 3 avisou.</p>
+<p><strong>3.</strong> Se o invasor alterou a configuração (usuário oculto, scheduler malicioso, regra de NAT espiã), <em>keep old configuration</em> <strong>reinstala a porta dos fundos junto</strong>. Fluxo correto: Netinstall limpo → reconstruir a configuração a partir de um <strong>export conhecido e auditado</strong> (de antes do incidente, lido linha a linha antes do import) → senhas novas em tudo → só então voltar à produção — idealmente entendendo por onde a invasão entrou (o hardening do Volume 3 existe para isso).</p>
+<p><strong>4.</strong> Linha de montagem: bancada com switch dedicado só para provisionamento; notebook com Netinstall e <em>configure script</em> apontando para o <code>.rsc</code>-base do parque (IP de gerência por DHCP da bancada, usuário nominal da equipe, serviços restritos, NTP — o checklist do capítulo 6 em forma de script); cada rádio novo: etherboot → install → o script aplica a base → etiqueta com identidade → backup/export arquivados → estoque de “prontos para torre”. Trinta rádios viram uma tarde de trabalho repetitivo e à prova de esquecimento.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="resumo"><span class="header-section-number">8.4</span> Resumo</h2>
+<ul>
+<li><strong>Netinstall reinstala o sistema</strong>; o reset só limpa a configuração. É o caminho para boot quebrado, senha perdida, comprometimento e downgrade.</li>
+<li>Mecanismo: RouterBOOT em <strong>etherboot</strong> (botão de reset ao ligar) + o aplicativo Netinstall servindo boot e regravando o RouterOS (<a href="#fig-netinstall-fluxo" class="quarto-xref">Figura&nbsp;<span>8.1</span></a>).</li>
+<li>Receita à prova de frustração: <strong>cabo direto</strong>, notebook com IP fixo <code>192.168.88.2</code>, firewall local desligado, pacote da <strong>arquitetura certa</strong>, e paciência durante a gravação.</li>
+<li><em>Keep old configuration</em> preserva a configuração (nunca em caso de invasão); <em>configure script</em> provisiona — o <code>run-after-reset</code> do mundo físico.</li>
+<li>Netinstall apaga <strong>tudo</strong>, inclusive backups internos — que, você já sabe, deveriam estar fora do equipamento.</li>
+<li>Com ele, fecha-se o ciclo do Volume 1: não existe RouterBOARD irrecuperável.</li>
+</ul>
+<p>Este capítulo encerra o Volume 1 — você conhece o sistema, o hardware, as licenças, os acessos, montou seu laboratório e domina o ciclo de vida completo de um equipamento. No Volume 2, mergulhamos de vez na linha de comando: a anatomia do terminal e a construção, peça por peça, de um roteador de borda funcional.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>A página <em>Netinstall</em> da documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> traz o passo a passo com capturas atualizadas e a tabela de solução de problemas que inspirou nossas regras práticas; o download do aplicativo e dos <em>main packages</em> por arquitetura está em <code>mikrotik.com/download</code>. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
 
 
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+</div>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -650,8 +1468,8 @@ ul.task-list li input[type="checkbox"] {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../../referencias.html" class="pagination-link" aria-label="Referências">
-        <span class="nav-page-text">Referências</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="pagination-link" aria-label="Anatomia do terminal">
+        <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
@@ -660,4 +1478,4 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/08-netinstall.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v01-primeiros-passos/08-netinstall.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
