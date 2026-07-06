@@ -1,8 +1,374 @@
-# Formas de acesso ao RouterOS
+# Formas de acesso ao RouterOS {#sec-formas-de-acesso}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Ele apresentará as formas de acessar um
-equipamento MikroTik — WinBox, WebFig, SSH, console serial e MAC-Telnet — e
-quando usar cada uma. Consulte o `ROADMAP.md` para acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Listar as formas de acesso ao RouterOS — WinBox, WebFig, SSH, Telnet,
+  console serial e MAC-Telnet — e escolher a adequada a cada situação;
+- Explicar a diferença entre acesso **por IP** (camada 3) e acesso **por
+  MAC** (camada 2), e por que o segundo salva o dia quando o IP está errado;
+- Usar o **Safe Mode**, o cinto de segurança que desfaz alterações quando
+  você perde o próprio acesso;
+- Acessar seu CHR de laboratório pelo WinBox, pelo WebFig e por SSH;
+- Reconhecer os serviços de acesso em `/ip service` e entender por que
+  eles serão restringidos no capítulo de segurança.
 :::
+
+## Muitas portas para a mesma casa
+
+Tudo o que fizemos até aqui usou o **console da máquina virtual** — o
+equivalente a sentar na frente do equipamento com teclado e monitor. Na vida
+real de provedor, o roteador está num rack, num poste ou numa torre a 40 km,
+e você precisa entrar nele pela rede. O RouterOS oferece várias portas de
+entrada, e a escolha certa depende de duas perguntas:
+
+1. **O equipamento tem IP acessível?** Se sim, qualquer forma serve; se não
+   (equipamento novo, configuração quebrada), você precisa das formas que
+   funcionam em **camada 2**, direto pelo cabo.
+2. **Você quer interface gráfica ou linha de comando?** A gráfica é
+   confortável para explorar; a linha de comando é precisa, documentável e
+   automatizável — e é o padrão deste manual.
+
+A @fig-mapa-acessos organiza as opções nesses dois eixos:
+
+::: {#fig-mapa-acessos}
+
+```{.tikz}
+%%| filename: fig-mapa-acessos
+%%| alt: Diagrama de quadrantes com dois eixos. Eixo horizontal: precisa de IP à direita, funciona sem IP em camada 2 à esquerda. Eixo vertical: interface gráfica acima, linha de comando abaixo. Quadrante gráfico com IP: WebFig e WinBox por IP. Quadrante gráfico sem IP: WinBox por MAC. Quadrante linha de comando com IP: SSH e Telnet, este marcado como legado. Quadrante linha de comando sem IP: MAC-Telnet e console serial, este indicado como acesso físico direto.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  ferramenta/.style={draw=manualblue, very thick, fill=manualblue!8,
+                     rounded corners=3pt, minimum height=8mm,
+                     text width=32mm, align=center,
+                     font=\sffamily\small\bfseries},
+  legado/.style={draw=manualgray, thick, fill=manualgray!10,
+                 rounded corners=3pt, minimum height=8mm,
+                 text width=32mm, align=center},
+  eixo/.style={very thick, -stealth, manualgray},
+  rotulo/.style={font=\sffamily\small\bfseries, manualgray}
+]
+  % Eixos
+  \draw[eixo] (-58mm,0) -- (58mm,0);
+  \draw[eixo] (0,-38mm) -- (0,38mm);
+  \node[rotulo, anchor=west] at (38mm,4mm) {precisa de IP};
+  \node[rotulo, anchor=east] at (-30mm,4mm) {sem IP (camada 2)};
+  \node[rotulo, anchor=south] at (0,34mm) [xshift=17mm] {interface gráfica};
+  \node[rotulo, anchor=north] at (0,-34mm) [xshift=19mm] {linha de comando};
+
+  % Quadrante gráfico + IP
+  \node[ferramenta] at (30mm,22mm) (webfig) {WebFig\\ \small navegador};
+  \node[ferramenta] at (30mm,10mm) (winboxip) {WinBox por IP};
+
+  % Quadrante gráfico + sem IP
+  \node[ferramenta] at (-30mm,16mm) (winboxmac) {WinBox por MAC};
+
+  % Quadrante CLI + IP
+  \node[ferramenta] at (30mm,-12mm) (ssh) {SSH};
+  \node[legado] at (30mm,-24mm) (telnet) {Telnet \small(legado)};
+
+  % Quadrante CLI + sem IP
+  \node[ferramenta] at (-30mm,-12mm) (mactelnet) {MAC-Telnet};
+  \node[legado] at (-30mm,-24mm) (serial) {Console serial\\ \small(cabo no local)};
+\end{tikzpicture}
+```
+
+As portas de entrada do RouterOS, organizadas por tipo de interface e por
+dependência de IP.
+
+:::
+
+Vamos conhecer uma a uma, começando pelas que você mais usará.
+
+### WinBox — a ferramenta símbolo
+
+O **WinBox** é o aplicativo gráfico de gerência da MikroTik — tão associado
+à marca que muita gente "configura pelo WinBox" sem saber o nome do sistema
+que está configurando. Ele conversa com o roteador pela porta **8291/TCP**
+e hoje tem versão nativa para Windows, macOS e Linux.
+
+Três características o tornam a ferramenta de campo por excelência:
+
+- **Descoberta de vizinhos**: a tela inicial lista os equipamentos MikroTik
+  alcançáveis no cabo (via protocolo de descoberta), mesmo os sem IP;
+- **Conexão por MAC**: dê um clique no endereço MAC da lista e você entra num
+  equipamento que não tem IP nenhum — mágica de camada 2 que veremos adiante;
+- **Espelho da CLI**: cada janela do WinBox corresponde a um menu do
+  terminal (`IP → Addresses` é `/ip address`). Aprender um é aprender o
+  outro — e é por isso que este manual pode ensinar por linha de comando sem
+  abandonar quem prefere clicar.
+
+### WebFig — o WinBox no navegador
+
+O **WebFig** é a interface web embutida: aponte o navegador para o IP do
+roteador (porta **80/HTTP** ou **443/HTTPS**) e você tem praticamente as
+mesmas telas do WinBox, sem instalar nada. É a saída natural quando você
+está numa máquina emprestada ou num sistema onde não pode instalar
+aplicativos. Nos equipamentos com configuração de fábrica, é o WebFig que
+recebe o usuário no modo simplificado "Quick Set".
+
+### SSH — a porta da linha de comando
+
+O **SSH** (porta **22/TCP**) entrega o mesmo terminal que você usou no
+console da VM, com criptografia, a partir de qualquer sistema operacional:
+
+```routeros
+ssh admin@192.168.88.1
+```
+
+É a forma preferida deste manual para o dia a dia, por três motivos: é
+universal (todo sistema tem cliente SSH), é **automatizável** (scripts,
+Ansible e afins entram por aqui — Volume 12) e registra bem o que foi feito
+(seu terminal guarda o histórico da sessão). O RouterOS também aceita
+**SFTP/SCP** na mesma porta, para copiar arquivos — algo que usaremos nos
+backups (@sec-backup-export).
+
+O primo velho do SSH, o **Telnet** (porta 23), também existe — sem
+criptografia alguma. Trate-o como peça de museu: útil apenas em redes de
+laboratório isoladas, e um dos primeiros serviços que desligaremos no
+capítulo de segurança.
+
+### Console serial — o cabo da UTI
+
+Roteadores de rack (CCR, alguns CRS) trazem uma porta **serial** (RJ45 ou
+USB). Ligando um cabo console, você acessa o terminal **antes mesmo do
+RouterOS subir** — vê o boot, o RouterBOOT (@sec-licencas-routerboot) e o
+sistema, mesmo com a rede completamente quebrada. É o acesso de UTI: usado
+raramente, mas insubstituível quando o equipamento não responde por nenhuma
+outra via e você está fisicamente diante dele.
+
+### MAC-Telnet — terminal sem IP
+
+E se o equipamento não tem IP, você não tem o WinBox à mão, mas há **outro
+MikroTik** no mesmo cabo? O **MAC-Telnet** resolve: de um RouterOS para
+outro, abre-se um terminal usando só o endereço MAC, em camada 2:
+
+```routeros
+/tool mac-telnet 48:A9:8A:12:34:56
+```
+
+O RouterOS descobre os vizinhos MikroTik (e seus MACs) sozinho:
+
+```routeros
+/ip neighbor print
+```
+
+Esse par — descoberta de vizinhos + MAC-Telnet — é o kit de resgate do
+provedor: o técnico conecta o notebook (ou usa o roteador de cima da torre)
+e entra no rádio "perdido" sem depender de IP certo. A contrapartida de
+segurança é evidente: qualquer um no cabo pode tentar o mesmo. Como
+restringir isso é assunto do @sec-primeiro-acesso.
+
+## Safe Mode: o cinto de segurança
+
+Antes do laboratório, a ferramenta mais importante do capítulo. Imagine:
+você está acessando um rádio de torre **pela própria rede que ele roteia** e
+desativa, sem querer, a interface errada. A conexão cai — e com ela, seu
+acesso e o dos clientes. Viagem de 40 km.
+
+O **Safe Mode** existe para impedir exatamente isso. Ao ativá-lo (tecla
+`Ctrl+X` no terminal; botão *Safe Mode* no WinBox/WebFig), o RouterOS passa a
+tratar suas alterações como **provisórias**:
+
+- Se você **sair do Safe Mode normalmente** (`Ctrl+X` de novo), as mudanças
+  são confirmadas;
+- Se a **conexão cair** com o Safe Mode ativo — inclusive porque sua mudança
+  derrubou o próprio acesso —, o RouterOS **desfaz tudo** o que foi feito
+  desde a ativação, e alguns segundos depois você entra de novo como se nada
+  tivesse acontecido.
+
+No terminal, o modo ativo aparece no prompt:
+
+```routeros
+[admin@lab-r1] <SAFE>
+```
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Toda alteração remota que possa afetar o seu próprio caminho até o
+equipamento — interfaces, IPs, rotas, firewall — deve ser feita **dentro do
+Safe Mode**. `Ctrl+X` antes, mexa, confirme com `Ctrl+X` depois. Esse
+hábito, sozinho, paga o livro: ele elimina a viagem até a torre.
+:::
+
+## Os serviços em `/ip service`
+
+Cada forma de acesso por IP corresponde a um **serviço** que o RouterOS
+mantém ouvindo, listado em `/ip service`:
+
+| Serviço | Porta padrão | Forma de acesso |
+|:---------|:-------------|:----------------------------|
+| `winbox` | 8291/TCP | WinBox |
+| `www` | 80/TCP | WebFig (HTTP) |
+| `www-ssl` | 443/TCP | WebFig (HTTPS) |
+| `ssh` | 22/TCP | SSH / SFTP |
+| `telnet` | 23/TCP | Telnet (legado) |
+| `ftp` | 21/TCP | FTP (legado) |
+| `api`, `api-ssl` | 8728, 8729/TCP | API de automação (Volume 12) |
+
+: Serviços de acesso do RouterOS {#tbl-ip-services}
+
+Guarde a existência dessa tabela: no @sec-primeiro-acesso ela vira uma lista
+de decisões — o que desabilitar, o que restringir por endereço de origem
+(`allowed-address`) e o que mover de porta. Um roteador de provedor exposto
+à internet com todos esses serviços abertos é convite para invasão.
+
+## 🧪 Laboratório
+
+### Ambiente
+
+A VM do CHR no VirtualBox — agora com um ajuste de rede que permitirá ao
+**seu computador** conversar com ela. Com a VM **desligada**
+(`/system shutdown`):
+
+1. No VirtualBox, abra as **configurações da VM → Rede**;
+2. No **Adaptador 1**, troque o modo para **Placa de rede exclusiva de
+   hospedeiro** (*host-only adapter*), selecionando a rede padrão
+   (`VirtualBox Host-Only Ethernet Adapter`, tipicamente `192.168.56.0/24`);
+3. Inicie a VM.
+
+Assim, o CHR (`ether1`) e o seu computador ficam ligados num "cabo virtual"
+— exatamente o cenário de um técnico com notebook conectado ao equipamento.
+
+### Comandos passo a passo
+
+No **console da VM**, dê um endereço IP à `ether1` (a sintaxe de endereços é
+assunto do Volume 2 — por ora, digite e observe):
+
+```routeros
+/ip address add address=192.168.56.10/24 interface=ether1
+```
+
+Confirme:
+
+```routeros
+/ip address print
+```
+
+```routeros
+[admin@lab-r1] > /ip address print
+Columns: ADDRESS, NETWORK, INTERFACE
+# ADDRESS           NETWORK       INTERFACE
+0 192.168.56.10/24  192.168.56.0  ether1
+```
+
+**Acesso 1 — WebFig.** No navegador do seu computador, abra
+`http://192.168.56.10`. Entre com `admin` e a senha que você definiu no
+primeiro boot. Explore: localize em **IP → Addresses** o endereço que você
+acabou de criar pelo terminal.
+
+**Acesso 2 — SSH.** No terminal do seu computador (PowerShell, Terminal do
+macOS ou shell Linux — todos têm o cliente):
+
+```routeros
+ssh admin@192.168.56.10
+```
+
+Aceite a chave do servidor (`yes`), informe a senha e observe: é o mesmo
+prompt `[admin@lab-r1] >` do console. Execute `/system resource print` para
+provar que tudo que você aprendeu vale aqui.
+
+**Acesso 3 — WinBox.** Baixe o WinBox em `mikrotik.com/download` (seção
+*WinBox*). Ao abrir, a aba **Neighbors** deve listar seu CHR. Conecte duas
+vezes: primeiro clicando no **IP**, depois clicando no **endereço MAC** —
+esta segunda é uma conexão de camada 2, que funcionaria mesmo sem o
+endereço IP configurado.
+
+**Acesso 4 — Safe Mode (o exercício mais importante).** Na sessão SSH,
+pressione `Ctrl+X`. O prompt ganha o marcador `<SAFE>`. Agora derrube o
+próprio acesso de propósito, removendo o endereço IP:
+
+```routeros
+/ip address remove numbers=0
+```
+
+Sua sessão SSH congela e cai — você "se trancou para fora". Espere cerca de
+15 segundos e conecte de novo por SSH: funciona, porque o Safe Mode
+detectou a queda da sessão e **desfez a remoção**. Confirme com
+`/ip address print` que o endereço voltou.
+
+### Verificação
+
+1. WebFig abre em `http://192.168.56.10` e mostra o endereço em
+   IP → Addresses;
+2. SSH conecta e entrega o prompt `[admin@lab-r1] >`;
+3. O WinBox lista o CHR em Neighbors e conecta por IP **e** por MAC;
+4. Após o teste do Safe Mode, `/ip address print` mostra o item `0`
+   restaurado — a prova de que a reversão automática funcionou.
+
+### Desafios
+
+1. Liste os serviços ativos do seu CHR com `/ip service print`. Quais das
+   quatro conexões deste laboratório passaram por qual serviço?
+2. Ainda em `/ip service`: descubra (com TAB e `?`) como **desabilitar** o
+   serviço `telnet` — e desabilite-o. Por que essa é uma boa ideia mesmo em
+   laboratório?
+3. Repita a remoção do endereço IP **sem** Safe Mode. O que muda? Como você
+   recupera o acesso desta vez? (Dica: você tem o console da VM — e o
+   WinBox por MAC.)
+4. Em produção, um técnico precisa configurar um rádio novo, sem IP, no topo
+   da torre, a partir do POP lá embaixo (há um MikroTik no POP, no mesmo
+   cabo). Descreva o caminho de acesso completo, citando as ferramentas
+   deste capítulo.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** `/ip service print` lista a @tbl-ip-services. WebFig usou `www`
+(porta 80), SSH usou `ssh` (22), o WinBox por IP usou `winbox` (8291) — e o
+WinBox **por MAC** não passou por nenhum serviço IP: é camada 2.
+
+**2.**
+
+```routeros
+/ip service disable telnet
+/ip service print
+```
+
+O Telnet transmite tudo — inclusive a senha — em texto puro. Desabilitar o
+que não se usa reduz a superfície de ataque; o hábito vale até em
+laboratório, para virar reflexo.
+
+**3.** Sem Safe Mode, a remoção é **definitiva**: o SSH cai e não volta,
+pois o endereço se foi de verdade. A recuperação: entrar pelo **console da
+VM** (ou WinBox pelo **MAC**) e recriar o endereço com
+`/ip address add address=192.168.56.10/24 interface=ether1`. É a experiência
+que ensina o valor do `Ctrl+X`.
+
+**4.** No MikroTik do POP: `/ip neighbor print` para descobrir o MAC do
+rádio novo → `/tool mac-telnet <MAC>` para abrir o terminal em camada 2 →
+dentro da sessão, configurar IP de gerência no rádio → a partir daí, seguir
+por SSH/WinBox normalmente (e, sendo mudança arriscada em rádio de torre,
+tudo dentro do Safe Mode).
+:::
+
+## Resumo
+
+- Formas de acesso por **IP**: WinBox (8291), WebFig (80/443), SSH (22) —
+  e Telnet/FTP como legados a desativar (@tbl-ip-services).
+- Formas de acesso por **camada 2** (sem IP): WinBox por MAC e MAC-Telnet
+  (entre RouterOS), com descoberta de vizinhos por `/ip neighbor print`;
+  console serial como acesso físico de emergência (@fig-mapa-acessos).
+- **WinBox espelha a CLI**: cada janela é um menu do terminal — aprender um
+  é aprender os dois.
+- **Safe Mode** (`Ctrl+X`): alterações viram provisórias e são desfeitas se
+  a sua sessão cair — obrigatório em qualquer mudança remota que possa
+  derrubar o próprio acesso.
+- Cada acesso por IP é um **serviço** em `/ip service`, que será
+  restringido no capítulo de segurança inicial.
+
+No próximo capítulo, montamos de uma vez o laboratório definitivo do livro:
+múltiplos CHRs em topologia, com acesso confortável do seu computador — o
+ambiente que reutilizaremos até a última página.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] descreve cada ferramenta nas seções
+*WinBox*, *WebFig* e *MAC server* (MAC-Telnet), além do menu `/ip service`.
+O download do WinBox e do cliente para cada plataforma está em
+`mikrotik.com/download`. @discher-rosv7 dedica bons capítulos iniciais às
+interfaces de gerência. As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).

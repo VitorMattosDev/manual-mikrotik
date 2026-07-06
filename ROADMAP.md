@@ -36,7 +36,7 @@ Pré-requisitos: nenhum.*
 - [x] `volumes/v01-primeiros-passos/01-o-que-e-mikrotik.qmd` — O que é MikroTik e RouterOS: história, RouterOS vs. SwOS, onde o MikroTik se encaixa na rede de um provedor fibra+rádio. **(gabarito de estilo)**
 - [x] `volumes/v01-primeiros-passos/02-hardware-linhas-produto.qmd` — Linhas de hardware: hEX, hAP, CRS, CCR, LHG/SXT; como escolher equipamento por função (borda, concentrador, switch, rádio). *Pré-req.: cap. 1.*
 - [x] `volumes/v01-primeiros-passos/03-licencas-routerboot.qmd` — Licenças RouterOS (níveis 0–6, licença do CHR) e RouterBOOT (bootloader, proteções). *Pré-req.: cap. 2.*
-- [~] `volumes/v01-primeiros-passos/04-formas-de-acesso.qmd` — Formas de acesso: WinBox, WebFig, SSH, serial, MAC-Telnet; quando usar cada uma. *Pré-req.: cap. 1.*
+- [x] `volumes/v01-primeiros-passos/04-formas-de-acesso.qmd` — Formas de acesso: WinBox, WebFig, SSH, serial, MAC-Telnet; quando usar cada uma. *Pré-req.: cap. 1.*
 - [~] `volumes/v01-primeiros-passos/05-laboratorio-chr.qmd` — **Capítulo-chave**: montando o laboratório com CHR no VirtualBox/GNS3/EVE-NG; topologia-base reutilizada em todo o livro. Recebe a âncora `{#sec-lab-chr}`. *Pré-req.: cap. 4.*
 - [~] `volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.qmd` — Primeiro acesso, configuração padrão, usuários, grupos, senhas e segurança inicial (desabilitar serviços, allowed-address). *Pré-req.: cap. 5.*
 - [~] `volumes/v01-primeiros-passos/07-backup-export-reset.qmd` — Backup binário vs. export, restauração, reset de configuração (com avisos). *Pré-req.: cap. 6.*
