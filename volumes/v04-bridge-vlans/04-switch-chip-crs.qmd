@@ -1,7 +1,333 @@
-# Switch chip nos CRS
+# Switch chip nos CRS {#sec-switch-chip}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que um **switch chip** faz e como o RouterOS o expõe em
+  `/interface ethernet switch`;
+- Escolher o caminho de configuração certo por família — **CRS3xx/5xx**
+  (tudo pela bridge, offload automático) *versus* **CRS1xx/2xx e
+  RouterBOARDs** (menu legado do chip);
+- Usar os recursos que moram no chip além de VLAN: **rule table** (ACLs
+  em velocidade de fio), **port mirroring** e a host table de hardware;
+- Reconhecer os limites de cada chip (tamanho de tabelas, recursos) na
+  ficha técnica antes de projetar o POP;
+- Diagnosticar o clássico "CRS lento": descobrir para onde o tráfego
+  está indo — chip ou CPU.
 :::
+
+## O porão do switch
+
+Dois capítulos falamos de bridge como se tudo fosse software — e o
+@sec-bridge-offload avisou: nos CRS, quem trabalha de verdade é o
+**switch chip**, um circuito dedicado (Marvell nos CRS3xx/5xx, Atheros/
+Qualcomm nos antigos e nas RouterBOARDs) com suas próprias tabelas de
+MACs, de VLANs e de regras, comutando em velocidade de fio enquanto a
+CPU dorme.
+
+O RouterOS expõe o porão em `/interface ethernet switch`:
+
+```routeros
+/interface ethernet switch print
+```
+
+```routeros
+[admin@crs326] > /interface ethernet switch print
+Columns: NAME, TYPE, MIRROR-SOURCE, MIRROR-TARGET
+# NAME      TYPE          MIRROR-SOURCE  MIRROR-TARGET
+0 switch1   Marvell-98DX3236  none       none
+```
+
+Ali você vê o chip pelo nome (pesquise-o: a página *Switch Chip
+Features* da documentação diz exatamente o que **o seu** sabe fazer) e
+os menus dele: portas, host table de hardware, rule table, espelhamento.
+Todo equipamento MikroTik com mais de uma porta comutável tem um — até o
+hEX da casa do cliente.
+
+## Dois mundos, uma decisão
+
+A pergunta prática que define qualquer projeto de switching MikroTik:
+**por onde configurar as VLANs?** A resposta depende da geração
+(@fig-decisao-switch):
+
+::: {#fig-decisao-switch}
+
+```{.tikz}
+%%| filename: fig-decisao-switch
+%%| alt: Fluxograma de decisão para configuração de VLAN em equipamentos MikroTik. Pergunta inicial: qual é o equipamento? Três ramos. CRS3xx ou CRS5xx: usar bridge VLAN filtering, o RouterOS programa o chip sozinho, offload preservado. CRS1xx ou CRS2xx: usar o menu do switch chip em interface ethernet switch, VLAN table e portas; a bridge fica sem filtering. RouterBOARD pequena, como hEX ou hAP: para poucas portas usar bridge VLAN filtering aceitando CPU, ou o menu do chip se o modelo suportar; verificar a página Switch Chip Features.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  pergunta/.style={draw=manualblue, very thick, fill=manualblue!8,
+                   rounded corners=3pt, minimum height=10mm, text width=34mm,
+                   align=center, font=\sffamily\small\bfseries},
+  resposta/.style={draw=manualgreen, very thick, fill=manualgreen!8,
+                   rounded corners=3pt, minimum height=12mm, text width=36mm,
+                   align=center, font=\sffamily\scriptsize},
+  seta/.style={very thick, -stealth, manualgray},
+  ramo/.style={font=\sffamily\scriptsize\bfseries, text=manualgray}
+]
+  \node[pergunta] (q) {Qual é o equipamento?};
+  \node[resposta, below left=10mm and 24mm of q] (crs3)
+    {\textbf{CRS3xx / CRS5xx}\\Bridge VLAN filtering\\ (@sec-vlan-filtering) —\\o RouterOS programa o chip;\\offload preservado};
+  \node[resposta, below=14mm of q] (crs1)
+    {\textbf{CRS1xx / CRS2xx}\\Menu do switch chip\\ (\texttt{/interface ethernet switch})\\— bridge sem filtering};
+  \node[resposta, below right=10mm and 24mm of q] (rb)
+    {\textbf{RouterBOARD pequena}\\poucas portas: bridge\\filtering (CPU aguenta);\\ou menu do chip se houver};
+
+  \draw[seta] (q.south west) -- (crs3.north) node[pos=0.4, above left, ramo] {série 3xx/5xx};
+  \draw[seta] (q.south) -- (crs1.north) node[pos=0.4, right, ramo] {série 1xx/2xx};
+  \draw[seta] (q.south east) -- (rb.north) node[pos=0.4, above right, ramo] {hEX, hAP, RB...};
+\end{tikzpicture}
+```
+
+A decisão de projeto: em qual "idioma" configurar o switching, conforme
+a geração do hardware.
+
+:::
+
+- **CRS3xx/5xx — o mundo unificado.** Você configura **só a bridge**
+  (@sec-vlan-filtering) e o RouterOS traduz para o chip: tabela de
+  VLANs, PVIDs, tudo vira programação de hardware, com a flag `H`
+  intacta. É o presente e o futuro — e o motivo de este livro ter
+  ensinado a bridge primeiro;
+- **CRS1xx/2xx — o mundo legado.** O chip (QCA8511 e afins) é capaz —
+  mas não fala o idioma da bridge. As VLANs se configuram **no menu do
+  chip**: `/interface ethernet switch vlan` (a tabela), `... port` (modo
+  de cada porta: `vlan-mode`, `vlan-header`, `default-vlan-id` — o PVID
+  daquele mundo). A bridge existe só para agrupar, **sem**
+  `vlan-filtering`. Os conceitos são os mesmos do @sec-vlan-filtering —
+  muda a sintaxe;
+- **RouterBOARDs pequenas** — o hEX e irmãos têm chips básicos: para
+  meia dúzia de portas de escritório, o bridge filtering na CPU resolve;
+  onde o chip suportar (`switch1` com menu de VLAN), o legado serve.
+  Consulte sempre a página do chip.
+
+::: {.callout-warning}
+**Não misture os dois idiomas.** Bridge com `vlan-filtering=yes` **e**
+VLANs no menu do switch chip ao mesmo tempo é receita de comportamento
+indefinido — cada geração tem seu caminho, e a documentação do modelo
+diz qual. O sintoma de mistura (ou do idioma errado): o "CRS lento" —
+CPU alta, throughput de software. Diagnóstico em dois comandos:
+`/interface bridge port print` procurando `H` ausente, e
+`/system resource print` com CPU suspeita sob tráfego que "deveria ser
+de graça".
+:::
+
+## O que mais mora no chip
+
+VLAN é o prato principal, mas o porão tem mais ferramentas — todas em
+velocidade de fio:
+
+**Rule table — ACLs de hardware.** Uma tabela de regras estilo firewall
+(matchers de MAC, IP, porta; ações de drop/redirect/mirror) processada
+**pelo chip**:
+
+```routeros
+/interface ethernet switch rule add switch=switch1 ports=ether5 src-mac-address=!AA:BB:CC:DD:EE:FF/FF:FF:FF:FF:FF:FF copy-to-cpu=no new-dst-ports="" comment="so o MAC autorizado fala nesta porta"
+```
+
+(`new-dst-ports=""` = descartar.) É o jeito de impor "nesta porta, só
+este equipamento" num POP — sem gastar um ciclo de CPU. As regras variam
+por chip; as dos CRS3xx são particularmente ricas (é o embrião do
+*Layer 3 hardware offloading* dos CRS3xx/5xx mais novos — roteamento no
+chip, fora do nosso escopo, mas bom saber que existe).
+
+**Port mirroring — o grampo legítimo.** Copiar o tráfego de uma porta
+para outra, onde um analisador escuta:
+
+```routeros
+/interface ethernet switch set switch1 mirror-source=ether5 mirror-target=ether10
+```
+
+No @sec-torch-sniffer você verá o sniffer do próprio RouterOS; o mirror
+é a versão "de verdade" para depurar a porta de um cliente sem entrar no
+caminho.
+
+**Host table de hardware.** A prima da
+`/interface bridge host`: `/interface ethernet switch host print` mostra
+os MACs que **o chip** conhece — e aceita entradas estáticas (prender um
+MAC a uma porta). Nos CRS3xx integrada à da bridge; nos legados, é a que
+vale.
+
+E os **limites**: cada chip tem tabelas finitas — tantos mil MACs,
+tantas VLANs ativas, tantas regras de ACL. A ficha técnica
+(@sec-hardware-linhas) e a página *Switch Chip Features* trazem os
+números; um POP com mais MACs que a tabela do chip degrada para
+inundação (o switch vira hub para os excedentes). Projetar é conferir os
+números **antes**.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+O switch chip é um **computador de comutação com tabelas próprias** —
+VLANs, MACs, ACLs — e o seu trabalho é programá-lo no idioma certo da
+geração: **bridge filtering nos CRS3xx+** (o RouterOS traduz), **menu do
+chip nos legados**. Misturar idiomas ou exceder as tabelas derruba o
+tráfego para a CPU — e o "switch de 10 Gbps lento" quase sempre é isso:
+hardware esperando alguém falar a língua dele.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+O CHR **não tem switch chip** — este laboratório é em parte "seco"
+(leitura de especificações e projeto), em parte executável em qualquer
+RouterBOARD física que você tenha (um hEX serve: chip básico, menus
+presentes). Sem hardware, faça os passos de projeto e os desafios — o
+raciocínio é o produto.
+
+### Comandos passo a passo
+
+**Passo 1 — conhecer o chip (hardware físico).** Numa RouterBOARD:
+
+```routeros
+/interface ethernet switch print
+/interface ethernet switch port print
+```
+
+Anote o modelo do chip. Abra a página *Switch Chip Features* da
+documentação e localize a linha dele: quantas entradas de host table?
+Rule table existe? VLAN table de que tamanho?
+
+**Passo 2 — a host table de hardware.** Com dispositivos ligados às
+portas:
+
+```routeros
+/interface ethernet switch host print
+```
+
+Compare com `/interface bridge host print` — no hEX, as duas contam a
+mesma história por caminhos diferentes (chip × software).
+
+**Passo 3 — projeto no papel: o POP de 24 portas.** Sem equipamento,
+este passo vale por dois. Dado um **CRS326-24G-2S+** (chip Marvell,
+série 3xx) servindo um POP: uplink SFP+ 1 = trunk para o roteador de
+borda; SFP+ 2 = trunk para a torre; ether1–20 = clientes dedicados (cada
+um numa VLAN própria, 101–120); ether21–24 = equipamentos do provedor
+(VLAN 99 de gerência). Escreva, em `.rsc`, a configuração completa no
+idioma **certo** para a série 3xx — bridge, tabela de VLANs, PVIDs,
+frame-types, interface de gerência. (Solução no desafio 1 — tente antes
+de olhar.)
+
+**Passo 4 — o mesmo POP num CRS125.** Reescreva o miolo (as VLANs de
+duas portas de cliente e a gerência) no idioma legado:
+`/interface ethernet switch vlan` + `... port` com `vlan-mode=secure`,
+`vlan-header` e `default-vlan-id`. Compare o esforço — e entenda por que
+a série 3xx venceu.
+
+### Verificação
+
+1. (Com hardware) Você identificou o chip do seu equipamento e localizou
+   seus limites na documentação;
+2. O `.rsc` do Passo 3 segue a liturgia do @sec-vlan-filtering (tabela →
+   portas → filtering por último) e a gerência mora na VLAN 99 com a
+   bridge como tagged;
+3. Você sabe apontar, nos dois idiomas, onde vive cada conceito: tabela
+   de VLANs, PVID, admissão de quadros;
+4. Dado um "CRS lento", você lista os dois comandos de diagnóstico e os
+   três suspeitos (idioma errado, mistura, tabela estourada).
+
+### Desafios
+
+1. Escreva o `.rsc` do Passo 3 (CRS326). Estruture: bridge com todas as
+   portas; VLANs 101–120 (cada uma tagged no uplink SFP+1 e untagged na
+   porta do cliente); VLAN 99 tagged nos dois SFP+ e untagged nas
+   ether21–24; PVIDs e frame-types; `vlan-filtering=yes` ao final.
+   (Abrevie as 20 VLANs de cliente mostrando 2 e indicando o padrão.)
+2. No desenho do desafio 1, cada cliente está **sozinho** na própria
+   VLAN — clientes não se enxergam em camada 2. Que problema clássico de
+   condomínio/POP isso resolve? E o que o roteador de borda precisa ter
+   para que os clientes continuem chegando à internet?
+3. Um POP com CRS326 tem 6 mil dispositivos atrás de uma porta (uma
+   torre PtMP inteira). A host table do chip suporta 16 mil MACs. Outro
+   integrador propõe ligar **três** torres iguais no mesmo switch. Faça
+   a conta e diga o risco — e duas mitigações de projeto.
+4. A rule table permite "nesta porta, só este MAC". Por que essa regra é
+   ao mesmo tempo uma ótima defesa num POP e uma péssima ideia numa
+   porta de torre PtMP? O que usar em cada caso?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Esqueleto (padrão indicado, 2 de 20 clientes mostrados):
+
+```routeros
+/interface bridge add name=bridge-pop
+/interface bridge port
+add bridge=bridge-pop interface=sfp-sfpplus1 frame-types=admit-only-vlan-tagged
+add bridge=bridge-pop interface=sfp-sfpplus2 frame-types=admit-only-vlan-tagged
+add bridge=bridge-pop interface=ether1 pvid=101 frame-types=admit-only-untagged-and-priority-tagged
+add bridge=bridge-pop interface=ether2 pvid=102 frame-types=admit-only-untagged-and-priority-tagged
+# ... ether3-20: pvid=103..120, mesmo frame-types
+add bridge=bridge-pop interface=ether21 pvid=99 frame-types=admit-only-untagged-and-priority-tagged
+# ... ether22-24 idem
+/interface bridge vlan
+add bridge=bridge-pop vlan-ids=101 tagged=bridge-pop,sfp-sfpplus1 untagged=ether1
+add bridge=bridge-pop vlan-ids=102 tagged=bridge-pop,sfp-sfpplus1 untagged=ether2
+# ... 103-120 no padrao
+add bridge=bridge-pop vlan-ids=99 tagged=bridge-pop,sfp-sfpplus1,sfp-sfpplus2 untagged=ether21,ether22,ether23,ether24
+/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-pop
+/ip address add address=10.99.1.2/24 interface=vlan99-ger
+/interface bridge set bridge-pop vlan-filtering=yes
+```
+
+(Refinamento pró: `tagged=bridge-pop` só é necessário nas VLANs que a
+CPU precisa ver — a 99; nas de cliente, pode sair.)
+
+**2.** Resolve o **vizinho bisbilhoteiro/atacante**: sem camada 2 comum,
+não há ARP spoofing entre clientes, não há vírus varrendo o condomínio,
+não há briga de DHCP — cada cliente enxerga só o provedor. O roteador de
+borda precisa **ter presença em cada VLAN** (`/interface vlan` 101–120,
+tipicamente agregadas por PPPoE ou DHCP por VLAN) e rotear/NAT-ear — o
+router-on-a-stick do @sec-vlans-8021q em escala. É o desenho que o
+@sec-segmentacao-pop consolida.
+
+**3.** 3 × 6 000 = 18 000 MACs > 16 000 da tabela: sob carga plena, ~2
+mil MACs não cabem — o chip **inunda** o tráfego deles por todas as
+portas da VLAN: banda desperdiçada, privacidade vazada, CPU do que
+escuta castigada. Mitigações: (a) **quebrar o domínio L2**: rotear na
+torre (cada torre com sua sub-rede — os MACs de clientes morrem lá e o
+switch vê só o MAC do roteador da torre); (b) distribuir torres em
+switches distintos / limitar aprendizagem por porta. A lição: host
+table é recurso de projeto, não detalhe.
+
+**4.** Na porta de um **cliente dedicado/servidor do POP**, o MAC é
+um e conhecido: a regra elimina troca de equipamento não autorizada e
+spoofing — ótima. Numa porta de **torre PtMP**, chegam **milhares** de
+MACs legítimos (todos os clientes atrás do rádio): travar em um MAC
+derruba todo mundo. Lá, o controle certo é por VLAN + os mecanismos da
+camada wireless (access-list do Volume 5) e, para contenção de L2,
+isolamento entre clientes no próprio rádio.
+:::
+
+## Resumo
+
+- O **switch chip** é o comutador de verdade dos CRS e RouterBOARDs —
+  tabelas próprias de MACs, VLANs e regras, expostas em
+  `/interface ethernet switch`.
+- A decisão de idioma (@fig-decisao-switch): **CRS3xx/5xx = bridge VLAN
+  filtering** (RouterOS programa o chip, `H` vivo); **CRS1xx/2xx = menu
+  legado do chip**; nunca os dois juntos.
+- Além de VLAN: **rule table** (ACLs em fio), **port mirroring**
+  (grampo de diagnóstico), host table de hardware com entradas
+  estáticas.
+- Tabelas são **finitas**: MACs, VLANs e regras têm teto por chip —
+  estourar = inundação silenciosa; projetar é conferir a página *Switch
+  Chip Features* antes.
+- "CRS lento" = tráfego na CPU: procure o `H` perdido, o idioma errado
+  ou a tabela cheia.
+
+No próximo capítulo, o volume fecha com o projeto integrador: a
+**segmentação completa de um POP** — gerência, clientes e serviços, do
+switch ao firewall.
+
+## Bibliografia do capítulo {.unnumbered}
+
+As páginas *Switch Chip Features* (tabela por modelo) e *CRS3xx, CRS5xx
+switch chip features* da documentação oficial [@mikrotik-docs] são
+leitura obrigatória de projeto; os manuais de cada CRS indicam o idioma
+de configuração suportado. As referências completas, em ABNT, estão no
+apêndice [Referências](../../referencias.qmd).
