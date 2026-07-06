@@ -69,7 +69,7 @@ Pré-requisitos: Vol. 2.*
 *Objetivo: segmentar a rede em camada 2 com desempenho de hardware.
 Pré-requisitos: Vol. 2 (Vol. 3 recomendado).*
 
-- [ ] `volumes/v04-bridge-vlans/01-bridge-hardware-offload.qmd` — Bridge: conceito, portas, hardware offload e quando ele se perde.
+- [x] `volumes/v04-bridge-vlans/01-bridge-hardware-offload.qmd` — Bridge: conceito, portas, hardware offload e quando ele se perde.
 - [ ] `volumes/v04-bridge-vlans/02-vlans-8021q.qmd` — VLANs e 802.1Q: tagging, interface vlan sobre bridge/ethernet.
 - [ ] `volumes/v04-bridge-vlans/03-bridge-vlan-filtering.qmd` — Bridge VLAN filtering: tagged/untagged, PVID, trunk e access na prática.
 - [ ] `volumes/v04-bridge-vlans/04-switch-chip-crs.qmd` — Switch chip nos CRS: switching em hardware, diferenças CRS1xx/3xx.

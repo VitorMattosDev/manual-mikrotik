@@ -1,0 +1,339 @@
+# Bridge e hardware offload {#sec-bridge-offload}
+
+::: {.callout-note}
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Diferenciar **rotear** (camada 3) de **comutar** (camada 2) — e dizer
+  qual dos dois cada problema pede;
+- Explicar o que uma **bridge** faz: aprendizado de MACs, encaminhamento
+  por tabela e inundação do desconhecido;
+- Criar bridges no RouterOS, adicionar portas e ler a *host table*;
+- Explicar o **hardware offload** (a flag `H`): quando o switch chip
+  comuta sozinho, quando o trabalho cai na CPU — e quais recursos matam o
+  offload;
+- Reconhecer os papéis da bridge na rede do provedor: LAN de CPE, switch
+  de POP e o motor por trás das VLANs dos próximos capítulos.
+:::
+
+## Camada 2: o andar de baixo
+
+Três volumes inteiros olhando endereços IP — e no entanto, quando dois
+computadores da mesma LAN conversam, o IP quase não trabalha: quem entrega
+os quadros é a **camada 2**, endereçando por **MAC**. O RouterOS, que até
+aqui usamos como roteador, também é um **switch** — e a peça que faz isso
+é a **bridge**.
+
+A distinção que organiza o volume:
+
+- **Rotear** (camada 3): conectar redes **diferentes** — decisão por
+  tabela de rotas, TTL decrementado, firewall na travessia. É o que
+  fizemos até aqui;
+- **Comutar** (camada 2): conectar equipamentos da **mesma** rede —
+  decisão por tabela de MACs, transparente para o IP. É o que um switch
+  faz, e o que a bridge do RouterOS faz.
+
+Uma bridge é um **switch de software**: uma interface virtual que agrupa
+portas físicas e comuta quadros entre elas. O algoritmo cabe em três
+verbos:
+
+1. **Aprende**: cada quadro que chega ensina "o MAC de origem X mora na
+   porta Y" — anotado na *host table*;
+2. **Encaminha**: quadro para MAC conhecido sai **só** pela porta onde ele
+   mora;
+3. **Inunda**: quadro para MAC desconhecido (ou broadcast) sai por
+   **todas** as portas, menos a de origem — e a resposta ensinará o
+   caminho.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+A bridge é um **carteiro de condomínio** que começa sem conhecer ninguém:
+a primeira carta para um morador desconhecido é anunciada no pátio
+(inundação); quando o morador responde, o carteiro anota o bloco
+(aprendizado) e as próximas cartas vão direto (encaminhamento). O
+roteador, por contraste, é o **correio entre cidades** — outro andar do
+sistema.
+:::
+
+## Bridge no RouterOS
+
+Criar o switch de software e povoá-lo:
+
+```routeros
+/interface bridge add name=bridge-lan comment="LAN do escritorio"
+/interface bridge port add bridge=bridge-lan interface=ether2
+/interface bridge port add bridge=bridge-lan interface=ether3
+/interface bridge port add bridge=bridge-lan interface=ether4
+```
+
+Pronto: `ether2`–`ether4` agora são portas do mesmo "switch", e
+dispositivos ligados a elas conversam em camada 2. Três consequências
+imediatas que mudam como você configura:
+
+- **A bridge é uma interface** — e é *nela* que a configuração de camada
+  3 mora a partir de agora: o IP da LAN vai em `interface=bridge-lan`,
+  o DHCP server escuta na bridge, as regras de firewall referenciam a
+  bridge. As portas físicas viram "buracos de tomada": nenhuma
+  configuração IP nelas;
+- **A host table conta a verdade** (`/interface bridge host print`): que
+  MAC está em que porta, aprendido ao vivo — a primeira parada de todo
+  diagnóstico "o dispositivo não aparece";
+- **Quem entra na bridge deixa de ser individual**: um endereço IP
+  esquecido numa porta-membro é receita de comportamento bizarro.
+
+Na rede do provedor, a bridge está em toda parte: é a LAN do CPE na casa
+do cliente (portas + WiFi na mesma bridge), o switch de gerência de uma
+torre (rádios + roteador no mesmo segmento) e — no CRS — o switch do POP
+inteiro. E aqui entra a pergunta de desempenho.
+
+## Hardware offload: quem carrega o piano?
+
+Uma bridge de software comuta na **CPU**: cada quadro sobe, é decidido e
+desce. Num CHR ou num roteador pequeno servindo uma casa, tudo bem. Num
+CRS com 24 portas a 1 Gbps, seria suicídio — e é por isso que os CRS
+(@sec-hardware-linhas) carregam um **switch chip**: um circuito que
+comuta sozinho, em velocidade de fio, sem acordar a CPU.
+
+O elo entre os dois mundos é o **hardware offload**: quando as condições
+permitem, o RouterOS *delega* a comutação da bridge ao switch chip. O
+sinal está na flag **`H`** de cada porta:
+
+```routeros
+/interface bridge port print
+```
+
+```routeros
+[admin@crs-pop] > /interface bridge port print
+Flags: I - INACTIVE; H - HW-OFFLOAD
+Columns: INTERFACE, BRIDGE, HW
+#    INTERFACE  BRIDGE      HW
+0 H  ether1     bridge-pop  yes
+1 H  ether2     bridge-pop  yes
+2 H  ether3     bridge-pop  yes
+```
+
+`H` presente = aquele tráfego não gasta CPU. E a regra de ouro do
+capítulo: **recursos de software matam o offload**. A bridge só delega o
+que o chip sabe fazer; peça algo que exija a CPU e o RouterOS
+silenciosamente traz o tráfego de volta para o software — o switch de
+200 Gbps vira um roteador de 500 Mbps sem avisar. Os assassinos clássicos
+do `H`:
+
+| Recurso na bridge | Efeito no offload |
+|:------------------|:------------------|
+| `use-ip-firewall=yes` (firewall vendo tráfego da bridge) | mata (tudo passa pela CPU) |
+| VLAN filtering em chips antigos (CRS1xx/2xx) | mata; nos CRS3xx+, **preservado** |
+| STP/RSTP | preservado (protocolos vão à CPU; dados não) |
+| Bonding de portas | depende do chip |
+| Mesma bridge misturando portas de chips diferentes | mata nas portas fora do chip |
+
+: O que mata (e o que preserva) o hardware offload {#tbl-offload}
+
+A tabela tem uma linha que anuncia o futuro: **VLAN filtering com offload
+nos CRS3xx** é exatamente o assunto dos próximos capítulos — segmentar
+POPs inteiros em velocidade de fio. E tem uma pegadinha de diagnóstico
+que vale sublinhar: a perda do offload **não gera erro** — só CPU alta e
+throughput baixo. `/interface bridge port print` procurando `H` ausente é
+o primeiro reflexo do técnico de POP.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+A bridge é o switch de software do RouterOS — IP, DHCP e firewall passam
+a morar **nela**, não nas portas. E desempenho de switching é uma
+pergunta só: **a flag `H` está lá?** Com offload, o switch chip comuta em
+velocidade de fio; sem ele, cada quadro custa CPU — e o RouterOS troca um
+pelo outro em silêncio quando você pede recursos que o chip não sabe
+fazer (@tbl-offload).
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Os três CHRs (@sec-lab-chr), a partir dos snapshots `hardening-completo`
+(r1, r2) e `base-limpa` (r3). Ajuste **para este volume** (vale para os
+próximos capítulos): no VirtualBox, mova o Adaptador 2 de `lab-r3` para a
+rede interna **`lab-a`** — r2 e r3 ficam ambos "espetados" no r1, que
+fará papel de switch. (No CHR não há switch chip — a flag `H` não
+aparecerá; o offload é conceitual aqui e real no CRS do seu POP. Tudo o
+mais é idêntico.)
+
+### Comandos passo a passo
+
+**Passo 1 — desmontar a LAN roteada.** No `lab-r1`, a LAN atual mora na
+`ether2` física. Vamos migrá-la para uma bridge — a operação clássica de
+quem "ganha portas". Primeiro, crie a bridge e mova o IP (Safe Mode,
+claro — mexer onde mora o DHCP da LAN merece cinto):
+
+```routeros
+/interface bridge add name=bridge-lan comment="LAN em bridge"
+/ip address set [find address~"192.168.10.1"] interface=bridge-lan
+/ip dhcp-server set dhcp-lan interface=bridge-lan
+```
+
+**Passo 2 — portas na bridge.** `ether2` (onde vive o r2/r3 via lab-a)
+vira porta:
+
+```routeros
+/interface bridge port add bridge=bridge-lan interface=ether2
+```
+
+E atualize a interface list (o firewall do Volume 3 referencia `LAN` —
+eis a recompensa da indireção do @sec-protegendo-roteador):
+
+```routeros
+/interface list member set [find interface=ether2] interface=bridge-lan
+```
+
+**Passo 3 — dois vizinhos de bridge.** Em `lab-r2` e `lab-r3` (console
+do r3), garanta DHCP client na `ether2` de cada:
+
+```routeros
+/ip dhcp-client add interface=ether2
+```
+
+Ambos devem receber `192.168.10.1xx` do r1. E o teste de camada 2: de
+`lab-r3`, pingue o **r2** (IP dele na LAN — veja em
+`/ip dhcp-server lease print` no r1):
+
+```routeros
+/ping 192.168.10.105 count=3
+```
+
+Funciona — e repare: esse tráfego r3↔r2 **não é roteado** pelo r1; ele é
+**comutado** pela bridge (mesma rede, camada 2). O firewall `forward` do
+r1 nem o vê.
+
+**Passo 4 — a host table.** Em `lab-r1`, o caderno do carteiro:
+
+```routeros
+/interface bridge host print
+```
+
+```routeros
+[vitor@lab-r1] > /interface bridge host print
+Flags: L - LOCAL, D - DYNAMIC
+Columns: MAC-ADDRESS, ON-INTERFACE, BRIDGE, AGE
+#    MAC-ADDRESS        ON-INTERFACE  BRIDGE      AGE
+0 D  08:00:27:3B:71:9E  ether2        bridge-lan  12s
+1 D  08:00:27:C4:88:2A  ether2        bridge-lan  4s
+2 L  08:00:27:6A:2B:1C  bridge-lan    bridge-lan
+```
+
+Os MACs de r2 e r3 aprendidos (flag `D`, com idade), ambos na `ether2` —
+no laboratório as duas VMs chegam pela mesma "tomada" (a rede interna
+lab-a é o switch do VirtualBox); num CRS físico, cada um apareceria na
+sua porta. A flag `L` marca o MAC da própria bridge.
+
+**Passo 5 — assistir ao aprendizado.** Limpe um host e veja-o voltar:
+
+```routeros
+/interface bridge host print where !local
+```
+
+Anote um MAC, gere silêncio (pare pings), aguarde o `AGE` crescer — e
+dispare um ping do r3: o `AGE` zera (quadro novo reensina). É o ciclo
+aprende-esquece que mantém a tabela enxuta.
+
+**Passo 6 — a bateria de sempre.** O firewall sobreviveu à migração?
+Bateria de fumaça do @sec-hardening, versão rápida: r2 navega
+(`/ping google.com`), DHCP renova, SSH da LAN ao r1 morre, gerência viva.
+Se algo quebrou, o suspeito é a interface list do Passo 2.
+
+### Verificação
+
+1. O IP da LAN, o DHCP server e a interface list apontam para
+   `bridge-lan` (`/ip address print`, `/ip dhcp-server print`,
+   `/interface list member print`);
+2. r2 e r3 têm leases e se pingam **diretamente** (comutados, não
+   roteados);
+3. A host table mostra os MACs dinâmicos com `AGE` vivo;
+4. A bateria de fumaça do firewall passou intacta.
+
+### Desafios
+
+1. No Passo 3, o ping r3→r2 não passa pelo firewall `forward` do r1. Isso
+   é um problema de segurança? Em que cenário de provedor a resposta é
+   "sim" — e qual ferramenta (deste volume) resolve?
+2. Um técnico deixou um IP configurado direto na `ether2` **além** do IP
+   da bridge. Que classe de defeitos isso causa? (Pense no que o RouterOS
+   responde por ARP e por onde ele roteia.)
+3. Num CRS326 com 24 portas na bridge, você precisa que o firewall
+   inspecione o tráfego **entre** duas portas específicas. Quais são suas
+   opções, e qual o preço de cada uma? (@tbl-offload ajuda.)
+4. A host table de um switch de POP mostra o mesmo MAC **alternando**
+   entre duas portas, com `AGE` sempre zerando. O que está acontecendo, e
+   por que é urgente? (Palavra-chave para investigar: loop — e o próximo
+   capítulo do livro que trata disso é o de STP... que não existe; o
+   assunto aparece no @sec-vlan-filtering. Por ora, raciocine.)
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Para uma LAN de **um** cliente (casa, escritório), não: os
+dispositivos são do mesmo dono e confiança. Vira problema quando a mesma
+bridge carrega **clientes diferentes** — vizinhos de condomínio num
+switch, assinantes numa torre: um infectado ataca os outros em camada 2,
+invisível para o firewall do roteador. As respostas do volume: separar
+clientes em **VLANs** (@sec-vlans-8021q em diante) — e, em bridges que
+precisam mesmo filtrar, o firewall de bridge/`use-ip-firewall` (pagando o
+offload, @tbl-offload).
+
+**2.** O RouterOS passa a ter **dois caminhos** para a mesma rede: a
+interface física (com o IP esquecido) e a bridge. ARP pode ser respondido
+pelos dois lados, rotas conectadas duplicam (uma por interface) e o
+tráfego ora sai por uma, ora por outra — sintomas: conexões que "às vezes
+funcionam", ARP incompleto em vizinhos, e a host table confusa. Regra do
+capítulo: porta-membro não tem configuração própria; camada 3 mora **só**
+na bridge.
+
+**3.** Opções: (a) `use-ip-firewall=yes` — o firewall IP passa a ver o
+tráfego em bridge; preço: **todo** o tráfego da bridge desce para a CPU
+(mata o offload geral — inaceitável num POP carregado); (b) **bridge
+filter** (regras de camada 2) — mais barato, mas igualmente processado
+em CPU para o que casar; (c) a resposta arquitetural: **tirar as duas
+portas da bridge comum** — VLANs separadas + roteamento entre elas no
+próprio CRS ou num roteador acima: o firewall vê o tráfego **na
+travessia de camada 3**, onde ele é natural, e o resto do POP continua
+em hardware. A opção (c) é o desenho do @sec-segmentacao-pop.
+
+**4.** MAC alternando entre portas = o mesmo quadro chegando por dois
+caminhos: ou há um **loop físico** (dois cabos fechando um anel entre
+switches — broadcasts circulam e multiplicam até saturar tudo: é uma
+*broadcast storm* em formação, urgência máxima), ou alguém está
+**forjando o MAC** (ataque/equipamento defeituoso). Ação imediata:
+identificar as duas portas e derrubar uma; ação estrutural: STP/RSTP
+ligado nas bridges de POP (o RouterOS traz RSTP por padrão) e desenho
+sem anéis não intencionais.
+:::
+
+## Resumo
+
+- **Comutar** (camada 2, por MAC, dentro da rede) ≠ **rotear** (camada 3,
+  por IP, entre redes) — a bridge é o switch de software do RouterOS:
+  aprende, encaminha, inunda.
+- Configuração de camada 3 (IP, DHCP, firewall, listas) mora **na
+  bridge**; portas-membro são tomadas burras. A **host table** é o
+  caderno do carteiro — primeira parada do diagnóstico.
+- Tráfego entre portas da mesma bridge **não passa** pelo firewall
+  `forward` — consciência disso é segurança.
+- **Hardware offload** (flag `H`): o switch chip comuta em velocidade de
+  fio; recursos de software o matam **em silêncio** (@tbl-offload) — CPU
+  alta + throughput baixo num CRS = procurar o `H` perdido.
+- Nos CRS3xx, o VLAN filtering preserva o offload — a porta de entrada
+  dos próximos capítulos.
+
+No próximo capítulo, o divisor de águas da rede de provedor: **VLANs e
+802.1Q** — como um cabo só carrega dezenas de redes separadas.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/interface bridge`
+(portas, host table, STP) e as tabelas de compatibilidade de hardware
+offload por switch chip — consulte a do seu modelo antes de projetar um
+POP. @tanenbaum-redes fundamenta a comutação em camada 2 (aprendizado,
+inundação, spanning tree). As referências completas, em ABNT, estão no
+apêndice [Referências](../../referencias.qmd).
