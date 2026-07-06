@@ -58,7 +58,7 @@ Pré-requisitos: Vol. 1.*
 Pré-requisitos: Vol. 2.*
 
 - [x] `volumes/v03-firewall/01-connection-tracking.qmd` — Connection tracking: estados (new/established/related/invalid), tabela de conexões.
-- [ ] `volumes/v03-firewall/02-chains-logica-firewall.qmd` — Chains input/forward/output e a lógica de avaliação das regras (ordem, if-first-match).
+- [x] `volumes/v03-firewall/02-chains-logica-firewall.qmd` — Chains input/forward/output e a lógica de avaliação das regras (ordem, if-first-match).
 - [ ] `volumes/v03-firewall/03-protegendo-o-roteador.qmd` — Filter na chain input: protegendo o próprio roteador (serviços, ICMP, drop final).
 - [ ] `volumes/v03-firewall/04-forward-address-lists.qmd` — Filter na chain forward e address-lists (estáticas e dinâmicas, timeout).
 - [ ] `volumes/v03-firewall/05-dstnat-port-forwarding.qmd` — dstnat e port forwarding: publicando serviços, hairpin NAT.

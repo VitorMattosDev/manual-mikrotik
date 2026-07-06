@@ -1,7 +1,367 @@
-# Chains e a lógica do firewall
+# Chains e a lógica do firewall {#sec-chains-firewall}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Dizer, para qualquer pacote, em qual **chain** ele será julgado —
+  `input`, `forward` ou `output` — usando uma única pergunta;
+- Explicar a avaliação **de cima para baixo, primeira regra que casa
+  decide** — e por que a ordem das regras é metade do firewall;
+- Usar as **actions** fundamentais (`accept`, `drop`, `reject`, `log`,
+  `jump`) e escolher entre `drop` e `reject` com critério;
+- Montar o **esqueleto stateful** de uma chain (established/related →
+  invalid → julgamento do new) e explicar cada linha;
+- Usar contadores e a action `log` para ver regras trabalhando — inclusive
+  no modo "ensaio", antes de qualquer bloqueio real.
 :::
+
+## Três tribunais, uma pergunta
+
+O firewall de filtro vive em `/ip firewall filter`, e cada regra pertence a
+uma **chain** (corrente/fila de julgamento). As três nativas separam os
+pacotes por uma pergunta só: **qual a relação do pacote com o roteador?**
+
+- **`input`** — o pacote é **para** o roteador (destino: um IP dele). O
+  SSH da gerência, o DNS que a LAN consulta, o ping no gateway — tudo
+  input;
+- **`forward`** — o pacote **atravessa** o roteador (origem e destino são
+  de terceiros). A navegação dos clientes é 99% disso;
+- **`output`** — o pacote **nasce** no roteador (ele mesmo consultando o
+  upstream de DNS, o NTP, o ping que você dispara do terminal).
+
+Quem decide a chain não é você — é o **destino do pacote**, avaliado logo
+após a decisão de roteamento (@fig-chains-fluxo):
+
+::: {#fig-chains-fluxo}
+
+```{.tikz}
+%%| filename: fig-chains-fluxo
+%%| alt: Fluxo de um pacote pelo firewall. O pacote entra por uma interface e passa pela decisão de roteamento, um losango que pergunta se o destino é o próprio roteador. Se sim, segue para a chain input e, aprovado, chega aos processos locais do roteador. Se não, segue para a chain forward e, aprovado, sai pela interface de saída. Um terceiro caminho parte dos processos locais: pacotes gerados pelo roteador passam pela chain output antes de sair. As três chains aparecem como caixas de julgamento destacadas.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  etapa/.style={draw=manualgray, thick, fill=manualgray!10, rounded corners=3pt,
+                minimum height=9mm, text width=24mm, align=center},
+  chain/.style={draw=manualred, very thick, fill=manualred!8, rounded corners=3pt,
+                minimum height=9mm, text width=20mm, align=center,
+                font=\sffamily\small\bfseries},
+  decisao/.style={draw=manualblue, very thick, fill=manualblue!8,
+                  diamond, aspect=2.2, text width=20mm, align=center,
+                  font=\sffamily\scriptsize},
+  seta/.style={very thick, -stealth, manualblue},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  \node[etapa] (in) {pacote chega\\ \small(interface)};
+  \node[decisao, right=14mm of in] (rot) {destino é o roteador?};
+  \node[chain, above right=6mm and 16mm of rot] (input) {input};
+  \node[chain, below right=6mm and 16mm of rot] (fwd) {forward};
+  \node[etapa, right=14mm of input] (local) {processos locais\\ \small(SSH, DNS...)};
+  \node[etapa, right=14mm of fwd] (out) {sai pela\\interface};
+  \node[chain, right=13mm of local] (output) {output};
+
+  \draw[seta] (in) -- (rot);
+  \draw[seta] (rot.north) |- (input.west) node[pos=0.25, left, rotulo] {sim};
+  \draw[seta] (rot.south) |- (fwd.west) node[pos=0.25, left, rotulo] {não};
+  \draw[seta] (input) -- (local);
+  \draw[seta] (fwd) -- (out);
+  \draw[seta] (local.east) -- (output.west);
+  \draw[seta] (output.south) |- (out.east);
+\end{tikzpicture}
+```
+
+O caminho do pacote: a decisão de roteamento distribui cada um à sua
+chain — para o roteador (`input`), através dele (`forward`) ou nascido
+nele (`output`).
+
+:::
+
+A separação é a sua primeira ferramenta de projeto: **proteger o roteador**
+é escrever regras no `input` (próximo capítulo); **proteger e policiar os
+clientes** é escrever no `forward` (@sec-forward-lists). Misturar os dois é
+o erro de iniciante mais comum — regras de cliente no input não fazem
+nada, e regras de roteador no forward protegem a caixa errada.
+
+## A lógica: de cima para baixo, primeira que casa decide
+
+Dentro de cada chain, as regras formam uma **lista ordenada**. Cada pacote
+da chain percorre a lista do topo para baixo; na primeira regra cujas
+condições (*matchers*) ele satisfaz, a **action** é executada — e, se ela
+for terminal (`accept`, `drop`, `reject`), o julgamento **acaba ali**. As
+regras seguintes nem são olhadas.
+
+Duas consequências que valem um firewall inteiro:
+
+1. **Ordem é semântica.** `drop` geral antes de `accept` específico =
+   o accept nunca executa. As regras baratas e frequentes vão no topo
+   (é o esqueleto stateful do @sec-conntrack); as exceções vêm **antes**
+   das regras gerais que elas excetuam;
+2. **O fim da lista é uma decisão.** Se nenhuma regra casar, o RouterOS
+   **aceita** o pacote — a política padrão é permissiva. Um firewall de
+   verdade termina, portanto, com uma regra explícita de `drop` do resto
+   ("**drop all**") — e tudo que deve viver, vive **acima** dela.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+Uma chain é uma **fila de carimbos**: o pacote passa de mesa em mesa, e o
+primeiro fiscal cuja regra o descreve dá o carimbo final — entra ou lixo.
+Se chegar ao fim da fila sem carimbo, a porta está aberta (política
+padrão: aceitar). Por isso o último fiscal de um firewall sério carimba
+"lixo" em tudo que sobrou.
+:::
+
+### As actions
+
+| Action | Efeito | Quando usar |
+|:-------|:-------|:------------|
+| `accept` | deixa passar, fim do julgamento | tráfego aprovado |
+| `drop` | descarta **em silêncio** | o padrão para lixo externo |
+| `reject` | descarta e **avisa** a origem (ICMP/TCP reset) | redes internas, onde a resposta rápida ajuda |
+| `log` | registra no log e **continua** para a próxima regra | diagnóstico e ensaio |
+| `jump` | desvia para uma chain sua (`jump-target`) | organizar firewalls grandes |
+| `return` | volta da chain desviada | fecha o ciclo do jump |
+
+: Actions essenciais do filter {#tbl-actions}
+
+Dois pares merecem nota:
+
+- **`drop` × `reject`**: o `drop` silencia — quem sonda a sua WAN não
+  descobre nem que existe um firewall (e cada pacote de resposta
+  economizado importa sob ataque). O `reject` responde "recusado" — em
+  rede **interna**, poupa usuários e aplicações de esperar timeouts. Regra
+  de bolso: **fora, drop; dentro, reject quando a experiência importar**;
+- **`log` não é terminal**: o pacote é registrado e **segue** para as
+  regras seguintes. Isso permite o padrão mais valioso deste capítulo — o
+  **ensaio**: coloque um `log` onde o futuro `drop` ficará, observe alguns
+  dias o que ele pegaria e só então troque por `drop`. Firewall de
+  produção se estreia sem surpresas. (A action `log` aceita
+  `log-prefix="texto"` — use sempre: log sem prefixo é charada.)
+
+### Chains próprias: organização por `jump`
+
+Além das três nativas, você cria chains suas e desvia tráfego para elas:
+
+```routeros
+/ip firewall filter add chain=forward src-address=192.168.10.0/24 action=jump jump-target=clientes
+/ip firewall filter add chain=clientes protocol=tcp dst-port=25 action=drop comment="bloqueia SMTP direto"
+/ip firewall filter add chain=clientes action=return
+```
+
+O pacote que casa com o jump é julgado pelas regras da chain `clientes`;
+um `return` (ou o fim da chain) devolve-o para onde parou na `forward`. Em
+firewalls de provedor com centenas de regras, chains temáticas
+(`da-wan`, `clientes`, `gerencia`) mantêm a lista legível — e mais
+rápida, pois grupos inteiros de regras só são percorridos por quem casa
+com o jump.
+
+## O esqueleto que você vai repetir para sempre
+
+Juntando conntrack (@sec-conntrack) + chains + ordem, nasce o esqueleto de
+**toda** chain de filtro bem construída:
+
+```routeros
+/ip firewall filter
+add chain=input action=accept connection-state=established,related comment="aceita conversas em andamento"
+add chain=input action=drop connection-state=invalid comment="lixo do conntrack"
+# ... daqui para baixo, só pacotes NEW chegam:
+# regras que julgam QUEM PODE ABRIR conversa nova
+# ...
+add chain=input action=drop comment="drop all: o que nao foi aceito acima, morre"
+```
+
+Leia-o como narrativa: *conversas aprovadas passam barato (linha 1); lixo
+morre cedo (linha 2); pedidos novos são julgados um a um (miolo); e tudo
+que sobrar, morre (última linha)*. O miolo muda conforme a chain e o
+papel do equipamento — os dois próximos capítulos são exatamente sobre
+esses miolos.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Firewall no RouterOS é responder três perguntas, nesta ordem: **em qual
+chain?** (qual a relação do pacote com o roteador), **em que posição?**
+(primeira que casa decide; baratas no topo, drop all no fim) e **com qual
+action?** (fora drop, dentro reject, ensaio com log). Quem domina as três
+perguntas escreve qualquer regra; quem não domina, copia listas da
+internet sem saber o que protegem.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+O de sempre neste volume: `lab-r1` (borda completa do @sec-projeto-borda)
+e `lab-r2` (cliente na LAN). Vamos montar o esqueleto do `input` **em modo
+ensaio** — nenhum bloqueio real ainda; o aperto de verdade é no próximo
+capítulo, com rede de segurança.
+
+### Comandos passo a passo
+
+**Passo 1 — o esqueleto, com ensaio no lugar do drop.** Em `lab-r1`:
+
+```routeros
+/ip firewall filter add chain=input action=accept connection-state=established,related comment="aceita conversas em andamento"
+/ip firewall filter add chain=input action=drop connection-state=invalid comment="lixo do conntrack"
+/ip firewall filter add chain=input action=log log-prefix="INPUT-NEW: " comment="ENSAIO: quem esta abrindo conversa com o roteador?"
+```
+
+Repare: onde um dia haverá julgamento + drop all, por ora há um `log` —
+o firewall observa e **não bloqueia nada** (política padrão aceita o que
+o log deixa passar).
+
+**Passo 2 — gerar tráfego e ler contadores.** Em `lab-r2`, movimente a
+rede: `/ping 192.168.10.1 count=5` (input do r1!), `/ping google.com
+count=5` (forward + o DNS é input!). Em `lab-r1`:
+
+```routeros
+/ip firewall filter print stats
+```
+
+```routeros
+[vitor@lab-r1] > /ip firewall filter print stats
+Flags: X - disabled, I - invalid; D - dynamic
+Columns: CHAIN, ACTION, BYTES, PACKETS
+#  CHAIN  ACTION  BYTES   PACKETS
+0  input  accept  12 480      156
+1  input  drop         0        0
+2  input  log      1 344       18
+```
+
+Os contadores são o eletrocardiograma do firewall: a regra 0 engorda a
+cada pacote de conversas vivas; a 2 conta só as **aberturas** (`new`).
+Zere-os e observe do zero quando quiser: `/ip firewall filter
+reset-counters-all`.
+
+**Passo 3 — ler o ensaio.** Veja quem o log pegou:
+
+```routeros
+/log print where message~"INPUT-NEW"
+```
+
+```routeros
+15:41:02 firewall,info INPUT-NEW: input: in:ether2 out:(unknown 0),
+proto UDP, 192.168.10.105:44231->192.168.10.1:53, len 62
+15:41:07 firewall,info INPUT-NEW: input: in:ether2 out:(unknown 0),
+proto ICMP, 192.168.10.105->192.168.10.1, len 84
+```
+
+Cada linha é um pedido de conversa nova com o roteador: o DNS da LAN
+(porta 53), o ping no gateway, o seu SSH da gerência (`in:ether1`, porta
+22)... Este é o **inventário real** do que o próximo capítulo precisa
+permitir antes do drop all.
+
+**Passo 4 — sentir a ordem.** Prove que ordem é semântica: suba uma regra
+de log específica **abaixo** da genérica e veja que nunca casa:
+
+```routeros
+/ip firewall filter add chain=input protocol=icmp action=log log-prefix="PING: " comment="teste de ordem"
+```
+
+Pingue o r1 de novo (do r2) e confira: o contador da regra nova avança?
+Sim — porque `log` **não é terminal**: o pacote passou pela regra 2 (log
+genérico) e **continuou** até a 3. Agora troque o log genérico por um
+`accept` temporário e repita:
+
+```routeros
+/ip firewall filter set 2 action=accept
+/ip firewall filter reset-counters-all
+```
+
+Ping de novo: agora a regra `PING:` fica **zerada** — o `accept` da regra
+2 é terminal e ninguém abaixo dela vê pacote algum. Ordem + terminalidade,
+demonstradas. Desfaça o experimento:
+
+```routeros
+/ip firewall filter set 2 action=log
+/ip firewall filter remove [find comment="teste de ordem"]
+```
+
+### Verificação
+
+1. `/ip firewall filter print` mostra o esqueleto: accept
+   established/related → drop invalid → log ensaio;
+2. Os contadores contam a história certa: regra 0 com milhares de pacotes,
+   regra 1 quase zerada, log só com aberturas;
+3. O `/log print` lista as conversas novas reais da sua rede (DNS, ping,
+   SSH) — o inventário do próximo capítulo;
+4. Você demonstrou que `log` deixa passar adiante e `accept` termina o
+   julgamento (Passo 4).
+
+### Desafios
+
+1. Classifique na chain certa: (a) cliente da LAN navegando; (b) você
+   pingando `8.8.8.8` **do terminal do r1**; (c) um atacante tentando
+   WinBox no IP público do r1; (d) o r2 consultando o DNS do r1; (e) o r1
+   consultando o upstream `1.1.1.1`.
+2. No esqueleto, por que o `drop invalid` vem **depois** do accept
+   established/related, e não antes? Há diferença prática?
+3. Escreva (sem aplicar) a regra que registraria no log, com prefixo
+   `WAN-NEW:`, apenas as tentativas de conexão **novas** chegando pela
+   `ether3` — e diga em que posição da chain ela deveria entrar.
+4. Um colega propõe terminar o input com `action=reject` "para o atacante
+   desistir mais rápido". Argumente contra, com dois motivos.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) `forward`; (b) `output` (nasce no roteador); (c) `input`
+(destino é o roteador); (d) `input` (o serviço DNS é do roteador); (e)
+`output`. O par (d)/(e) é o mesmo "pedido de DNS" visto de dois lados —
+ótimo teste de compreensão.
+
+**2.** Funcionalmente, quase nada muda (um pacote não é os dois estados ao
+mesmo tempo); a razão é **desempenho**: established/related é a esmagadora
+maioria dos pacotes — casando primeiro, eles saem da chain na regra 1. O
+invalid é raro; colocá-lo antes faria todo pacote bom pagar uma
+verificação inútil. Regra frequente em cima: o princípio de ordenação em
+uma linha.
+
+**3.**
+
+```routeros
+/ip firewall filter add chain=input in-interface=ether3 connection-state=new action=log log-prefix="WAN-NEW: "
+```
+
+Posição: **depois** do accept established/related e do drop invalid (para
+só ver aberturas reais), **antes** de qualquer accept específico — no
+nosso esqueleto atual, junto do log de ensaio. É o ensaio focado na
+fronteira.
+
+**4.** (a) `reject` **responde** — cada pacote de sonda gera um pacote seu
+de volta: sob flood, você paga banda e CPU para ajudar o atacante (e pode
+virar refletor contra origens forjadas); (b) a resposta **confirma que há
+um equipamento vivo** e filtrado ali, convidando a sondagem mais
+cuidadosa. O silêncio do `drop` não custa nada e não informa nada — na
+WAN, é a escolha certa. (O reject tem lugar: dentro de casa, poupando
+timeouts.)
+:::
+
+## Resumo
+
+- Três chains, uma pergunta: **para** o roteador (`input`), **através**
+  (`forward`), **dele** (`output`) — quem decide é o destino do pacote
+  (@fig-chains-fluxo).
+- Avaliação **top-down, primeira que casa decide**; actions terminais
+  encerram; sem casar nada, a política padrão **aceita** — por isso o
+  firewall sério termina em drop all explícito.
+- Actions (@tbl-actions): fora `drop` (silêncio), dentro `reject`
+  (experiência), `log` para diagnóstico e **ensaio** (não é terminal!),
+  `jump`/`return` para organizar em chains temáticas.
+- O esqueleto universal: accept `established,related` → drop `invalid` →
+  julgamento dos `new` → drop all.
+- Contadores (`print stats`) e logs com prefixo são os olhos do firewall —
+  e o modo ensaio (log no lugar do futuro drop) é como se estreia
+  firewall sem derrubar produção.
+
+No próximo capítulo, o esqueleto ganha músculos: fechamos o `input` de
+verdade — serviços, gerência, ICMP e o drop all — sem perder o próprio
+acesso no processo.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] descreve o packet flow completo
+do RouterOS (diagramas de fluxo com todas as chains e etapas) e a
+referência de `/ip firewall filter` (matchers e actions). @discher-rosv7
+dedica capítulos didáticos à construção de chains. As referências
+completas, em ABNT, estão no apêndice [Referências](../../referencias.qmd).
