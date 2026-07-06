@@ -1,0 +1,34 @@
+/*-- scss:rules --*/
+
+/* Marcador de camada SCSS acima é OBRIGATÓRIO: styles.css está em theme:
+   no _quarto.yml; sem o marcador o Quarto >= 1.9 quebra TODO o render com
+   "doesn't contain at least one layer boundary". Não remova a 1ª linha. */
+
+:root {
+  --manual-blue: #2780e3;
+  --manual-red: #d7433b;
+  --manual-green: #3fb618;
+  --manual-yellow: #ff7518;
+  --manual-gray: #6c757d;
+}
+
+h1, h2, h3 {
+  color: var(--manual-blue);
+}
+
+/* Figuras TikZ (SVG) nunca estouram a largura da página. */
+figure svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Blocos de comando RouterOS: leve destaque para diferenciá-los da prosa. */
+div.sourceCode {
+  border-left: 3px solid var(--manual-blue);
+}
+
+/* Tabelas largas roláveis no HTML. */
+.table-responsive,
+table {
+  max-width: 100%;
+}

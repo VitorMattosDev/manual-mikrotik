@@ -1,0 +1,10 @@
+# Primeiro acesso, usuários e segurança inicial
+
+::: {.callout-note}
+## Em construção
+Este capítulo ainda não foi escrito. Ele cobrirá o primeiro acesso ao
+RouterOS, a configuração padrão de fábrica, criação de usuários e grupos,
+senhas fortes e as primeiras medidas de segurança (desabilitar serviços não
+usados, restringir por endereço). Consulte o `ROADMAP.md` para acompanhar o
+progresso.
+:::

@@ -1,0 +1,106 @@
+project:
+  type: book
+  output-dir: _book
+
+# IMPORTANTE: lang fica na RAIZ (nunca dentro de book:) — controla os rótulos
+# automáticos ("Figura", "Capítulo", "Sumário") em pt-BR.
+lang: pt-BR
+
+book:
+  title: "Manual de MikroTik"
+  subtitle: "RouterOS do básico ao avançado, com foco na operação de provedor de internet (fibra e rádio)"
+  author: "Provedor de Fibra Óptica"
+  date: today
+  search: true
+  repo-url: https://github.com/VitorMattosDev/manual-mikrotik
+  repo-actions: [edit, issue]
+  downloads: [pdf]
+  sidebar:
+    style: docked
+    collapse-level: 1
+  chapters:
+    - index.qmd
+
+    - part: "Volume 1 — Primeiros passos"
+      chapters:
+        - volumes/v01-primeiros-passos/01-o-que-e-mikrotik.qmd
+        - volumes/v01-primeiros-passos/02-hardware-linhas-produto.qmd
+        - volumes/v01-primeiros-passos/03-licencas-routerboot.qmd
+        - volumes/v01-primeiros-passos/04-formas-de-acesso.qmd
+        - volumes/v01-primeiros-passos/05-laboratorio-chr.qmd
+        - volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.qmd
+        - volumes/v01-primeiros-passos/07-backup-export-reset.qmd
+        - volumes/v01-primeiros-passos/08-netinstall.qmd
+
+    # Volumes seguintes: descomente o bloco `part:` correspondente ao INICIAR o
+    # volume (fatia vertical — ver ROADMAP.md). Os arquivos são criados sob
+    # demanda, um capítulo por sessão.
+    #
+    # - part: "Volume 2 — CLI e configuração essencial"
+    #   chapters:
+    #     - volumes/v02-cli-configuracao/01-anatomia-terminal.qmd
+    #     - volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.qmd
+    #     - volumes/v02-cli-configuracao/03-dhcp.qmd
+    #     - volumes/v02-cli-configuracao/04-dns.qmd
+    #     - volumes/v02-cli-configuracao/05-nat-masquerade.qmd
+    #     - volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.qmd
+    #
+    # - part: "Volume 3 — Firewall"
+    #   chapters:
+    #     - volumes/v03-firewall/01-connection-tracking.qmd
+    #     - volumes/v03-firewall/02-chains-logica-firewall.qmd
+    #     - volumes/v03-firewall/03-protegendo-o-roteador.qmd
+    #     - volumes/v03-firewall/04-forward-address-lists.qmd
+    #     - volumes/v03-firewall/05-dstnat-port-forwarding.qmd
+    #     - volumes/v03-firewall/06-mangle-raw.qmd
+    #     - volumes/v03-firewall/07-hardening-completo.qmd
+    #
+    # - part: "Volume 4 — Bridge, switching e VLANs"
+    #   chapters:
+    #     - volumes/v04-bridge-vlans/01-bridge-hardware-offload.qmd
+    #     - volumes/v04-bridge-vlans/02-vlans-8021q.qmd
+    #     - volumes/v04-bridge-vlans/03-bridge-vlan-filtering.qmd
+    #     - volumes/v04-bridge-vlans/04-switch-chip-crs.qmd
+    #     - volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.qmd
+    #
+    # (Volumes 5–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
+
+  appendices:
+    - referencias.qmd
+
+bibliography: references.bib
+csl: abnt.csl
+
+# IMPORTANTE: o filtro danmackinlay/tikz precisa vir ANTES do quarto.
+# NUNCA rodar `quarto add`/`quarto update` nessa extensão — ela tem patches
+# locais (paleta, estilos, caminhos absolutos p/ Windows) que seriam perdidos.
+filters:
+  - danmackinlay/tikz
+  - quarto
+
+# Figuras TikZ renderizadas como SVG via dvisvgm (pdflatex -> dvisvgm).
+# Exige TeX no PATH mesmo para render só-HTML.
+tikz:
+  svg-engine: dvisvgm
+  cache: true
+
+format:
+  html:
+    # styles.css entra como CAMADA SCSS aqui -> ele PRECISA ter o marcador
+    # /*-- scss:rules --*/ na primeira linha, senão TODO o render quebra.
+    theme: [cosmo, styles.css]
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    number-sections: true
+  pdf:
+    documentclass: scrreprt
+    papersize: a4
+    toc: true
+    number-sections: true
+    colorlinks: true
+    keep-tex: false
+    include-in-header:
+      text: |
+        \usepackage{booktabs}
+        \usepackage{longtable}

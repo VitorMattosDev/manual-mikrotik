@@ -1,0 +1,8 @@
+# Netinstall
+
+::: {.callout-note}
+## Em construção
+Este capítulo ainda não foi escrito. Ele ensinará a usar o Netinstall para
+reinstalar o RouterOS e recuperar equipamentos que não inicializam. Consulte
+o `ROADMAP.md` para acompanhar o progresso.
+:::

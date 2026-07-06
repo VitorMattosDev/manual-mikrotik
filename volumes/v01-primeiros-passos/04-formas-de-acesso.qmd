@@ -1,0 +1,8 @@
+# Formas de acesso ao RouterOS
+
+::: {.callout-note}
+## Em construção
+Este capítulo ainda não foi escrito. Ele apresentará as formas de acessar um
+equipamento MikroTik — WinBox, WebFig, SSH, console serial e MAC-Telnet — e
+quando usar cada uma. Consulte o `ROADMAP.md` para acompanhar o progresso.
+:::

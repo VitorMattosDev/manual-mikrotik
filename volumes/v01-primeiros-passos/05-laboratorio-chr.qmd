@@ -1,0 +1,10 @@
+# Montando o laboratório com CHR {#sec-lab-chr}
+
+::: {.callout-note}
+## Em construção
+Este capítulo ainda não foi escrito. É o **capítulo-chave do laboratório**:
+ensinará a montar, uma única vez, o ambiente de prática com o MikroTik CHR
+(Cloud Hosted Router) no VirtualBox, GNS3 ou EVE-NG — a topologia-base que
+todos os laboratórios do livro reutilizam. Consulte o `ROADMAP.md` para
+acompanhar o progresso.
+:::

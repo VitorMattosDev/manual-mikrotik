@@ -1,0 +1,9 @@
+# Linhas de hardware MikroTik
+
+::: {.callout-note}
+## Em construção
+Este capítulo ainda não foi escrito. Ele apresentará as linhas de produto
+MikroTik — hEX, hAP, CRS, CCR, LHG/SXT — e como escolher o equipamento certo
+para cada função na rede do provedor (borda, concentrador, switch, rádio).
+Consulte o `ROADMAP.md` para acompanhar o progresso.
+:::

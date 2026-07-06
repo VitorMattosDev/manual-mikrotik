@@ -1,0 +1,16 @@
+/_book/
+/.quarto/
+*.pdf
+.DS_Store
+
+**/*.quarto_ipynb
+
+# artefatos de render local (LaTeX intermediário + figuras de renders avulsos)
+*.tex
+*_files/
+
+# logs de build/diagnóstico locais
+*.log
+
+# kit-fonte da extensão TikZ (já extraído em _extensions/)
+tikz.zip

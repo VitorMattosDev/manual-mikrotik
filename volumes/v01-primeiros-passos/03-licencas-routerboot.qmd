@@ -1,0 +1,8 @@
+# Licenças RouterOS e RouterBOOT
+
+::: {.callout-note}
+## Em construção
+Este capítulo ainda não foi escrito. Ele explicará os níveis de licença do
+RouterOS (0–6 e as licenças do CHR) e o RouterBOOT, o bootloader dos
+equipamentos MikroTik. Consulte o `ROADMAP.md` para acompanhar o progresso.
+:::

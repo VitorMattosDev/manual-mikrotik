@@ -1,0 +1,6 @@
+# Referências {.unnumbered}
+
+Obras e documentos citados ao longo do manual, em formato ABNT.
+
+::: {#refs}
+:::

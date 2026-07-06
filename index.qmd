@@ -1,0 +1,94 @@
+# Apresentação {.unnumbered}
+
+Bem-vindo ao **Manual de MikroTik**, um livro aberto da série *Manuais de
+Ciências*. Este manual leva você do zero absoluto — "o que é um roteador
+MikroTik?" — até a operação do backbone de um provedor de internet real, com
+fibra óptica e enlaces de rádio em área rural.
+
+## Para quem é este manual
+
+Para quem está começando em redes e quer chegar ao nível de **operar a rede de
+um provedor (ISP)**: técnicos de campo que querem migrar para o NOC, donos de
+pequenos provedores, estudantes e curiosos. Não pressupomos conhecimento
+prévio de RouterOS; cada conceito é explicado antes de ser usado, e a ordem
+dos capítulos respeita os pré-requisitos entre eles.
+
+Se você quiser reforçar a teoria de redes por trás dos capítulos (modelo OSI,
+endereçamento IP, fibra óptica, rádio), o [Manual de Redes de
+Computadores](https://vitormattosdev.github.io/manual-redes/) da mesma série é
+o companheiro ideal deste livro.
+
+## Como este manual funciona
+
+- **Progressão gradual**: os volumes formam três fases — fundamentos,
+  provedor na prática e operação avançada. Cada capítulo declara o que você
+  precisa ter visto antes.
+- **🧪 Laboratório em todo capítulo**: você pratica *enquanto* estuda, usando o
+  **MikroTik CHR** (RouterOS em máquina virtual) — sem precisar comprar
+  hardware. O @sec-lab-chr ensina a montar o ambiente uma única vez; os demais
+  capítulos apenas indicam a topologia necessária.
+- **Comandos reais**: todos os blocos de código são RouterOS de verdade,
+  prontos para copiar e colar no terminal, sempre explicados linha a linha.
+- **Desafios com solução**: cada laboratório termina com exercícios; as
+  soluções ficam escondidas em caixas colapsáveis para você tentar antes de
+  olhar.
+
+## Mapa de pré-requisitos
+
+O grafo abaixo mostra a dependência entre os volumes: siga as setas para saber
+o que estudar antes de cada assunto.
+
+```{mermaid}
+%%| fig-cap: "Grafo de pré-requisitos entre os volumes do manual."
+flowchart TD
+  V1["Vol. 1<br>Primeiros passos"] --> V2["Vol. 2<br>CLI e configuração essencial"]
+  V2 --> V3["Vol. 3<br>Firewall"]
+  V2 --> V4["Vol. 4<br>Bridge e VLANs"]
+  V3 --> V5["Vol. 5<br>Wireless e enlaces de rádio"]
+  V3 --> V6["Vol. 6<br>PPPoE e autenticação"]
+  V4 --> V6
+  V6 --> V7["Vol. 7<br>QoS e controle de banda"]
+  V3 --> V8["Vol. 8<br>Roteamento"]
+  V8 --> V9["Vol. 9<br>CGNAT e IPv6"]
+  V6 --> V9
+  V8 --> V10["Vol. 10<br>Túneis e VPN"]
+  V10 --> V11["Vol. 11<br>MPLS"]
+  V8 --> V11
+  V2 --> V12["Vol. 12<br>Scripts e automação"]
+  V3 --> V13["Vol. 13<br>Monitoramento e diagnóstico"]
+  V8 --> V14["Vol. 14<br>Alta disponibilidade"]
+  V11 --> V15["Vol. 15<br>Operação de ISP ponta a ponta"]
+  V9 --> V15
+  V14 --> V15
+  V5 --> V15
+  V7 --> V15
+  V13 --> V15
+```
+
+## As três fases
+
+**Fase 1 — Fundamentos e operação básica** (Volumes 1–4): o que é o RouterOS,
+como acessá-lo e operá-lo com segurança; a linha de comando; endereçamento,
+DHCP, DNS e NAT; firewall completo; bridges, switching e VLANs. Ao final desta
+fase você configura, do zero, um roteador de borda seguro e segmentado.
+
+**Fase 2 — Provedor na prática** (Volumes 5–9): os pilares do dia a dia de um
+ISP — enlaces de rádio PtP/PtMP, PPPoE com RADIUS, planos de velocidade com
+QoS, roteamento OSPF/BGP, CGNAT e IPv6.
+
+**Fase 3 — Avançado e operação** (Volumes 10–15): túneis e VPN entre POPs,
+MPLS no backbone, automação com scripts, monitoramento, alta disponibilidade
+e, fechando o livro, o desenho ponta a ponta da rede de um provedor real de
+fibra e rádio.
+
+## Convenções usadas no livro
+
+- Blocos de código `routeros` contêm comandos prontos para colar no terminal.
+  O prompt `[admin@MikroTik] >` só aparece quando ilustramos uma sessão
+  interativa com a saída do equipamento.
+- Caixas de aviso (⚠️) antecedem **todo** comando destrutivo (reset,
+  Netinstall, remoção de regras).
+- Referências bibliográficas seguem o padrão ABNT e estão listadas ao final de
+  cada capítulo.
+
+Bons estudos — e boas configurações!

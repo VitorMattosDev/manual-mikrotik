@@ -1,0 +1,9 @@
+# Backup, export e reset
+
+::: {.callout-note}
+## Em construção
+Este capítulo ainda não foi escrito. Ele explicará a diferença entre backup
+binário e `export`, como restaurar configurações e como resetar um
+equipamento com segurança. Consulte o `ROADMAP.md` para acompanhar o
+progresso.
+:::
