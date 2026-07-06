@@ -1,0 +1,406 @@
+# O que é MikroTik e RouterOS {#sec-o-que-e-mikrotik}
+
+::: {.callout-note}
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que é a MikroTik (a empresa) e o que é o RouterOS (o sistema);
+- Diferenciar RouterOS de SwOS e entender por que essa distinção importa;
+- Reconhecer o que torna o MikroTik tão popular entre provedores de internet;
+- Localizar, num diagrama de rede de provedor (fibra + rádio), os pontos onde
+  equipamentos MikroTik costumam trabalhar;
+- Dar o primeiro passo prático: baixar o CHR (RouterOS em máquina virtual) e
+  fazer o primeiro login.
+:::
+
+## A empresa e o sistema
+
+**MikroTik** é uma empresa da Letônia, fundada em 1996 na capital Riga, que
+faz duas coisas: um sistema operacional de rede chamado **RouterOS** e o
+hardware que roda esse sistema, a linha **RouterBOARD**. Essa dupla —
+software poderoso e hardware barato — transformou a MikroTik numa das marcas
+mais usadas por provedores de internet do mundo, especialmente em países como
+o Brasil, onde milhares de ISPs regionais construíram suas redes sobre ela.
+
+Aqui vale uma analogia. Pense num computador comum: ele tem um hardware (a
+máquina física) e um sistema operacional (Windows, Linux) que faz o hardware
+ser útil. Com o MikroTik é igual:
+
+- O **RouterOS** é o sistema operacional. É ele que roteia pacotes, filtra
+  tráfego no firewall, autentica assinantes por PPPoE, fala OSPF e BGP com
+  outros roteadores — tudo o que este manual ensina é, no fundo, "como operar
+  o RouterOS".
+- A **RouterBOARD** é a família de hardware: roteadores de mesa, roteadores
+  de rack com dezenas de núcleos, switches, antenas e rádios. Todos saem de
+  fábrica com o RouterOS instalado.
+
+O detalhe importante — e que explica boa parte da fama da marca — é que **o
+RouterOS é o mesmo em todos os equipamentos**. O sistema que roda num
+roteadorzinho de R$ 300 é o mesmo que roda no roteador de rack que segura o
+BGP de um provedor com dezenas de milhares de clientes. Muda o desempenho do
+hardware; não muda a linguagem, os menus nem os conceitos. É por isso que
+tudo o que você aprender neste manual num laboratório virtual gratuito vale,
+sem tradução, para qualquer equipamento físico da marca.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+RouterOS está para a RouterBOARD assim como o Android está para um celular:
+o mesmo sistema, em aparelhos de tamanhos e preços muito diferentes. Aprenda
+o sistema uma vez e você sabe operar todos.
+:::
+
+### Um pouco de história
+
+A MikroTik nasceu vendendo software: no fim dos anos 1990, o RouterOS era
+instalado em PCs comuns para transformá-los em roteadores — uma alternativa
+muito mais barata que os grandes roteadores comerciais da época. Em 2002 a
+empresa passou a fabricar o próprio hardware (a RouterBOARD), e o conjunto
+decolou entre provedores pequenos e médios: preço de equipamento doméstico,
+recursos de equipamento de operadora.
+
+Duas versões do sistema importam para você hoje:
+
+- **RouterOS v6** — dominou as redes por mais de uma década; você ainda vai
+  encontrá-lo em muito equipamento antigo em campo.
+- **RouterOS v7** — a geração atual, com motor de roteamento reescrito
+  (OSPF/BGP), WireGuard, suporte a hardware novo e melhorias contínuas. **Este
+  manual ensina RouterOS v7**; quando uma diferença do v6 for relevante na
+  vida real do provedor, ela será apontada explicitamente.
+
+### RouterOS ou SwOS?
+
+Alguns equipamentos MikroTik — em especial os switches da linha CRS — podem
+inicializar com um segundo sistema, o **SwOS**: um firmware minimalista que
+só faz switching (camada 2) e é configurado por uma página web simples. Ele
+existe porque, quando um switch só precisa comutar quadros, um sistema
+enxuto dedicado a isso é mais simples de operar.
+
+A regra prática deste manual: **usamos RouterOS em tudo**. O RouterOS também
+faz switching (e o faz em hardware, como você verá no Volume 4), e manter um
+único sistema em todo o parque simplifica a operação, os backups e a
+automação. Saiba que o SwOS existe para não se confundir ao encontrá-lo, mas
+nosso caminho é o RouterOS.
+
+## Por que os provedores escolhem MikroTik?
+
+Quatro razões aparecem em praticamente toda rede de ISP construída com a
+marca:
+
+1. **Custo**: um roteador capaz de concentrar centenas de assinantes PPPoE
+   custa uma fração do equivalente das marcas tradicionais de operadora.
+2. **Completude**: firewall com estado, NAT e CGNAT, PPPoE com RADIUS, QoS,
+   OSPF, BGP, MPLS, VPNs, scripts — tudo incluso no sistema, sem licenças
+   adicionais por recurso.
+3. **Versatilidade**: o mesmo sistema opera na borda (BGP com a operadora),
+   no concentrador de assinantes, no switch do POP, no rádio da torre e na
+   casa do cliente.
+4. **Comunidade**: fóruns, documentação aberta [@mikrotik-docs], treinamentos
+   e uma enorme base de conhecimento acumulada por provedores do mundo todo.
+
+Há também um ponto de atenção honesto: todo esse poder vem com **muita
+responsabilidade de configuração**. O RouterOS entrega as ferramentas; quem
+decide se a rede será segura e estável é quem a configura. É exatamente essa
+a lacuna que este manual fecha — inclusive dedicando um volume inteiro a
+firewall e proteção (Volume 3).
+
+## Onde o MikroTik se encaixa na rede de um provedor
+
+Para entender o que você vai construir ao longo do livro, veja o caminho que
+os dados percorrem num provedor típico do interior, que atende clientes por
+fibra óptica na cidade e por rádio na zona rural (@fig-rede-provedor):
+
+::: {#fig-rede-provedor}
+
+```{.tikz}
+%%| filename: fig-rede-provedor
+%%| alt: Diagrama esquemático da rede de um provedor de internet. À esquerda, a nuvem da operadora de trânsito conecta-se ao roteador de borda MikroTik CCR, que se liga ao switch CRS do POP. Do switch partem dois ramos: o concentrador PPPoE que alimenta a OLT e os clientes de fibra, e o rádio PtP que alimenta a torre rural com antena setorial e os clientes de rádio. Os equipamentos MikroTik aparecem destacados em azul; OLT e ONU, de outros fabricantes, em cinza.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  mk/.style={draw=manualblue, very thick, fill=manualblue!8, rounded corners=3pt,
+             minimum height=9mm, text width=30mm, align=center},
+  outro/.style={draw=manualgray, thick, fill=manualgray!10, rounded corners=3pt,
+                minimum height=9mm, text width=26mm, align=center},
+  nuvem/.style={draw=manualgray, thick, fill=manualgray!10, ellipse,
+                minimum height=12mm, text width=22mm, align=center},
+  enlace/.style={very thick, manualblue},
+  radio/.style={very thick, manualyellow, dashed},
+  rotulo/.style={font=\sffamily\scriptsize, manualgray}
+]
+  % Núcleo do provedor (POP)
+  \node[nuvem] (internet) {Internet\\(operadora)};
+  \node[mk, right=14mm of internet] (borda) {\textbf{CCR}\\roteador de borda (BGP)};
+  \node[mk, right=12mm of borda] (core) {\textbf{CRS}\\switch do POP};
+
+  % Ramo fibra (abaixo à direita)
+  \node[mk, below right=10mm and -6mm of core] (bng) {\textbf{CCR/CHR}\\concentrador PPPoE};
+  \node[outro, right=10mm of bng] (olt) {OLT\\(rede PON)};
+  \node[outro, right=8mm of olt] (onu) {Clientes fibra\\(ONU)};
+
+  % Ramo rádio (acima à direita)
+  \node[mk, above right=10mm and -6mm of core] (ptp) {\textbf{LHG/Wire}\\rádio PtP};
+  \node[mk, right=10mm of ptp] (torre) {\textbf{Setorial}\\torre rural (PtMP)};
+  \node[mk, right=8mm of torre, text width=24mm] (cli-radio) {\textbf{SXT/LHG}\\clientes rádio};
+
+  % Enlaces
+  \draw[enlace] (internet) -- (borda) node[midway, above, rotulo] {trânsito};
+  \draw[enlace] (borda) -- (core);
+  \draw[enlace] (core.south) |- (bng.west);
+  \draw[enlace] (bng) -- (olt) node[midway, above, rotulo] {VLANs};
+  \draw[enlace] (olt) -- (onu) node[midway, above, rotulo] {fibra};
+  \draw[enlace] (core.north) |- (ptp.west);
+  \draw[radio] (ptp) -- (torre) node[midway, above, rotulo] {enlace PtP};
+  \draw[radio] (torre) -- (cli-radio) node[midway, above, rotulo] {PtMP};
+
+  % Legenda
+  \node[mk, minimum height=5mm, text width=20mm, below=16mm of bng.south west,
+        anchor=north west, font=\sffamily\scriptsize] (leg-mk) {MikroTik};
+  \node[outro, minimum height=5mm, text width=26mm, right=6mm of leg-mk,
+        font=\sffamily\scriptsize] (leg-outro) {outros fabricantes};
+\end{tikzpicture}
+```
+
+Onde os equipamentos MikroTik (em azul) trabalham na rede de um provedor
+típico de fibra e rádio.
+
+:::
+
+Acompanhe o diagrama da esquerda para a direita:
+
+- **Roteador de borda**: um CCR conversa via **BGP** com a operadora que
+  vende trânsito ao provedor (Volume 8). É a porta de entrada e saída de toda
+  a rede.
+- **Switch do POP**: um CRS distribui o tráfego dentro do ponto de presença,
+  separando os serviços em **VLANs** (Volume 4).
+- **Concentrador PPPoE (BNG)**: um CCR — ou um CHR virtualizado — autentica
+  cada assinante, entrega IP e aplica o plano de velocidade contratado
+  (Volumes 6 e 7).
+- **Ramo fibra**: a OLT e as ONUs dos clientes são, em geral, de outros
+  fabricantes — mas quem roteia, autentica e controla a banda desses clientes
+  continua sendo o MikroTik (Volume 15 detalha essa integração).
+- **Ramo rádio**: enlaces **PtP** levam a internet até torres na zona rural;
+  lá, antenas setoriais atendem em **PtMP** os rádios na casa de cada cliente
+  — tudo MikroTik, das linhas LHG, SXT e afins (Volume 5).
+
+Guarde esta imagem: os quinze volumes deste manual são, essencialmente, um
+tour guiado por esse diagrama, do centro para as pontas.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Um único sistema — o RouterOS — opera todos os papéis azuis do diagrama.
+Aprender RouterOS não é aprender "um roteador": é aprender a operar **a rede
+inteira do provedor**.
+:::
+
+## O CHR: seu laboratório gratuito
+
+Como praticar tudo isso sem gastar um centavo em equipamento? A resposta é o
+**CHR — Cloud Hosted Router** [@mikrotik-chr]: uma versão do RouterOS
+empacotada como **máquina virtual**, feita pela própria MikroTik para rodar
+em VirtualBox, VMware, Proxmox, GNS3, EVE-NG e afins.
+
+O CHR é um RouterOS completo: mesma linha de comando, mesmo firewall, mesmo
+OSPF e BGP. Sem licença, ele funciona para sempre com uma única limitação —
+cada interface fica limitada a **1 Mbps** de velocidade, o que não atrapalha
+em nada o estudo. É nele que rodam todos os laboratórios deste livro.
+
+Neste capítulo você fará o primeiro contato: baixar o CHR, dar o boot e
+entrar no sistema. A montagem completa do ambiente de estudos — com várias
+máquinas virtuais interligadas em topologias — é o assunto do @sec-lab-chr,
+que você montará uma única vez e reutilizará no livro inteiro.
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Neste primeiro laboratório você precisa apenas de um computador com o
+**VirtualBox** instalado (gratuito, disponível para Windows, Linux e macOS em
+`virtualbox.org`). Nada de topologias ainda: uma única máquina virtual basta.
+
+1. Acesse `mikrotik.com/download` e, na seção **Cloud Hosted Router**, baixe a
+   imagem **VDI** da versão estável mais recente (7.x).
+2. No VirtualBox, crie uma máquina virtual nova: tipo **Linux**, versão
+   **Other Linux (64-bit)**, com **256 MB** de RAM.
+3. Na etapa de disco, escolha **usar um disco existente** e aponte para o
+   arquivo `.vdi` baixado (não crie disco novo).
+4. Inicie a máquina virtual.
+
+Ao final do boot aparece o prompt de login do RouterOS na janela da VM.
+
+### Comandos passo a passo
+
+Faça login com o usuário padrão de fábrica — usuário `admin`, senha em
+branco (só pressionar Enter):
+
+```routeros
+MikroTik Login: admin
+Password:
+```
+
+Nas versões atuais, o RouterOS pede imediatamente uma senha nova — escolha
+uma e anote. Em seguida ele mostra a licença e o banner com o logotipo, e
+você cai no prompt do terminal:
+
+```routeros
+[admin@MikroTik] >
+```
+
+Esse prompt diz duas coisas: quem você é (`admin`) e o nome do equipamento
+(`MikroTik`, a identidade de fábrica). Vamos fazer o RouterOS se apresentar.
+O comando abaixo mostra o "RG" do sistema — versão, tempo ligado, memória,
+CPU e placa:
+
+```routeros
+/system resource print
+```
+
+A saída esperada é parecida com esta (os números variam conforme sua máquina):
+
+```routeros
+[admin@MikroTik] > /system resource print
+                   uptime: 4m12s
+                  version: 7.15.3 (stable)
+               build-time: 2024-07-24 10:39:01
+              free-memory: 190.1MiB
+             total-memory: 224.0MiB
+                      cpu: QEMU
+                 cpu-count: 1
+                 cpu-load: 1%
+          free-hdd-space: 43.1MiB
+         total-hdd-space: 61.4MiB
+         board-name: CHR
+                 platform: MikroTik
+```
+
+Repare em `version: 7.x` (estamos no RouterOS v7) e `board-name: CHR` (é a
+versão virtual). Agora veja as interfaces de rede que a VM enxerga:
+
+```routeros
+/interface print
+```
+
+```routeros
+[admin@MikroTik] > /interface print
+Flags: R - RUNNING
+Columns: NAME, TYPE, ACTUAL-MTU, MAC-ADDRESS
+#   NAME     TYPE    ACTUAL-MTU  MAC-ADDRESS
+0 R ether1   ether         1500  08:00:27:6A:2B:1C
+```
+
+Uma única `ether1`: é a placa de rede virtual do VirtualBox. Nos próximos
+capítulos adicionaremos mais. Por fim, dê um nome ao seu roteador — boa
+prática que você levará para a vida de provedor, onde cada equipamento do
+parque precisa de identidade única:
+
+```routeros
+/system identity set name=lab-r1
+```
+
+O prompt muda na hora, confirmando a alteração:
+
+```routeros
+[admin@lab-r1] >
+```
+
+### Verificação
+
+Confirme os três resultados do laboratório:
+
+1. `/system resource print` mostra `version` começando com `7.` e
+   `board-name: CHR`;
+2. `/interface print` lista ao menos `ether1` com a flag `R` (running);
+3. O prompt exibe `[admin@lab-r1]` — a identidade foi gravada.
+
+Se a VM não deu boot, verifique se você **apontou o disco existente** (o
+`.vdi` baixado) em vez de criar um disco vazio — esse é o erro mais comum.
+
+### Desafios
+
+1. Descubra, usando apenas a tecla `?` no terminal, o que faz o comando
+   `/system clock print` — e execute-o. O horário está certo?
+2. O RouterOS organiza os comandos em menus, como pastas. Entre no menu
+   `/system` (digite `/system` e Enter) e liste o que há dentro dele com
+   `?`. Depois volte à raiz com `/`.
+3. Sem consultar a internet: qual comando você usaria para trocar a
+   identidade do roteador para `chr-teste`? Execute-o e desfaça em seguida,
+   voltando para `lab-r1`.
+4. Desligue o roteador **pelo terminal** (não feche a janela da VM no X!).
+   Dica: explore o menu `/system` do desafio 2.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Digite `/system clock print ?` (ou apenas execute o comando). Ele
+mostra data, hora e fuso configurados:
+
+```routeros
+/system clock print
+```
+
+No CHR recém-instalado o fuso costuma vir errado (`gmt` ou detectado pela
+VM); você aprenderá a ajustá-lo no capítulo de primeiro acesso.
+
+**2.** Sessão esperada:
+
+```routeros
+[admin@lab-r1] > /system
+[admin@lab-r1] /system> ?
+```
+
+O `?` lista submenus como `clock`, `identity`, `resource`, `reboot`,
+`shutdown`... Para voltar à raiz:
+
+```routeros
+[admin@lab-r1] /system> /
+[admin@lab-r1] >
+```
+
+**3.** O mesmo comando do corpo do capítulo, com outro valor:
+
+```routeros
+/system identity set name=chr-teste
+/system identity set name=lab-r1
+```
+
+**4.** O comando é `/system shutdown`. Ele pede confirmação — responda `y`:
+
+```routeros
+[admin@lab-r1] > /system shutdown
+Shutdown, yes? [y/N]:
+```
+
+Desligar pelo sistema (em vez de fechar a VM "no cabo") evita corromper o
+armazenamento — nos equipamentos físicos de produção, vale a mesma regra.
+:::
+
+## Resumo
+
+- **MikroTik** é a empresa (Letônia, 1996); **RouterOS** é o sistema
+  operacional de rede; **RouterBOARD** é a linha de hardware que o roda.
+- O RouterOS é **o mesmo** do equipamento mais barato ao mais caro — o que
+  você aprende no laboratório vale para todo o parque.
+- **SwOS** é um firmware alternativo minimalista para switches; neste manual,
+  operamos tudo com RouterOS.
+- Provedores escolhem MikroTik por **custo, completude, versatilidade e
+  comunidade** — e assumem a responsabilidade de configurar bem.
+- Na rede de um ISP, o MikroTik aparece da **borda BGP** ao **rádio do
+  cliente**, passando por switch, concentrador PPPoE e enlaces PtP/PtMP
+  (@fig-rede-provedor).
+- O **CHR** é o RouterOS em máquina virtual, gratuito (limitado a 1 Mbps por
+  interface) — o laboratório perfeito, usado no livro inteiro.
+- Você já fez o primeiro login, leu `/system resource print` e batizou seu
+  roteador com `/system identity set`.
+
+No próximo capítulo, conheceremos as linhas de hardware — hEX, hAP, CRS, CCR,
+LHG/SXT — e como escolher o equipamento certo para cada papel do diagrama.
+
+## Bibliografia do capítulo {.unnumbered}
+
+Para aprofundar o que vimos aqui: a documentação oficial do RouterOS
+[@mikrotik-docs] e a página do CHR [@mikrotik-chr] são as fontes primárias
+que acompanharão todo o livro; @discher-rosv7 e @burgess-mikrotik são bons
+livros introdutórios em inglês; e @tanenbaum-redes cobre a teoria de redes
+por trás de tudo. As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
