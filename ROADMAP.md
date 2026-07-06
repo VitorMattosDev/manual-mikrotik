@@ -57,7 +57,7 @@ Pré-requisitos: Vol. 1.*
 *Objetivo: entender e operar o firewall do RouterOS com segurança de provedor.
 Pré-requisitos: Vol. 2.*
 
-- [ ] `volumes/v03-firewall/01-connection-tracking.qmd` — Connection tracking: estados (new/established/related/invalid), tabela de conexões.
+- [x] `volumes/v03-firewall/01-connection-tracking.qmd` — Connection tracking: estados (new/established/related/invalid), tabela de conexões.
 - [ ] `volumes/v03-firewall/02-chains-logica-firewall.qmd` — Chains input/forward/output e a lógica de avaliação das regras (ordem, if-first-match).
 - [ ] `volumes/v03-firewall/03-protegendo-o-roteador.qmd` — Filter na chain input: protegendo o próprio roteador (serviços, ICMP, drop final).
 - [ ] `volumes/v03-firewall/04-forward-address-lists.qmd` — Filter na chain forward e address-lists (estáticas e dinâmicas, timeout).

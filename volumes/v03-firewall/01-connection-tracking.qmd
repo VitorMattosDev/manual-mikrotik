@@ -1,0 +1,335 @@
+# Connection tracking {#sec-conntrack}
+
+::: {.callout-note}
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que é o **connection tracking** (conntrack) e por que ele é a
+  fundação de todo o firewall do RouterOS;
+- Classificar pacotes pelos quatro **estados** de conexão — `new`,
+  `established`, `related` e `invalid` — e prever qual estado um pacote
+  receberá;
+- Ler a tabela de conexões (`/ip firewall connection`): protocolos,
+  timeouts, flags e o que cada coluna conta;
+- Explicar como o conntrack enxerga protocolos "sem conexão" (UDP, ICMP) e
+  protocolos com canais secundários (FTP);
+- Dimensionar e ajustar o conntrack: tamanho máximo da tabela, timeouts e o
+  custo de memória/CPU em equipamentos de provedor.
+:::
+
+## A memória que muda tudo
+
+No @sec-nat-masquerade você viu o NAT anotar cada tradução numa tabela e
+consultá-la na volta. Aquela tabela não pertence ao NAT: ela é o
+**connection tracking** — o subsistema do RouterOS que observa **todo**
+pacote roteado e mantém um registro vivo de cada conversa em andamento. O
+NAT é apenas seu primeiro cliente; o segundo, e mais importante, é o
+firewall que construiremos neste volume.
+
+Por quê? Porque um firewall sem memória é obrigado a julgar cada pacote
+isoladamente — e pacotes isolados mentem. Um pacote vindo da internet para
+o seu cliente pode ser um ataque **ou** a resposta legítima de um site que
+o cliente acabou de acessar; olhando só o pacote, é impossível
+distinguir. Com memória, a pergunta muda de "este pacote parece bom?" para
+**"este pacote pertence a uma conversa que alguém de dentro começou?"** —
+uma pergunta que a tabela de conexões responde em microssegundos.
+
+Esse é o conceito de **firewall com estado** (*stateful*), e é o modelo de
+praticamente toda regra que escreveremos: julgamos **conexões** na
+abertura, e os pacotes seguintes herdam o julgamento.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O conntrack é a **recepcionista com caderno**: a primeira vez que alguém
+sai para uma reunião, ela anota (conexão `new`). Quando a resposta chega,
+ela olha o caderno — "ah, é da reunião do fulano" (`established`) — e deixa
+passar sem interrogatório. Entregador que chega junto com a encomenda
+esperada (`related`) também entra. Estranho que aparece dizendo "estou
+voltando de uma reunião" que não está no caderno (`invalid`)? Porta.
+:::
+
+## Os quatro estados
+
+Cada pacote que o conntrack examina recebe um **connection state** — e é
+sobre esses estados que as regras do firewall operam:
+
+| Estado | Significado | Tratamento típico |
+|:-------|:------------|:------------------|
+| `new` | primeiro pacote de uma conversa nova | julgar com as regras |
+| `established` | pertence a uma conversa já registrada | aceitar cedo |
+| `related` | conversa nova, mas **filha** de uma registrada | aceitar cedo |
+| `invalid` | não pertence a nada e não abre nada válido | descartar sempre |
+
+: Os estados de conexão {#tbl-conn-states}
+
+Vale detalhar os dois menos óbvios:
+
+- **`related`**: alguns protocolos abrem canais secundários — o FTP
+  clássico negocia a transferência numa conexão e move os dados por outra;
+  o ICMP de erro ("destino inalcançável") é resposta a uma conexão que já
+  existe. O conntrack usa *helpers* (em `/ip firewall service-port`) para
+  reconhecer esses filhotes e marcá-los `related` — sem isso, seriam `new`
+  vindos de fora e morreriam no filtro;
+- **`invalid`**: o estado do lixo — pacotes TCP no meio de uma conversa
+  que a tabela não conhece (sobras de conexão expirada, pacotes fora de
+  ordem extremos, varreduras e ataques). `invalid` **não** é o mesmo que
+  `new`: um SYN legítimo é `new`; um ACK órfão é `invalid`. A regra
+  universal: descartar.
+
+A consequência prática, que será o esqueleto de todas as nossas chains no
+@sec-chains-firewall:
+
+```routeros
+accept established,related    # o grosso do tráfego, barato
+drop invalid                  # o lixo
+# ... e só o que for NEW é julgado pelas regras seguintes
+```
+
+Essa ordem não é estética — é **desempenho**. Numa rede de provedor, mais
+de 95% dos pacotes pertencem a conexões já estabelecidas: eles casam com a
+primeira regra e saem do firewall imediatamente, sem atravessar a lista
+inteira. As regras caras julgam apenas o primeiro pacote de cada conversa.
+
+## Lendo a tabela
+
+A tabela mora em `/ip firewall connection` — você já a espiou no NAT;
+agora com olhos completos:
+
+```routeros
+/ip firewall connection print detail
+```
+
+```routeros
+[vitor@lab-r1] > /ip firewall connection print detail
+Flags: E - expected, S - seen-reply, A - assured, C - confirmed, D - dying,
+F - fasttrack, s - srcnat, d - dstnat
+ 0    SAC protocol=tcp src-address=192.168.10.105:51234
+      dst-address=142.250.79.78:443 reply-src-address=142.250.79.78:443
+      reply-dst-address=10.0.2.15:51234 tcp-state=established
+      timeout=23h59m58s orig-packets=52 orig-bytes=8402
+      repl-packets=48 repl-bytes=61003
+```
+
+O que cada pedaço conta:
+
+- **`src/dst-address`** — a conversa como o cliente a iniciou;
+  **`reply-*`** — como ela volta (denunciando NAT no caminho, flag `s`);
+- **`tcp-state=established`** + flags `S` (viu resposta) e `A`
+  (*assured*: tráfego nos dois sentidos consolidado) — uma conexão
+  saudável;
+- **`timeout`** — o prazo de vida sem tráfego novo. Cada protocolo/estado
+  tem o seu: TCP estabelecido dura horas; UDP, segundos a minutos; TCP
+  semiaberto (`syn-sent`), poucos segundos. Tráfego renova o prazo;
+  silêncio deixa a entrada morrer;
+- **contadores** (`orig/repl-packets/bytes`) — quanto já passou em cada
+  sentido: ferramenta de diagnóstico de primeira ("a conexão existe, mas
+  só tem tráfego de ida...").
+
+E os protocolos "sem conexão"? O conntrack finge que têm: um par
+pergunta/resposta **UDP** vira uma "conexão" com timeout curto; um
+**ICMP** echo request/reply idem. É o que permite ao firewall stateful
+tratar DNS, NTP e ping com a mesma lógica do TCP — e é por isso que o
+`/ping` do laboratório de NAT apareceu na tabela como `protocol=icmp`.
+
+## O custo da memória
+
+Nada é de graça: cada entrada consome memória, e cada pacote novo consome
+CPU para busca/criação na tabela. Três números para operar com consciência
+em `/ip firewall connection tracking`:
+
+```routeros
+/ip firewall connection tracking print
+```
+
+- **`max-entries`** — o teto da tabela (calculado da RAM por padrão).
+  Tabela **cheia = conexões novas descartadas**: o sintoma é "internet
+  intermitente" com CPU baixa — clássico em concentrador PPPoE
+  subdimensionado ou sob ataque de flood de conexões;
+- **timeouts ajustáveis** — `udp-timeout`, `tcp-established-timeout` etc.
+  Encurtar timeouts derruba entradas ociosas mais cedo (alívio em tabela
+  cheia), ao custo de matar conversas legítimas muito quietas;
+- **`enabled=auto`** — o conntrack liga sozinho quando existe regra que
+  precisa dele (NAT, filter por estado). Desligá-lo (`no`) transforma o
+  equipamento num roteador "burro e rápido" — sem NAT, sem firewall
+  stateful: faz sentido em roteador de **core** puro que só encaminha
+  (Volume 8), jamais na borda. E há um meio-termo importante, o
+  **RAW/notrack**, que isenta tráfego escolhido a dedo — assunto do
+  @sec-mangle-raw.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+O firewall do RouterOS não julga pacotes — julga **conversas**. O
+conntrack dá a cada pacote um estado (`new`/`established`/`related`/
+`invalid`), e o firewall eficiente decide caro **uma vez por conexão**
+(no `new`) e barato em todos os demais pacotes (`established,related`
+aceitos cedo, `invalid` no lixo). Quem entende a tabela de conexões lê o
+firewall inteiro; quem não entende, coleciona regras por superstição.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+O roteador de borda pronto do @sec-projeto-borda: `lab-r1`
+(`cli-paoquente-r1`, WAN NAT + LAN + DHCP + DNS + NAT) e `lab-r2`
+(`pc-padaria`, cliente DHCP). Se não guardou, remonte pelas etapas 0–6 de
+lá (10 minutos — o gabarito `.rsc` ajuda). Vamos **observar** o conntrack;
+o filtro começa no próximo capítulo.
+
+### Comandos passo a passo
+
+**Passo 1 — a tabela em repouso.** Em `lab-r1`:
+
+```routeros
+/ip firewall connection print
+```
+
+Poucas linhas (talvez o seu SSH da gerência, NTP). Anote quantas.
+
+**Passo 2 — nascimento de uma conexão.** Em `lab-r2`, dispare um ping
+contínuo:
+
+```routeros
+/ping 8.8.8.8
+```
+
+Em `lab-r1`, encontre-a e examine:
+
+```routeros
+/ip firewall connection print detail where protocol=icmp
+```
+
+Observe: `src-address=192.168.10.x`, `reply-dst-address` com o IP da WAN
+(o NAT, flag `s`), timeout de ~10 s **renovando-se** a cada pacote (rode o
+print duas vezes e compare).
+
+**Passo 3 — morte por timeout.** Pare o ping no r2 (`Ctrl+C`) e, no r1,
+repita o print a cada poucos segundos:
+
+```routeros
+/ip firewall connection print where protocol=icmp
+```
+
+O `timeout` decresce até a entrada sumir — silêncio mata a conexão, e você
+assistiu.
+
+**Passo 4 — TCP conta mais história.** Em `lab-r2`, abra uma conexão TCP
+de verdade (o fetch baixa uma página):
+
+```routeros
+/tool fetch url=https://mikrotik.com keep-result=no
+```
+
+Em `lab-r1`, rápido (a conexão fecha ao terminar):
+
+```routeros
+/ip firewall connection print detail where protocol=tcp and dst-port=443
+```
+
+Compare com o ICMP: `tcp-state=established`, timeout de **horas**, flags
+`SAC`. Depois que o fetch termina, o RouterOS de lá fecha a conexão
+educadamente — e a entrada some rápido (estados de fechamento têm timeout
+curto).
+
+**Passo 5 — os limites da casa.** Ainda em `lab-r1`:
+
+```routeros
+/ip firewall connection tracking print
+```
+
+Localize `max-entries` e `total-entries`. Com 256 MB de RAM, o CHR
+sustenta dezenas de milhares de entradas — guarde a razão
+`total/max-entries` como um dos sinais vitais de um concentrador.
+
+### Verificação
+
+1. Você viu a mesma conexão ICMP com o timeout **renovando** (tráfego) e
+   depois **decrescendo até sumir** (silêncio);
+2. A entrada TCP mostrou `tcp-state=established`, flags `SAC` e timeout
+   longo — e você sabe dizer por que difere do ICMP;
+3. As flags `s` (srcnat) apareceram nas conexões da LAN — a herança do
+   @sec-nat-masquerade explicada;
+4. Você sabe onde olhar `max-entries`/`total-entries` e qual o sintoma de
+   tabela cheia.
+
+### Desafios
+
+1. Um pacote TCP ACK chega da internet e a tabela não tem nada sobre
+   aquela conversa. Que estado ele recebe? E um TCP SYN nas mesmas
+   condições? Por que a diferença importa para o firewall?
+2. Em `lab-r2`, rode `/resolve mikrotik.com` e ache a conexão
+   correspondente na tabela do r1. Protocolo? Timeout? Por que o
+   conntrack trata assim um protocolo que "não tem conexão"?
+3. Concentrador com 4 GB de RAM, 8 mil assinantes, média de 40 conexões
+   por assinante: estime as entradas em uso. Num flood que abre 100
+   conexões UDP **por segundo por assinante** infectado (200 infectados),
+   quanto tempo até encher uma tabela de 1M de entradas (UDP timeout 30 s
+   — considere o regime estacionário)? O que o operador vê?
+4. `connection tracking enabled=no` deixaria o `lab-r1` mais rápido. O que
+   quebraria **imediatamente** na nossa topologia — e em que tipo de
+   equipamento de provedor essa troca vale a pena?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** ACK órfão → **`invalid`** (não está na tabela e não é um começo
+válido de conversa). SYN → **`new`** (é exatamente como conversas TCP
+começam). A diferença é o firewall inteiro: `new` merece julgamento
+(talvez seja um cliente legítimo abrindo conexão); `invalid` nunca é
+legítimo em operação normal — descarta-se sem dó. Tratar os dois igual —
+para qualquer um dos lados — cria ou um buraco ou um firewall que quebra
+conexões válidas.
+
+**2.** `protocol=udp dst-port=53` (a consulta ao upstream aparece também,
+vinda do próprio r1). Timeout curto (~10 s pós-resposta). O conntrack
+inventa a "conexão" UDP pareando pergunta e resposta por
+endereços/portas — é o que permite à resposta do DNS voltar através do
+NAT e do firewall stateful sem regra especial de entrada.
+
+**3.** Regime normal: 8 000 × 40 = **320 mil** entradas — folga numa
+tabela de 1M. Flood: 200 × 100 = 20 mil conexões novas/s; com timeout de
+30 s, o regime estacionário adiciona 20 000 × 30 = **600 mil** entradas —
+somadas às 320 mil, a tabela satura (920 mil ≈ 1M) em ~30 s de ataque. O
+operador vê `total-entries` cravado no teto, clientes reclamando de
+conexões novas falhando (páginas que não abrem) com CPU e banda
+aparentemente normais. Remédios: RAW/notrack e rate-limit de `new` —
+@sec-mangle-raw e @sec-hardening.
+
+**4.** Quebra na hora: o **NAT** (masquerade depende da tabela) — a LAN
+inteira para de navegar; e qualquer filtro por estado que existisse. Vale
+a pena em roteador **interno de core/trânsito**: só encaminha pacotes
+entre redes públicas, sem NAT e sem stateful (a proteção mora nas bordas)
+— aí o conntrack é custo puro, e desligá-lo libera CPU. Nunca na borda,
+nunca no concentrador.
+:::
+
+## Resumo
+
+- O **connection tracking** é a memória do RouterOS: toda conversa roteada
+  vira uma entrada com estado, timeout e contadores — NAT e firewall
+  stateful são consumidores dela.
+- Estados (@tbl-conn-states): `new` (julgar), `established`/`related`
+  (aceitar cedo — é o grosso do tráfego), `invalid` (descartar sempre; e
+  `invalid` ≠ `new`).
+- UDP e ICMP ganham "conexões" por pareamento pergunta/resposta com
+  timeouts curtos; helpers marcam canais secundários como `related`.
+- A tabela conta histórias: `reply-*` denuncia NAT, `tcp-state` e flags
+  dizem a saúde, contadores dizem o volume, timeout diz o futuro.
+- Custo real: memória por entrada e CPU por conexão nova — monitore
+  `total/max-entries`; tabela cheia = internet intermitente misteriosa.
+
+No próximo capítulo, os trilhos por onde as regras correm: as **chains**
+`input`, `forward` e `output`, e a lógica de avaliação que decide o
+destino de cada pacote.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/ip firewall connection` e
+`connection tracking` (estados, timeouts, helpers em `service-port`). O
+modelo stateful e o conntrack derivam do Netfilter do Linux, cuja
+documentação conceitual complementa; @tanenbaum-redes cobre TCP/UDP/ICMP
+por baixo de tudo isso. As referências completas, em ABNT, estão no
+apêndice [Referências](../../referencias.qmd).

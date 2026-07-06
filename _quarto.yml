@@ -45,16 +45,16 @@ book:
         - volumes/v02-cli-configuracao/05-nat-masquerade.qmd
         - volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.qmd
 
-    # - part: "Volume 3 — Firewall"
-    #   chapters:
-    #     - volumes/v03-firewall/01-connection-tracking.qmd
-    #     - volumes/v03-firewall/02-chains-logica-firewall.qmd
-    #     - volumes/v03-firewall/03-protegendo-o-roteador.qmd
-    #     - volumes/v03-firewall/04-forward-address-lists.qmd
-    #     - volumes/v03-firewall/05-dstnat-port-forwarding.qmd
-    #     - volumes/v03-firewall/06-mangle-raw.qmd
-    #     - volumes/v03-firewall/07-hardening-completo.qmd
-    #
+    - part: "Volume 3 — Firewall"
+      chapters:
+        - volumes/v03-firewall/01-connection-tracking.qmd
+        - volumes/v03-firewall/02-chains-logica-firewall.qmd
+        - volumes/v03-firewall/03-protegendo-o-roteador.qmd
+        - volumes/v03-firewall/04-forward-address-lists.qmd
+        - volumes/v03-firewall/05-dstnat-port-forwarding.qmd
+        - volumes/v03-firewall/06-mangle-raw.qmd
+        - volumes/v03-firewall/07-hardening-completo.qmd
+
     # - part: "Volume 4 — Bridge, switching e VLANs"
     #   chapters:
     #     - volumes/v04-bridge-vlans/01-bridge-hardware-offload.qmd
