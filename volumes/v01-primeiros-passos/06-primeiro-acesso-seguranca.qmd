@@ -1,10 +1,347 @@
-# Primeiro acesso, usuários e segurança inicial
+# Primeiro acesso, usuários e segurança inicial {#sec-primeiro-acesso}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Ele cobrirá o primeiro acesso ao
-RouterOS, a configuração padrão de fábrica, criação de usuários e grupos,
-senhas fortes e as primeiras medidas de segurança (desabilitar serviços não
-usados, restringir por endereço). Consulte o `ROADMAP.md` para acompanhar o
-progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Descrever o que um equipamento MikroTik traz de fábrica — a *default
+  configuration* — e decidir entre aproveitá-la ou partir do zero;
+- Criar usuários com o **grupo** certo (`read`, `write`, `full`) e abolir o
+  uso compartilhado do `admin`;
+- Aplicar o checklist mínimo de segurança inicial: senha forte, serviços
+  desnecessários desligados, acesso restrito por `allowed-address`,
+  descoberta de vizinhos contida e MAC-server sob controle;
+- Ajustar relógio e fuso (`/system clock`, NTP) — e explicar por que hora
+  certa é item de **segurança**;
+- Deixar qualquer equipamento novo em estado "apresentável" em cinco
+  minutos, seguindo sempre a mesma sequência.
 :::
+
+## O que vem de fábrica
+
+Ligue um hAP novo e ele já funciona: distribui IPs na LAN, faz NAT para a
+porta WAN, tem firewall básico e WiFi com senha na etiqueta. Essa é a
+**configuração padrão** (*default configuration*), pensada para o roteador
+doméstico — e ela é boa nesse papel.
+
+No mundo do provedor, porém, a configuração de fábrica é quase sempre
+**ponto de partida errado**: um rádio de torre não precisa de servidor DHCP;
+um concentrador não deve ter NAT de fábrica; um switch de POP não quer
+firewall nas portas. Por isso o costume profissional é começar **limpo** e
+construir só o que o papel do equipamento pede. Há duas formas de chegar ao
+estado limpo:
+
+- No primeiro boot de um equipamento físico, o RouterOS mostra a
+  configuração padrão e oferece a tecla `r` para removê-la já no primeiro
+  login;
+- A qualquer momento: `/system reset-configuration no-defaults=yes` — que
+  reveremos, com os devidos avisos, no @sec-backup-export.
+
+O **CHR nasce limpo** — sem default configuration —, e é por isso que nossos
+laboratórios nunca precisaram removê-la. O que o CHR *tem*, como todo
+RouterOS, é o usuário **`admin`** — e é nele que a segurança inicial começa.
+
+## Usuários e grupos: aposentando o `admin` compartilhado
+
+Todo RouterOS nasce com o usuário `admin`, do grupo `full`. Numa operação
+com três técnicos, é tentador todo mundo usar "o admin" — até o dia em que
+uma configuração some às 3h da manhã e o `/system history print`
+(@sec-licencas-routerboot) diz apenas: foi o `admin`. Quem?
+
+A regra profissional: **uma pessoa, um usuário** — e cada usuário com o
+menor privilégio que cumpre sua função. Os privilégios vêm dos **grupos**,
+em `/user group`:
+
+| Grupo | Pode | Uso típico |
+|:------|:-----|:-----------|
+| `read` | ver tudo, mudar nada | monitoramento, auditoria, NOC nível 1 |
+| `write` | configurar (exceto gerenciar usuários) | técnicos de campo |
+| `full` | tudo, inclusive usuários e reboot | administradores |
+
+: Grupos padrão de usuários {#tbl-user-groups}
+
+Os comandos essenciais:
+
+```routeros
+/user add name=vitor group=full password=SenhaForte!2026 comment="Vitor - admin"
+/user add name=noc group=read password=OutraSenha!2026 comment="Monitoramento"
+/user print
+```
+
+Criado o seu usuário nominal e testado o login com ele, desabilite o
+`admin` de fábrica — todo scanner de internet conhece esse nome:
+
+```routeros
+/user disable admin
+```
+
+Sobre as senhas, o essencial cabe em três linhas: longas (frases servem),
+únicas por equipamento ou por parque (gerenciador de senhas é ferramenta de
+provedor, não luxo) e **nunca** a mesma do WiFi da sua casa. O RouterOS
+não impõe complexidade — a disciplina é sua.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+Usuário compartilhado é caixa de supermercado sem operador identificado:
+qualquer diferença no caixa, ninguém foi. Grupos são os cargos — o
+repositor (read) não abre a gaveta; o gerente (full) assina a sangria. O
+`/system history` só vira auditoria quando cada login tem dono.
+:::
+
+## Fechando as portas: serviços e acesso
+
+No @sec-formas-de-acesso você viu a @tbl-ip-services: cada forma de acesso
+por IP é um serviço em `/ip service`. Segurança inicial é decidir o destino
+de cada um. A política deste manual, que aplicaremos no laboratório:
+
+1. **Desabilitar o que não se usa**: `telnet` e `ftp` sempre; `www` (HTTP
+   puro) e `api`/`api-ssl` até que algum uso real os exija;
+2. **Restringir o que fica**: os serviços sobreviventes (`ssh`, `winbox`,
+   `www-ssl`) ganham `allowed-address` — uma lista de redes de onde aceitam
+   conexão. Tipicamente, a rede de **gerência** do provedor;
+3. **Registrar a decisão**: o `comment` nos itens críticos explica o porquê
+   para o próximo técnico (que pode ser você, daqui a dois anos).
+
+O mesmo raciocínio vale para os protocolos de **camada 2**, que não passam
+por `/ip service`:
+
+- **Descoberta de vizinhos** (`/ip neighbor discovery-settings`): anuncia o
+  equipamento no cabo. Ótimo na gerência, péssimo nas portas voltadas a
+  clientes — um assinante curioso não precisa ver modelo e versão do seu
+  concentrador;
+- **MAC-server** (`/tool mac-server`): controla quem pode abrir MAC-Telnet
+  e WinBox-por-MAC. O kit de resgate do técnico é também o kit de invasão
+  de quem alcança o cabo — restrinja-o a uma lista de interfaces de
+  confiança.
+
+Ambos aceitam o mesmo remédio: uma **interface list** (uma lista nomeada de
+interfaces, ex.: `gerencia`) usada como filtro. Interface lists reaparecerão
+como protagonistas no firewall (Volume 3).
+
+## Relógio certo: segurança, não estética
+
+`/system clock print` num equipamento recém-ligado mostra 1970 ou um fuso
+errado. Parece cosmético — até o dia em que você precisa cruzar o log do
+concentrador com a reclamação de um cliente ("caiu ontem 21h40") ou atender
+um ofício judicial pedindo quem usava tal IP em tal **horário** (assunto
+sério no Brasil — Volume 9 detalha os requisitos legais de guarda de
+registros). Log com hora errada é log inútil.
+
+A receita completa, que aplicaremos no laboratório: fuso correto
+(`America/Sao_Paulo`... ou o seu) e **NTP** — o protocolo que mantém o
+relógio sincronizado pela rede — apontando para servidores confiáveis; no
+Brasil, os do projeto `ntp.br`.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Segurança inicial não é um produto que se instala; é uma **sequência que se
+repete** em todo equipamento que entra no parque: senha forte no usuário
+nominal → `admin` desabilitado → serviços não usados desligados → acesso
+restrito à gerência → descoberta e MAC-server contidos → relógio certo com
+NTP. Cinco minutos por equipamento; anos de dores de cabeça evitadas.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+O laboratório padrão do @sec-lab-chr, restaurado no snapshot `base-limpa`.
+Usaremos apenas **`lab-r1`** — com o adaptador NAT (`ether3`) habilitado,
+pois o NTP precisa de internet. Acesse por SSH: `ssh admin@192.168.56.11`.
+
+### Comandos passo a passo
+
+**Passo 1 — usuário nominal.** Crie o seu usuário (troque nome e senha
+pelos seus), teste-o e desabilite o `admin`:
+
+```routeros
+/user add name=vitor group=full password=Lab!Segura2026 comment="dono do lab"
+```
+
+Abra **outro** terminal e confirme o login novo antes de fechar o atual —
+regra de ouro ao mexer em usuários:
+
+```routeros
+ssh vitor@192.168.56.11
+```
+
+Funcionando, desabilite o usuário de fábrica (na sessão nova):
+
+```routeros
+/user disable admin
+/user print
+```
+
+```routeros
+[vitor@lab-r1] > /user print
+Columns: NAME, GROUP, LAST-LOGGED-IN
+# NAME    GROUP  LAST-LOGGED-IN
+0 ;;; system default user
+  X admin  full   2026-07-06 14:02:11
+1 ;;; dono do lab
+    vitor  full   2026-07-06 14:05:37
+```
+
+O `X` marca o `admin` desabilitado.
+
+**Passo 2 — serviços.** Desligue o que não usamos e restrinja o resto à
+rede de gerência:
+
+```routeros
+/ip service disable telnet,ftp,www,api,api-ssl
+/ip service set ssh address=192.168.56.0/24
+/ip service set winbox address=192.168.56.0/24
+/ip service set www-ssl address=192.168.56.0/24
+/ip service print
+```
+
+```routeros
+[vitor@lab-r1] > /ip service print
+Columns: NAME, PORT, ADDRESS
+#   NAME     PORT  ADDRESS
+0 X telnet     23
+1 X ftp        21
+2 X www        80
+3   ssh        22  192.168.56.0/24
+4   winbox   8291  192.168.56.0/24
+5 X api      8728
+6   www-ssl   443  192.168.56.0/24
+7 X api-ssl  8729
+```
+
+**Passo 3 — camada 2 contida.** Crie a interface list `gerencia`, ponha a
+`ether1` nela e aponte a descoberta de vizinhos e o MAC-server para a lista:
+
+```routeros
+/interface list add name=gerencia comment="interfaces de gerencia do lab"
+/interface list member add list=gerencia interface=ether1
+/ip neighbor discovery-settings set discover-interface-list=gerencia
+/tool mac-server set allowed-interface-list=gerencia
+/tool mac-server mac-winbox set allowed-interface-list=gerencia
+```
+
+**Passo 4 — relógio e NTP.** Ajuste o fuso e ative o cliente NTP com os
+servidores brasileiros (garanta que o DHCP client do desafio do capítulo
+anterior está ativo na `ether3`, ou crie-o:
+`/ip dhcp-client add interface=ether3`):
+
+```routeros
+/system clock set time-zone-name=America/Sao_Paulo
+/system ntp client set enabled=yes
+/system ntp client servers add address=a.st1.ntp.br
+/system ntp client servers add address=b.st1.ntp.br
+```
+
+Aguarde alguns segundos e verifique a sincronização:
+
+```routeros
+/system ntp client print
+```
+
+```routeros
+[vitor@lab-r1] > /system ntp client print
+             enabled: yes
+                mode: unicast
+  synced-stratum: 1
+       synced-server: a.st1.ntp.br
+```
+
+`synced-server` preenchido = relógio sob controle. Confira o resultado
+final com `/system clock print`.
+
+### Verificação
+
+1. `ssh vitor@192.168.56.11` entra; tentar `ssh admin@192.168.56.11` é
+   recusado (usuário desabilitado);
+2. `/ip service print` mostra `telnet`, `ftp`, `www`, `api` e `api-ssl` com
+   `X`, e os demais restritos a `192.168.56.0/24`;
+3. `/ip neighbor discovery-settings print` e `/tool mac-server print`
+   apontam para a lista `gerencia`;
+4. `/system clock print` mostra fuso e hora corretos, e
+   `/system ntp client print` mostra um `synced-server`.
+
+Feche com um snapshot novo em `lab-r1` — nomeie `seguranca-inicial`: vários
+capítulos seguintes partirão dele.
+
+### Desafios
+
+1. Crie um usuário `estagiario` do grupo `read` e, logado com ele, tente
+   `/system identity set name=hacker`. O que acontece? E
+   `/user print`, funciona?
+2. Nos grupos padrão não existe "técnico que configura mas não reinicia".
+   Explore `/user group print` e crie um grupo `campo` com as políticas do
+   `write` **sem** a política `reboot`.
+3. Sua sessão SSH vem do `192.168.56.1` (o hospedeiro). Aplique, **dentro do
+   Safe Mode**, um `allowed-address` de propósito errado no serviço `ssh`
+   (ex.: `10.99.99.0/24`), deixe a sessão cair e explique o que o Safe Mode
+   fez por você (@sec-formas-de-acesso).
+4. Monte, em texto, o **checklist de entrada** do seu provedor fictício: os
+   passos deste capítulo na ordem em que você os aplicaria num rádio novo
+   antes de ele subir na torre — e um item extra que este capítulo ainda não
+   cobriu, mas o próximo cobrirá (dica: o que você faz *antes* de mexer numa
+   configuração que funciona?).
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O `set` falha com erro de permissão (`not enough permissions`): o
+grupo `read` não tem a política `write`. Já `/user print` **também falha** —
+ver e gerenciar usuários exige a política `sensitive`/política de usuários,
+que o `read` não tem. Menor privilégio funcionando.
+
+**2.**
+
+```routeros
+/user group add name=campo policy=local,ssh,read,write,winbox,web,!reboot,!policy,!sensitive
+```
+
+O essencial: partir das políticas do `write` e negar `reboot` (a sintaxe
+`!politica` nega). Confira com `/user group print` e teste com um usuário
+de mentira.
+
+**3.** Com `Ctrl+X` ativo, `/ip service set ssh address=10.99.99.0/24`
+derruba sua sessão (você não está nessa rede). O Safe Mode detecta a queda
+e **reverte** o `allowed-address` — reconecte e confirme com
+`/ip service print`. Sem Safe Mode, seria console da VM para consertar.
+
+**4.** Sequência razoável: (1) usuário nominal + senha do gerenciador;
+(2) `admin` desabilitado; (3) serviços: só `ssh`+`winbox`, com
+`allowed-address` da gerência; (4) discovery e MAC-server na lista
+`gerencia`; (5) fuso + NTP; (6) identidade com o padrão de nomes do parque
+(ex.: `torre-sul-ptp1`). O item que falta: **backup/export da configuração**
+antes e depois — assunto do próximo capítulo.
+:::
+
+## Resumo
+
+- Equipamentos físicos trazem **default configuration** boa para uso
+  doméstico; no provedor, parte-se limpo (tecla `r` no primeiro login ou
+  reset `no-defaults=yes`). O CHR já nasce limpo.
+- **Um usuário por pessoa**, no grupo de menor privilégio
+  (@tbl-user-groups); `admin` desabilitado após criar o usuário nominal —
+  e teste o login novo **antes** de fechar a sessão antiga.
+- Serviços: desabilite `telnet`, `ftp`, `www`, `api`; restrinja `ssh`,
+  `winbox` e `www-ssl` com `allowed-address` da gerência.
+- Camada 2 também se fecha: `discovery-settings` e `mac-server` apontando
+  para uma **interface list** de gerência.
+- Fuso + **NTP** (`ntp.br`) porque log sem hora certa não serve nem ao
+  troubleshooting nem à Justiça.
+- Tudo isso é uma sequência repetível de ~5 minutos — o "ritual de entrada"
+  de equipamento novo no parque.
+
+No próximo capítulo, a rede de segurança que faltou ao seu checklist:
+backup binário, export de configuração, restauração — e o reset, com os
+avisos que ele merece.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre os menus `/user`,
+`/ip service`, `/ip neighbor` e `/system ntp`, além da página *Securing
+your router*, que inspira o checklist deste capítulo. O projeto NTP.br
+(`ntp.br`) documenta os servidores públicos brasileiros de hora legal.
+@discher-rosv7 traz um capítulo dedicado a usuários e segurança de acesso.
+As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
