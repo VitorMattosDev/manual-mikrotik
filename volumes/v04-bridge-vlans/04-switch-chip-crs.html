@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>25&nbsp; Switch chip nos CRS – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.html" rel="next">
+<link href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html">Volume 4 — Bridge, switching e VLANs</a></li><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 4 — Bridge, switching e VLANs</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Bridge e hardware offload</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Segmentação da rede do provedor</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#o-porão-do-switch" id="toc-o-porão-do-switch" class="nav-link active" data-scroll-target="#o-porão-do-switch"><span class="header-section-number">25.1</span> O porão do switch</a></li>
+  <li><a href="#dois-mundos-uma-decisão" id="toc-dois-mundos-uma-decisão" class="nav-link" data-scroll-target="#dois-mundos-uma-decisão"><span class="header-section-number">25.2</span> Dois mundos, uma decisão</a></li>
+  <li><a href="#o-que-mais-mora-no-chip" id="toc-o-que-mais-mora-no-chip" class="nav-link" data-scroll-target="#o-que-mais-mora-no-chip"><span class="header-section-number">25.3</span> O que mais mora no chip</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">25.4</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">25.4.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">25.4.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">25.4.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">25.4.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">25.5</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v04-bridge-vlans/04-switch-chip-crs.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html">Volume 4 — Bridge, switching e VLANs</a></li><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-switch-chip" class="quarto-section-identifier"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Explicar o que um <strong>switch chip</strong> faz e como o RouterOS o expõe em <code>/interface ethernet switch</code>;</li>
+<li>Escolher o caminho de configuração certo por família — <strong>CRS3xx/5xx</strong> (tudo pela bridge, offload automático) <em>versus</em> <strong>CRS1xx/2xx e RouterBOARDs</strong> (menu legado do chip);</li>
+<li>Usar os recursos que moram no chip além de VLAN: <strong>rule table</strong> (ACLs em velocidade de fio), <strong>port mirroring</strong> e a host table de hardware;</li>
+<li>Reconhecer os limites de cada chip (tamanho de tabelas, recursos) na ficha técnica antes de projetar o POP;</li>
+<li>Diagnosticar o clássico “CRS lento”: descobrir para onde o tráfego está indo — chip ou CPU.</li>
+</ul>
+</div>
+</div>
+<section id="o-porão-do-switch" class="level2" data-number="25.1">
+<h2 data-number="25.1" class="anchored" data-anchor-id="o-porão-do-switch"><span class="header-section-number">25.1</span> O porão do switch</h2>
+<p>Dois capítulos falamos de bridge como se tudo fosse software — e o <a href="01-bridge-hardware-offload.html" class="quarto-xref"><span>Capítulo 22</span></a> avisou: nos CRS, quem trabalha de verdade é o <strong>switch chip</strong>, um circuito dedicado (Marvell nos CRS3xx/5xx, Atheros/ Qualcomm nos antigos e nas RouterBOARDs) com suas próprias tabelas de MACs, de VLANs e de regras, comutando em velocidade de fio enquanto a CPU dorme.</p>
+<p>O RouterOS expõe o porão em <code>/interface ethernet switch</code>:</p>
+<pre class="routeros"><code>/interface ethernet switch print</code></pre>
+<pre class="routeros"><code>[admin@crs326] &gt; /interface ethernet switch print
+Columns: NAME, TYPE, MIRROR-SOURCE, MIRROR-TARGET
+# NAME      TYPE          MIRROR-SOURCE  MIRROR-TARGET
+0 switch1   Marvell-98DX3236  none       none</code></pre>
+<p>Ali você vê o chip pelo nome (pesquise-o: a página <em>Switch Chip Features</em> da documentação diz exatamente o que <strong>o seu</strong> sabe fazer) e os menus dele: portas, host table de hardware, rule table, espelhamento. Todo equipamento MikroTik com mais de uma porta comutável tem um — até o hEX da casa do cliente.</p>
+</section>
+<section id="dois-mundos-uma-decisão" class="level2" data-number="25.2">
+<h2 data-number="25.2" class="anchored" data-anchor-id="dois-mundos-uma-decisão"><span class="header-section-number">25.2</span> Dois mundos, uma decisão</h2>
+<p>A pergunta prática que define qualquer projeto de switching MikroTik: <strong>por onde configurar as VLANs?</strong> A resposta depende da geração (<a href="#fig-decisao-switch" class="quarto-xref">Figura&nbsp;<span>25.1</span></a>):</p>
+<div id="fig-decisao-switch" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-decisao-switch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="460.045001pt" height="107.560229pt" viewbox="-68.014948 -68.014951 460.045001 107.560229">
+<defs>
+<path id="tz_fig_decisao_switch_g0-47" d="M3.228892-4.400498C3.277709-4.51208 3.284682-4.51208 3.284682-4.56787C3.284682-4.735243 3.145205-4.839851 3.019676-4.839851C2.84533-4.839851 2.789539-4.721295 2.75467-4.644583L.467248 .139477C.418431 .251059 .411457 .251059 .411457 .306849C.411457 .474222 .550934 .578829 .676463 .578829C.850809 .578829 .9066 .460274 .941469 .383562L3.228892-4.400498Z"></path>
+<path id="tz_fig_decisao_switch_g0-97" d="M3.005729-1.966625C3.005729-2.545455 2.552428-3.061519 1.597011-3.061519C1.26924-3.061519 .550934-3.061519 .550934-2.524533C.550934-2.336239 .683437-2.182814 .892653-2.182814C1.025156-2.182814 1.21345-2.266501 1.227397-2.517559C1.227397-2.57335 1.234371-2.580324 1.325031-2.594271C1.401743-2.601245 1.520299-2.601245 1.603985-2.601245C2.175841-2.601245 2.475716-2.343213 2.475716-1.959651C1.729514-1.959651 .369614-1.785305 .369614-.927522C.369614-.411457 .850809 .034869 1.555168 .034869C2.113076 .034869 2.461768-.174346 2.552428-.237111C2.698879-.020922 2.991781 0 3.326526 0C3.514819 0 3.696139 0 3.696139-.230137S3.500872-.460274 3.403238-.460274C3.138232-.460274 3.075467-.481196 3.005729-.509091V-1.966625ZM2.475716-.99726C2.475716-.850809 2.475716-.690411 2.203736-.557908C1.959651-.432379 1.687671-.425405 1.597011-.425405C1.185554-.425405 .899626-.669489 .899626-.927522C.899626-1.297136 1.66675-1.506351 2.475716-1.513325V-.99726Z"></path>
+<path id="tz_fig_decisao_switch_g0-99" d="M3.277709-.753176C3.277709-.9066 3.159153-.969365 3.012702-.969365C2.915068-.969365 2.817435-.969365 2.75467-.808966C2.629141-.502117 2.350187-.425405 2.099128-.425405C1.520299-.425405 1.03213-.899626 1.03213-1.506351C1.03213-1.862017 1.255293-2.601245 2.140971-2.601245C2.343213-2.601245 2.461768-2.587298 2.496638-2.580324C2.517559-2.57335 2.524533-2.566376 2.524533-2.503611C2.538481-2.30137 2.684932-2.182814 2.859278-2.182814C3.068493-2.182814 3.200996-2.336239 3.200996-2.524533C3.200996-3.061519 2.475716-3.061519 2.154919-3.061519C.913574-3.061519 .502117-2.099128 .502117-1.506351C.502117-.669489 1.171606 .034869 2.064259 .034869C3.054545 .034869 3.277709-.63462 3.277709-.753176Z"></path>
+<path id="tz_fig_decisao_switch_g0-101" d="M2.977833-1.311083C3.110336-1.311083 3.277709-1.311083 3.277709-1.57609C3.277709-2.412951 2.803487-3.061519 1.903861-3.061519C1.046077-3.061519 .369614-2.364134 .369614-1.513325C.369614-.683437 1.066999 .034869 2.015442 .034869C2.970859 .034869 3.277709-.578829 3.277709-.753176C3.277709-.9066 3.159153-.969365 3.012702-.969365C2.894147-.969365 2.824408-.962391 2.75467-.808966C2.615193-.495143 2.273474-.425405 2.050311-.425405C1.54122-.425405 1.03213-.760149 .920548-1.311083H2.977833ZM.927522-1.764384C1.03213-2.252553 1.443587-2.601245 1.903861-2.601245C2.531507-2.601245 2.691905-2.113076 2.733748-1.764384H.927522Z"></path>
+<path id="tz_fig_decisao_switch_g0-102" d="M1.806227-2.545455H2.636115C2.740722-2.545455 2.93599-2.545455 2.93599-2.775592S2.740722-3.005729 2.636115-3.005729H1.806227V-3.326526C1.806227-3.765878 2.140971-3.835616 2.433873-3.835616C2.454795-3.612453 2.636115-3.514819 2.761644-3.514819C2.908095-3.514819 3.089415-3.626401 3.089415-3.849564C3.089415-4.29589 2.503611-4.29589 2.39203-4.29589C1.855044-4.29589 1.276214-4.002989 1.276214-3.347447V-3.005729H.606725C.502117-3.005729 .299875-3.005729 .299875-2.775592S.495143-2.545455 .599751-2.545455H1.276214V-.460274H.599751C.502117-.460274 .292902-.460274 .292902-.230137S.502117 0 .599751 0H2.48269C2.580324 0 2.789539 0 2.789539-.230137S2.580324-.460274 2.48269-.460274H1.806227V-2.545455Z"></path>
+<path id="tz_fig_decisao_switch_g0-104" d="M3.033624-2.02939C3.033624-2.726775 2.684932-3.040598 2.113076-3.040598C1.597011-3.040598 1.262267-2.761644 1.192528-2.691905V-3.961146C1.192528-4.198257 1.12279-4.261021 .892653-4.261021H.376588C.265006-4.261021 .076712-4.261021 .076712-4.030884S.265006-3.800747 .376588-3.800747H.662516V-.460274H.376588C.265006-.460274 .076712-.460274 .076712-.230137S.265006 0 .376588 0H1.478456C1.590037 0 1.778331 0 1.778331-.230137S1.590037-.460274 1.478456-.460274H1.192528V-1.659776C1.192528-2.329265 1.729514-2.580324 2.078207-2.580324C2.399004-2.580324 2.503611-2.426899 2.503611-2.015442V-.460274H2.273474C2.168867-.460274 1.973599-.460274 1.973599-.230137S2.168867 0 2.273474 0H3.319552C3.431133 0 3.619427 0 3.619427-.230137S3.431133-.460274 3.319552-.460274H3.033624V-2.02939Z"></path>
+<path id="tz_fig_decisao_switch_g0-105" d="M2.203736-3.891407C2.203736-4.100623 2.036364-4.267995 1.827148-4.267995S1.45056-4.100623 1.45056-3.891407S1.617933-3.514819 1.827148-3.514819S2.203736-3.682192 2.203736-3.891407ZM.913574-3.005729C.808966-3.005729 .606725-3.005729 .606725-2.775592S.81594-2.545455 .913574-2.545455H1.673724V-.460274H.857783C.753176-.460274 .550934-.460274 .550934-.230137S.760149 0 .857783 0H2.908095C3.005729 0 3.214944 0 3.214944-.230137S3.005729-.460274 2.908095-.460274H2.203736V-2.705853C2.203736-2.942964 2.133998-3.005729 1.903861-3.005729H.913574Z"></path>
+<path id="tz_fig_decisao_switch_g0-110" d="M3.033624-2.02939C3.033624-2.726775 2.684932-3.040598 2.113076-3.040598C1.597011-3.040598 1.262267-2.761644 1.192528-2.691905C1.192528-2.901121 1.171606-3.005729 .892653-3.005729H.376588C.265006-3.005729 .076712-3.005729 .076712-2.775592S.265006-2.545455 .376588-2.545455H.662516V-.460274H.376588C.265006-.460274 .076712-.460274 .076712-.230137S.265006 0 .376588 0H1.478456C1.590037 0 1.778331 0 1.778331-.230137S1.590037-.460274 1.478456-.460274H1.192528V-1.659776C1.192528-2.329265 1.729514-2.580324 2.078207-2.580324C2.399004-2.580324 2.503611-2.426899 2.503611-2.015442V-.460274H2.273474C2.168867-.460274 1.973599-.460274 1.973599-.230137S2.168867 0 2.273474 0H3.319552C3.431133 0 3.619427 0 3.619427-.230137S3.431133-.460274 3.319552-.460274H3.033624V-2.02939Z"></path>
+<path id="tz_fig_decisao_switch_g0-114" d="M1.57609-1.276214C1.57609-2.036364 2.12005-2.580324 2.796513-2.580324C2.810461-2.308344 3.005729-2.252553 3.11731-2.252553C3.291656-2.252553 3.438107-2.378082 3.438107-2.580324C3.438107-2.75467 3.312578-3.040598 2.768618-3.040598C2.127024-3.040598 1.750436-2.670984 1.57609-2.496638V-2.705853C1.57609-2.942964 1.506351-3.005729 1.276214-3.005729H.516065C.418431-3.005729 .209215-3.005729 .209215-2.775592S.418431-2.545455 .516065-2.545455H1.046077V-.460274H.516065C.418431-.460274 .209215-.460274 .209215-.230137S.418431 0 .516065 0H2.315318C2.426899 0 2.615193 0 2.615193-.230137S2.426899-.460274 2.315318-.460274H1.57609V-1.276214Z"></path>
+<path id="tz_fig_decisao_switch_g0-115" d="M3.019676-2.761644C3.019676-2.866252 3.019676-3.061519 2.789539-3.061519C2.629141-3.061519 2.594271-2.977833 2.57335-2.93599C2.287422-3.061519 2.008468-3.061519 1.84807-3.061519C.662516-3.061519 .509091-2.475716 .509091-2.231631C.509091-1.583064 1.241345-1.471482 1.855044-1.373848C2.231631-1.311083 2.768618-1.227397 2.768618-.885679C2.768618-.63462 2.503611-.425405 1.896887-.425405C1.464508-.425405 1.185554-.571856 1.039103-.990286C1.004234-1.101868 .976339-1.185554 .774097-1.185554C.509091-1.185554 .509091-1.011208 .509091-.885679V-.265006C.509091-.160399 .509091 .034869 .739228 .034869C.808966 .034869 .934496 .013948 1.004234-.195268C1.3599 .034869 1.750436 .034869 1.889913 .034869C3.075467 .034869 3.228892-.620672 3.228892-.878705C3.228892-1.046077 3.173101-1.297136 2.908095-1.499377C2.629141-1.708593 2.357161-1.750436 1.868991-1.834122C1.39477-1.910834 .969365-1.980573 .969365-2.231631C.969365-2.371108 1.136737-2.601245 1.834122-2.601245C2.461768-2.601245 2.48269-2.378082 2.489664-2.252553C2.503611-2.02939 2.677958-2.02939 2.75467-2.02939C3.019676-2.02939 3.019676-2.196762 3.019676-2.329265V-2.761644Z"></path>
+<path id="tz_fig_decisao_switch_g0-116" d="M1.590037-2.545455H2.705853C2.810461-2.545455 3.005729-2.545455 3.005729-2.775592S2.810461-3.005729 2.705853-3.005729H1.590037V-3.563636C1.590037-3.696139 1.590037-3.863512 1.325031-3.863512S1.060025-3.689166 1.060025-3.563636V-3.005729H.481196C.376588-3.005729 .174346-3.005729 .174346-2.775592S.369614-2.545455 .474222-2.545455H1.060025V-.955417C1.060025-.202242 1.590037 .034869 2.078207 .034869C2.705853 .034869 3.166127-.404483 3.166127-.9066C3.166127-1.143711 2.963885-1.143711 2.901121-1.143711C2.719801-1.143711 2.643088-1.073973 2.636115-.899626C2.622167-.613699 2.371108-.425405 2.106102-.425405C1.590037-.425405 1.590037-.808966 1.590037-.969365V-2.545455Z"></path>
+<path id="tz_fig_decisao_switch_g0-119" d="M3.228892-2.545455C3.38929-2.545455 3.584558-2.545455 3.584558-2.775592S3.375342-3.005729 3.277709-3.005729H2.454795C2.350187-3.005729 2.154919-3.005729 2.154919-2.775592S2.350187-2.545455 2.454795-2.545455H2.782565L2.461768-.557908H2.454795C2.433873-.732254 2.329265-1.094894 2.259527-1.318057C2.154919-1.694645 2.12005-1.806227 1.862017-1.806227C1.597011-1.806227 1.569116-1.687671 1.464508-1.332005C1.290162-.732254 1.276214-.662516 1.255293-.550934H1.248319L.913574-2.545455H1.241345C1.345953-2.545455 1.54122-2.545455 1.54122-2.775592S1.345953-3.005729 1.241345-3.005729H.418431C.313823-3.005729 .111582-3.005729 .111582-2.775592S.306849-2.545455 .467248-2.545455L.878705-.244085C.927522 .020922 1.060025 .034869 1.227397 .034869C1.527273 .034869 1.555168-.048817 1.659776-.418431C1.834122-1.025156 1.841096-1.108842 1.855044-1.241345H1.862017C1.868991-1.157659 1.917808-.927522 2.064259-.418431C2.161893-.069738 2.189788 .034869 2.48269 .034869C2.608219 .034869 2.768618 .034869 2.817435-.237111L3.228892-2.545455Z"></path>
+<path id="tz_fig_decisao_switch_g1-19" d="M3.110336-4.644583C3.145205-4.672478 3.187049-4.707347 3.187049-4.749191C3.187049-4.839851 3.110336-4.839851 2.998755-4.839851H2.426899C2.287422-4.839851 2.280448-4.832877 2.217684-4.756164L1.617933-3.940224C1.555168-3.863512 1.555168-3.849564 1.555168-3.835616C1.555168-3.744956 1.63188-3.744956 1.743462-3.744956H2.001494L3.110336-4.644583Z"></path>
+<path id="tz_fig_decisao_switch_g1-44" d="M1.520299-.72528C1.520299-.9066 1.513325-.913574 1.332005-.913574H.795019C.613699-.913574 .606725-.9066 .606725-.72528V-.188294C.606725-.006974 .613699 0 .843836 0C.801993 .111582 .767123 .223163 .72528 .334745C.683437 .439352 .613699 .63462 .613699 .648568C.613699 .739228 .683437 .739228 .795019 .739228H.878705C1.018182 .739228 1.025156 .732254 1.094894 .620672C1.220423 .432379 1.338979 .237111 1.457534 .041843C1.520299-.055791 1.520299-.069738 1.520299-.188294V-.72528Z"></path>
+<path id="tz_fig_decisao_switch_g1-46" d="M1.520299-.72528C1.520299-.9066 1.513325-.913574 1.332005-.913574H.795019C.613699-.913574 .606725-.9066 .606725-.72528V-.188294C.606725-.006974 .613699 0 .795019 0H1.332005C1.513325 0 1.520299-.006974 1.520299-.188294V-.72528Z"></path>
+<path id="tz_fig_decisao_switch_g1-47" d="M3.361395-4.777086C3.403238-4.881694 3.403238-4.888667 3.403238-4.937484C3.403238-5.090909 3.277709-5.230386 3.110336-5.230386C2.908095-5.230386 2.838356-5.05604 2.817435-4.993275L.467248 1.290162C.425405 1.39477 .425405 1.401743 .425405 1.45056C.425405 1.603985 .550934 1.743462 .718306 1.743462C.920548 1.743462 .990286 1.569116 1.011208 1.506351L3.361395-4.777086Z"></path>
+<path id="tz_fig_decisao_switch_g1-49" d="M2.475716-4.658531C2.475716-4.791034 2.475716-4.993275 2.168867-4.993275C2.02939-4.993275 2.001494-4.979328 1.917808-4.895641C1.792279-4.78406 1.527273-4.526027 .836862-4.51208C.711333-4.51208 .530012-4.463263 .530012-4.261021C.530012-4.009963 .774097-4.009963 .864757-4.009963C1.073973-4.009963 1.318057-4.044832 1.520299-4.100623V-.502117H.976339C.885679-.502117 .641594-.502117 .641594-.251059S.885679 0 .976339 0H2.963885C3.040598 0 3.29863 0 3.29863-.251059S3.040598-.502117 2.963885-.502117H2.475716V-4.658531Z"></path>
+<path id="tz_fig_decisao_switch_g1-50" d="M.4533-.592777C.383562-.523039 .383562-.509091 .383562-.390535V-.334745C.383562-.083686 .460274 0 .718306 0H3.110336C3.375342 0 3.445081-.09066 3.445081-.334745V-.418431C3.445081-.530012 3.445081-.662516 3.29863-.72528C3.249813-.753176 3.02665-.753176 2.887173-.753176C2.733748-.753176 2.566376-.746202 2.412951-.746202H1.283188L2.203736-1.617933C2.308344-1.708593 2.57335-1.924782 2.677958-2.022416C3.061519-2.399004 3.445081-2.768618 3.445081-3.38929C3.445081-4.2401 2.831382-4.993275 1.806227-4.993275C1.562142-4.993275 1.164633-4.958406 .829888-4.686426C.767123-4.637609 .446326-4.38655 .320797-3.919303L.669489-3.472976C.711333-3.417186 .732254-3.38929 .781071-3.38929C.843836-3.38929 .857783-3.438107 .878705-3.521793C1.018182-4.002989 1.255293-4.29589 1.701619-4.29589C2.245579-4.29589 2.468742-3.800747 2.468742-3.375342C2.468742-2.929016 2.203736-2.461768 1.785305-2.015442L.4533-.592777Z"></path>
+<path id="tz_fig_decisao_switch_g1-51" d="M.669489-3.870486C.72528-3.7868 .760149-3.7868 .774097-3.7868C.822914-3.7868 .836862-3.814695 .871731-3.863512C1.227397-4.372603 1.72254-4.372603 1.8132-4.372603C2.259527-4.372603 2.322291-4.142466 2.322291-3.800747C2.322291-3.703113 2.322291-3.368369 2.106102-3.103362C1.93873-2.908095 1.764384-2.894147 1.555168-2.880199C1.478456-2.873225 1.345953-2.866252 1.325031-2.852304C1.276214-2.831382 1.276214-2.789539 1.276214-2.677958V-2.552428C1.276214-2.371108 1.283188-2.364134 1.464508-2.364134H1.771357C2.405978-2.364134 2.48269-1.966625 2.48269-1.429639C2.48269-.962391 2.433873-.502117 1.799253-.502117C1.57609-.502117 1.060025-.550934 .592777-.990286C.530012-1.053051 .523039-1.060025 .495143-1.060025C.425405-1.060025 .411457-.99726 .404483-.983313C.404483-.976339 .320797-.536986 .320797-.502117C.320797-.411457 .920548 .153425 1.834122 .153425C3.033624 .153425 3.507846-.488169 3.507846-1.415691C3.507846-2.043337 3.173101-2.468742 2.545455-2.629141C3.110336-2.93599 3.29863-3.38929 3.29863-3.7868C3.29863-4.902615 2.30137-4.993275 1.84807-4.993275C.892653-4.993275 .425405-4.309838 .425405-4.254047C.425405-4.212204 .467248-4.156413 .474222-4.14944L.669489-3.870486Z"></path>
+<path id="tz_fig_decisao_switch_g1-53" d="M1.48543-4.142466H2.852304C3.180075-4.142466 3.187049-4.302864 3.187049-4.491158C3.187049-4.672478 3.187049-4.839851 2.852304-4.839851H.913574C.690411-4.839851 .578829-4.798007 .578829-4.519054V-2.385056C.578829-2.071233 .739228-2.064259 .927522-2.064259C1.108842-2.064259 1.171606-2.064259 1.26924-2.231631C1.436613-2.503611 1.673724-2.643088 1.966625-2.643088C2.419925-2.643088 2.419925-2.113076 2.419925-1.569116C2.419925-1.03213 2.419925-.502117 1.687671-.502117C1.471482-.502117 .99726-.564882 .718306-1.115816C.697385-1.157659 .676463-1.199502 .627646-1.199502C.571856-1.199502 .557908-1.164633 .516065-1.108842C.418431-.948443 .258032-.704359 .258032-.655542C.258032-.599751 .711333 .153425 1.708593 .153425C2.831382 .153425 3.445081-.411457 3.445081-1.54122C3.445081-2.461768 3.061519-3.145205 1.994521-3.145205C1.820174-3.145205 1.652802-3.11731 1.48543-3.054545V-4.142466Z"></path>
+<path id="tz_fig_decisao_switch_g1-63" d="M2.064259-1.743462C2.064259-2.475716 2.559402-2.866252 2.803487-3.054545C3.005729-3.200996 3.187049-3.438107 3.187049-3.863512C3.187049-4.916563 2.099128-4.916563 1.743462-4.916563C1.583064-4.916563 1.12279-4.916563 .63462-4.651557C.54396-4.60274 .425405-4.539975 .425405-4.47721C.425405-4.470237 .425405-4.449315 .460274-4.365629L.585803-4.02391C.613699-3.940224 .627646-3.905355 .690411-3.905355C.732254-3.905355 .746202-3.919303 .781071-3.96812C1.053051-4.29589 1.380822-4.414446 1.72254-4.414446C2.182814-4.414446 2.238605-4.261021 2.238605-3.898381C2.238605-3.563636 2.175841-3.500872 2.02939-3.347447C1.332005-2.636115 1.332005-1.903861 1.332005-1.66675C1.332005-1.583064 1.332005-1.443587 1.338979-1.422665C1.366874-1.366874 1.408717-1.366874 1.527273-1.366874H1.868991C2.057285-1.366874 2.064259-1.373848 2.064259-1.555168V-1.743462ZM1.241345-.334745C1.241345-.083686 1.318057 0 1.57609 0H1.820174C2.085181 0 2.154919-.09066 2.154919-.334745V-.578829C2.154919-.801993 2.106102-.913574 1.820174-.913574H1.57609C1.311083-.913574 1.241345-.822914 1.241345-.578829V-.334745Z"></path>
+<path id="tz_fig_decisao_switch_g1-65" d="M3.305604-4.539975C3.200996-4.839851 2.998755-4.839851 2.859278-4.839851H2.245579C2.106102-4.839851 1.903861-4.839851 1.799253-4.539975L.327771-.327771C.292902-.237111 .292902-.223163 .292902-.188294C.292902 0 .467248 0 .564882 0H.81594C.941469 0 1.157659 0 1.255293-.278954L1.527273-1.053051H3.459029L3.696139-.383562C3.779826-.139477 3.828643 0 4.163387 0H4.539975C4.637609 0 4.811955 0 4.811955-.188294C4.811955-.223163 4.811955-.237111 4.777086-.327771L3.305604-4.539975ZM2.238605-3.131258C2.343213-3.438107 2.433873-3.703113 2.489664-3.954172H2.496638C2.531507-3.7868 2.531507-3.772852 2.587298-3.612453L3.249813-1.652802H1.736488L2.238605-3.131258Z"></path>
+<path id="tz_fig_decisao_switch_g1-66" d="M.969365-4.839851C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H2.880199C3.396264 0 4.679452-.09066 4.679452-1.352927C4.679452-2.336239 3.710087-2.489664 3.452055-2.531507C4.093649-2.677958 4.463263-3.040598 4.463263-3.584558C4.463263-4.839851 2.977833-4.839851 2.684932-4.839851H.969365ZM1.617933-2.768618V-4.2401H2.433873C2.705853-4.2401 3.514819-4.219178 3.514819-3.563636C3.514819-2.768618 2.601245-2.768618 2.426899-2.768618H1.617933ZM1.617933-.599751V-2.266501H2.496638C2.740722-2.266501 3.710087-2.266501 3.710087-1.366874C3.710087-.648568 2.963885-.599751 2.629141-.599751H1.617933Z"></path>
+<path id="tz_fig_decisao_switch_g1-67" d="M4.463263-.99726C4.463263-1.053051 4.414446-1.080946 4.38655-1.080946C4.219178-1.080946 4.016936-.627646 3.033624-.627646C1.806227-.627646 1.457534-1.380822 1.457534-2.426899C1.457534-3.466002 1.834122-4.219178 2.977833-4.219178C3.598506-4.219178 3.926276-3.975093 4.11457-3.821669C4.156413-3.7868 4.177335-3.758904 4.226152-3.758904C4.254047-3.758904 4.288917-3.793773 4.29589-3.821669L4.435367-4.595766C4.442341-4.623661 4.435367-4.651557 4.379577-4.672478C3.96812-4.825903 3.542715-4.923537 2.998755-4.923537C1.297136-4.923537 .425405-4.093649 .425405-2.433873C.425405-.72528 1.311083 .069738 3.005729 .069738C3.598506 .069738 3.96812-.013948 4.47721-.327771C4.533001-.36264 4.519054-.411457 4.519054-.411457L4.463263-.99726Z"></path>
+<path id="tz_fig_decisao_switch_g1-68" d="M.969365-4.839851C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H2.810461C4.51208 0 5.104857-1.018182 5.104857-2.385056C5.104857-2.93599 5.014197-3.612453 4.623661-4.107597C4.100623-4.756164 3.263761-4.839851 2.810461-4.839851H.969365ZM1.638854-.599751V-4.2401H2.531507C4.037858-4.2401 4.100623-3.166127 4.100623-2.385056C4.100623-1.597011 4.02391-.599751 2.538481-.599751H1.638854Z"></path>
+<path id="tz_fig_decisao_switch_g1-69" d="M1.659776-2.168867H3.493898C3.710087-2.168867 3.828643-2.217684 3.828643-2.496638C3.828643-2.75467 3.737983-2.824408 3.493898-2.824408H1.659776V-4.11457H2.001494C2.545455-4.11457 3.096389-4.093649 3.640349-4.093649C3.884433-4.093649 4.044832-4.093649 4.044832-4.428394V-4.484184C4.044832-4.707347 3.996015-4.818929 3.710087-4.818929H.969365C.718306-4.818929 .63462-4.742217 .63462-4.484184V-.334745C.63462-.083686 .711333 0 .969365 0H3.814695C4.079701 0 4.14944-.09066 4.14944-.334745V-.432379C4.14944-.767123 3.989041-.767123 3.758904-.767123C3.396264-.767123 3.040598-.753176 2.677958-.753176C2.503611-.753176 1.785305-.746202 1.659776-.739228V-2.168867Z"></path>
+<path id="tz_fig_decisao_switch_g1-79" d="M5.104857-2.385056C5.104857-3.7868 4.595766-4.993275 2.768618-4.993275C.836862-4.993275 .425405-3.66127 .425405-2.385056C.425405-1.080946 .878705 .153425 2.761644 .153425C4.560897 .153425 5.104857-.955417 5.104857-2.385056ZM2.768618-.404483C1.45056-.404483 1.45056-1.862017 1.45056-2.496638C1.45056-3.110336 1.45056-4.449315 2.761644-4.449315C4.079701-4.449315 4.079701-3.124284 4.079701-2.496638C4.079701-1.875965 4.079701-.404483 2.768618-.404483Z"></path>
+<path id="tz_fig_decisao_switch_g1-80" d="M1.659776-1.868991H2.719801C3.814695-1.868991 4.470237-2.329265 4.470237-3.333499C4.470237-4.38655 3.7868-4.839851 2.712827-4.839851H.969365C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H1.325031C1.590037 0 1.659776-.09066 1.659776-.334745V-1.868991ZM2.496638-4.2401C3.410212-4.2401 3.500872-3.821669 3.500872-3.333499C3.500872-2.866252 3.424159-2.419925 2.489664-2.419925H1.638854V-4.2401H2.496638Z"></path>
+<path id="tz_fig_decisao_switch_g1-81" d="M4.47721 .739228C4.56787 .739228 4.728269 .739228 4.728269 .585803C4.728269 .530012 4.714321 .516065 4.623661 .390535L4.170361-.195268C5.05604-.732254 5.104857-1.882939 5.104857-2.385056C5.104857-3.7868 4.595766-4.993275 2.768618-4.993275C.836862-4.993275 .425405-3.66127 .425405-2.385056C.425405-1.080946 .878705 .153425 2.761644 .153425C2.880199 .153425 3.040598 .153425 3.263761 .118555C3.347447 .244085 3.431133 .369614 3.521793 .495143C3.668244 .718306 3.689166 .739228 3.919303 .739228H4.47721ZM2.66401-1.352927C2.566376-1.352927 2.412951-1.352927 2.412951-1.192528C2.412951-1.115816 2.636115-.801993 2.761644-.627646C2.782565-.592777 2.901121-.425405 2.901121-.404483C2.901121-.390535 2.789539-.390535 2.761644-.390535C1.429639-.390535 1.429639-1.771357 1.429639-2.39203C1.429639-3.005729 1.429639-4.449315 2.761644-4.449315C4.100623-4.449315 4.100623-3.012702 4.100623-2.39203C4.100623-1.952677 4.100623-1.227397 3.710087-.781071L3.326526-1.276214C3.256787-1.352927 3.228892-1.352927 3.089415-1.352927H2.66401Z"></path>
+<path id="tz_fig_decisao_switch_g1-82" d="M3.368369-2.231631C3.807721-2.336239 4.470237-2.601245 4.470237-3.466002C4.470237-4.839851 2.956912-4.839851 2.643088-4.839851H.969365C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H1.30411C1.569116 0 1.638854-.09066 1.638854-.334745V-2.168867H2.412951L3.556663-.167372C3.654296 0 3.731009 0 3.884433 0H4.29589C4.435367 0 4.553923 0 4.553923-.209215L3.368369-2.231631ZM1.638854-2.670984V-4.2401H2.545455C3.354421-4.2401 3.500872-3.919303 3.500872-3.459029C3.500872-3.047572 3.403238-2.670984 2.545455-2.670984H1.638854Z"></path>
+<path id="tz_fig_decisao_switch_g1-83" d="M1.882939-3.075467C1.729514-3.110336 1.297136-3.270735 1.297136-3.668244C1.297136-4.261021 1.889913-4.274969 2.127024-4.274969C2.517559-4.274969 2.866252-4.184309 3.20797-3.849564C3.319552-3.744956 3.326526-3.737983 3.354421-3.737983C3.396264-3.737983 3.431133-3.758904 3.452055-3.863512L3.556663-4.470237C3.57061-4.526027 3.57061-4.539975 3.57061-4.560897C3.57061-4.616687 3.563636-4.623661 3.38929-4.714321C2.894147-4.958406 2.48269-4.993275 2.127024-4.993275C1.506351-4.993275 .425405-4.846824 .425405-3.542715C.425405-3.047572 .683437-2.726775 .81594-2.587298C1.171606-2.224658 1.499377-2.154919 2.043337-2.02939C2.433873-1.93873 2.587298-1.903861 2.740722-1.764384C2.810461-1.694645 2.956912-1.548194 2.956912-1.283188C2.956912-.627646 2.357161-.606725 2.127024-.606725C1.54122-.606725 1.03213-.843836 .683437-1.157659C.599751-1.241345 .585803-1.241345 .557908-1.241345C.516065-1.241345 .481196-1.220423 .460274-1.115816L.355666-.509091C.341719-.4533 .341719-.439352 .341719-.418431C.341719-.27198 1.066999-.020922 1.101868-.006974C1.569116 .139477 1.945704 .153425 2.127024 .153425C3.173101 .153425 3.828643-.313823 3.828643-1.39477C3.828643-2.175841 3.249813-2.761644 2.552428-2.922042L1.882939-3.075467Z"></path>
+<path id="tz_fig_decisao_switch_g1-88" d="M3.019676-2.566376L4.456289-4.539975C4.519054-4.623661 4.526027-4.630635 4.526027-4.679452C4.526027-4.839851 4.372603-4.839851 4.274969-4.839851H3.75193C3.633375-4.839851 3.514819-4.839851 3.410212-4.6934L2.496638-3.38929L1.555168-4.679452C1.436613-4.839851 1.345953-4.839851 1.199502-4.839851H.620672C.523039-4.839851 .376588-4.839851 .376588-4.686426C.376588-4.644583 .376588-4.630635 .446326-4.546949L1.973599-2.566376L.327771-.299875C.265006-.216189 .258032-.209215 .258032-.160399C.258032 0 .411457 0 .509091 0H1.03213C1.262267 0 1.290162-.041843 1.373848-.167372L2.496638-1.827148L3.66127-.153425C3.765878 0 3.87746 0 4.009963 0H4.588792C4.679452 0 4.839851 0 4.839851-.153425C4.839851-.202242 4.804981-.258032 4.777086-.292902L3.019676-2.566376Z"></path>
+<path id="tz_fig_decisao_switch_g1-97" d="M3.235866-2.203736C3.235866-3.305604 2.175841-3.312578 1.827148-3.312578C1.499377-3.312578 1.150685-3.284682 .683437-3.089415C.536986-3.02665 .502117-3.005729 .502117-2.929016C.502117-2.880199 .54396-2.475716 .550934-2.419925C.557908-2.378082 .592777-2.343213 .641594-2.343213C.676463-2.343213 .697385-2.364134 .718306-2.385056C1.018182-2.698879 1.366874-2.852304 1.799253-2.852304C2.175841-2.852304 2.287422-2.622167 2.287422-2.21071V-1.966625C2.043337-1.966625 .216189-1.952677 .216189-.927522C.216189-.439352 .606725 .076712 1.220423 .076712C1.457534 .076712 1.980573 .006974 2.308344-.474222V-.334745C2.308344-.111582 2.357161 0 2.643088 0H2.901121C3.166127 0 3.235866-.09066 3.235866-.334745V-2.203736ZM2.287422-1.073973C2.287422-.425405 1.624907-.425405 1.603985-.425405C1.311083-.425405 1.12279-.676463 1.12279-.941469C1.12279-1.624907 2.092154-1.673724 2.287422-1.680697V-1.073973Z"></path>
+<path id="tz_fig_decisao_switch_g1-101" d="M3.005729-1.492403C3.166127-1.492403 3.340473-1.499377 3.340473-1.8132C3.340473-2.712827 2.922042-3.312578 1.882939-3.312578C.767123-3.312578 .216189-2.684932 .216189-1.624907C.216189-.481196 .878705 .076712 1.973599 .076712C2.238605 .076712 2.636115 .041843 3.096389-.188294C3.249813-.265006 3.29863-.285928 3.29863-.369614C3.29863-.418431 3.277709-.620672 3.270735-.676463C3.242839-.892653 3.235866-.899626 3.173101-.899626C3.145205-.899626 3.131258-.899626 3.054545-.829888C2.643088-.474222 2.224658-.425405 2.001494-.425405C1.21345-.425405 1.129763-1.046077 1.108842-1.492403H3.005729ZM1.115816-1.862017C1.136737-2.287422 1.276214-2.810461 1.882939-2.810461C2.440847-2.810461 2.545455-2.405978 2.566376-1.862017H1.115816Z"></path>
+<path id="tz_fig_decisao_switch_g1-104" d="M3.486924-2.266501C3.486924-2.984807 3.180075-3.270735 2.468742-3.270735C1.771357-3.270735 1.45056-2.789539 1.352927-2.594271H1.345953V-4.505106C1.345953-4.728269 1.297136-4.839851 1.011208-4.839851H.753176C.502117-4.839851 .418431-4.763138 .418431-4.505106V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.48269 1.771357-2.768618 2.133998-2.768618C2.468742-2.768618 2.538481-2.608219 2.538481-2.252553V-.334745C2.538481-.111582 2.587298 0 2.873225 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.266501Z"></path>
+<path id="tz_fig_decisao_switch_g1-105" d="M.711333-4.846824C.488169-4.846824 .376588-4.804981 .376588-4.526027V-4.20523C.376588-3.982067 .446326-3.891407 .704359-3.891407H1.066999C1.401743-3.891407 1.401743-4.037858 1.401743-4.365629C1.401743-4.700374 1.401743-4.846824 1.066999-4.846824H.711333ZM1.352927-2.859278C1.352927-3.082441 1.30411-3.194022 1.018182-3.194022H.760149C.509091-3.194022 .425405-3.11731 .425405-2.859278V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-2.859278Z"></path>
+<path id="tz_fig_decisao_switch_g1-108" d="M1.352927-4.505106C1.352927-4.728269 1.30411-4.839851 1.018182-4.839851H.760149C.509091-4.839851 .425405-4.763138 .425405-4.505106V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-4.505106Z"></path>
+<path id="tz_fig_decisao_switch_g1-109" d="M5.620922-2.266501C5.620922-2.984807 5.314072-3.270735 4.60274-3.270735C4.107597-3.270735 3.724035-3.040598 3.472976-2.580324C3.361395-3.249813 2.768618-3.270735 2.475716-3.270735C2.343213-3.270735 2.050311-3.270735 1.736488-3.040598C1.520299-2.880199 1.380822-2.657036 1.332005-2.552428H1.325031V-2.901121C1.325031-3.124284 1.276214-3.235866 .990286-3.235866H.753176C.502117-3.235866 .418431-3.159153 .418431-2.901121V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.503611 1.792279-2.768618 2.133998-2.768618C2.468742-2.768618 2.545455-2.622167 2.545455-2.252553V-.334745C2.545455-.083686 2.622167 0 2.880199 0H3.159153C3.424159 0 3.493898-.09066 3.493898-.334745V-1.875965C3.493898-2.503611 3.919303-2.768618 4.261021-2.768618C4.595766-2.768618 4.672478-2.622167 4.672478-2.252553V-.334745C4.672478-.083686 4.749191 0 5.007223 0H5.286177C5.551183 0 5.620922-.09066 5.620922-.334745V-2.266501Z"></path>
+<path id="tz_fig_decisao_switch_g1-110" d="M3.486924-2.266501C3.486924-2.984807 3.180075-3.270735 2.468742-3.270735C1.736488-3.270735 1.422665-2.740722 1.332005-2.552428H1.325031V-2.901121C1.325031-3.124284 1.276214-3.235866 .990286-3.235866H.753176C.502117-3.235866 .418431-3.159153 .418431-2.901121V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.48269 1.771357-2.768618 2.133998-2.768618C2.468742-2.768618 2.538481-2.608219 2.538481-2.252553V-.334745C2.538481-.111582 2.587298 0 2.873225 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.266501Z"></path>
+<path id="tz_fig_decisao_switch_g1-111" d="M3.612453-1.569116C3.612453-2.712827 3.054545-3.312578 1.917808-3.312578C.753176-3.312578 .216189-2.691905 .216189-1.569116C.216189-.432379 .81594 .076712 1.910834 .076712S3.612453-.425405 3.612453-1.569116ZM1.917808-.467248C1.164633-.467248 1.164633-1.094894 1.164633-1.652802C1.164633-2.189788 1.164633-2.810461 1.910834-2.810461C2.66401-2.810461 2.66401-2.196762 2.66401-1.652802C2.66401-1.101868 2.66401-.467248 1.917808-.467248Z"></path>
+<path id="tz_fig_decisao_switch_g1-112" d="M1.373848-.27198C1.687671 .076712 2.071233 .076712 2.168867 .076712C3.647323 .076712 3.647323-1.262267 3.647323-1.610959C3.647323-1.952677 3.647323-3.270735 2.385056-3.270735C1.973599-3.270735 1.603985-3.103362 1.352927-2.866252C1.352927-3.124284 1.255293-3.194022 1.018182-3.194022H.760149C.509091-3.194022 .425405-3.11731 .425405-2.859278V1.018182C.425405 1.26924 .502117 1.352927 .760149 1.352927H1.039103C1.30411 1.352927 1.373848 1.262267 1.373848 1.018182V-.27198ZM1.373848-2.496638C1.45056-2.566376 1.680697-2.726775 1.980573-2.726775C2.691905-2.726775 2.698879-1.903861 2.698879-1.597011C2.698879-1.318057 2.698879-.425405 1.910834-.425405C1.750436-.425405 1.624907-.481196 1.54122-.54396C1.373848-.662516 1.373848-.697385 1.373848-.822914V-2.496638Z"></path>
+<path id="tz_fig_decisao_switch_g1-113" d="M3.47995-2.93599C3.47995-3.159153 3.431133-3.270735 3.145205-3.270735H2.887173C2.622167-3.270735 2.552428-3.180075 2.552428-2.93599V-2.803487C2.245579-3.270735 1.834122-3.270735 1.715567-3.270735C.369614-3.270735 .258032-2.147945 .258032-1.590037C.258032-1.046077 .369614 .076712 1.66675 .076712C2.036364 .076712 2.294396-.062765 2.531507-.334745V1.018182C2.531507 1.241345 2.580324 1.352927 2.866252 1.352927H3.145205C3.410212 1.352927 3.47995 1.262267 3.47995 1.018182V-2.93599ZM2.552428-.801993C2.426899-.627646 2.238605-.425405 1.917808-.425405C1.206476-.425405 1.206476-1.311083 1.206476-1.583064C1.206476-1.862017 1.206476-2.726775 1.987547-2.726775C2.099128-2.726775 2.245579-2.698879 2.371108-2.566376C2.552428-2.39203 2.552428-2.266501 2.552428-2.182814V-.801993Z"></path>
+<path id="tz_fig_decisao_switch_g1-114" d="M1.352927-1.603985C1.352927-2.266501 1.903861-2.538481 2.343213-2.566376C2.468742-2.57335 2.48269-2.57335 2.48269-2.75467V-3.082441C2.48269-3.221918 2.48269-3.270735 2.357161-3.270735C2.161893-3.270735 1.652802-3.200996 1.325031-2.447821H1.318057V-2.901121C1.318057-3.124284 1.26924-3.235866 .983313-3.235866H.760149C.509091-3.235866 .425405-3.159153 .425405-2.901121V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-1.603985Z"></path>
+<path id="tz_fig_decisao_switch_g1-115" d="M2.761644-.983313C2.761644-1.373848 2.552428-1.617933 2.426899-1.729514C2.147945-1.980573 1.903861-2.022416 1.610959-2.078207C1.227397-2.147945 .948443-2.203736 .948443-2.475716C.948443-2.761644 1.17858-2.817435 1.45056-2.817435C1.917808-2.817435 2.168867-2.643088 2.350187-2.489664C2.419925-2.419925 2.433873-2.419925 2.461768-2.419925C2.531507-2.419925 2.545455-2.48269 2.552428-2.510585C2.566376-2.566376 2.636115-2.956912 2.636115-2.991781C2.636115-3.103362 2.266501-3.200996 2.189788-3.228892C1.910834-3.305604 1.687671-3.312578 1.506351-3.312578C1.192528-3.312578 .258032-3.312578 .258032-2.315318C.258032-1.973599 .411457-1.764384 .599751-1.597011C.843836-1.373848 1.115816-1.325031 1.513325-1.248319C1.715567-1.21345 2.071233-1.150685 2.071233-.843836C2.071233-.516065 1.799253-.467248 1.527273-.467248C1.220423-.467248 .829888-.557908 .502117-.948443C.467248-.983313 .446326-1.004234 .404483-1.004234C.334745-1.004234 .320797-.941469 .313823-.899626C.299875-.801993 .216189-.404483 .216189-.334745C.216189-.209215 .732254-.048817 .739228-.041843C1.12279 .076712 1.408717 .076712 1.527273 .076712C1.882939 .076712 2.761644 .048817 2.761644-.983313Z"></path>
+<path id="tz_fig_decisao_switch_g1-116" d="M1.520299-2.691905H2.140971C2.224658-2.691905 2.475716-2.691905 2.475716-2.942964S2.224658-3.194022 2.140971-3.194022H1.520299V-3.772852C1.520299-3.996015 1.471482-4.107597 1.185554-4.107597H.969365C.718306-4.107597 .63462-4.030884 .63462-3.772852V-3.194022H.474222C.397509-3.194022 .139477-3.194022 .139477-2.942964S.390535-2.691905 .474222-2.691905H.613699V-.927522C.613699-.223163 .864757 .076712 1.345953 .076712C1.408717 .076712 1.715567 .076712 2.078207-.034869C2.196762-.069738 2.601245-.195268 2.601245-.327771C2.601245-.348692 2.587298-.397509 2.545455-.54396C2.510585-.683437 2.496638-.72528 2.433873-.72528C2.399004-.72528 2.39203-.718306 2.350187-.676463C2.273474-.620672 2.085181-.467248 1.792279-.467248C1.624907-.467248 1.520299-.585803 1.520299-1.046077V-2.691905Z"></path>
+<path id="tz_fig_decisao_switch_g1-117" d="M3.486924-2.859278C3.486924-3.082441 3.438107-3.194022 3.152179-3.194022H2.873225C2.608219-3.194022 2.538481-3.103362 2.538481-2.859278V-1.206476C2.538481-.746202 2.294396-.348692 1.799253-.348692C1.408717-.348692 1.366874-.446326 1.366874-.81594V-2.859278C1.366874-3.082441 1.318057-3.194022 1.03213-3.194022H.753176C.502117-3.194022 .418431-3.11731 .418431-2.859278V-.878705C.418431-.132503 .822914 .076712 1.548194 .076712C1.736488 .076712 2.231631 .076712 2.559402-.516065V-.334745C2.559402-.111582 2.608219 0 2.894147 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.859278Z"></path>
+<path id="tz_fig_decisao_switch_g1-120" d="M2.099128-1.652802L3.110336-2.894147C3.180075-2.977833 3.180075-3.005729 3.180075-3.040598C3.180075-3.194022 3.040598-3.194022 2.93599-3.194022H2.636115C2.510585-3.194022 2.426899-3.194022 2.329265-3.089415C2.294396-3.054545 1.841096-2.447821 1.72254-2.287422L1.12279-3.040598C1.004234-3.187049 .927522-3.194022 .767123-3.194022H.460274C.369614-3.194022 .216189-3.194022 .216189-3.040598C.216189-2.991781 .237111-2.963885 .285928-2.908095L1.338979-1.652802L.237111-.292902C.195268-.244085 .167372-.209215 .167372-.153425C.167372 0 .320797 0 .418431 0H.718306C.948443 0 .962391-.020922 1.115816-.251059L1.715567-1.143711L2.426899-.139477C2.524533 0 2.608219 0 2.75467 0H3.061519C3.159153 0 3.305604 0 3.305604-.153425C3.305604-.209215 3.277709-.237111 3.228892-.299875L2.099128-1.652802Z"></path>
+<path id="tz_fig_decisao_switch_g2-12" d="M3.38929-4.846824H2.761644V-4.219178H3.38929V-4.846824ZM3.368369-3.096389H2.782565V0H3.368369V-3.096389ZM1.325031-2.657036H2.182814V-3.096389H1.30411V-3.912329C1.30411-4.358655 1.569116-4.449315 1.736488-4.449315C1.855044-4.449315 2.02939-4.42142 2.182814-4.316812V-4.839851C2.161893-4.846824 1.966625-4.909589 1.736488-4.909589C1.199502-4.909589 .739228-4.428394 .739228-3.710087V-3.096389H.202242V-2.657036H.739228V0H1.325031V-2.657036Z"></path>
+<path id="tz_fig_decisao_switch_g2-15" d="M1.325031-2.657036H2.182814V-3.096389H1.30411V-3.905355C1.30411-4.379577 1.659776-4.449315 1.84807-4.449315C2.022416-4.449315 2.196762-4.407472 2.364134-4.33076V-4.839851C2.287422-4.860772 2.085181-4.909589 1.855044-4.909589C1.21345-4.909589 .739228-4.393524 .739228-3.710087V-3.096389H.202242V-2.657036H.739228V0H1.325031V-2.657036ZM5.432628-4.839851H4.846824V0H5.432628V-4.839851ZM3.382316-2.657036H4.2401V-3.096389H3.361395V-3.912329C3.361395-4.33076 3.591532-4.449315 3.800747-4.449315C4.016936-4.449315 4.191283-4.358655 4.2401-4.33076V-4.839851C4.219178-4.846824 4.02391-4.909589 3.793773-4.909589C3.256787-4.909589 2.796513-4.428394 2.796513-3.710087V0H3.382316V-2.657036Z"></path>
+<path id="tz_fig_decisao_switch_g2-40" d="M2.127024-5.230386C2.008468-5.230386 1.994521-5.230386 1.910834-5.153674C1.03213-4.38655 .585803-3.145205 .585803-1.743462C.585803-.425405 .983313 .843836 1.903861 1.652802C1.994521 1.743462 2.008468 1.743462 2.127024 1.743462H2.461768C2.440847 1.729514 1.764384 1.150685 1.443587 .062765C1.276214-.481196 1.192528-1.053051 1.192528-1.743462C1.192528-4.156413 2.322291-5.111831 2.461768-5.230386H2.127024Z"></path>
+<path id="tz_fig_decisao_switch_g2-41" d="M.746202 1.743462C.864757 1.743462 .878705 1.743462 .962391 1.66675C1.841096 .899626 2.287422-.341719 2.287422-1.743462C2.287422-3.061519 1.889913-4.33076 .969365-5.139726C.878705-5.230386 .864757-5.230386 .746202-5.230386H.411457C.432379-5.216438 1.108842-4.637609 1.429639-3.549689C1.597011-3.005729 1.680697-2.433873 1.680697-1.743462C1.680697 .669489 .550934 1.624907 .411457 1.743462H.746202Z"></path>
+<path id="tz_fig_decisao_switch_g2-45" d="M2.050311-1.332005V-1.771357H.083686V-1.332005H2.050311Z"></path>
+<path id="tz_fig_decisao_switch_g2-58" d="M1.338979-3.096389H.711333V-2.468742H1.338979V-3.096389ZM.711333-.627646V0H1.338979V-.627646H.711333Z"></path>
+<path id="tz_fig_decisao_switch_g2-59" d="M1.338979-3.096389H.711333V-2.468742H1.338979V-3.096389ZM.704359 .892653H1.018182L1.338979-.006974V-.627646H.711333V0H.9066L.704359 .892653Z"></path>
+<path id="tz_fig_decisao_switch_g2-64" d="M4.142466-.613699C4.037858-.613699 4.02391-.613699 3.96812-.585803C3.626401-.467248 3.270735-.390535 2.901121-.390535C1.778331-.390535 .976339-1.338979 .976339-2.419925C.976339-3.591532 1.882939-4.449315 2.859278-4.449315C3.054545-4.449315 3.514819-4.400498 3.744956-3.84259C3.549689-3.954172 3.333499-4.002989 3.152179-4.002989C2.405978-4.002989 1.778331-3.305604 1.778331-2.419925C1.778331-1.513325 2.426899-.836862 3.145205-.836862C3.689166-.836862 4.519054-1.276214 4.519054-2.517559C4.519054-3.221918 4.470237-4.909589 2.866252-4.909589C1.54122-4.909589 .411457-3.814695 .411457-2.419925C.411457-1.039103 1.527273 .069738 2.873225 .069738C3.514819 .069738 4.11457-.195268 4.519054-.613699H4.142466ZM3.152179-1.297136C2.719801-1.297136 2.343213-1.778331 2.343213-2.419925C2.343213-3.082441 2.733748-3.542715 3.145205-3.542715C3.577584-3.542715 3.954172-3.061519 3.954172-2.419925C3.954172-1.75741 3.563636-1.297136 3.152179-1.297136Z"></path>
+<path id="tz_fig_decisao_switch_g2-65" d="M2.803487-4.839851H2.127024L.209215 0H.781071L1.325031-1.380822H3.445081L3.989041 0H4.721295L2.803487-4.839851ZM2.39203-4.309838L3.270735-1.792279H1.499377L2.39203-4.309838Z"></path>
+<path id="tz_fig_decisao_switch_g2-66" d="M.697385-4.839851V0H2.684932C3.717061 0 4.519054-.613699 4.519054-1.311083C4.519054-1.924782 3.870486-2.419925 3.096389-2.531507C3.821669-2.705853 4.309838-3.124284 4.309838-3.626401C4.309838-4.267995 3.507846-4.839851 2.48269-4.839851H.697385ZM1.352927-2.747696V-4.428394H2.273474C3.054545-4.428394 3.703113-4.065753 3.703113-3.619427C3.703113-3.152179 3.068493-2.747696 2.280448-2.747696H1.352927ZM1.352927-.411457V-2.287422H2.350187C3.228892-2.287422 3.884433-1.841096 3.884433-1.318057C3.884433-.801993 3.235866-.411457 2.468742-.411457H1.352927Z"></path>
+<path id="tz_fig_decisao_switch_g2-67" d="M4.316812-.850809C3.828643-.550934 3.605479-.418431 2.908095-.418431C1.827148-.418431 1.171606-1.429639 1.171606-2.433873C1.171606-3.466002 1.889913-4.435367 2.908095-4.435367C3.368369-4.435367 3.84259-4.288917 4.163387-4.044832L4.274969-4.679452C3.7868-4.860772 3.396264-4.916563 2.887173-4.916563C1.506351-4.916563 .474222-3.772852 .474222-2.426899C.474222-.990286 1.569116 .069738 2.929016 .069738C3.612453 .069738 3.898381-.069738 4.358655-.320797L4.316812-.850809Z"></path>
+<path id="tz_fig_decisao_switch_g2-76" d="M1.380822-4.839851H.676463V0H3.717061V-.495143C3.054545-.495143 2.39203-.481196 1.729514-.481196H1.380822V-4.839851Z"></path>
+<path id="tz_fig_decisao_switch_g2-77" d="M3.884433-2.419925C3.800747-2.21071 3.29863-.983313 3.228892-.690411H3.221918C3.173101-.892653 2.852304-1.694645 2.782565-1.875965L1.583064-4.839851H.732254V0H1.318057V-4.281943H1.325031C1.380822-4.037858 1.743462-3.11731 1.778331-3.040598L2.942964-.146451H3.493898L4.533001-2.712827C4.533001-2.719801 5.014197-3.905355 5.132752-4.288917H5.139726V0H5.725529V-4.839851H4.867746L3.884433-2.419925Z"></path>
+<path id="tz_fig_decisao_switch_g2-78" d="M1.645828-4.839851H.697385V0H1.283188V-4.288917H1.290162L3.577584 0H4.526027V-4.839851H3.940224V-.550934H3.93325L1.645828-4.839851Z"></path>
+<path id="tz_fig_decisao_switch_g2-79" d="M5.05604-2.399004C5.05604-3.84259 3.996015-4.986301 2.733748-4.986301S.411457-3.84259 .411457-2.399004S1.48543 .146451 2.733748 .146451C3.989041 .146451 5.05604-.962391 5.05604-2.399004ZM2.733748-.348692C1.889913-.348692 1.115816-1.192528 1.115816-2.510585C1.115816-3.744956 1.896887-4.505106 2.733748-4.505106S4.351681-3.744956 4.351681-2.510585C4.351681-1.185554 3.577584-.348692 2.733748-.348692Z"></path>
+<path id="tz_fig_decisao_switch_g2-80" d="M2.615193-1.987547C3.514819-1.987547 4.316812-2.622167 4.316812-3.424159C4.316812-4.170361 3.577584-4.839851 2.566376-4.839851H.683437V0H1.387796V-1.987547H2.615193ZM2.39203-4.428394C3.180075-4.428394 3.682192-4.009963 3.682192-3.424159C3.682192-2.852304 3.20797-2.419925 2.39203-2.419925H1.366874V-4.428394H2.39203Z"></path>
+<path id="tz_fig_decisao_switch_g2-82" d="M3.131258-2.259527C4.128518-2.552428 4.379577-3.159153 4.379577-3.535741C4.379577-4.261021 3.528767-4.839851 2.517559-4.839851H.683437V0H1.366874V-2.189788H2.517559L3.87746 0H4.581818L3.131258-2.259527ZM1.366874-2.650062V-4.428394H2.426899C3.228892-4.428394 3.744956-4.051806 3.744956-3.535741C3.744956-3.047572 3.263761-2.650062 2.426899-2.650062H1.366874Z"></path>
+<path id="tz_fig_decisao_switch_g2-83" d="M3.445081-4.644583C2.998755-4.87472 2.601245-4.986301 2.085181-4.986301C1.03213-4.986301 .411457-4.274969 .411457-3.605479C.411457-3.319552 .502117-2.984807 .843836-2.66401C1.150685-2.378082 1.471482-2.308344 1.903861-2.203736C2.489664-2.064259 2.650062-2.02939 2.852304-1.820174C2.984807-1.687671 3.096389-1.492403 3.096389-1.255293C3.096389-.822914 2.705853-.376588 2.02939-.376588C1.63188-.376588 .990286-.495143 .439352-.962391L.327771-.334745C.676463-.132503 1.255293 .146451 2.036364 .146451C3.005729 .146451 3.696139-.557908 3.696139-1.338979C3.696139-1.903861 3.368369-2.224658 3.228892-2.371108C2.93599-2.657036 2.615193-2.733748 2.078207-2.859278C1.652802-2.956912 1.429639-3.012702 1.262267-3.173101C1.171606-3.263761 1.011208-3.424159 1.011208-3.689166C1.011208-4.079701 1.401743-4.484184 2.078207-4.484184C2.608219-4.484184 2.977833-4.316812 3.333499-4.016936L3.445081-4.644583Z"></path>
+<path id="tz_fig_decisao_switch_g2-85" d="M4.400498-4.839851H3.793773V-1.624907C3.793773-.690411 3.166127-.265006 2.566376-.265006S1.380822-.697385 1.380822-1.617933V-4.839851H.676463V-1.63188C.676463-.606725 1.555168 .146451 2.559402 .146451C3.556663 .146451 4.400498-.613699 4.400498-1.63188V-4.839851Z"></path>
+<path id="tz_fig_decisao_switch_g2-86" d="M4.825903-4.839851H4.219178L3.340473-2.698879C3.291656-2.580324 2.601245-.899626 2.538481-.550934H2.531507C2.461768-.9066 1.764384-2.594271 1.736488-2.66401L.843836-4.839851H.104608L2.113076 0H2.817435L4.825903-4.839851Z"></path>
+<path id="tz_fig_decisao_switch_g2-97" d="M2.970859-2.008468C2.970859-2.719801 2.426899-3.200996 1.736488-3.200996C1.297136-3.200996 .962391-3.110336 .571856-2.901121L.613699-2.39203C.843836-2.545455 1.185554-2.75467 1.736488-2.75467C2.043337-2.75467 2.364134-2.524533 2.364134-2.001494V-1.72254C1.332005-1.687671 .313823-1.471482 .313823-.822914C.313823-.474222 .550934 .069738 1.164633 .069738C1.464508 .069738 2.015442 .006974 2.385056-.265006V0H2.970859V-2.008468ZM2.364134-.990286C2.364134-.850809 2.364134-.669489 2.12005-.523039C1.896887-.397509 1.624907-.390535 1.548194-.390535C1.164633-.390535 .871731-.564882 .871731-.829888C.871731-1.276214 2.050311-1.318057 2.364134-1.332005V-.990286Z"></path>
+<path id="tz_fig_decisao_switch_g2-98" d="M1.17858-4.839851H.592777V0H1.199502V-.327771C1.352927-.195268 1.687671 .069738 2.196762 .069738C2.956912 .069738 3.57061-.641594 3.57061-1.555168C3.57061-2.399004 3.089415-3.166127 2.39203-3.166127C1.952677-3.166127 1.527273-3.02665 1.17858-2.768618V-4.839851ZM1.199502-2.196762C1.199502-2.308344 1.199502-2.39203 1.443587-2.552428C1.548194-2.615193 1.736488-2.705853 1.973599-2.705853C2.440847-2.705853 2.963885-2.39203 2.963885-1.555168C2.963885-.704359 2.385056-.390535 1.896887-.390535C1.638854-.390535 1.39477-.509091 1.199502-.822914V-2.196762Z"></path>
+<path id="tz_fig_decisao_switch_g2-99" d="M3.033624-.760149C2.684932-.536986 2.308344-.411457 1.875965-.411457C1.234371-.411457 .857783-.927522 .857783-1.555168C.857783-2.092154 1.136737-2.719801 1.896887-2.719801C2.371108-2.719801 2.594271-2.622167 2.949938-2.399004L3.040598-2.901121C2.622167-3.110336 2.440847-3.200996 1.896887-3.200996C.850809-3.200996 .251059-2.357161 .251059-1.548194C.251059-.697385 .920548 .069738 1.868991 .069738C2.357161 .069738 2.775592-.076712 3.075467-.251059L3.033624-.760149Z"></path>
+<path id="tz_fig_decisao_switch_g2-100" d="M3.228892-4.839851H2.643088V-2.796513C2.196762-3.124284 1.743462-3.166127 1.54122-3.166127C.808966-3.166127 .251059-2.433873 .251059-1.548194S.801993 .069738 1.520299 .069738C1.952677 .069738 2.357161-.125529 2.622167-.36264V0H3.228892V-4.839851ZM2.622167-.864757C2.447821-.578829 2.182814-.390535 1.84807-.390535C1.3599-.390535 .857783-.732254 .857783-1.54122C.857783-2.412951 1.45056-2.705853 1.924782-2.705853C2.203736-2.705853 2.440847-2.587298 2.622167-2.350187V-.864757Z"></path>
+<path id="tz_fig_decisao_switch_g2-101" d="M2.998755-.760149C2.608219-.481196 2.168867-.390535 1.868991-.390535C1.262267-.390535 .801993-.885679 .781071-1.527273H3.068493C3.068493-1.84807 3.033624-2.315318 2.761644-2.712827C2.510585-3.068493 2.092154-3.200996 1.750436-3.200996C.899626-3.200996 .244085-2.454795 .244085-1.569116C.244085-.676463 .941469 .069738 1.862017 .069738C2.266501 .069738 2.684932-.048817 3.040598-.265006L2.998755-.760149ZM.829888-1.945704C.990286-2.503611 1.401743-2.740722 1.750436-2.740722C2.057285-2.740722 2.510585-2.594271 2.643088-1.945704H.829888Z"></path>
+<path id="tz_fig_decisao_switch_g2-103" d="M3.507846-3.166127C3.354421-3.166127 2.887173-3.159153 2.357161-2.956912L2.343213-2.949938C2.092154-3.11731 1.84807-3.166127 1.645828-3.166127C.962391-3.166127 .4533-2.629141 .4533-2.02939C.4533-1.785305 .536986-1.534247 .697385-1.338979C.599751-1.220423 .495143-1.025156 .495143-.760149C.495143-.488169 .606725-.313823 .669489-.230137C.285928-.006974 .209215 .313823 .209215 .481196C.209215 1.011208 .941469 1.429639 1.84807 1.429639C2.761644 1.429639 3.486924 1.011208 3.486924 .481196C3.486924-.502117 2.266501-.502117 1.966625-.502117H1.318057C1.206476-.502117 .9066-.502117 .9066-.864757C.9066-1.004234 .955417-1.073973 .962391-1.08792C1.206476-.934496 1.45056-.885679 1.638854-.885679C2.322291-.885679 2.831382-1.422665 2.831382-2.022416C2.831382-2.245579 2.768618-2.447821 2.643088-2.636115C2.615193-2.677958 2.615193-2.684932 2.615193-2.691905C2.615193-2.719801 3.033624-2.719801 3.068493-2.719801C3.075467-2.719801 3.340473-2.719801 3.591532-2.691905L3.507846-3.166127ZM1.645828-1.318057C1.26924-1.318057 .990286-1.555168 .990286-2.022416C.990286-2.566376 1.338979-2.733748 1.638854-2.733748C2.015442-2.733748 2.294396-2.496638 2.294396-2.02939C2.294396-1.48543 1.945704-1.318057 1.645828-1.318057ZM1.973599 .041843C2.133998 .041843 2.956912 .041843 2.956912 .488169C2.956912 .788045 2.433873 .99726 1.84807 .99726S.739228 .788045 .739228 .488169C.739228 .4533 .739228 .041843 1.30411 .041843H1.973599Z"></path>
+<path id="tz_fig_decisao_switch_g2-104" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.624907-3.166127 1.30411-2.817435 1.164633-2.670984V-4.839851H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_decisao_switch_g2-105" d="M1.227397-4.78406H.523039V-4.079701H1.227397V-4.78406ZM1.171606-3.096389H.585803V0H1.171606V-3.096389Z"></path>
+<path id="tz_fig_decisao_switch_g2-108" d="M1.171606-4.839851H.585803V0H1.171606V-4.839851Z"></path>
+<path id="tz_fig_decisao_switch_g2-109" d="M5.300125-2.064259C5.300125-2.608219 5.139726-3.166127 4.281943-3.166127C3.696139-3.166127 3.333499-2.824408 3.166127-2.601245C3.096389-2.789539 2.922042-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-1.694645C3.242839-2.154919 3.438107-2.705853 3.975093-2.705853C4.6934-2.705853 4.6934-2.217684 4.6934-2.015442V0H5.300125V-2.064259Z"></path>
+<path id="tz_fig_decisao_switch_g2-110" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_decisao_switch_g2-111" d="M3.486924-1.527273C3.486924-2.447821 2.75467-3.200996 1.84807-3.200996S.209215-2.440847 .209215-1.527273C.209215-.641594 .948443 .069738 1.84807 .069738C2.75467 .069738 3.486924-.641594 3.486924-1.527273ZM1.84807-.411457C1.297136-.411457 .81594-.81594 .81594-1.603985S1.332005-2.740722 1.84807-2.740722C2.371108-2.740722 2.880199-2.378082 2.880199-1.603985C2.880199-.808966 2.385056-.411457 1.84807-.411457Z"></path>
+<path id="tz_fig_decisao_switch_g2-112" d="M1.199502-.327771C1.569116 .006974 1.966625 .069738 2.203736 .069738C2.942964 .069738 3.57061-.63462 3.57061-1.555168C3.57061-2.39203 3.110336-3.166127 2.419925-3.166127C2.106102-3.166127 1.583064-3.075467 1.17858-2.761644V-3.096389H.592777V1.352927H1.199502V-.327771ZM1.199502-2.315318C1.3599-2.510585 1.63188-2.684932 1.966625-2.684932C2.524533-2.684932 2.963885-2.168867 2.963885-1.555168C2.963885-.864757 2.440847-.390535 1.896887-.390535C1.792279-.390535 1.617933-.404483 1.436613-.550934C1.227397-.711333 1.199502-.81594 1.199502-.948443V-2.315318Z"></path>
+<path id="tz_fig_decisao_switch_g2-114" d="M1.17858-1.48543C1.17858-2.238605 1.806227-2.643088 2.419925-2.650062V-3.166127C1.834122-3.159153 1.408717-2.873225 1.129763-2.503611V-3.145205H.592777V0H1.17858V-1.48543Z"></path>
+<path id="tz_fig_decisao_switch_g2-115" d="M2.545455-2.984807C2.071233-3.180075 1.72254-3.200996 1.471482-3.200996C1.297136-3.200996 .244085-3.200996 .244085-2.273474C.244085-1.945704 .425405-1.764384 .516065-1.680697C.760149-1.436613 1.053051-1.380822 1.422665-1.311083C1.750436-1.248319 2.127024-1.17858 2.127024-.843836C2.127024-.404483 1.548194-.404483 1.45056-.404483C1.004234-.404483 .585803-.564882 .306849-.760149L.209215-.237111C.446326-.118555 .871731 .069738 1.45056 .069738C1.764384 .069738 2.071233 .020922 2.329265-.167372C2.587298-.36264 2.670984-.669489 2.670984-.9066C2.670984-1.03213 2.657036-1.30411 2.364134-1.569116C2.106102-1.799253 1.855044-1.84807 1.520299-1.910834C1.108842-1.987547 .788045-2.050311 .788045-2.357161C.788045-2.75467 1.297136-2.75467 1.401743-2.75467C1.799253-2.75467 2.106102-2.670984 2.454795-2.489664L2.545455-2.984807Z"></path>
+<path id="tz_fig_decisao_switch_g2-116" d="M1.311083-2.657036H2.343213V-3.096389H1.311083V-3.982067H.774097V-3.096389H.139477V-2.657036H.753176V-.892653C.753176-.425405 .871731 .069738 1.373848 .069738S2.259527-.09066 2.468742-.188294L2.350187-.63462C2.12005-.467248 1.875965-.411457 1.680697-.411457C1.387796-.411457 1.311083-.697385 1.311083-1.018182V-2.657036Z"></path>
+<path id="tz_fig_decisao_switch_g2-117" d="M3.242839-3.096389H2.636115V-1.073973C2.636115-.516065 2.161893-.341719 1.75741-.341719C1.241345-.341719 1.185554-.481196 1.185554-.801993V-3.096389H.578829V-.760149C.578829-.139477 .850809 .069738 1.338979 .069738C1.624907 .069738 2.238605 .013948 2.657036-.320797V0H3.242839V-3.096389Z"></path>
+<path id="tz_fig_decisao_switch_g2-118" d="M3.305604-3.096389H2.747696C1.792279-.760149 1.750436-.571856 1.72254-.411457H1.715567C1.659776-.683437 1.464508-1.171606 1.248319-1.708593L.690411-3.096389H.104608L1.380822 0H2.02939L3.305604-3.096389Z"></path>
+<path id="tz_fig_decisao_switch_g2-119" d="M4.951432-3.096389H4.407472C4.344707-2.901121 3.954172-1.72254 3.737983-.99726C3.682192-.795019 3.612453-.571856 3.591532-.411457H3.584558C3.542715-.697385 3.29863-1.45056 3.284682-1.499377L2.768618-3.096389H2.238605C2.036364-2.496638 1.513325-.934496 1.457534-.425405H1.45056C1.39477-.920548 .878705-2.461768 .767123-2.796513C.711333-2.963885 .711333-2.977833 .676463-3.096389H.104608L1.12279 0H1.708593C1.715567-.027895 1.903861-.578829 2.147945-1.352927C2.252553-1.694645 2.461768-2.364134 2.496638-2.670984L2.503611-2.677958C2.517559-2.531507 2.559402-2.378082 2.608219-2.203736S2.705853-1.841096 2.75467-1.680697L3.291656 0H3.93325L4.951432-3.096389Z"></path>
+<path id="tz_fig_decisao_switch_g2-124" d="M7.406227-1.680697V-2.140971H0V-1.680697H7.406227Z"></path>
+<use id="tz_fig_decisao_switch_g3-19" href="#tz_fig_decisao_switch_g1-19" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-63" href="#tz_fig_decisao_switch_g1-63" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-81" href="#tz_fig_decisao_switch_g1-81" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-97" href="#tz_fig_decisao_switch_g1-97" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-101" href="#tz_fig_decisao_switch_g1-101" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-105" href="#tz_fig_decisao_switch_g1-105" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-108" href="#tz_fig_decisao_switch_g1-108" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-109" href="#tz_fig_decisao_switch_g1-109" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-110" href="#tz_fig_decisao_switch_g1-110" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-111" href="#tz_fig_decisao_switch_g1-111" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-112" href="#tz_fig_decisao_switch_g1-112" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-113" href="#tz_fig_decisao_switch_g1-113" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-116" href="#tz_fig_decisao_switch_g1-116" transform="scale(1.285714)"></use>
+<use id="tz_fig_decisao_switch_g3-117" href="#tz_fig_decisao_switch_g1-117" transform="scale(1.285714)"></use>
+</defs>
+<g id="tz_fig_decisao_switch_page1">
+<g stroke-miterlimit="10" transform="translate(162.007553,-53.243984)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#eef5fd">
+<path d="M48.70265 14.22636H-48.70265C-50.35953 14.22636-51.70265 12.88324-51.70265 11.22636V-11.22636C-51.70265-12.88324-50.35953-14.22636-48.70265-14.22636H48.70265C50.35953-14.22636 51.70265-12.88324 51.70265-11.22636V11.22636C51.70265 12.88324 50.35953 14.22636 48.70265 14.22636ZM-51.70265-14.22636"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-48.36967,-2.25)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(162.007553,-53.243984)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="162.295247" y="-53.243984" href="#tz_fig_decisao_switch_g3-81"></use>
+<use x="169.418574" y="-53.243984" href="#tz_fig_decisao_switch_g3-117"></use>
+<use x="174.449736" y="-53.243984" href="#tz_fig_decisao_switch_g3-97"></use>
+<use x="179.157115" y="-53.243984" href="#tz_fig_decisao_switch_g3-108"></use>
+<use x="184.561511" y="-53.243984" href="#tz_fig_decisao_switch_g3-19"></use>
+<use x="184.73586" y="-53.243984" href="#tz_fig_decisao_switch_g3-101"></use>
+<use x="192.606026" y="-53.243984" href="#tz_fig_decisao_switch_g3-111"></use>
+<use x="200.824885" y="-53.243984" href="#tz_fig_decisao_switch_g3-101"></use>
+<use x="205.407726" y="-53.243984" href="#tz_fig_decisao_switch_g3-113"></use>
+<use x="210.438888" y="-53.243984" href="#tz_fig_decisao_switch_g3-117"></use>
+<use x="215.47005" y="-53.243984" href="#tz_fig_decisao_switch_g3-105"></use>
+<use x="217.761471" y="-53.243984" href="#tz_fig_decisao_switch_g3-112"></use>
+<use x="222.792633" y="-53.243984" href="#tz_fig_decisao_switch_g3-97"></use>
+<use x="227.500011" y="-53.243984" href="#tz_fig_decisao_switch_g3-109"></use>
+<use x="235.270914" y="-53.243984" href="#tz_fig_decisao_switch_g3-101"></use>
+<use x="239.853756" y="-53.243984" href="#tz_fig_decisao_switch_g3-110"></use>
+<use x="244.884918" y="-53.243984" href="#tz_fig_decisao_switch_g3-116"></use>
+<use x="248.50885" y="-53.243984" href="#tz_fig_decisao_switch_g3-111"></use>
+<use x="253.440384" y="-53.243984" href="#tz_fig_decisao_switch_g3-63"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<path d="M-124.18924-43.87909H-227.2851C-228.94197-43.87909-230.2851-45.22221-230.2851-46.87909V-86.15613C-230.2851-87.813-228.94197-89.15613-227.2851-89.15613H-124.18924C-122.53236-89.15613-121.18924-87.813-121.18924-86.15613V-46.87909C-121.18924-45.22221-122.53236-43.87909-124.18924-43.87909ZM-230.2851-89.15613"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-226.95212,-52.46207)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(162.007553,-53.243984)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="183.770182" y="-53.243984" href="#tz_fig_decisao_switch_g1-67"></use>
+<use x="188.671275" y="-53.243984" href="#tz_fig_decisao_switch_g1-82"></use>
+<use x="193.572367" y="-53.243984" href="#tz_fig_decisao_switch_g1-83"></use>
+<use x="197.834187" y="-53.243984" href="#tz_fig_decisao_switch_g1-51"></use>
+<use x="201.669825" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="205.156769" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="211.113379" y="-53.243984" href="#tz_fig_decisao_switch_g1-47"></use>
+<use x="217.418683" y="-53.243984" href="#tz_fig_decisao_switch_g1-67"></use>
+<use x="222.319776" y="-53.243984" href="#tz_fig_decisao_switch_g1-82"></use>
+<use x="227.220868" y="-53.243984" href="#tz_fig_decisao_switch_g1-83"></use>
+<use x="231.482688" y="-53.243984" href="#tz_fig_decisao_switch_g1-53"></use>
+<use x="235.318326" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="238.80527" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="179.190903" y="-45.273872" href="#tz_fig_decisao_switch_g2-66"></use>
+<use x="184.130783" y="-45.273872" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="186.661259" y="-45.273872" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="188.428956" y="-45.273872" href="#tz_fig_decisao_switch_g2-100"></use>
+<use x="192.254937" y="-45.273872" href="#tz_fig_decisao_switch_g2-103"></use>
+<use x="195.959847" y="-45.273872" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="201.722767" y="-45.273872" href="#tz_fig_decisao_switch_g2-86"></use>
+<use x="206.662647" y="-45.273872" href="#tz_fig_decisao_switch_g2-76"></use>
+<use x="210.694469" y="-45.273872" href="#tz_fig_decisao_switch_g2-65"></use>
+<use x="215.634349" y="-45.273872" href="#tz_fig_decisao_switch_g2-78"></use>
+<use x="223.334468" y="-45.273872" href="#tz_fig_decisao_switch_g2-12"></use>
+<use x="227.305742" y="-45.273872" href="#tz_fig_decisao_switch_g2-108"></use>
+<use x="229.073439" y="-45.273872" href="#tz_fig_decisao_switch_g2-116"></use>
+<use x="231.749208" y="-45.273872" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="235.042461" y="-45.273872" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="237.572936" y="-45.273872" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="239.340634" y="-45.273872" href="#tz_fig_decisao_switch_g2-110"></use>
+<use x="243.166614" y="-45.273872" href="#tz_fig_decisao_switch_g2-103"></use>
+<use x="177.504205" y="-37.30376" href="#tz_fig_decisao_switch_g2-40"></use>
+<use x="180.385801" y="-37.30376" href="#tz_fig_decisao_switch_g2-64"></use>
+<use x="185.325681" y="-37.30376" href="#tz_fig_decisao_switch_g2-115"></use>
+<use x="188.16611" y="-37.30376" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="191.459363" y="-37.30376" href="#tz_fig_decisao_switch_g2-99"></use>
+<use x="194.752616" y="-37.30376" href="#tz_fig_decisao_switch_g2-45"></use>
+<use x="197.222556" y="-37.30376" href="#tz_fig_decisao_switch_g2-118"></use>
+<use x="200.636881" y="-37.30376" href="#tz_fig_decisao_switch_g2-108"></use>
+<use x="202.404578" y="-37.30376" href="#tz_fig_decisao_switch_g2-97"></use>
+<use x="205.964195" y="-37.30376" href="#tz_fig_decisao_switch_g2-110"></use>
+<use x="209.790176" y="-37.30376" href="#tz_fig_decisao_switch_g2-45"></use>
+<use x="212.260116" y="-37.30376" href="#tz_fig_decisao_switch_g2-12"></use>
+<use x="216.23139" y="-37.30376" href="#tz_fig_decisao_switch_g2-108"></use>
+<use x="217.999087" y="-37.30376" href="#tz_fig_decisao_switch_g2-116"></use>
+<use x="220.674855" y="-37.30376" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="223.968109" y="-37.30376" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="226.498584" y="-37.30376" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="228.266282" y="-37.30376" href="#tz_fig_decisao_switch_g2-110"></use>
+<use x="232.092262" y="-37.30376" href="#tz_fig_decisao_switch_g2-103"></use>
+<use x="235.797172" y="-37.30376" href="#tz_fig_decisao_switch_g2-41"></use>
+<use x="241.148435" y="-37.30376" href="#tz_fig_decisao_switch_g2-124"></use>
+<use x="167.247121" y="-29.333648" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="173.421698" y="-29.333648" href="#tz_fig_decisao_switch_g2-82"></use>
+<use x="178.216285" y="-29.333648" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="181.921195" y="-29.333648" href="#tz_fig_decisao_switch_g2-117"></use>
+<use x="185.747176" y="-29.333648" href="#tz_fig_decisao_switch_g2-116"></use>
+<use x="188.422944" y="-29.333648" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="191.716197" y="-29.333648" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="194.246673" y="-29.333648" href="#tz_fig_decisao_switch_g2-79"></use>
+<use x="199.719293" y="-29.333648" href="#tz_fig_decisao_switch_g2-83"></use>
+<use x="206.305526" y="-29.333648" href="#tz_fig_decisao_switch_g2-112"></use>
+<use x="209.925675" y="-29.333648" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="212.45615" y="-29.333648" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="216.16106" y="-29.333648" href="#tz_fig_decisao_switch_g2-103"></use>
+<use x="219.86597" y="-29.333648" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="222.396446" y="-29.333648" href="#tz_fig_decisao_switch_g2-97"></use>
+<use x="225.956063" y="-29.333648" href="#tz_fig_decisao_switch_g2-109"></use>
+<use x="231.840327" y="-29.333648" href="#tz_fig_decisao_switch_g2-97"></use>
+<use x="237.86961" y="-29.333648" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="244.044187" y="-29.333648" href="#tz_fig_decisao_switch_g2-99"></use>
+<use x="247.33744" y="-29.333648" href="#tz_fig_decisao_switch_g2-104"></use>
+<use x="251.163421" y="-29.333648" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="252.931118" y="-29.333648" href="#tz_fig_decisao_switch_g2-112"></use>
+<use x="256.757099" y="-29.333648" href="#tz_fig_decisao_switch_g2-59"></use>
+<use x="185.077474" y="-21.363536" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="188.782384" y="-21.363536" href="#tz_fig_decisao_switch_g2-15"></use>
+<use x="194.811941" y="-21.363536" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="198.516851" y="-21.363536" href="#tz_fig_decisao_switch_g2-97"></use>
+<use x="202.076468" y="-21.363536" href="#tz_fig_decisao_switch_g2-100"></use>
+<use x="208.372116" y="-21.363536" href="#tz_fig_decisao_switch_g2-112"></use>
+<use x="211.992264" y="-21.363536" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="214.52274" y="-21.363536" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="217.815993" y="-21.363536" href="#tz_fig_decisao_switch_g2-115"></use>
+<use x="220.656421" y="-21.363536" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="223.949675" y="-21.363536" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="226.48015" y="-21.363536" href="#tz_fig_decisao_switch_g2-118"></use>
+<use x="229.894474" y="-21.363536" href="#tz_fig_decisao_switch_g2-97"></use>
+<use x="233.454091" y="-21.363536" href="#tz_fig_decisao_switch_g2-100"></use>
+<use x="237.280072" y="-21.363536" href="#tz_fig_decisao_switch_g2-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<path d="M51.54793-55.2602H-51.54793C-53.2048-55.2602-54.54793-56.60332-54.54793-58.2602V-89.53723C-54.54793-91.1941-53.2048-92.53723-51.54793-92.53723H51.54793C53.2048-92.53723 54.54793-91.1941 54.54793-89.53723V-58.2602C54.54793-56.60332 53.2048-55.2602 51.54793-55.2602ZM-54.54793-92.53723"></path>
+</g>
+</g>
+</g>
+<g transform="translate(-51.21495,-63.84317)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(162.007553,-53.243984)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="183.770182" y="-53.243984" href="#tz_fig_decisao_switch_g1-67"></use>
+<use x="188.671275" y="-53.243984" href="#tz_fig_decisao_switch_g1-82"></use>
+<use x="193.572367" y="-53.243984" href="#tz_fig_decisao_switch_g1-83"></use>
+<use x="197.834187" y="-53.243984" href="#tz_fig_decisao_switch_g1-49"></use>
+<use x="201.669825" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="205.156769" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="211.113379" y="-53.243984" href="#tz_fig_decisao_switch_g1-47"></use>
+<use x="217.418683" y="-53.243984" href="#tz_fig_decisao_switch_g1-67"></use>
+<use x="222.319776" y="-53.243984" href="#tz_fig_decisao_switch_g1-82"></use>
+<use x="227.220868" y="-53.243984" href="#tz_fig_decisao_switch_g1-83"></use>
+<use x="231.482688" y="-53.243984" href="#tz_fig_decisao_switch_g1-50"></use>
+<use x="235.318326" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="238.80527" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="180.76748" y="-45.273872" href="#tz_fig_decisao_switch_g2-77"></use>
+<use x="187.232903" y="-45.273872" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="190.526156" y="-45.273872" href="#tz_fig_decisao_switch_g2-110"></use>
+<use x="194.352137" y="-45.273872" href="#tz_fig_decisao_switch_g2-117"></use>
+<use x="200.647784" y="-45.273872" href="#tz_fig_decisao_switch_g2-100"></use>
+<use x="204.473765" y="-45.273872" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="210.648341" y="-45.273872" href="#tz_fig_decisao_switch_g2-115"></use>
+<use x="213.48877" y="-45.273872" href="#tz_fig_decisao_switch_g2-119"></use>
+<use x="218.54972" y="-45.273872" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="220.317418" y="-45.273872" href="#tz_fig_decisao_switch_g2-116"></use>
+<use x="222.993186" y="-45.273872" href="#tz_fig_decisao_switch_g2-99"></use>
+<use x="226.286439" y="-45.273872" href="#tz_fig_decisao_switch_g2-104"></use>
+<use x="232.582087" y="-45.273872" href="#tz_fig_decisao_switch_g2-99"></use>
+<use x="235.87534" y="-45.273872" href="#tz_fig_decisao_switch_g2-104"></use>
+<use x="239.701321" y="-45.273872" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="241.469018" y="-45.273872" href="#tz_fig_decisao_switch_g2-112"></use>
+<use x="163.221097" y="-37.30376" href="#tz_fig_decisao_switch_g2-40"></use>
+<use x="166.102693" y="-37.30376" href="#tz_fig_decisao_switch_g0-47"></use>
+<use x="169.807603" y="-37.30376" href="#tz_fig_decisao_switch_g0-105"></use>
+<use x="173.512513" y="-37.30376" href="#tz_fig_decisao_switch_g0-110"></use>
+<use x="177.217423" y="-37.30376" href="#tz_fig_decisao_switch_g0-116"></use>
+<use x="180.922333" y="-37.30376" href="#tz_fig_decisao_switch_g0-101"></use>
+<use x="184.627243" y="-37.30376" href="#tz_fig_decisao_switch_g0-114"></use>
+<use x="188.332153" y="-37.30376" href="#tz_fig_decisao_switch_g0-102"></use>
+<use x="192.037063" y="-37.30376" href="#tz_fig_decisao_switch_g0-97"></use>
+<use x="195.741973" y="-37.30376" href="#tz_fig_decisao_switch_g0-99"></use>
+<use x="199.446883" y="-37.30376" href="#tz_fig_decisao_switch_g0-101"></use>
+<use x="205.62146" y="-37.30376" href="#tz_fig_decisao_switch_g0-101"></use>
+<use x="209.326369" y="-37.30376" href="#tz_fig_decisao_switch_g0-116"></use>
+<use x="213.031279" y="-37.30376" href="#tz_fig_decisao_switch_g0-104"></use>
+<use x="216.736189" y="-37.30376" href="#tz_fig_decisao_switch_g0-101"></use>
+<use x="220.441099" y="-37.30376" href="#tz_fig_decisao_switch_g0-114"></use>
+<use x="224.146009" y="-37.30376" href="#tz_fig_decisao_switch_g0-110"></use>
+<use x="227.850919" y="-37.30376" href="#tz_fig_decisao_switch_g0-101"></use>
+<use x="231.555829" y="-37.30376" href="#tz_fig_decisao_switch_g0-116"></use>
+<use x="237.730406" y="-37.30376" href="#tz_fig_decisao_switch_g0-115"></use>
+<use x="241.435316" y="-37.30376" href="#tz_fig_decisao_switch_g0-119"></use>
+<use x="245.140226" y="-37.30376" href="#tz_fig_decisao_switch_g0-105"></use>
+<use x="248.845136" y="-37.30376" href="#tz_fig_decisao_switch_g0-116"></use>
+<use x="252.550046" y="-37.30376" href="#tz_fig_decisao_switch_g0-99"></use>
+<use x="256.254956" y="-37.30376" href="#tz_fig_decisao_switch_g0-104"></use>
+<use x="259.959866" y="-37.30376" href="#tz_fig_decisao_switch_g2-41"></use>
+<use x="178.473075" y="-29.333648" href="#tz_fig_decisao_switch_g2-124"></use>
+<use x="188.352562" y="-29.333648" href="#tz_fig_decisao_switch_g2-98"></use>
+<use x="191.97271" y="-29.333648" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="194.503186" y="-29.333648" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="196.270883" y="-29.333648" href="#tz_fig_decisao_switch_g2-100"></use>
+<use x="200.096864" y="-29.333648" href="#tz_fig_decisao_switch_g2-103"></use>
+<use x="203.801774" y="-29.333648" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="209.564694" y="-29.333648" href="#tz_fig_decisao_switch_g2-115"></use>
+<use x="212.405122" y="-29.333648" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="215.698375" y="-29.333648" href="#tz_fig_decisao_switch_g2-109"></use>
+<use x="224.052306" y="-29.333648" href="#tz_fig_decisao_switch_g2-12"></use>
+<use x="228.023579" y="-29.333648" href="#tz_fig_decisao_switch_g2-108"></use>
+<use x="229.791277" y="-29.333648" href="#tz_fig_decisao_switch_g2-116"></use>
+<use x="232.467045" y="-29.333648" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="235.760299" y="-29.333648" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="238.290774" y="-29.333648" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="240.058471" y="-29.333648" href="#tz_fig_decisao_switch_g2-110"></use>
+<use x="243.884452" y="-29.333648" href="#tz_fig_decisao_switch_g2-103"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<g stroke="#3fb618">
+<g stroke-width="1.2">
+<g fill="#f0faed">
+<path d="M227.2851-43.87909H124.18924C122.53236-43.87909 121.18924-45.22221 121.18924-46.87909V-77.76724C121.18924-79.42412 122.53236-80.76724 124.18924-80.76724H227.2851C228.94197-80.76724 230.2851-79.42412 230.2851-77.76724V-46.87909C230.2851-45.22221 228.94197-43.87909 227.2851-43.87909ZM121.18924-80.76724"></path>
+</g>
+</g>
+</g>
+<g transform="translate(124.52222,-52.07317)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(162.007553,-53.243984)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="174.655604" y="-53.243984" href="#tz_fig_decisao_switch_g1-82"></use>
+<use x="179.556696" y="-53.243984" href="#tz_fig_decisao_switch_g1-111"></use>
+<use x="183.392334" y="-53.243984" href="#tz_fig_decisao_switch_g1-117"></use>
+<use x="187.30546" y="-53.243984" href="#tz_fig_decisao_switch_g1-116"></use>
+<use x="190.124074" y="-53.243984" href="#tz_fig_decisao_switch_g1-101"></use>
+<use x="193.688506" y="-53.243984" href="#tz_fig_decisao_switch_g1-114"></use>
+<use x="196.284345" y="-53.243984" href="#tz_fig_decisao_switch_g1-66"></use>
+<use x="201.398529" y="-53.243984" href="#tz_fig_decisao_switch_g1-79"></use>
+<use x="206.725796" y="-53.243984" href="#tz_fig_decisao_switch_g1-65"></use>
+<use x="211.839979" y="-53.243984" href="#tz_fig_decisao_switch_g1-82"></use>
+<use x="216.741072" y="-53.243984" href="#tz_fig_decisao_switch_g1-68"></use>
+<use x="224.751104" y="-53.243984" href="#tz_fig_decisao_switch_g1-112"></use>
+<use x="228.877313" y="-53.243984" href="#tz_fig_decisao_switch_g1-101"></use>
+<use x="232.441746" y="-53.243984" href="#tz_fig_decisao_switch_g1-113"></use>
+<use x="236.354872" y="-53.243984" href="#tz_fig_decisao_switch_g1-117"></use>
+<use x="240.267998" y="-53.243984" href="#tz_fig_decisao_switch_g1-101"></use>
+<use x="243.83243" y="-53.243984" href="#tz_fig_decisao_switch_g1-110"></use>
+<use x="247.745556" y="-53.243984" href="#tz_fig_decisao_switch_g1-97"></use>
+<use x="179.34701" y="-45.273872" href="#tz_fig_decisao_switch_g2-112"></use>
+<use x="183.378808" y="-45.273872" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="187.083718" y="-45.273872" href="#tz_fig_decisao_switch_g2-117"></use>
+<use x="190.909699" y="-45.273872" href="#tz_fig_decisao_switch_g2-99"></use>
+<use x="194.202952" y="-45.273872" href="#tz_fig_decisao_switch_g2-97"></use>
+<use x="197.762569" y="-45.273872" href="#tz_fig_decisao_switch_g2-115"></use>
+<use x="203.072664" y="-45.273872" href="#tz_fig_decisao_switch_g2-112"></use>
+<use x="207.104462" y="-45.273872" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="210.60354" y="-45.273872" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="213.134015" y="-45.273872" href="#tz_fig_decisao_switch_g2-116"></use>
+<use x="215.809783" y="-45.273872" href="#tz_fig_decisao_switch_g2-97"></use>
+<use x="219.3694" y="-45.273872" href="#tz_fig_decisao_switch_g2-115"></use>
+<use x="222.209829" y="-45.273872" href="#tz_fig_decisao_switch_g2-58"></use>
+<use x="227.973014" y="-45.273872" href="#tz_fig_decisao_switch_g2-98"></use>
+<use x="231.593163" y="-45.273872" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="234.123639" y="-45.273872" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="235.891336" y="-45.273872" href="#tz_fig_decisao_switch_g2-100"></use>
+<use x="239.717317" y="-45.273872" href="#tz_fig_decisao_switch_g2-103"></use>
+<use x="243.422227" y="-45.273872" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="175.383115" y="-37.30376" href="#tz_fig_decisao_switch_g2-12"></use>
+<use x="179.354389" y="-37.30376" href="#tz_fig_decisao_switch_g2-108"></use>
+<use x="181.122087" y="-37.30376" href="#tz_fig_decisao_switch_g2-116"></use>
+<use x="183.797855" y="-37.30376" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="187.091108" y="-37.30376" href="#tz_fig_decisao_switch_g2-114"></use>
+<use x="189.621584" y="-37.30376" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="191.389281" y="-37.30376" href="#tz_fig_decisao_switch_g2-110"></use>
+<use x="195.215262" y="-37.30376" href="#tz_fig_decisao_switch_g2-103"></use>
+<use x="201.389838" y="-37.30376" href="#tz_fig_decisao_switch_g2-40"></use>
+<use x="204.271435" y="-37.30376" href="#tz_fig_decisao_switch_g2-67"></use>
+<use x="209.005486" y="-37.30376" href="#tz_fig_decisao_switch_g2-80"></use>
+<use x="213.739538" y="-37.30376" href="#tz_fig_decisao_switch_g2-85"></use>
+<use x="221.294377" y="-37.30376" href="#tz_fig_decisao_switch_g2-97"></use>
+<use x="224.853994" y="-37.30376" href="#tz_fig_decisao_switch_g2-103"></use>
+<use x="228.558904" y="-37.30376" href="#tz_fig_decisao_switch_g2-117"></use>
+<use x="232.384885" y="-37.30376" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="235.678139" y="-37.30376" href="#tz_fig_decisao_switch_g2-110"></use>
+<use x="239.504119" y="-37.30376" href="#tz_fig_decisao_switch_g2-116"></use>
+<use x="242.179888" y="-37.30376" href="#tz_fig_decisao_switch_g2-97"></use>
+<use x="245.739505" y="-37.30376" href="#tz_fig_decisao_switch_g2-41"></use>
+<use x="248.621101" y="-37.30376" href="#tz_fig_decisao_switch_g2-59"></use>
+<use x="171.190692" y="-29.333648" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="174.895602" y="-29.333648" href="#tz_fig_decisao_switch_g2-117"></use>
+<use x="181.191249" y="-29.333648" href="#tz_fig_decisao_switch_g2-109"></use>
+<use x="187.075513" y="-29.333648" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="190.368766" y="-29.333648" href="#tz_fig_decisao_switch_g2-110"></use>
+<use x="194.194747" y="-29.333648" href="#tz_fig_decisao_switch_g2-117"></use>
+<use x="200.490394" y="-29.333648" href="#tz_fig_decisao_switch_g2-100"></use>
+<use x="204.316375" y="-29.333648" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="210.490951" y="-29.333648" href="#tz_fig_decisao_switch_g2-99"></use>
+<use x="213.784205" y="-29.333648" href="#tz_fig_decisao_switch_g2-104"></use>
+<use x="217.610186" y="-29.333648" href="#tz_fig_decisao_switch_g2-105"></use>
+<use x="219.377883" y="-29.333648" href="#tz_fig_decisao_switch_g2-112"></use>
+<use x="225.67353" y="-29.333648" href="#tz_fig_decisao_switch_g2-115"></use>
+<use x="228.513959" y="-29.333648" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="234.276878" y="-29.333648" href="#tz_fig_decisao_switch_g2-104"></use>
+<use x="238.102859" y="-29.333648" href="#tz_fig_decisao_switch_g2-111"></use>
+<use x="241.807769" y="-29.333648" href="#tz_fig_decisao_switch_g2-117"></use>
+<use x="245.63375" y="-29.333648" href="#tz_fig_decisao_switch_g2-118"></use>
+<use x="249.048074" y="-29.333648" href="#tz_fig_decisao_switch_g2-101"></use>
+<use x="252.341327" y="-29.333648" href="#tz_fig_decisao_switch_g2-114"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#6c757d" stroke="#6c757d">
+<path d="M-52.30264-14.82635L-172.61902-42.56041" fill="none"></path>
+<g transform="matrix(-0.97443,-0.2246,0.2246,-0.97443,-172.61902,-42.5604)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(-148.22716,-20.5243)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(162.007553,-53.243984)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="162.007553" y="-53.243984" href="#tz_fig_decisao_switch_g1-115"></use>
+<use x="164.812594" y="-53.243984" href="#tz_fig_decisao_switch_g1-19"></use>
+<use x="164.948209" y="-53.243984" href="#tz_fig_decisao_switch_g1-101"></use>
+<use x="168.512641" y="-53.243984" href="#tz_fig_decisao_switch_g1-114"></use>
+<use x="171.108481" y="-53.243984" href="#tz_fig_decisao_switch_g1-105"></use>
+<use x="172.890697" y="-53.243984" href="#tz_fig_decisao_switch_g1-101"></use>
+<use x="179.012221" y="-53.243984" href="#tz_fig_decisao_switch_g1-51"></use>
+<use x="182.847858" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="186.334802" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="189.821746" y="-53.243984" href="#tz_fig_decisao_switch_g1-47"></use>
+<use x="193.657384" y="-53.243984" href="#tz_fig_decisao_switch_g1-53"></use>
+<use x="197.493022" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="200.979966" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#6c757d" stroke="#6c757d">
+<path d="M0-14.82635V-51.4602" fill="none"></path>
+<g transform="matrix(0.0,-1.0,1.0,0.0,0.0,-51.4602)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(3.93297,-32.50964)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(162.007553,-53.243984)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="162.007553" y="-53.243984" href="#tz_fig_decisao_switch_g1-115"></use>
+<use x="164.812594" y="-53.243984" href="#tz_fig_decisao_switch_g1-19"></use>
+<use x="164.948209" y="-53.243984" href="#tz_fig_decisao_switch_g1-101"></use>
+<use x="168.512641" y="-53.243984" href="#tz_fig_decisao_switch_g1-114"></use>
+<use x="171.108481" y="-53.243984" href="#tz_fig_decisao_switch_g1-105"></use>
+<use x="172.890697" y="-53.243984" href="#tz_fig_decisao_switch_g1-101"></use>
+<use x="179.012221" y="-53.243984" href="#tz_fig_decisao_switch_g1-49"></use>
+<use x="182.847858" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="186.334802" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="189.821746" y="-53.243984" href="#tz_fig_decisao_switch_g1-47"></use>
+<use x="193.657384" y="-53.243984" href="#tz_fig_decisao_switch_g1-50"></use>
+<use x="197.493022" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+<use x="200.979966" y="-53.243984" href="#tz_fig_decisao_switch_g1-120"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#6c757d" stroke="#6c757d">
+<path d="M52.30264-14.82635L172.61902-42.56041" fill="none"></path>
+<g transform="matrix(0.97443,-0.2246,0.2246,0.97443,172.61902,-42.5604)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(105.60866,-21.53543)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(162.007553,-53.243984)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="162.007553" y="-53.243984" href="#tz_fig_decisao_switch_g1-104"></use>
+<use x="165.920679" y="-53.243984" href="#tz_fig_decisao_switch_g1-69"></use>
+<use x="170.39559" y="-53.243984" href="#tz_fig_decisao_switch_g1-88"></use>
+<use x="175.509774" y="-53.243984" href="#tz_fig_decisao_switch_g1-44"></use>
+<use x="180.197775" y="-53.243984" href="#tz_fig_decisao_switch_g1-104"></use>
+<use x="184.110901" y="-53.243984" href="#tz_fig_decisao_switch_g1-65"></use>
+<use x="189.225085" y="-53.243984" href="#tz_fig_decisao_switch_g1-80"></use>
+<use x="193.486897" y="-53.243984" href="#tz_fig_decisao_switch_g1-44"></use>
+<use x="198.174899" y="-53.243984" href="#tz_fig_decisao_switch_g1-82"></use>
+<use x="203.075991" y="-53.243984" href="#tz_fig_decisao_switch_g1-66"></use>
+<use x="208.190175" y="-53.243984" href="#tz_fig_decisao_switch_g1-46"></use>
+<use x="210.321085" y="-53.243984" href="#tz_fig_decisao_switch_g1-46"></use>
+<use x="212.451995" y="-53.243984" href="#tz_fig_decisao_switch_g1-46"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-decisao-switch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;25.1: A decisão de projeto: em qual “idioma” configurar o switching, conforme a geração do hardware.
+</figcaption>
+</figure>
+</div>
+<ul>
+<li><strong>CRS3xx/5xx — o mundo unificado.</strong> Você configura <strong>só a bridge</strong>
+<ol class="example" type="1">
+<li>e o RouterOS traduz para o chip: tabela de VLANs, PVIDs, tudo vira programação de hardware, com a flag <code>H</code> intacta. É o presente e o futuro — e o motivo de este livro ter ensinado a bridge primeiro;</li>
+</ol></li>
+<li><strong>CRS1xx/2xx — o mundo legado.</strong> O chip (QCA8511 e afins) é capaz — mas não fala o idioma da bridge. As VLANs se configuram <strong>no menu do chip</strong>: <code>/interface ethernet switch vlan</code> (a tabela), <code>... port</code> (modo de cada porta: <code>vlan-mode</code>, <code>vlan-header</code>, <code>default-vlan-id</code> — o PVID daquele mundo). A bridge existe só para agrupar, <strong>sem</strong> <code>vlan-filtering</code>. Os conceitos são os mesmos do 1 — muda a sintaxe;</li>
+<li><strong>RouterBOARDs pequenas</strong> — o hEX e irmãos têm chips básicos: para meia dúzia de portas de escritório, o bridge filtering na CPU resolve; onde o chip suportar (<code>switch1</code> com menu de VLAN), o legado serve. Consulte sempre a página do chip.</li>
+</ul>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Aviso
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Não misture os dois idiomas.</strong> Bridge com <code>vlan-filtering=yes</code> <strong>e</strong> VLANs no menu do switch chip ao mesmo tempo é receita de comportamento indefinido — cada geração tem seu caminho, e a documentação do modelo diz qual. O sintoma de mistura (ou do idioma errado): o “CRS lento” — CPU alta, throughput de software. Diagnóstico em dois comandos: <code>/interface bridge port print</code> procurando <code>H</code> ausente, e <code>/system resource print</code> com CPU suspeita sob tráfego que “deveria ser de graça”.</p>
+</div>
+</div>
+</section>
+<section id="o-que-mais-mora-no-chip" class="level2" data-number="25.3">
+<h2 data-number="25.3" class="anchored" data-anchor-id="o-que-mais-mora-no-chip"><span class="header-section-number">25.3</span> O que mais mora no chip</h2>
+<p>VLAN é o prato principal, mas o porão tem mais ferramentas — todas em velocidade de fio:</p>
+<p><strong>Rule table — ACLs de hardware.</strong> Uma tabela de regras estilo firewall (matchers de MAC, IP, porta; ações de drop/redirect/mirror) processada <strong>pelo chip</strong>:</p>
+<pre class="routeros"><code>/interface ethernet switch rule add switch=switch1 ports=ether5 src-mac-address=!AA:BB:CC:DD:EE:FF/FF:FF:FF:FF:FF:FF copy-to-cpu=no new-dst-ports="" comment="so o MAC autorizado fala nesta porta"</code></pre>
+<p>(<code>new-dst-ports=""</code> = descartar.) É o jeito de impor “nesta porta, só este equipamento” num POP — sem gastar um ciclo de CPU. As regras variam por chip; as dos CRS3xx são particularmente ricas (é o embrião do <em>Layer 3 hardware offloading</em> dos CRS3xx/5xx mais novos — roteamento no chip, fora do nosso escopo, mas bom saber que existe).</p>
+<p><strong>Port mirroring — o grampo legítimo.</strong> Copiar o tráfego de uma porta para outra, onde um analisador escuta:</p>
+<pre class="routeros"><code>/interface ethernet switch set switch1 mirror-source=ether5 mirror-target=ether10</code></pre>
+<p>No <span class="quarto-unresolved-ref">?sec-torch-sniffer</span> você verá o sniffer do próprio RouterOS; o mirror é a versão “de verdade” para depurar a porta de um cliente sem entrar no caminho.</p>
+<p><strong>Host table de hardware.</strong> A prima da <code>/interface bridge host</code>: <code>/interface ethernet switch host print</code> mostra os MACs que <strong>o chip</strong> conhece — e aceita entradas estáticas (prender um MAC a uma porta). Nos CRS3xx integrada à da bridge; nos legados, é a que vale.</p>
+<p>E os <strong>limites</strong>: cada chip tem tabelas finitas — tantos mil MACs, tantas VLANs ativas, tantas regras de ACL. A ficha técnica (<a href="../v01-primeiros-passos/02-hardware-linhas-produto.html" class="quarto-xref"><span>Capítulo 2</span></a>) e a página <em>Switch Chip Features</em> trazem os números; um POP com mais MACs que a tabela do chip degrada para inundação (o switch vira hub para os excedentes). Projetar é conferir os números <strong>antes</strong>.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O switch chip é um <strong>computador de comutação com tabelas próprias</strong> — VLANs, MACs, ACLs — e o seu trabalho é programá-lo no idioma certo da geração: <strong>bridge filtering nos CRS3xx+</strong> (o RouterOS traduz), <strong>menu do chip nos legados</strong>. Misturar idiomas ou exceder as tabelas derruba o tráfego para a CPU — e o “switch de 10 Gbps lento” quase sempre é isso: hardware esperando alguém falar a língua dele.</p>
+</div>
+</div>
+</section>
+<section id="laboratório" class="level2" data-number="25.4">
+<h2 data-number="25.4" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">25.4</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="25.4.1">
+<h3 data-number="25.4.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">25.4.1</span> Ambiente</h3>
+<p>O CHR <strong>não tem switch chip</strong> — este laboratório é em parte “seco” (leitura de especificações e projeto), em parte executável em qualquer RouterBOARD física que você tenha (um hEX serve: chip básico, menus presentes). Sem hardware, faça os passos de projeto e os desafios — o raciocínio é o produto.</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="25.4.2">
+<h3 data-number="25.4.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">25.4.2</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — conhecer o chip (hardware físico).</strong> Numa RouterBOARD:</p>
+<pre class="routeros"><code>/interface ethernet switch print
+/interface ethernet switch port print</code></pre>
+<p>Anote o modelo do chip. Abra a página <em>Switch Chip Features</em> da documentação e localize a linha dele: quantas entradas de host table? Rule table existe? VLAN table de que tamanho?</p>
+<p><strong>Passo 2 — a host table de hardware.</strong> Com dispositivos ligados às portas:</p>
+<pre class="routeros"><code>/interface ethernet switch host print</code></pre>
+<p>Compare com <code>/interface bridge host print</code> — no hEX, as duas contam a mesma história por caminhos diferentes (chip × software).</p>
+<p><strong>Passo 3 — projeto no papel: o POP de 24 portas.</strong> Sem equipamento, este passo vale por dois. Dado um <strong>CRS326-24G-2S+</strong> (chip Marvell, série 3xx) servindo um POP: uplink SFP+ 1 = trunk para o roteador de borda; SFP+ 2 = trunk para a torre; ether1–20 = clientes dedicados (cada um numa VLAN própria, 101–120); ether21–24 = equipamentos do provedor (VLAN 99 de gerência). Escreva, em <code>.rsc</code>, a configuração completa no idioma <strong>certo</strong> para a série 3xx — bridge, tabela de VLANs, PVIDs, frame-types, interface de gerência. (Solução no desafio 1 — tente antes de olhar.)</p>
+<p><strong>Passo 4 — o mesmo POP num CRS125.</strong> Reescreva o miolo (as VLANs de duas portas de cliente e a gerência) no idioma legado: <code>/interface ethernet switch vlan</code> + <code>... port</code> com <code>vlan-mode=secure</code>, <code>vlan-header</code> e <code>default-vlan-id</code>. Compare o esforço — e entenda por que a série 3xx venceu.</p>
+</section>
+<section id="verificação" class="level3" data-number="25.4.3">
+<h3 data-number="25.4.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">25.4.3</span> Verificação</h3>
+<ol type="1">
+<li>(Com hardware) Você identificou o chip do seu equipamento e localizou seus limites na documentação;</li>
+<li>O <code>.rsc</code> do Passo 3 segue a liturgia do 1 (tabela → portas → filtering por último) e a gerência mora na VLAN 99 com a bridge como tagged;</li>
+<li>Você sabe apontar, nos dois idiomas, onde vive cada conceito: tabela de VLANs, PVID, admissão de quadros;</li>
+<li>Dado um “CRS lento”, você lista os dois comandos de diagnóstico e os três suspeitos (idioma errado, mistura, tabela estourada).</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="25.4.4">
+<h3 data-number="25.4.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">25.4.4</span> Desafios</h3>
+<ol type="1">
+<li>Escreva o <code>.rsc</code> do Passo 3 (CRS326). Estruture: bridge com todas as portas; VLANs 101–120 (cada uma tagged no uplink SFP+1 e untagged na porta do cliente); VLAN 99 tagged nos dois SFP+ e untagged nas ether21–24; PVIDs e frame-types; <code>vlan-filtering=yes</code> ao final. (Abrevie as 20 VLANs de cliente mostrando 2 e indicando o padrão.)</li>
+<li>No desenho do desafio 1, cada cliente está <strong>sozinho</strong> na própria VLAN — clientes não se enxergam em camada 2. Que problema clássico de condomínio/POP isso resolve? E o que o roteador de borda precisa ter para que os clientes continuem chegando à internet?</li>
+<li>Um POP com CRS326 tem 6 mil dispositivos atrás de uma porta (uma torre PtMP inteira). A host table do chip suporta 16 mil MACs. Outro integrador propõe ligar <strong>três</strong> torres iguais no mesmo switch. Faça a conta e diga o risco — e duas mitigações de projeto.</li>
+<li>A rule table permite “nesta porta, só este MAC”. Por que essa regra é ao mesmo tempo uma ótima defesa num POP e uma péssima ideia numa porta de torre PtMP? O que usar em cada caso?</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> Esqueleto (padrão indicado, 2 de 20 clientes mostrados):</p>
+<pre class="routeros"><code>/interface bridge add name=bridge-pop
+/interface bridge port
+add bridge=bridge-pop interface=sfp-sfpplus1 frame-types=admit-only-vlan-tagged
+add bridge=bridge-pop interface=sfp-sfpplus2 frame-types=admit-only-vlan-tagged
+add bridge=bridge-pop interface=ether1 pvid=101 frame-types=admit-only-untagged-and-priority-tagged
+add bridge=bridge-pop interface=ether2 pvid=102 frame-types=admit-only-untagged-and-priority-tagged
+# ... ether3-20: pvid=103..120, mesmo frame-types
+add bridge=bridge-pop interface=ether21 pvid=99 frame-types=admit-only-untagged-and-priority-tagged
+# ... ether22-24 idem
+/interface bridge vlan
+add bridge=bridge-pop vlan-ids=101 tagged=bridge-pop,sfp-sfpplus1 untagged=ether1
+add bridge=bridge-pop vlan-ids=102 tagged=bridge-pop,sfp-sfpplus1 untagged=ether2
+# ... 103-120 no padrao
+add bridge=bridge-pop vlan-ids=99 tagged=bridge-pop,sfp-sfpplus1,sfp-sfpplus2 untagged=ether21,ether22,ether23,ether24
+/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-pop
+/ip address add address=10.99.1.2/24 interface=vlan99-ger
+/interface bridge set bridge-pop vlan-filtering=yes</code></pre>
+<p>(Refinamento pró: <code>tagged=bridge-pop</code> só é necessário nas VLANs que a CPU precisa ver — a 99; nas de cliente, pode sair.)</p>
+<p><strong>2.</strong> Resolve o <strong>vizinho bisbilhoteiro/atacante</strong>: sem camada 2 comum, não há ARP spoofing entre clientes, não há vírus varrendo o condomínio, não há briga de DHCP — cada cliente enxerga só o provedor. O roteador de borda precisa <strong>ter presença em cada VLAN</strong> (<code>/interface vlan</code> 101–120, tipicamente agregadas por PPPoE ou DHCP por VLAN) e rotear/NAT-ear — o router-on-a-stick do <a href="02-vlans-8021q.html" class="quarto-xref"><span>Capítulo 23</span></a> em escala. É o desenho que o <a href="05-segmentacao-rede-provedor.html" class="quarto-xref"><span>Capítulo 26</span></a> consolida.</p>
+<p><strong>3.</strong> 3 × 6 000 = 18 000 MACs &gt; 16 000 da tabela: sob carga plena, ~2 mil MACs não cabem — o chip <strong>inunda</strong> o tráfego deles por todas as portas da VLAN: banda desperdiçada, privacidade vazada, CPU do que escuta castigada. Mitigações: (a) <strong>quebrar o domínio L2</strong>: rotear na torre (cada torre com sua sub-rede — os MACs de clientes morrem lá e o switch vê só o MAC do roteador da torre); (b) distribuir torres em switches distintos / limitar aprendizagem por porta. A lição: host table é recurso de projeto, não detalhe.</p>
+<p><strong>4.</strong> Na porta de um <strong>cliente dedicado/servidor do POP</strong>, o MAC é um e conhecido: a regra elimina troca de equipamento não autorizada e spoofing — ótima. Numa porta de <strong>torre PtMP</strong>, chegam <strong>milhares</strong> de MACs legítimos (todos os clientes atrás do rádio): travar em um MAC derruba todo mundo. Lá, o controle certo é por VLAN + os mecanismos da camada wireless (access-list do Volume 5) e, para contenção de L2, isolamento entre clientes no próprio rádio.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="25.5">
+<h2 data-number="25.5" class="anchored" data-anchor-id="resumo"><span class="header-section-number">25.5</span> Resumo</h2>
+<ul>
+<li>O <strong>switch chip</strong> é o comutador de verdade dos CRS e RouterBOARDs — tabelas próprias de MACs, VLANs e regras, expostas em <code>/interface ethernet switch</code>.</li>
+<li>A decisão de idioma (<a href="#fig-decisao-switch" class="quarto-xref">Figura&nbsp;<span>25.1</span></a>): <strong>CRS3xx/5xx = bridge VLAN filtering</strong> (RouterOS programa o chip, <code>H</code> vivo); <strong>CRS1xx/2xx = menu legado do chip</strong>; nunca os dois juntos.</li>
+<li>Além de VLAN: <strong>rule table</strong> (ACLs em fio), <strong>port mirroring</strong> (grampo de diagnóstico), host table de hardware com entradas estáticas.</li>
+<li>Tabelas são <strong>finitas</strong>: MACs, VLANs e regras têm teto por chip — estourar = inundação silenciosa; projetar é conferir a página <em>Switch Chip Features</em> antes.</li>
+<li>“CRS lento” = tráfego na CPU: procure o <code>H</code> perdido, o idioma errado ou a tabela cheia.</li>
+</ul>
+<p>No próximo capítulo, o volume fecha com o projeto integrador: a <strong>segmentação completa de um POP</strong> — gerência, clientes e serviços, do switch ao firewall.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>As páginas <em>Switch Chip Features</em> (tabela por modelo) e <em>CRS3xx, CRS5xx switch chip features</em> da documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> são leitura obrigatória de projeto; os manuais de cada CRS indicam o idioma de configuração suportado. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="pagination-link" aria-label="Bridge VLAN filtering">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.html" class="pagination-link" aria-label="Segmentação da rede do provedor">
+        <span class="nav-page-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Segmentação da rede do provedor</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v04-bridge-vlans/04-switch-chip-crs.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>

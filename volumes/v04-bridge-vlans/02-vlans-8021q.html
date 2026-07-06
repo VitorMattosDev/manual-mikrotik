@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>23&nbsp; VLANs e 802.1Q – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" rel="next">
+<link href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html">Volume 4 — Bridge, switching e VLANs</a></li><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 4 — Bridge, switching e VLANs</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Bridge e hardware offload</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Segmentação da rede do provedor</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#o-problema-um-cabo-várias-redes" id="toc-o-problema-um-cabo-várias-redes" class="nav-link active" data-scroll-target="#o-problema-um-cabo-várias-redes"><span class="header-section-number">23.1</span> O problema: um cabo, várias redes</a></li>
+  <li><a href="#vlans-no-routeros-a-interface-vlan" id="toc-vlans-no-routeros-a-interface-vlan" class="nav-link" data-scroll-target="#vlans-no-routeros-a-interface-vlan"><span class="header-section-number">23.2</span> VLANs no RouterOS: a interface <code>vlan</code></a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">23.3</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">23.3.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">23.3.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">23.3.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">23.3.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">23.4</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v04-bridge-vlans/02-vlans-8021q.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html">Volume 4 — Bridge, switching e VLANs</a></li><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-vlans-8021q" class="quarto-section-identifier"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Explicar o problema que a VLAN resolve: <strong>redes separadas sem cabos separados</strong>;</li>
+<li>Descrever a etiqueta <strong>802.1Q</strong>: onde ela entra no quadro, o que é o <strong>VID</strong> e o que significa um quadro <em>tagged</em> ou <em>untagged</em>;</li>
+<li>Usar o vocabulário sem tropeçar: <strong>trunk</strong>, <strong>access</strong>, VLAN nativa;</li>
+<li>Criar interfaces <strong><code>/interface vlan</code></strong> no RouterOS e montar o <em>router-on-a-stick</em> — várias redes roteadas por um cabo só;</li>
+<li>Reconhecer as VLANs na rede do provedor: serviços, clientes e gerência compartilhando a mesma fibra sem se ver.</li>
+</ul>
+</div>
+</div>
+<section id="o-problema-um-cabo-várias-redes" class="level2" data-number="23.1">
+<h2 data-number="23.1" class="anchored" data-anchor-id="o-problema-um-cabo-várias-redes"><span class="header-section-number">23.1</span> O problema: um cabo, várias redes</h2>
+<p>O capítulo anterior terminou com um alerta: colocar clientes diferentes na mesma bridge é colocá-los na mesma sala. A solução ingênua — um cabo e uma porta para cada rede — morre na primeira conta: o POP atende a rede de clientes, a de gerência, a de servidores e a VLAN da operadora… por <strong>uma</strong> fibra até a torre. Precisamos de redes logicamente separadas sobre o mesmo meio físico.</p>
+<p>A resposta tem trinta anos e está em todo equipamento de rede do planeta: a <strong>VLAN</strong> (<em>Virtual LAN</em>), padronizada como <strong>IEEE 802.1Q</strong>. A ideia cabe numa frase: <strong>cada quadro Ethernet ganha uma etiqueta dizendo a que rede pertence</strong> — e switches e roteadores tratam cada etiqueta como se fosse um cabo separado.</p>
+<p>A etiqueta (<em>tag</em>) são 4 bytes inseridos dentro do cabeçalho Ethernet (1), dos quais importam dois campos: o <strong>VID</strong> (<em>VLAN ID</em>, 12 bits — redes de 1 a 4094) e a <strong>prioridade</strong> (3 bits — que o QoS do Volume 7 conhece como CoS).</p>
+<div id="fig-quadro-8021q" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-quadro-8021q-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="321.419975pt" height="114.734247pt" viewbox="-68.014948 -68.014943 321.419975 114.734247">
+<defs>
+<path id="tz_fig_quadro_8021q_g0-46" d="M1.520299-.72528C1.520299-.9066 1.513325-.913574 1.332005-.913574H.795019C.613699-.913574 .606725-.9066 .606725-.72528V-.188294C.606725-.006974 .613699 0 .795019 0H1.332005C1.513325 0 1.520299-.006974 1.520299-.188294V-.72528Z"></path>
+<path id="tz_fig_quadro_8021q_g0-48" d="M3.528767-2.39203C3.528767-3.347447 3.528767-4.993275 1.917808-4.993275C.299875-4.993275 .299875-3.361395 .299875-2.39203C.299875-1.436613 .299875 .153425 1.910834 .153425C3.528767 .153425 3.528767-1.422665 3.528767-2.39203ZM1.910834-.348692C1.39477-.348692 1.318057-.990286 1.297136-1.17858C1.248319-1.548194 1.248319-2.203736 1.248319-2.489664C1.248319-2.901121 1.248319-3.347447 1.290162-3.689166C1.311083-3.87746 1.380822-4.491158 1.910834-4.491158C2.426899-4.491158 2.510585-3.905355 2.531507-3.765878C2.580324-3.410212 2.580324-2.859278 2.580324-2.489664C2.580324-2.092154 2.580324-1.548194 2.531507-1.164633C2.510585-.983313 2.433873-.348692 1.910834-.348692Z"></path>
+<path id="tz_fig_quadro_8021q_g0-49" d="M2.475716-4.658531C2.475716-4.791034 2.475716-4.993275 2.168867-4.993275C2.02939-4.993275 2.001494-4.979328 1.917808-4.895641C1.792279-4.78406 1.527273-4.526027 .836862-4.51208C.711333-4.51208 .530012-4.463263 .530012-4.261021C.530012-4.009963 .774097-4.009963 .864757-4.009963C1.073973-4.009963 1.318057-4.044832 1.520299-4.100623V-.502117H.976339C.885679-.502117 .641594-.502117 .641594-.251059S.885679 0 .976339 0H2.963885C3.040598 0 3.29863 0 3.29863-.251059S3.040598-.502117 2.963885-.502117H2.475716V-4.658531Z"></path>
+<path id="tz_fig_quadro_8021q_g0-50" d="M.4533-.592777C.383562-.523039 .383562-.509091 .383562-.390535V-.334745C.383562-.083686 .460274 0 .718306 0H3.110336C3.375342 0 3.445081-.09066 3.445081-.334745V-.418431C3.445081-.530012 3.445081-.662516 3.29863-.72528C3.249813-.753176 3.02665-.753176 2.887173-.753176C2.733748-.753176 2.566376-.746202 2.412951-.746202H1.283188L2.203736-1.617933C2.308344-1.708593 2.57335-1.924782 2.677958-2.022416C3.061519-2.399004 3.445081-2.768618 3.445081-3.38929C3.445081-4.2401 2.831382-4.993275 1.806227-4.993275C1.562142-4.993275 1.164633-4.958406 .829888-4.686426C.767123-4.637609 .446326-4.38655 .320797-3.919303L.669489-3.472976C.711333-3.417186 .732254-3.38929 .781071-3.38929C.843836-3.38929 .857783-3.438107 .878705-3.521793C1.018182-4.002989 1.255293-4.29589 1.701619-4.29589C2.245579-4.29589 2.468742-3.800747 2.468742-3.375342C2.468742-2.929016 2.203736-2.461768 1.785305-2.015442L.4533-.592777Z"></path>
+<path id="tz_fig_quadro_8021q_g0-56" d="M2.650062-2.608219C3.319552-2.831382 3.403238-3.319552 3.403238-3.633375C3.403238-4.658531 2.747696-4.993275 1.917808-4.993275C1.157659-4.993275 .425405-4.721295 .425405-3.633375C.425405-3.263761 .550934-2.817435 1.17858-2.608219C.460274-2.405978 .320797-1.855044 .320797-1.415691C.320797-.327771 .9066 .153425 1.910834 .153425C2.963885 .153425 3.507846-.369614 3.507846-1.415691C3.507846-2.050311 3.20797-2.447821 2.650062-2.608219ZM1.917808-2.866252C1.332005-2.866252 1.318057-3.20797 1.318057-3.626401C1.318057-4.107597 1.3599-4.372603 1.910834-4.372603S2.510585-4.121544 2.510585-3.626401C2.510585-3.221918 2.503611-2.866252 1.917808-2.866252ZM1.917808-.502117C1.30411-.502117 1.290162-.892653 1.290162-1.429639C1.290162-1.882939 1.290162-2.364134 1.910834-2.364134C2.538481-2.364134 2.538481-1.889913 2.538481-1.429639C2.538481-.9066 2.524533-.502117 1.917808-.502117Z"></path>
+<path id="tz_fig_quadro_8021q_g0-61" d="M5.160648-2.252553C5.244334-2.252553 5.537235-2.252553 5.537235-2.545455S5.23736-2.838356 5.167621-2.838356H.795019C.72528-2.838356 .425405-2.838356 .425405-2.545455S.72528-2.252553 .801993-2.252553H5.160648ZM5.167621-.648568C5.23736-.648568 5.537235-.648568 5.537235-.941469S5.23736-1.234371 5.160648-1.234371H.801993C.718306-1.234371 .425405-1.234371 .425405-.941469S.72528-.648568 .795019-.648568H5.167621Z"></path>
+<path id="tz_fig_quadro_8021q_g0-68" d="M.969365-4.839851C.718306-4.839851 .63462-4.763138 .63462-4.505106V-.334745C.63462-.083686 .711333 0 .969365 0H2.810461C4.51208 0 5.104857-1.018182 5.104857-2.385056C5.104857-2.93599 5.014197-3.612453 4.623661-4.107597C4.100623-4.756164 3.263761-4.839851 2.810461-4.839851H.969365ZM1.638854-.599751V-4.2401H2.531507C4.037858-4.2401 4.100623-3.166127 4.100623-2.385056C4.100623-1.597011 4.02391-.599751 2.538481-.599751H1.638854Z"></path>
+<path id="tz_fig_quadro_8021q_g0-69" d="M1.659776-2.168867H3.493898C3.710087-2.168867 3.828643-2.217684 3.828643-2.496638C3.828643-2.75467 3.737983-2.824408 3.493898-2.824408H1.659776V-4.11457H2.001494C2.545455-4.11457 3.096389-4.093649 3.640349-4.093649C3.884433-4.093649 4.044832-4.093649 4.044832-4.428394V-4.484184C4.044832-4.707347 3.996015-4.818929 3.710087-4.818929H.969365C.718306-4.818929 .63462-4.742217 .63462-4.484184V-.334745C.63462-.083686 .711333 0 .969365 0H3.814695C4.079701 0 4.14944-.09066 4.14944-.334745V-.432379C4.14944-.767123 3.989041-.767123 3.758904-.767123C3.396264-.767123 3.040598-.753176 2.677958-.753176C2.503611-.753176 1.785305-.746202 1.659776-.739228V-2.168867Z"></path>
+<path id="tz_fig_quadro_8021q_g0-73" d="M1.66675-4.505106C1.66675-4.728269 1.617933-4.839851 1.332005-4.839851H.976339C.72528-4.839851 .641594-4.763138 .641594-4.505106V-.334745C.641594-.083686 .718306 0 .976339 0H1.332005C1.597011 0 1.66675-.09066 1.66675-.334745V-4.505106Z"></path>
+<path id="tz_fig_quadro_8021q_g0-81" d="M4.47721 .739228C4.56787 .739228 4.728269 .739228 4.728269 .585803C4.728269 .530012 4.714321 .516065 4.623661 .390535L4.170361-.195268C5.05604-.732254 5.104857-1.882939 5.104857-2.385056C5.104857-3.7868 4.595766-4.993275 2.768618-4.993275C.836862-4.993275 .425405-3.66127 .425405-2.385056C.425405-1.080946 .878705 .153425 2.761644 .153425C2.880199 .153425 3.040598 .153425 3.263761 .118555C3.347447 .244085 3.431133 .369614 3.521793 .495143C3.668244 .718306 3.689166 .739228 3.919303 .739228H4.47721ZM2.66401-1.352927C2.566376-1.352927 2.412951-1.352927 2.412951-1.192528C2.412951-1.115816 2.636115-.801993 2.761644-.627646C2.782565-.592777 2.901121-.425405 2.901121-.404483C2.901121-.390535 2.789539-.390535 2.761644-.390535C1.429639-.390535 1.429639-1.771357 1.429639-2.39203C1.429639-3.005729 1.429639-4.449315 2.761644-4.449315C4.100623-4.449315 4.100623-3.012702 4.100623-2.39203C4.100623-1.952677 4.100623-1.227397 3.710087-.781071L3.326526-1.276214C3.256787-1.352927 3.228892-1.352927 3.089415-1.352927H2.66401Z"></path>
+<path id="tz_fig_quadro_8021q_g0-86" d="M4.881694-4.526027C4.909589-4.609714 4.916563-4.616687 4.916563-4.651557C4.916563-4.839851 4.742217-4.839851 4.644583-4.839851H4.372603C4.226152-4.839851 4.02391-4.839851 3.912329-4.533001L2.970859-1.945704L2.608219-.871731C2.601245-.892653 2.524533-1.136737 2.419925-1.422665L1.290162-4.539975C1.17858-4.839851 .983313-4.839851 .836862-4.839851H.460274C.36264-4.839851 .188294-4.839851 .188294-4.651557C.188294-4.616687 .195268-4.609714 .223163-4.526027L1.785305-.292902C1.889913 0 2.092154 0 2.231631 0H2.873225C3.019676 0 3.214944 0 3.326526-.306849L4.881694-4.526027Z"></path>
+<path id="tz_fig_quadro_8021q_g0-97" d="M3.235866-2.203736C3.235866-3.305604 2.175841-3.312578 1.827148-3.312578C1.499377-3.312578 1.150685-3.284682 .683437-3.089415C.536986-3.02665 .502117-3.005729 .502117-2.929016C.502117-2.880199 .54396-2.475716 .550934-2.419925C.557908-2.378082 .592777-2.343213 .641594-2.343213C.676463-2.343213 .697385-2.364134 .718306-2.385056C1.018182-2.698879 1.366874-2.852304 1.799253-2.852304C2.175841-2.852304 2.287422-2.622167 2.287422-2.21071V-1.966625C2.043337-1.966625 .216189-1.952677 .216189-.927522C.216189-.439352 .606725 .076712 1.220423 .076712C1.457534 .076712 1.980573 .006974 2.308344-.474222V-.334745C2.308344-.111582 2.357161 0 2.643088 0H2.901121C3.166127 0 3.235866-.09066 3.235866-.334745V-2.203736ZM2.287422-1.073973C2.287422-.425405 1.624907-.425405 1.603985-.425405C1.311083-.425405 1.12279-.676463 1.12279-.941469C1.12279-1.624907 2.092154-1.673724 2.287422-1.680697V-1.073973Z"></path>
+<path id="tz_fig_quadro_8021q_g0-99" d="M3.187049-.348692C3.187049-.425405 3.159153-.746202 3.145205-.836862C3.145205-.857783 3.131258-.927522 3.061519-.927522C3.033624-.927522 3.019676-.927522 2.949938-.857783C2.831382-.753176 2.503611-.467248 1.931756-.467248C1.206476-.467248 1.206476-1.171606 1.206476-1.617933C1.206476-2.182814 1.241345-2.768618 1.952677-2.768618C2.405978-2.768618 2.594271-2.657036 2.84533-2.447821C2.929016-2.371108 2.942964-2.371108 2.970859-2.371108C3.040598-2.371108 3.054545-2.433873 3.061519-2.461768C3.075467-2.517559 3.145205-2.908095 3.145205-2.942964C3.145205-3.005729 3.096389-3.033624 2.977833-3.089415C2.643088-3.242839 2.433873-3.312578 1.945704-3.312578C.9066-3.312578 .258032-2.824408 .258032-1.603985C.258032-.446326 .857783 .076712 1.910834 .076712C2.099128 .076712 2.517559 .069738 2.984807-.167372C3.180075-.27198 3.187049-.278954 3.187049-.348692Z"></path>
+<path id="tz_fig_quadro_8021q_g0-100" d="M3.47995-4.505106C3.47995-4.728269 3.431133-4.839851 3.145205-4.839851H2.887173C2.622167-4.839851 2.552428-4.749191 2.552428-4.505106V-2.922042C2.238605-3.221918 1.889913-3.270735 1.673724-3.270735C.258032-3.270735 .258032-1.931756 .258032-1.590037C.258032-1.26924 .258032 .076712 1.638854 .076712C1.931756 .076712 2.231631-.006974 2.531507-.327771C2.531507-.069738 2.629141 0 2.866252 0H3.145205C3.410212 0 3.47995-.09066 3.47995-.334745V-4.505106ZM2.531507-.871731C2.531507-.753176 2.531507-.690411 2.329265-.550934C2.154919-.439352 1.994521-.425405 1.910834-.425405C1.206476-.425405 1.206476-1.066999 1.206476-1.590037S1.206476-2.768618 1.987547-2.768618C2.189788-2.768618 2.378082-2.698879 2.531507-2.552428V-.871731Z"></path>
+<path id="tz_fig_quadro_8021q_g0-101" d="M3.005729-1.492403C3.166127-1.492403 3.340473-1.499377 3.340473-1.8132C3.340473-2.712827 2.922042-3.312578 1.882939-3.312578C.767123-3.312578 .216189-2.684932 .216189-1.624907C.216189-.481196 .878705 .076712 1.973599 .076712C2.238605 .076712 2.636115 .041843 3.096389-.188294C3.249813-.265006 3.29863-.285928 3.29863-.369614C3.29863-.418431 3.277709-.620672 3.270735-.676463C3.242839-.892653 3.235866-.899626 3.173101-.899626C3.145205-.899626 3.131258-.899626 3.054545-.829888C2.643088-.474222 2.224658-.425405 2.001494-.425405C1.21345-.425405 1.129763-1.046077 1.108842-1.492403H3.005729ZM1.115816-1.862017C1.136737-2.287422 1.276214-2.810461 1.882939-2.810461C2.440847-2.810461 2.545455-2.405978 2.566376-1.862017H1.115816Z"></path>
+<path id="tz_fig_quadro_8021q_g0-104" d="M3.486924-2.266501C3.486924-2.984807 3.180075-3.270735 2.468742-3.270735C1.771357-3.270735 1.45056-2.789539 1.352927-2.594271H1.345953V-4.505106C1.345953-4.728269 1.297136-4.839851 1.011208-4.839851H.753176C.502117-4.839851 .418431-4.763138 .418431-4.505106V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.48269 1.771357-2.768618 2.133998-2.768618C2.468742-2.768618 2.538481-2.608219 2.538481-2.252553V-.334745C2.538481-.111582 2.587298 0 2.873225 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.266501Z"></path>
+<path id="tz_fig_quadro_8021q_g0-105" d="M.711333-4.846824C.488169-4.846824 .376588-4.804981 .376588-4.526027V-4.20523C.376588-3.982067 .446326-3.891407 .704359-3.891407H1.066999C1.401743-3.891407 1.401743-4.037858 1.401743-4.365629C1.401743-4.700374 1.401743-4.846824 1.066999-4.846824H.711333ZM1.352927-2.859278C1.352927-3.082441 1.30411-3.194022 1.018182-3.194022H.760149C.509091-3.194022 .425405-3.11731 .425405-2.859278V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-2.859278Z"></path>
+<path id="tz_fig_quadro_8021q_g0-109" d="M5.620922-2.266501C5.620922-2.984807 5.314072-3.270735 4.60274-3.270735C4.107597-3.270735 3.724035-3.040598 3.472976-2.580324C3.361395-3.249813 2.768618-3.270735 2.475716-3.270735C2.343213-3.270735 2.050311-3.270735 1.736488-3.040598C1.520299-2.880199 1.380822-2.657036 1.332005-2.552428H1.325031V-2.901121C1.325031-3.124284 1.276214-3.235866 .990286-3.235866H.753176C.502117-3.235866 .418431-3.159153 .418431-2.901121V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.503611 1.792279-2.768618 2.133998-2.768618C2.468742-2.768618 2.545455-2.622167 2.545455-2.252553V-.334745C2.545455-.083686 2.622167 0 2.880199 0H3.159153C3.424159 0 3.493898-.09066 3.493898-.334745V-1.875965C3.493898-2.503611 3.919303-2.768618 4.261021-2.768618C4.595766-2.768618 4.672478-2.622167 4.672478-2.252553V-.334745C4.672478-.083686 4.749191 0 5.007223 0H5.286177C5.551183 0 5.620922-.09066 5.620922-.334745V-2.266501Z"></path>
+<path id="tz_fig_quadro_8021q_g0-110" d="M3.486924-2.266501C3.486924-2.984807 3.180075-3.270735 2.468742-3.270735C1.736488-3.270735 1.422665-2.740722 1.332005-2.552428H1.325031V-2.901121C1.325031-3.124284 1.276214-3.235866 .990286-3.235866H.753176C.502117-3.235866 .418431-3.159153 .418431-2.901121V-.334745C.418431-.083686 .495143 0 .753176 0H1.03213C1.297136 0 1.366874-.09066 1.366874-.334745V-1.875965C1.366874-2.48269 1.771357-2.768618 2.133998-2.768618C2.468742-2.768618 2.538481-2.608219 2.538481-2.252553V-.334745C2.538481-.111582 2.587298 0 2.873225 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.266501Z"></path>
+<path id="tz_fig_quadro_8021q_g0-111" d="M3.612453-1.569116C3.612453-2.712827 3.054545-3.312578 1.917808-3.312578C.753176-3.312578 .216189-2.691905 .216189-1.569116C.216189-.432379 .81594 .076712 1.910834 .076712S3.612453-.425405 3.612453-1.569116ZM1.917808-.467248C1.164633-.467248 1.164633-1.094894 1.164633-1.652802C1.164633-2.189788 1.164633-2.810461 1.910834-2.810461C2.66401-2.810461 2.66401-2.196762 2.66401-1.652802C2.66401-1.101868 2.66401-.467248 1.917808-.467248Z"></path>
+<path id="tz_fig_quadro_8021q_g0-112" d="M1.373848-.27198C1.687671 .076712 2.071233 .076712 2.168867 .076712C3.647323 .076712 3.647323-1.262267 3.647323-1.610959C3.647323-1.952677 3.647323-3.270735 2.385056-3.270735C1.973599-3.270735 1.603985-3.103362 1.352927-2.866252C1.352927-3.124284 1.255293-3.194022 1.018182-3.194022H.760149C.509091-3.194022 .425405-3.11731 .425405-2.859278V1.018182C.425405 1.26924 .502117 1.352927 .760149 1.352927H1.039103C1.30411 1.352927 1.373848 1.262267 1.373848 1.018182V-.27198ZM1.373848-2.496638C1.45056-2.566376 1.680697-2.726775 1.980573-2.726775C2.691905-2.726775 2.698879-1.903861 2.698879-1.597011C2.698879-1.318057 2.698879-.425405 1.910834-.425405C1.750436-.425405 1.624907-.481196 1.54122-.54396C1.373848-.662516 1.373848-.697385 1.373848-.822914V-2.496638Z"></path>
+<path id="tz_fig_quadro_8021q_g0-113" d="M3.47995-2.93599C3.47995-3.159153 3.431133-3.270735 3.145205-3.270735H2.887173C2.622167-3.270735 2.552428-3.180075 2.552428-2.93599V-2.803487C2.245579-3.270735 1.834122-3.270735 1.715567-3.270735C.369614-3.270735 .258032-2.147945 .258032-1.590037C.258032-1.046077 .369614 .076712 1.66675 .076712C2.036364 .076712 2.294396-.062765 2.531507-.334745V1.018182C2.531507 1.241345 2.580324 1.352927 2.866252 1.352927H3.145205C3.410212 1.352927 3.47995 1.262267 3.47995 1.018182V-2.93599ZM2.552428-.801993C2.426899-.627646 2.238605-.425405 1.917808-.425405C1.206476-.425405 1.206476-1.311083 1.206476-1.583064C1.206476-1.862017 1.206476-2.726775 1.987547-2.726775C2.099128-2.726775 2.245579-2.698879 2.371108-2.566376C2.552428-2.39203 2.552428-2.266501 2.552428-2.182814V-.801993Z"></path>
+<path id="tz_fig_quadro_8021q_g0-114" d="M1.352927-1.603985C1.352927-2.266501 1.903861-2.538481 2.343213-2.566376C2.468742-2.57335 2.48269-2.57335 2.48269-2.75467V-3.082441C2.48269-3.221918 2.48269-3.270735 2.357161-3.270735C2.161893-3.270735 1.652802-3.200996 1.325031-2.447821H1.318057V-2.901121C1.318057-3.124284 1.26924-3.235866 .983313-3.235866H.760149C.509091-3.235866 .425405-3.159153 .425405-2.901121V-.334745C.425405-.083686 .502117 0 .760149 0H1.018182C1.283188 0 1.352927-.09066 1.352927-.334745V-1.603985Z"></path>
+<path id="tz_fig_quadro_8021q_g0-116" d="M1.520299-2.691905H2.140971C2.224658-2.691905 2.475716-2.691905 2.475716-2.942964S2.224658-3.194022 2.140971-3.194022H1.520299V-3.772852C1.520299-3.996015 1.471482-4.107597 1.185554-4.107597H.969365C.718306-4.107597 .63462-4.030884 .63462-3.772852V-3.194022H.474222C.397509-3.194022 .139477-3.194022 .139477-2.942964S.390535-2.691905 .474222-2.691905H.613699V-.927522C.613699-.223163 .864757 .076712 1.345953 .076712C1.408717 .076712 1.715567 .076712 2.078207-.034869C2.196762-.069738 2.601245-.195268 2.601245-.327771C2.601245-.348692 2.587298-.397509 2.545455-.54396C2.510585-.683437 2.496638-.72528 2.433873-.72528C2.399004-.72528 2.39203-.718306 2.350187-.676463C2.273474-.620672 2.085181-.467248 1.792279-.467248C1.624907-.467248 1.520299-.585803 1.520299-1.046077V-2.691905Z"></path>
+<path id="tz_fig_quadro_8021q_g0-117" d="M3.486924-2.859278C3.486924-3.082441 3.438107-3.194022 3.152179-3.194022H2.873225C2.608219-3.194022 2.538481-3.103362 2.538481-2.859278V-1.206476C2.538481-.746202 2.294396-.348692 1.799253-.348692C1.408717-.348692 1.366874-.446326 1.366874-.81594V-2.859278C1.366874-3.082441 1.318057-3.194022 1.03213-3.194022H.753176C.502117-3.194022 .418431-3.11731 .418431-2.859278V-.878705C.418431-.132503 .822914 .076712 1.548194 .076712C1.736488 .076712 2.231631 .076712 2.559402-.516065V-.334745C2.559402-.111582 2.608219 0 2.894147 0H3.152179C3.417186 0 3.486924-.09066 3.486924-.334745V-2.859278Z"></path>
+<path id="tz_fig_quadro_8021q_g0-120" d="M2.099128-1.652802L3.110336-2.894147C3.180075-2.977833 3.180075-3.005729 3.180075-3.040598C3.180075-3.194022 3.040598-3.194022 2.93599-3.194022H2.636115C2.510585-3.194022 2.426899-3.194022 2.329265-3.089415C2.294396-3.054545 1.841096-2.447821 1.72254-2.287422L1.12279-3.040598C1.004234-3.187049 .927522-3.194022 .767123-3.194022H.460274C.369614-3.194022 .216189-3.194022 .216189-3.040598C.216189-2.991781 .237111-2.963885 .285928-2.908095L1.338979-1.652802L.237111-.292902C.195268-.244085 .167372-.209215 .167372-.153425C.167372 0 .320797 0 .418431 0H.718306C.948443 0 .962391-.020922 1.115816-.251059L1.715567-1.143711L2.426899-.139477C2.524533 0 2.608219 0 2.75467 0H3.061519C3.159153 0 3.305604 0 3.305604-.153425C3.305604-.209215 3.277709-.237111 3.228892-.299875L2.099128-1.652802Z"></path>
+<path id="tz_fig_quadro_8021q_g1-40" d="M2.127024-5.230386C2.008468-5.230386 1.994521-5.230386 1.910834-5.153674C1.03213-4.38655 .585803-3.145205 .585803-1.743462C.585803-.425405 .983313 .843836 1.903861 1.652802C1.994521 1.743462 2.008468 1.743462 2.127024 1.743462H2.461768C2.440847 1.729514 1.764384 1.150685 1.443587 .062765C1.276214-.481196 1.192528-1.053051 1.192528-1.743462C1.192528-4.156413 2.322291-5.111831 2.461768-5.230386H2.127024Z"></path>
+<path id="tz_fig_quadro_8021q_g1-41" d="M.746202 1.743462C.864757 1.743462 .878705 1.743462 .962391 1.66675C1.841096 .899626 2.287422-.341719 2.287422-1.743462C2.287422-3.061519 1.889913-4.33076 .969365-5.139726C.878705-5.230386 .864757-5.230386 .746202-5.230386H.411457C.432379-5.216438 1.108842-4.637609 1.429639-3.549689C1.597011-3.005729 1.680697-2.433873 1.680697-1.743462C1.680697 .669489 .550934 1.624907 .411457 1.743462H.746202Z"></path>
+<path id="tz_fig_quadro_8021q_g1-46" d="M1.338979-.627646H.711333V0H1.338979V-.627646Z"></path>
+<path id="tz_fig_quadro_8021q_g1-52" d="M2.761644-1.164633H3.486924V-1.624907H2.761644V-4.574844H2.071233L.209215-1.624907V-1.164633H2.161893V0H2.761644V-1.164633ZM.801993-1.624907C1.011208-1.952677 2.21071-3.814695 2.21071-4.233126V-1.624907H.801993Z"></path>
+<path id="tz_fig_quadro_8021q_g1-65" d="M2.803487-4.839851H2.127024L.209215 0H.781071L1.325031-1.380822H3.445081L3.989041 0H4.721295L2.803487-4.839851ZM2.39203-4.309838L3.270735-1.792279H1.499377L2.39203-4.309838Z"></path>
+<path id="tz_fig_quadro_8021q_g1-67" d="M4.316812-.850809C3.828643-.550934 3.605479-.418431 2.908095-.418431C1.827148-.418431 1.171606-1.429639 1.171606-2.433873C1.171606-3.466002 1.889913-4.435367 2.908095-4.435367C3.368369-4.435367 3.84259-4.288917 4.163387-4.044832L4.274969-4.679452C3.7868-4.860772 3.396264-4.916563 2.887173-4.916563C1.506351-4.916563 .474222-3.772852 .474222-2.426899C.474222-.990286 1.569116 .069738 2.929016 .069738C3.612453 .069738 3.898381-.069738 4.358655-.320797L4.316812-.850809Z"></path>
+<path id="tz_fig_quadro_8021q_g1-77" d="M3.884433-2.419925C3.800747-2.21071 3.29863-.983313 3.228892-.690411H3.221918C3.173101-.892653 2.852304-1.694645 2.782565-1.875965L1.583064-4.839851H.732254V0H1.318057V-4.281943H1.325031C1.380822-4.037858 1.743462-3.11731 1.778331-3.040598L2.942964-.146451H3.493898L4.533001-2.712827C4.533001-2.719801 5.014197-3.905355 5.132752-4.288917H5.139726V0H5.725529V-4.839851H4.867746L3.884433-2.419925Z"></path>
+<path id="tz_fig_quadro_8021q_g1-97" d="M2.970859-2.008468C2.970859-2.719801 2.426899-3.200996 1.736488-3.200996C1.297136-3.200996 .962391-3.110336 .571856-2.901121L.613699-2.39203C.843836-2.545455 1.185554-2.75467 1.736488-2.75467C2.043337-2.75467 2.364134-2.524533 2.364134-2.001494V-1.72254C1.332005-1.687671 .313823-1.471482 .313823-.822914C.313823-.474222 .550934 .069738 1.164633 .069738C1.464508 .069738 2.015442 .006974 2.385056-.265006V0H2.970859V-2.008468ZM2.364134-.990286C2.364134-.850809 2.364134-.669489 2.12005-.523039C1.896887-.397509 1.624907-.390535 1.548194-.390535C1.164633-.390535 .871731-.564882 .871731-.829888C.871731-1.276214 2.050311-1.318057 2.364134-1.332005V-.990286Z"></path>
+<path id="tz_fig_quadro_8021q_g1-98" d="M1.17858-4.839851H.592777V0H1.199502V-.327771C1.352927-.195268 1.687671 .069738 2.196762 .069738C2.956912 .069738 3.57061-.641594 3.57061-1.555168C3.57061-2.399004 3.089415-3.166127 2.39203-3.166127C1.952677-3.166127 1.527273-3.02665 1.17858-2.768618V-4.839851ZM1.199502-2.196762C1.199502-2.308344 1.199502-2.39203 1.443587-2.552428C1.548194-2.615193 1.736488-2.705853 1.973599-2.705853C2.440847-2.705853 2.963885-2.39203 2.963885-1.555168C2.963885-.704359 2.385056-.390535 1.896887-.390535C1.638854-.390535 1.39477-.509091 1.199502-.822914V-2.196762Z"></path>
+<path id="tz_fig_quadro_8021q_g1-100" d="M3.228892-4.839851H2.643088V-2.796513C2.196762-3.124284 1.743462-3.166127 1.54122-3.166127C.808966-3.166127 .251059-2.433873 .251059-1.548194S.801993 .069738 1.520299 .069738C1.952677 .069738 2.357161-.125529 2.622167-.36264V0H3.228892V-4.839851ZM2.622167-.864757C2.447821-.578829 2.182814-.390535 1.84807-.390535C1.3599-.390535 .857783-.732254 .857783-1.54122C.857783-2.412951 1.45056-2.705853 1.924782-2.705853C2.203736-2.705853 2.440847-2.587298 2.622167-2.350187V-.864757Z"></path>
+<path id="tz_fig_quadro_8021q_g1-101" d="M2.998755-.760149C2.608219-.481196 2.168867-.390535 1.868991-.390535C1.262267-.390535 .801993-.885679 .781071-1.527273H3.068493C3.068493-1.84807 3.033624-2.315318 2.761644-2.712827C2.510585-3.068493 2.092154-3.200996 1.750436-3.200996C.899626-3.200996 .244085-2.454795 .244085-1.569116C.244085-.676463 .941469 .069738 1.862017 .069738C2.266501 .069738 2.684932-.048817 3.040598-.265006L2.998755-.760149ZM.829888-1.945704C.990286-2.503611 1.401743-2.740722 1.750436-2.740722C2.057285-2.740722 2.510585-2.594271 2.643088-1.945704H.829888Z"></path>
+<path id="tz_fig_quadro_8021q_g1-103" d="M3.507846-3.166127C3.354421-3.166127 2.887173-3.159153 2.357161-2.956912L2.343213-2.949938C2.092154-3.11731 1.84807-3.166127 1.645828-3.166127C.962391-3.166127 .4533-2.629141 .4533-2.02939C.4533-1.785305 .536986-1.534247 .697385-1.338979C.599751-1.220423 .495143-1.025156 .495143-.760149C.495143-.488169 .606725-.313823 .669489-.230137C.285928-.006974 .209215 .313823 .209215 .481196C.209215 1.011208 .941469 1.429639 1.84807 1.429639C2.761644 1.429639 3.486924 1.011208 3.486924 .481196C3.486924-.502117 2.266501-.502117 1.966625-.502117H1.318057C1.206476-.502117 .9066-.502117 .9066-.864757C.9066-1.004234 .955417-1.073973 .962391-1.08792C1.206476-.934496 1.45056-.885679 1.638854-.885679C2.322291-.885679 2.831382-1.422665 2.831382-2.022416C2.831382-2.245579 2.768618-2.447821 2.643088-2.636115C2.615193-2.677958 2.615193-2.684932 2.615193-2.691905C2.615193-2.719801 3.033624-2.719801 3.068493-2.719801C3.075467-2.719801 3.340473-2.719801 3.591532-2.691905L3.507846-3.166127ZM1.645828-1.318057C1.26924-1.318057 .990286-1.555168 .990286-2.022416C.990286-2.566376 1.338979-2.733748 1.638854-2.733748C2.015442-2.733748 2.294396-2.496638 2.294396-2.02939C2.294396-1.48543 1.945704-1.318057 1.645828-1.318057ZM1.973599 .041843C2.133998 .041843 2.956912 .041843 2.956912 .488169C2.956912 .788045 2.433873 .99726 1.84807 .99726S.739228 .788045 .739228 .488169C.739228 .4533 .739228 .041843 1.30411 .041843H1.973599Z"></path>
+<path id="tz_fig_quadro_8021q_g1-105" d="M1.227397-4.78406H.523039V-4.079701H1.227397V-4.78406ZM1.171606-3.096389H.585803V0H1.171606V-3.096389Z"></path>
+<path id="tz_fig_quadro_8021q_g1-109" d="M5.300125-2.064259C5.300125-2.608219 5.139726-3.166127 4.281943-3.166127C3.696139-3.166127 3.333499-2.824408 3.166127-2.601245C3.096389-2.789539 2.922042-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-1.694645C3.242839-2.154919 3.438107-2.705853 3.975093-2.705853C4.6934-2.705853 4.6934-2.217684 4.6934-2.015442V0H5.300125V-2.064259Z"></path>
+<path id="tz_fig_quadro_8021q_g1-110" d="M3.242839-2.064259C3.242839-2.608219 3.082441-3.166127 2.224658-3.166127C1.827148-3.166127 1.443587-3.005729 1.136737-2.636115V-3.145205H.578829V0H1.185554V-1.694645C1.185554-2.154919 1.380822-2.705853 1.917808-2.705853C2.636115-2.705853 2.636115-2.217684 2.636115-2.015442V0H3.242839V-2.064259Z"></path>
+<path id="tz_fig_quadro_8021q_g1-111" d="M3.486924-1.527273C3.486924-2.447821 2.75467-3.200996 1.84807-3.200996S.209215-2.440847 .209215-1.527273C.209215-.641594 .948443 .069738 1.84807 .069738C2.75467 .069738 3.486924-.641594 3.486924-1.527273ZM1.84807-.411457C1.297136-.411457 .81594-.81594 .81594-1.603985S1.332005-2.740722 1.84807-2.740722C2.371108-2.740722 2.880199-2.378082 2.880199-1.603985C2.880199-.808966 2.385056-.411457 1.84807-.411457Z"></path>
+<path id="tz_fig_quadro_8021q_g1-112" d="M1.199502-.327771C1.569116 .006974 1.966625 .069738 2.203736 .069738C2.942964 .069738 3.57061-.63462 3.57061-1.555168C3.57061-2.39203 3.110336-3.166127 2.419925-3.166127C2.106102-3.166127 1.583064-3.075467 1.17858-2.761644V-3.096389H.592777V1.352927H1.199502V-.327771ZM1.199502-2.315318C1.3599-2.510585 1.63188-2.684932 1.966625-2.684932C2.524533-2.684932 2.963885-2.168867 2.963885-1.555168C2.963885-.864757 2.440847-.390535 1.896887-.390535C1.792279-.390535 1.617933-.404483 1.436613-.550934C1.227397-.711333 1.199502-.81594 1.199502-.948443V-2.315318Z"></path>
+<path id="tz_fig_quadro_8021q_g1-113" d="M3.228892-3.166127H2.643088V-2.698879C2.39203-2.977833 2.022416-3.166127 1.617933-3.166127C.878705-3.166127 .251059-2.468742 .251059-1.54122C.251059-.669489 .781071 .069738 1.478456 .069738C1.715567 .069738 2.182814 .013948 2.622167-.341719V1.352927H3.228892V-3.166127ZM2.643088-.857783C2.39203-.467248 2.057285-.390535 1.855044-.390535C1.290162-.390535 .857783-.920548 .857783-1.54122C.857783-2.224658 1.380822-2.684932 1.924782-2.684932C2.385056-2.684932 2.643088-2.231631 2.643088-1.93873V-.857783Z"></path>
+<path id="tz_fig_quadro_8021q_g1-114" d="M1.17858-1.48543C1.17858-2.238605 1.806227-2.643088 2.419925-2.650062V-3.166127C1.834122-3.159153 1.408717-2.873225 1.129763-2.503611V-3.145205H.592777V0H1.17858V-1.48543Z"></path>
+<path id="tz_fig_quadro_8021q_g1-115" d="M2.545455-2.984807C2.071233-3.180075 1.72254-3.200996 1.471482-3.200996C1.297136-3.200996 .244085-3.200996 .244085-2.273474C.244085-1.945704 .425405-1.764384 .516065-1.680697C.760149-1.436613 1.053051-1.380822 1.422665-1.311083C1.750436-1.248319 2.127024-1.17858 2.127024-.843836C2.127024-.404483 1.548194-.404483 1.45056-.404483C1.004234-.404483 .585803-.564882 .306849-.760149L.209215-.237111C.446326-.118555 .871731 .069738 1.45056 .069738C1.764384 .069738 2.071233 .020922 2.329265-.167372C2.587298-.36264 2.670984-.669489 2.670984-.9066C2.670984-1.03213 2.657036-1.30411 2.364134-1.569116C2.106102-1.799253 1.855044-1.84807 1.520299-1.910834C1.108842-1.987547 .788045-2.050311 .788045-2.357161C.788045-2.75467 1.297136-2.75467 1.401743-2.75467C1.799253-2.75467 2.106102-2.670984 2.454795-2.489664L2.545455-2.984807Z"></path>
+<path id="tz_fig_quadro_8021q_g1-116" d="M1.311083-2.657036H2.343213V-3.096389H1.311083V-3.982067H.774097V-3.096389H.139477V-2.657036H.753176V-.892653C.753176-.425405 .871731 .069738 1.373848 .069738S2.259527-.09066 2.468742-.188294L2.350187-.63462C2.12005-.467248 1.875965-.411457 1.680697-.411457C1.387796-.411457 1.311083-.697385 1.311083-1.018182V-2.657036Z"></path>
+<path id="tz_fig_quadro_8021q_g1-117" d="M3.242839-3.096389H2.636115V-1.073973C2.636115-.516065 2.161893-.341719 1.75741-.341719C1.241345-.341719 1.185554-.481196 1.185554-.801993V-3.096389H.578829V-.760149C.578829-.139477 .850809 .069738 1.338979 .069738C1.624907 .069738 2.238605 .013948 2.657036-.320797V0H3.242839V-3.096389Z"></path>
+<path id="tz_fig_quadro_8021q_g1-121" d="M3.305604-3.096389H2.740722C2.175841-1.764384 1.785305-.864757 1.75741-.439352C1.743462-.63462 1.617933-.983313 1.492403-1.311083C1.380822-1.590037 1.26924-1.868991 1.143711-2.140971L.704359-3.096389H.104608L1.548194 0C1.464508 .202242 1.325031 .523039 1.283188 .613699C1.136737 .9066 1.039103 1.004234 .850809 1.004234C.822914 1.004234 .564882 1.004234 .265006 .878705L.306849 1.366874C.369614 1.380822 .627646 1.422665 .843836 1.422665C1.12279 1.422665 1.373848 1.318057 1.66675 .648568L3.305604-3.096389Z"></path>
+</defs>
+<g id="tz_fig_quadro_8021q_page1">
+<g stroke-miterlimit="10" transform="translate(-68.014948,-33.248502)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g transform="translate(3.53297,26.70274)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g0-113"></use>
+<use x="-64.101822" y="-33.248502" href="#tz_fig_quadro_8021q_g0-117"></use>
+<use x="-60.188696" y="-33.248502" href="#tz_fig_quadro_8021q_g0-97"></use>
+<use x="-56.527402" y="-33.248502" href="#tz_fig_quadro_8021q_g0-100"></use>
+<use x="-52.614276" y="-33.248502" href="#tz_fig_quadro_8021q_g0-114"></use>
+<use x="-50.018437" y="-33.248502" href="#tz_fig_quadro_8021q_g0-111"></use>
+<use x="-43.625707" y="-33.248502" href="#tz_fig_quadro_8021q_g0-69"></use>
+<use x="-39.150797" y="-33.248502" href="#tz_fig_quadro_8021q_g0-116"></use>
+<use x="-36.332183" y="-33.248502" href="#tz_fig_quadro_8021q_g0-104"></use>
+<use x="-32.419057" y="-33.248502" href="#tz_fig_quadro_8021q_g0-101"></use>
+<use x="-28.854625" y="-33.248502" href="#tz_fig_quadro_8021q_g0-114"></use>
+<use x="-26.258785" y="-33.248502" href="#tz_fig_quadro_8021q_g0-110"></use>
+<use x="-22.34566" y="-33.248502" href="#tz_fig_quadro_8021q_g0-101"></use>
+<use x="-18.781227" y="-33.248502" href="#tz_fig_quadro_8021q_g0-116"></use>
+<use x="-13.405522" y="-33.248502" href="#tz_fig_quadro_8021q_g0-99"></use>
+<use x="-9.996066" y="-33.248502" href="#tz_fig_quadro_8021q_g0-111"></use>
+<use x="-6.160428" y="-33.248502" href="#tz_fig_quadro_8021q_g0-109"></use>
+<use x="-.116392" y="-33.248502" href="#tz_fig_quadro_8021q_g0-117"></use>
+<use x="3.796734" y="-33.248502" href="#tz_fig_quadro_8021q_g0-109"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M.4-11.38109H62.99604V11.38109H.4Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(11.45367,-2.43054)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g1-77"></use>
+<use x="-61.549526" y="-33.248502" href="#tz_fig_quadro_8021q_g1-65"></use>
+<use x="-56.815478" y="-33.248502" href="#tz_fig_quadro_8021q_g1-67"></use>
+<use x="-49.611486" y="-33.248502" href="#tz_fig_quadro_8021q_g1-100"></use>
+<use x="-45.785505" y="-33.248502" href="#tz_fig_quadro_8021q_g1-101"></use>
+<use x="-42.492252" y="-33.248502" href="#tz_fig_quadro_8021q_g1-115"></use>
+<use x="-39.651824" y="-33.248502" href="#tz_fig_quadro_8021q_g1-116"></use>
+<use x="-36.976055" y="-33.248502" href="#tz_fig_quadro_8021q_g1-105"></use>
+<use x="-35.208358" y="-33.248502" href="#tz_fig_quadro_8021q_g1-110"></use>
+<use x="-31.382377" y="-33.248502" href="#tz_fig_quadro_8021q_g1-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M63.79602-11.38109H126.39206V11.38109H63.79602Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(75.47922,-1.75)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g1-77"></use>
+<use x="-61.549526" y="-33.248502" href="#tz_fig_quadro_8021q_g1-65"></use>
+<use x="-56.815478" y="-33.248502" href="#tz_fig_quadro_8021q_g1-67"></use>
+<use x="-49.611486" y="-33.248502" href="#tz_fig_quadro_8021q_g1-111"></use>
+<use x="-46.112408" y="-33.248502" href="#tz_fig_quadro_8021q_g1-114"></use>
+<use x="-43.581933" y="-33.248502" href="#tz_fig_quadro_8021q_g1-105"></use>
+<use x="-41.814235" y="-33.248502" href="#tz_fig_quadro_8021q_g1-103"></use>
+<use x="-38.109325" y="-33.248502" href="#tz_fig_quadro_8021q_g1-101"></use>
+<use x="-34.816072" y="-33.248502" href="#tz_fig_quadro_8021q_g1-109"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M127.19205-11.38109H161.33533V11.38109H127.19205Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(138.15079,-1.7179)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g1-116"></use>
+<use x="-65.33918" y="-33.248502" href="#tz_fig_quadro_8021q_g1-105"></use>
+<use x="-63.571482" y="-33.248502" href="#tz_fig_quadro_8021q_g1-112"></use>
+<use x="-59.539685" y="-33.248502" href="#tz_fig_quadro_8021q_g1-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M162.13531-11.38109H247.49356V11.38109H162.13531Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(192.80373,-2.43054)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g1-100"></use>
+<use x="-64.188967" y="-33.248502" href="#tz_fig_quadro_8021q_g1-97"></use>
+<use x="-60.62935" y="-33.248502" href="#tz_fig_quadro_8021q_g1-100"></use>
+<use x="-56.80337" y="-33.248502" href="#tz_fig_quadro_8021q_g1-111"></use>
+<use x="-53.09846" y="-33.248502" href="#tz_fig_quadro_8021q_g1-115"></use>
+<use x="-50.258031" y="-33.248502" href="#tz_fig_quadro_8021q_g1-46"></use>
+<use x="-48.199748" y="-33.248502" href="#tz_fig_quadro_8021q_g1-46"></use>
+<use x="-46.141465" y="-33.248502" href="#tz_fig_quadro_8021q_g1-46"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g transform="translate(3.53297,-41.58385)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g0-113"></use>
+<use x="-64.101822" y="-33.248502" href="#tz_fig_quadro_8021q_g0-117"></use>
+<use x="-60.188696" y="-33.248502" href="#tz_fig_quadro_8021q_g0-97"></use>
+<use x="-56.527402" y="-33.248502" href="#tz_fig_quadro_8021q_g0-100"></use>
+<use x="-52.614276" y="-33.248502" href="#tz_fig_quadro_8021q_g0-114"></use>
+<use x="-50.018437" y="-33.248502" href="#tz_fig_quadro_8021q_g0-111"></use>
+<use x="-43.625707" y="-33.248502" href="#tz_fig_quadro_8021q_g0-99"></use>
+<use x="-40.216252" y="-33.248502" href="#tz_fig_quadro_8021q_g0-111"></use>
+<use x="-36.380614" y="-33.248502" href="#tz_fig_quadro_8021q_g0-109"></use>
+<use x="-27.779486" y="-33.248502" href="#tz_fig_quadro_8021q_g0-56"></use>
+<use x="-23.943849" y="-33.248502" href="#tz_fig_quadro_8021q_g0-48"></use>
+<use x="-20.108211" y="-33.248502" href="#tz_fig_quadro_8021q_g0-50"></use>
+<use x="-16.272573" y="-33.248502" href="#tz_fig_quadro_8021q_g0-46"></use>
+<use x="-14.141663" y="-33.248502" href="#tz_fig_quadro_8021q_g0-49"></use>
+<use x="-10.306026" y="-33.248502" href="#tz_fig_quadro_8021q_g0-81"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M.4-79.6677H62.99604V-56.90552H.4Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(11.45367,-70.71715)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g1-77"></use>
+<use x="-61.549526" y="-33.248502" href="#tz_fig_quadro_8021q_g1-65"></use>
+<use x="-56.815478" y="-33.248502" href="#tz_fig_quadro_8021q_g1-67"></use>
+<use x="-49.611486" y="-33.248502" href="#tz_fig_quadro_8021q_g1-100"></use>
+<use x="-45.785505" y="-33.248502" href="#tz_fig_quadro_8021q_g1-101"></use>
+<use x="-42.492252" y="-33.248502" href="#tz_fig_quadro_8021q_g1-115"></use>
+<use x="-39.651824" y="-33.248502" href="#tz_fig_quadro_8021q_g1-116"></use>
+<use x="-36.976055" y="-33.248502" href="#tz_fig_quadro_8021q_g1-105"></use>
+<use x="-35.208358" y="-33.248502" href="#tz_fig_quadro_8021q_g1-110"></use>
+<use x="-31.382377" y="-33.248502" href="#tz_fig_quadro_8021q_g1-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M63.79602-79.6677H126.39206V-56.90552H63.79602Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(75.47922,-70.0366)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g1-77"></use>
+<use x="-61.549526" y="-33.248502" href="#tz_fig_quadro_8021q_g1-65"></use>
+<use x="-56.815478" y="-33.248502" href="#tz_fig_quadro_8021q_g1-67"></use>
+<use x="-49.611486" y="-33.248502" href="#tz_fig_quadro_8021q_g1-111"></use>
+<use x="-46.112408" y="-33.248502" href="#tz_fig_quadro_8021q_g1-114"></use>
+<use x="-43.581933" y="-33.248502" href="#tz_fig_quadro_8021q_g1-105"></use>
+<use x="-41.814235" y="-33.248502" href="#tz_fig_quadro_8021q_g1-103"></use>
+<use x="-38.109325" y="-33.248502" href="#tz_fig_quadro_8021q_g1-101"></use>
+<use x="-34.816072" y="-33.248502" href="#tz_fig_quadro_8021q_g1-109"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#e5f0fc">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#e5f0fc">
+<path d="M127.39204-79.6677H164.3806V-56.90552H127.39204Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(134.51126,-70.71715)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g0-48"></use>
+<use x="-64.17931" y="-33.248502" href="#tz_fig_quadro_8021q_g0-120"></use>
+<use x="-60.692367" y="-33.248502" href="#tz_fig_quadro_8021q_g0-56"></use>
+<use x="-56.856729" y="-33.248502" href="#tz_fig_quadro_8021q_g0-49"></use>
+<use x="-53.021091" y="-33.248502" href="#tz_fig_quadro_8021q_g0-48"></use>
+<use x="-49.185453" y="-33.248502" href="#tz_fig_quadro_8021q_g0-48"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#e5f0fc">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#e5f0fc">
+<path d="M165.58058-79.6677H191.18803V-56.90552H165.58058Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(172.40512,-70.0366)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g0-112"></use>
+<use x="-64.314921" y="-33.248502" href="#tz_fig_quadro_8021q_g0-114"></use>
+<use x="-61.719082" y="-33.248502" href="#tz_fig_quadro_8021q_g0-105"></use>
+<use x="-59.936865" y="-33.248502" href="#tz_fig_quadro_8021q_g0-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#e5f0fc">
+<g stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#e5f0fc">
+<path d="M192.38802-79.6677H229.37658V-56.90552H192.38802Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(197.53362,-70.71715)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g0-86"></use>
+<use x="-62.900765" y="-33.248502" href="#tz_fig_quadro_8021q_g0-73"></use>
+<use x="-60.595511" y="-33.248502" href="#tz_fig_quadro_8021q_g0-68"></use>
+<use x="-55.055146" y="-33.248502" href="#tz_fig_quadro_8021q_g0-61"></use>
+<use x="-49.088598" y="-33.248502" href="#tz_fig_quadro_8021q_g0-49"></use>
+<use x="-45.25296" y="-33.248502" href="#tz_fig_quadro_8021q_g0-48"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M230.37656-79.6677H264.51984V-56.90552H230.37656Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(241.3353,-70.0045)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g1-116"></use>
+<use x="-65.33918" y="-33.248502" href="#tz_fig_quadro_8021q_g1-105"></use>
+<use x="-63.571482" y="-33.248502" href="#tz_fig_quadro_8021q_g1-112"></use>
+<use x="-59.539685" y="-33.248502" href="#tz_fig_quadro_8021q_g1-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<g stroke="#6c757d">
+<g stroke-width="0.8">
+<g fill="#f1f2f2">
+<path d="M265.31982-79.6677H322.22531V-56.90552H265.31982Z"></path>
+</g>
+</g>
+</g>
+<g transform="translate(281.76186,-70.71715)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g1-100"></use>
+<use x="-64.188967" y="-33.248502" href="#tz_fig_quadro_8021q_g1-97"></use>
+<use x="-60.62935" y="-33.248502" href="#tz_fig_quadro_8021q_g1-100"></use>
+<use x="-56.80337" y="-33.248502" href="#tz_fig_quadro_8021q_g1-111"></use>
+<use x="-53.09846" y="-33.248502" href="#tz_fig_quadro_8021q_g1-115"></use>
+<use x="-50.258031" y="-33.248502" href="#tz_fig_quadro_8021q_g1-46"></use>
+<use x="-48.199748" y="-33.248502" href="#tz_fig_quadro_8021q_g1-46"></use>
+<use x="-46.141465" y="-33.248502" href="#tz_fig_quadro_8021q_g1-46"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M126.79205-14.62634L144.47441-50.58879" fill="none"></path>
+<g transform="matrix(0.44122,-0.89734,0.89734,0.44122,144.47441,-50.58879)">
+<path d="M3.2 0L-1.92 2.56L0 0L-1.92-2.56" stroke="none"></path>
+</g>
+<g transform="translate(140.27216,-35.7933)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-68.014948,-33.248502)scale(-1,-1)">
+<g fill="#2780e3">
+<g stroke="none">
+<g fill="#2780e3">
+<use x="-68.014948" y="-33.248502" href="#tz_fig_quadro_8021q_g1-97"></use>
+<use x="-61.985391" y="-33.248502" href="#tz_fig_quadro_8021q_g1-116"></use>
+<use x="-59.309623" y="-33.248502" href="#tz_fig_quadro_8021q_g1-97"></use>
+<use x="-55.750006" y="-33.248502" href="#tz_fig_quadro_8021q_g1-103"></use>
+<use x="-49.575156" y="-33.248502" href="#tz_fig_quadro_8021q_g1-101"></use>
+<use x="-46.281902" y="-33.248502" href="#tz_fig_quadro_8021q_g1-110"></use>
+<use x="-42.455922" y="-33.248502" href="#tz_fig_quadro_8021q_g1-116"></use>
+<use x="-39.780153" y="-33.248502" href="#tz_fig_quadro_8021q_g1-114"></use>
+<use x="-37.249678" y="-33.248502" href="#tz_fig_quadro_8021q_g1-97"></use>
+<use x="-31.220121" y="-33.248502" href="#tz_fig_quadro_8021q_g1-97"></use>
+<use x="-27.660504" y="-33.248502" href="#tz_fig_quadro_8021q_g1-113"></use>
+<use x="-23.834523" y="-33.248502" href="#tz_fig_quadro_8021q_g1-117"></use>
+<use x="-20.008542" y="-33.248502" href="#tz_fig_quadro_8021q_g1-105"></use>
+<use x="-15.770905" y="-33.248502" href="#tz_fig_quadro_8021q_g1-40"></use>
+<use x="-12.889308" y="-33.248502" href="#tz_fig_quadro_8021q_g1-52"></use>
+<use x="-6.714458" y="-33.248502" href="#tz_fig_quadro_8021q_g1-98"></use>
+<use x="-3.09431" y="-33.248502" href="#tz_fig_quadro_8021q_g1-121"></use>
+<use x=".320015" y="-33.248502" href="#tz_fig_quadro_8021q_g1-116"></use>
+<use x="2.995783" y="-33.248502" href="#tz_fig_quadro_8021q_g1-101"></use>
+<use x="6.289036" y="-33.248502" href="#tz_fig_quadro_8021q_g1-115"></use>
+<use x="9.129465" y="-33.248502" href="#tz_fig_quadro_8021q_g1-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-quadro-8021q-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;23.1: A etiqueta 802.1Q: 4 bytes entre o MAC de origem e o tipo — com o VID dizendo “este quadro pertence à VLAN 10”.
+</figcaption>
+</figure>
+</div>
+<p>Com a etiqueta, nasce o vocabulário que você usará todos os dias:</p>
+<ul>
+<li>Quadro <strong>tagged</strong>: carrega a etiqueta — viaja pelos enlaces entre equipamentos de rede;</li>
+<li>Quadro <strong>untagged</strong>: quadro comum, sem etiqueta — o que computadores, câmeras e ONUs falam (dispositivos finais em geral ignoram VLANs);</li>
+<li>Porta/enlace <strong>trunk</strong> (tronco): transporta <strong>várias</strong> VLANs, todas tagged — a fibra do POP à torre;</li>
+<li>Porta <strong>access</strong> (acesso): pertence a <strong>uma</strong> VLAN; recebe/entrega quadros untagged e o switch etiqueta/desetiqueta por ela — a porta do computador;</li>
+<li><strong>VLAN nativa</strong>: a VLAN dos quadros untagged que chegam a um trunk (tradicionalmente a VID 1) — fonte clássica de surpresas de segurança; o <a href="03-bridge-vlan-filtering.html" class="quarto-xref"><span>Capítulo 24</span></a> a domará com o conceito de <strong>PVID</strong>.</li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Analogia para guardar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O 802.1Q transforma um cabo num <strong>feixe de canos coloridos</strong>: cada quadro ganha uma pulseira de cor (o VID) ao entrar, viaja pelo cano da sua cor e perde a pulseira ao sair para um dispositivo final. Trunk é o feixe inteiro; porta access é a boca de um cano só — e quem decide a cor é o switch, nunca o visitante.</p>
+</div>
+</div>
+</section>
+<section id="vlans-no-routeros-a-interface-vlan" class="level2" data-number="23.2">
+<h2 data-number="23.2" class="anchored" data-anchor-id="vlans-no-routeros-a-interface-vlan"><span class="header-section-number">23.2</span> VLANs no RouterOS: a interface <code>vlan</code></h2>
+<p>No RouterOS, cada VLAN que o roteador deve <strong>enxergar em camada 3</strong> vira uma interface virtual sobre a interface física (ou sobre uma bridge):</p>
+<pre class="routeros"><code>/interface vlan add name=vlan10-clientes vlan-id=10 interface=ether2
+/interface vlan add name=vlan20-gerencia vlan-id=20 interface=ether2</code></pre>
+<p>Cada <code>vlan</code> é uma interface completa: recebe IP, DHCP server, entra em interface lists, aparece no firewall — tudo que uma <code>ether</code> faz. Os quadros que saem por ela nascem tagged com o VID configurado; os que chegam tagged com aquele VID são entregues a ela.</p>
+<p>O desenho que isso habilita é o <strong>router-on-a-stick</strong> (“roteador no palito”): um roteador pendurado por <strong>um</strong> cabo trunk num switch, roteando entre todas as VLANs:</p>
+<pre class="routeros"><code>/ip address add address=10.10.0.1/24 interface=vlan10-clientes
+/ip address add address=10.20.0.1/24 interface=vlan20-gerencia</code></pre>
+<p>Duas redes, um cabo. O tráfego <strong>dentro</strong> de cada VLAN é comutado pelo switch (camada 2, sem tocar o roteador); o tráfego <strong>entre</strong> VLANs sobe o palito, é <strong>roteado</strong> — e aqui está o prêmio de segurança: a travessia passa pelo firewall <code>forward</code>, exatamente o que faltava no desafio do <a href="01-bridge-hardware-offload.html" class="quarto-xref"><span>Capítulo 22</span></a>. Segmentar em VLANs devolve ao firewall a visão que a bridge única roubava.</p>
+<p>Três notas de campo antes do laboratório:</p>
+<ol type="1">
+<li><strong>Os dois lados do enlace devem concordar</strong>: VID 10 aqui é VID 10 lá. Uma ponta tagged e outra untagged = silêncio absoluto (o quadro chega, a etiqueta não casa, ninguém reclama). É o defeito número 1 de VLAN — e o motivo de documentar VIDs como se documenta endereçamento;</li>
+<li><strong>MTU</strong>: a tag rouba 4 bytes. Equipamentos modernos aceitam quadros de 1522 bytes sem drama; em rádios antigos e caminhos com túneis, VLANs somam-se ao problema de MTU que você já conhece do <code>change-mss</code> (<a href="../v03-firewall/06-mangle-raw.html" class="quarto-xref"><span>Capítulo 20</span></a>);</li>
+<li><strong><code>/interface vlan</code> não filtra</strong> — ela apenas dá ao roteador presença nas VLANs. Impor “a porta X só fala VLAN 10” é papel do <strong>bridge VLAN filtering</strong>, o próximo capítulo. Aqui as duas pontas cooperam; lá, o switch policia.</li>
+</ol>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>VLAN = <strong>um cabo, várias redes</strong>: a tag 802.1Q (VID) faz cada quadro pertencer a uma rede lógica, trunk transporta muitas (tagged), access entrega uma (untagged). No RouterOS, <code>/interface vlan</code> dá ao roteador um “pé” em cada VLAN — e rotear <strong>entre</strong> VLANs devolve o tráfego ao firewall. Regra de ouro do campo: as duas pontas do enlace precisam contar a mesma história de VIDs.</p>
+</div>
+</div>
+</section>
+<section id="laboratório" class="level2" data-number="23.3">
+<h2 data-number="23.3" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">23.3</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="23.3.1">
+<h3 data-number="23.3.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">23.3.1</span> Ambiente</h3>
+<p>Topologia do volume (<a href="01-bridge-hardware-offload.html" class="quarto-xref"><span>Capítulo 22</span></a>): <code>lab-r1</code> com a <code>bridge-lan</code>, e <code>lab-r2</code>/<code>lab-r3</code> na rede <code>lab-a</code>. Neste capítulo, r1 e r2 conversarão por VLANs <strong>sobre o mesmo enlace</strong> que já os liga; o r3 fará o papel de “intruso sem VLAN” na prova de isolamento.</p>
+</section>
+<section id="comandos-passo-a-passo" class="level3" data-number="23.3.2">
+<h3 data-number="23.3.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">23.3.2</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — as VLANs no r1.</strong> Sobre a bridge da LAN (é o caso realista — o “palito” costuma ser uma bridge/trunk), crie duas VLANs com suas redes:</p>
+<pre class="routeros"><code>/interface vlan add name=vlan10-svc vlan-id=10 interface=bridge-lan comment="servicos"
+/interface vlan add name=vlan20-ger vlan-id=20 interface=bridge-lan comment="gerencia de equipamentos"
+/ip address add address=10.10.0.1/24 interface=vlan10-svc
+/ip address add address=10.20.0.1/24 interface=vlan20-ger</code></pre>
+<p><strong>Passo 2 — o outro lado, no r2.</strong> O r2 precisa contar a mesma história de VIDs sobre a <code>ether2</code>:</p>
+<pre class="routeros"><code>/interface vlan add name=vlan10 vlan-id=10 interface=ether2
+/interface vlan add name=vlan20 vlan-id=20 interface=ether2
+/ip address add address=10.10.0.2/24 interface=vlan10
+/ip address add address=10.20.0.2/24 interface=vlan20</code></pre>
+<p><strong>Passo 3 — provar os canos.</strong> De <code>lab-r2</code>, um ping por cano:</p>
+<pre class="routeros"><code>/ping 10.10.0.1 count=3
+/ping 10.20.0.1 count=3</code></pre>
+<p>Ambos limpos. Repare no que acabou de acontecer: pelo <strong>mesmo cabo</strong> (lab-a) onde já viviam a LAN untagged (<code>192.168.10.0/24</code>) e o DHCP, agora trafegam <strong>mais duas redes</strong>, cada uma no seu cano tagged — três redes, zero cabos novos.</p>
+<p><strong>Passo 4 — a prova do isolamento.</strong> O r3 está no mesmo cabo, <strong>sem</strong> VLANs configuradas. De <code>lab-r3</code>:</p>
+<pre class="routeros"><code>/ping 10.10.0.1 count=3</code></pre>
+<p><code>no route to host</code> — para o r3, a VLAN 10 <strong>não existe</strong>: os quadros tagged passam pela placa dele e são descartados (etiqueta desconhecida). Mesmo que ele tivesse uma rota, não tem interface naquela rede. Agora dê a ele o “crachá” e veja a porta abrir:</p>
+<pre class="routeros"><code>/interface vlan add name=vlan10 vlan-id=10 interface=ether2
+/ip address add address=10.10.0.3/24 interface=vlan10
+/ping 10.10.0.1 count=3</code></pre>
+<p>Funciona. E é exatamente essa a limitação a entender: <strong>quem controla a própria configuração pode “entrar” na VLAN</strong> — num cabo compartilhado, a tag separa, mas não tranca. A tranca (a porta do switch decidindo quais VIDs aceita) é o bridge VLAN filtering do próximo capítulo. Remova o crachá do r3 ao terminar:</p>
+<pre class="routeros"><code>/ip address remove [find interface=vlan10]
+/interface vlan remove [find name=vlan10]</code></pre>
+<p><strong>Passo 5 — o roteador vendo os canos.</strong> Em <code>lab-r1</code>, o torch mostra os quadros por interface — observe a VLAN 10 enquanto o r2 pinga <code>10.10.0.1</code>:</p>
+<pre class="routeros"><code>/tool torch interface=vlan10-svc</code></pre>
+<p>(Interrompa com <code>q</code>.) E as interfaces contam sua natureza:</p>
+<pre class="routeros"><code>/interface vlan print
+/interface print where type=vlan</code></pre>
+</section>
+<section id="verificação" class="level3" data-number="23.3.3">
+<h3 data-number="23.3.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">23.3.3</span> Verificação</h3>
+<ol type="1">
+<li>r1 e r2 se pingam pelas <strong>duas</strong> VLANs, sobre o mesmo enlace da LAN untagged — três redes num cabo;</li>
+<li>O r3 sem configuração de VLAN não alcança <code>10.10.0.1</code> (e você viu o erro certo: sem interface na rede, <code>no route to host</code>);</li>
+<li>Com o “crachá” (interface vlan + IP), o r3 entrou — e você sabe explicar por que isso é uma limitação, não um recurso;</li>
+<li><code>/interface vlan print</code> nos dois roteadores conta a <strong>mesma</strong> história de VIDs (10 e 20).</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="23.3.4">
+<h3 data-number="23.3.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">23.3.4</span> Desafios</h3>
+<ol type="1">
+<li>No r1 as VLANs foram criadas sobre a <code>bridge-lan</code>; no r2, sobre a <code>ether2</code>. Por que essa assimetria funciona — e quando criar a VLAN sobre a bridge é <strong>obrigatório</strong>?</li>
+<li>Um provedor entrega ao cliente corporativo “internet na VLAN 100 e telefonia na VLAN 200” por uma fibra. Desenhe (comandos) o lado do cliente num RB5009: as duas VLANs sobre a <code>sfp-sfpplus1</code>, com DHCP client na 100 e um IP fixo <code>10.200.0.2/30</code> na 200.</li>
+<li>O ping na VLAN 20 entre r1 e r2 funciona — mas deveria? A VLAN 20 é “gerência de equipamentos” e o r2 faz papel de CPE de cliente. Critique o desenho do laboratório com os olhos do <a href="../v03-firewall/07-hardening-completo.html" class="quarto-xref"><span>Capítulo 21</span></a> e proponha a correção (que o <a href="05-segmentacao-rede-provedor.html" class="quarto-xref"><span>Capítulo 26</span></a> consagrará).</li>
+<li>Sobre o quadro da 1: um quadro já tagged com VID 10 pode receber <strong>outra</strong> tag por fora? Investigue o nome da técnica, o EtherType envolvido e um uso clássico de provedor.</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> A tag viaja no quadro — não importa se quem a lê/escreve é uma interface física ou uma bridge: os VIDs casam e pronto. Criar sobre a <strong>bridge é obrigatório</strong> quando os quadros tagged podem chegar <strong>por mais de uma porta</strong> (o trunk pode migrar de porta, ou há redundância): a VLAN sobre a bridge enxerga todas as portas-membro; sobre uma <code>ether</code> específica, só aquele cabo. Regra prática moderna: se existe bridge, crie a VLAN sobre ela (com o filtering do próximo capítulo mandando no resto).</p>
+<p><strong>2.</strong></p>
+<pre class="routeros"><code>/interface vlan add name=vlan100-inet vlan-id=100 interface=sfp-sfpplus1
+/interface vlan add name=vlan200-voz vlan-id=200 interface=sfp-sfpplus1
+/ip dhcp-client add interface=vlan100-inet
+/ip address add address=10.200.0.2/30 interface=vlan200-voz</code></pre>
+<p>(E, sendo o RB5009 a borda do cliente: NAT com <code>out-interface=vlan100-inet</code> e o firewall do Volume 3 — as VLANs entram nas interface lists como qualquer WAN.)</p>
+<p><strong>3.</strong> O defeito: o CPE do cliente <strong>tem um pé na VLAN de gerência</strong> — qualquer cliente curioso (ou comprometido) com acesso ao próprio CPE alcança a rede que administra o parque. Ferido o princípio “gerência intocável” (<a href="../v03-firewall/04-forward-address-lists.html" class="quarto-xref"><span>Capítulo 18</span></a>). Correção: gerência em VLAN que <strong>só existe</strong> entre equipamentos do provedor (o switch não a entrega em portas de cliente — filtering, próximo capítulo), CPEs gerenciados por outra via (a própria sessão PPPoE/túnel dedicado), e firewall barrando a VLAN 20 de qualquer origem não-provedor. No laboratório seguimos didáticos; no POP real, a VLAN 20 jamais desceria ao cliente.</p>
+<p><strong>4.</strong> Pode — é o <strong>QinQ</strong> (802.1ad): uma tag de serviço (S-TAG, EtherType 0x88a8) envelopando a tag do cliente (C-TAG, 0x8100). Uso clássico: o provedor transporta as VLANs <strong>do cliente</strong> (quaisquer VIDs que ele use) através do backbone dentro de uma única VLAN de serviço — “VLAN do cliente 55” viaja intacta por dentro da “VLAN de transporte 1055”. No RouterOS: <code>/interface vlan</code> sobre <code>/interface vlan</code>, ou <code>ethertype=0x88a8</code> no bridge VLAN filtering.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="23.4">
+<h2 data-number="23.4" class="anchored" data-anchor-id="resumo"><span class="header-section-number">23.4</span> Resumo</h2>
+<ul>
+<li>VLAN = redes lógicas sobre o mesmo físico: a tag <strong>802.1Q</strong> (4 bytes,
+<ol class="example" type="1">
+<li>com o <strong>VID</strong> (1–4094) diz a que rede o quadro pertence.</li>
+</ol></li>
+<li>Vocabulário: <strong>tagged</strong> (com etiqueta, entre equipamentos), <strong>untagged</strong> (dispositivos finais), <strong>trunk</strong> (muitas VLANs), <strong>access</strong> (uma, untagged), VLAN nativa (untagged no trunk — cuidado).</li>
+<li><code>/interface vlan</code> sobre ether/bridge dá ao roteador um pé em cada VLAN — IP, DHCP, firewall, tudo normal; <strong>router-on-a-stick</strong> roteia entre VLANs por um cabo, devolvendo a travessia ao firewall.</li>
+<li>As duas pontas devem contar a <strong>mesma história de VIDs</strong> — ponta errada não gera erro, gera silêncio.</li>
+<li>A tag separa, mas <strong>não tranca</strong> num cabo compartilhado: quem configura a própria ponta entra na VLAN — a tranca é o bridge VLAN filtering.</li>
+</ul>
+<p>No próximo capítulo, exatamente ela: <strong>bridge VLAN filtering</strong> — o switch (de software e de hardware) decidindo quais VIDs entram e saem em cada porta: trunk e access de verdade, com PVID e tudo.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<p>A documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> cobre <code>/interface vlan</code> e os cenários de combinação com bridge (incluindo os casos a evitar). O padrão IEEE 802.1Q define tag, VIDs e prioridades; <span class="citation" data-cites="tanenbaum-redes">Tanenbaum; Feamster; Wetherall (<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">2021</a>)</span> o apresenta didaticamente. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+<div id="ref-tanenbaum-redes" class="csl-entry" role="listitem">
+TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Computadores</strong>. 6. ed. Porto Alegre: Bookman, 2021.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html" class="pagination-link" aria-label="Bridge e hardware offload">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Bridge e hardware offload</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="pagination-link" aria-label="Bridge VLAN filtering">
+        <span class="nav-page-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v04-bridge-vlans/02-vlans-8021q.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>

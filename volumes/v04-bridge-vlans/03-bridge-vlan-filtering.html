@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>9&nbsp; Anatomia do terminal – Manual de MikroTik</title>
+<title>24&nbsp; Bridge VLAN filtering – Manual de MikroTik</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -53,8 +53,8 @@ div.csl-indent {
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<link href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" rel="next">
-<link href="../../volumes/v01-primeiros-passos/08-netinstall.html" rel="prev">
+<link href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html" rel="next">
+<link href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html" rel="prev">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/popper.min.js"></script>
@@ -105,7 +105,7 @@ div.csl-indent {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html">Volume 2 — CLI e configuração essencial</a></li><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html">Volume 4 — Bridge, switching e VLANs</a></li><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
@@ -201,16 +201,16 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
  <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link active">
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
   </div>
 </li>
@@ -301,13 +301,13 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
  <span class="menu-text">Volume 4 — Bridge, switching e VLANs</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html" class="sidebar-item-text sidebar-link">
@@ -322,7 +322,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="sidebar-item-text sidebar-link">
+  <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span></a>
   </div>
 </li>
@@ -367,28 +367,31 @@ div.csl-indent {
     <h2 id="toc-title">Índice</h2>
    
   <ul>
-  <li><a href="#a-árvore-e-os-verbos" id="toc-a-árvore-e-os-verbos" class="nav-link active" data-scroll-target="#a-árvore-e-os-verbos"><span class="header-section-number">9.1</span> A árvore e os verbos</a></li>
-  <li><a href="#itens-números-e-o-perigo-escondido" id="toc-itens-números-e-o-perigo-escondido" class="nav-link" data-scroll-target="#itens-números-e-o-perigo-escondido"><span class="header-section-number">9.2</span> Itens, números e o perigo escondido</a></li>
-  <li><a href="#tab-e-o-manual-que-mora-no-equipamento" id="toc-tab-e-o-manual-que-mora-no-equipamento" class="nav-link" data-scroll-target="#tab-e-o-manual-que-mora-no-equipamento"><span class="header-section-number">9.3</span> TAB e <code>?</code>: o manual que mora no equipamento</a></li>
-  <li><a href="#print-afiado-e-export-como-lupa" id="toc-print-afiado-e-export-como-lupa" class="nav-link" data-scroll-target="#print-afiado-e-export-como-lupa"><span class="header-section-number">9.4</span> <code>print</code> afiado e <code>export</code> como lupa</a></li>
-  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">9.5</span> 🧪 Laboratório</a>
+  <li><a href="#do-consentimento-à-lei" id="toc-do-consentimento-à-lei" class="nav-link active" data-scroll-target="#do-consentimento-à-lei"><span class="header-section-number">24.1</span> Do consentimento à lei</a>
   <ul class="collapse">
-  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">9.5.1</span> Ambiente</a></li>
-  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">9.5.2</span> Comandos passo a passo</a></li>
-  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">9.5.3</span> Verificação</a></li>
-  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">9.5.4</span> Desafios</a></li>
+  <li><a href="#peça-1-a-tabela-de-vlans-da-bridge" id="toc-peça-1-a-tabela-de-vlans-da-bridge" class="nav-link" data-scroll-target="#peça-1-a-tabela-de-vlans-da-bridge"><span class="header-section-number">24.1.1</span> Peça 1: a tabela de VLANs da bridge</a></li>
+  <li><a href="#peça-2-o-pvid-a-etiqueta-de-entrada" id="toc-peça-2-o-pvid-a-etiqueta-de-entrada" class="nav-link" data-scroll-target="#peça-2-o-pvid-a-etiqueta-de-entrada"><span class="header-section-number">24.1.2</span> Peça 2: o PVID — a etiqueta de entrada</a></li>
+  <li><a href="#peça-3-frame-types-o-que-a-porta-admite" id="toc-peça-3-frame-types-o-que-a-porta-admite" class="nav-link" data-scroll-target="#peça-3-frame-types-o-que-a-porta-admite"><span class="header-section-number">24.1.3</span> Peça 3: <code>frame-types</code> — o que a porta admite</a></li>
   </ul></li>
-  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">9.6</span> Resumo</a></li>
+  <li><a href="#a-gerência-e-a-pegadinha-do-taggedbridge" id="toc-a-gerência-e-a-pegadinha-do-taggedbridge" class="nav-link" data-scroll-target="#a-gerência-e-a-pegadinha-do-taggedbridge"><span class="header-section-number">24.2</span> A gerência e a pegadinha do <code>tagged=bridge</code></a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">24.3</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">24.3.1</span> Ambiente</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">24.3.2</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">24.3.3</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">24.3.4</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">24.4</span> Resumo</a></li>
   <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v02-cli-configuracao/01-anatomia-terminal.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v04-bridge-vlans/03-bridge-vlan-filtering.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html">Volume 2 — CLI e configuração essencial</a></li><li class="breadcrumb-item"><a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html">Volume 4 — Bridge, switching e VLANs</a></li><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span id="sec-anatomia-terminal" class="quarto-section-identifier"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></h1>
+<h1 class="title"><span id="sec-vlan-filtering" class="quarto-section-identifier"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span></h1>
 </div>
 
 
@@ -417,83 +420,81 @@ div.csl-indent {
 <div class="callout-body-container callout-body">
 <p>Ao final deste capítulo, você será capaz de:</p>
 <ul>
-<li>Navegar pela árvore de menus do RouterOS como quem navega por pastas — caminho absoluto, caminho relativo e o retorno à raiz;</li>
-<li>Usar os cinco verbos que operam quase tudo: <code>print</code>, <code>add</code>, <code>set</code>, <code>remove</code> e <code>enable</code>/<code>disable</code>;</li>
-<li>Entender a <strong>numeração de itens</strong> — por que ela muda, quando usá-la e por que <code>[find ...]</code> é mais seguro;</li>
-<li>Explorar comandos desconhecidos sozinho, com <code>TAB</code> (completar) e <code>?</code> (ajuda embutida);</li>
-<li>Usar <code>export</code> como lupa (<a href="../v01-primeiros-passos/07-backup-export-reset.html" class="quarto-xref"><span>Capítulo 7</span></a>) para conferir qualquer seção da configuração;</li>
-<li>Aplicar truques de produtividade: histórico, <code>/undo</code> e <code>/redo</code>, comentários e flags.</li>
+<li>Ativar o <strong>VLAN filtering</strong> numa bridge e explicar o que muda: o switch passa a <strong>policiar</strong> etiquetas em vez de ignorá-las;</li>
+<li>Configurar portas <strong>trunk</strong> e <strong>access</strong> de verdade, com a tabela <code>/interface bridge vlan</code>, o <strong>PVID</strong> e os <code>frame-types</code>;</li>
+<li>Explicar o caminho de um quadro pelo switch filtrado: o que acontece na entrada (ingress) e na saída (egress) de cada porta;</li>
+<li>Manter o acesso de <strong>gerência</strong> ao próprio switch numa VLAN — incluindo o detalhe que derruba iniciantes: a bridge como membro tagged;</li>
+<li>Aplicar a ordem de configuração que <strong>não</strong> tranca você para fora.</li>
 </ul>
 </div>
 </div>
-<section id="a-árvore-e-os-verbos" class="level2" data-number="9.1">
-<h2 data-number="9.1" class="anchored" data-anchor-id="a-árvore-e-os-verbos"><span class="header-section-number">9.1</span> A árvore e os verbos</h2>
-<p>Você já usou o terminal do RouterOS em todos os capítulos do Volume 1 — agora vamos entendê-lo de verdade. O modelo mental cabe numa frase: <strong>a configuração é uma árvore de menus; em cada menu vivem itens; e um pequeno conjunto de verbos opera esses itens</strong>.</p>
-<p>A árvore você já conhece de tanto digitar: <code>/ip address</code> é o menu de endereços dentro da seção IP; <code>/system identity</code>, a identidade dentro de system. A barra inicial é a <strong>raiz</strong> — como o <code>C:\</code> do Windows ou o <code>/</code> do Linux. E, como em qualquer árvore de diretórios, você pode:</p>
-<pre class="routeros"><code>/ip address print          # caminho absoluto: executa de onde estiver
-/ip                        # entrar no menu ip
-address                    # descer para ip &gt; address
-print                      # executar o comando do menu atual
-/                          # voltar à raiz
-..                         # subir um nível</code></pre>
-<p>O prompt sempre mostra onde você está:</p>
-<pre class="routeros"><code>[vitor@lab-r1] &gt; /ip address
-[vitor@lab-r1] /ip/address&gt; print
-[vitor@lab-r1] /ip/address&gt; ..
-[vitor@lab-r1] /ip&gt;</code></pre>
-<p>Entrar num menu compensa quando você fará várias operações nele; para comandos avulsos, o caminho absoluto documenta melhor — e é por isso que todos os blocos de comandos deste livro usam caminhos absolutos.</p>
-<p>Sobre essa árvore agem os <strong>verbos</strong>. Cinco fazem 95% do trabalho:</p>
-<div id="tbl-verbos" class="quarto-float quarto-figure quarto-figure-center anchored">
+<section id="do-consentimento-à-lei" class="level2" data-number="24.1">
+<h2 data-number="24.1" class="anchored" data-anchor-id="do-consentimento-à-lei"><span class="header-section-number">24.1</span> Do consentimento à lei</h2>
+<p>O laboratório do <a href="02-vlans-8021q.html" class="quarto-xref"><span>Capítulo 23</span></a> terminou com uma demonstração incômoda: o r3 entrou na VLAN 10 sozinho, bastando configurar a própria placa. Num cabo compartilhado, a tag 802.1Q é um <strong>acordo entre pontas</strong> — e acordos não protegem contra quem não os assina.</p>
+<p>O <strong>bridge VLAN filtering</strong> transforma o acordo em lei: com ele ativo, a bridge (o switch) passa a <strong>decidir, porta a porta</strong>, quais VIDs entram, quais saem, e com ou sem etiqueta. O cliente pode etiquetar o que quiser; se a porta dele só admite VLAN 10 untagged, é isso que ele terá.</p>
+<p>Liga-se com um parâmetro:</p>
+<pre class="routeros"><code>/interface bridge set bridge-sw vlan-filtering=yes</code></pre>
+<p>— mas <strong>não rode isso ainda</strong>. A ordem importa (é a pegadinha número 1 do capítulo, tratada adiante). Antes, entenda as três peças que passam a mandar.</p>
+<section id="peça-1-a-tabela-de-vlans-da-bridge" class="level3" data-number="24.1.1">
+<h3 data-number="24.1.1" class="anchored" data-anchor-id="peça-1-a-tabela-de-vlans-da-bridge"><span class="header-section-number">24.1.1</span> Peça 1: a tabela de VLANs da bridge</h3>
+<p><code>/interface bridge vlan</code> é o mapa: para cada VLAN, quem participa e como:</p>
+<pre class="routeros"><code>/interface bridge vlan add bridge=bridge-sw vlan-ids=10 tagged=bridge-sw,ether2 untagged=ether3</code></pre>
+<p>Traduzindo: “a VLAN 10 existe nesta bridge; sai <strong>tagged</strong> pelo trunk <code>ether2</code> (e para a própria bridge — já explico); sai <strong>untagged</strong> pela porta de acesso <code>ether3</code>”. Na <strong>saída</strong> (egress) de cada porta, essa tabela é lei: quadro da VLAN 10 saindo pela ether3 perde a etiqueta; pela ether2, mantém; por uma porta que não está na linha, <strong>não sai</strong>.</p>
+</section>
+<section id="peça-2-o-pvid-a-etiqueta-de-entrada" class="level3" data-number="24.1.2">
+<h3 data-number="24.1.2" class="anchored" data-anchor-id="peça-2-o-pvid-a-etiqueta-de-entrada"><span class="header-section-number">24.1.2</span> Peça 2: o PVID — a etiqueta de entrada</h3>
+<p>E o quadro <strong>untagged</strong> que <em>chega</em> a uma porta — de que VLAN ele é? A resposta é o <strong>PVID</strong> (<em>Port VLAN ID</em>) da porta:</p>
+<pre class="routeros"><code>/interface bridge port set [find interface=ether3] pvid=10</code></pre>
+<p>Todo quadro sem etiqueta que entrar pela <code>ether3</code> é internamente tratado como VLAN 10. PVID é o “carimbo de entrada” — e o par tabela-de-saída + PVID-de-entrada define os dois papéis clássicos:</p>
+<div id="tbl-port-roles" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
-<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-verbos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabela&nbsp;9.1: Os cinco verbos fundamentais
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-port-roles-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;24.1: As receitas de porta access e trunk
 </figcaption>
-<div aria-describedby="tbl-verbos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div aria-describedby="tbl-port-roles-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
 <colgroup>
-<col style="width: 33%">
-<col style="width: 23%">
-<col style="width: 42%">
+<col style="width: 16%">
+<col style="width: 38%">
+<col style="width: 14%">
+<col style="width: 30%">
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">Verbo</th>
-<th style="text-align: left;">Faz</th>
-<th style="text-align: left;">Exemplo</th>
+<th style="text-align: left;">Papel</th>
+<th style="text-align: left;">Na tabela vlan</th>
+<th style="text-align: left;">PVID</th>
+<th style="text-align: left;">frame-types</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><code>print</code></td>
-<td style="text-align: left;">lista os itens do menu</td>
-<td style="text-align: left;"><code>/ip address print</code></td>
+<td style="text-align: left;"><strong>access</strong> (VLAN 10)</td>
+<td style="text-align: left;"><code>untagged=porta</code> na VLAN 10</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;"><code>admit-only-untagged-and-priority-tagged</code></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>add</code></td>
-<td style="text-align: left;">cria um item</td>
-<td style="text-align: left;"><code>/ip address add address=... interface=...</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>set</code></td>
-<td style="text-align: left;">altera um item existente</td>
-<td style="text-align: left;"><code>/ip service set ssh port=2222</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><code>remove</code></td>
-<td style="text-align: left;">apaga um item</td>
-<td style="text-align: left;"><code>/ip address remove numbers=0</code></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;"><code>enable</code> / <code>disable</code></td>
-<td style="text-align: left;">liga/desliga sem apagar</td>
-<td style="text-align: left;"><code>/ip service disable telnet</code></td>
+<td style="text-align: left;"><strong>trunk</strong></td>
+<td style="text-align: left;"><code>tagged=porta</code> em cada VLAN transportada</td>
+<td style="text-align: left;">(irrelevante se só aceita tagged)</td>
+<td style="text-align: left;"><code>admit-only-vlan-tagged</code></td>
 </tr>
 </tbody>
 </table>
 </div>
 </figure>
 </div>
-<p>Repare no padrão dos argumentos: <strong><code>chave=valor</code></strong>, separados por espaço, sem vírgulas. <code>add address=192.168.56.11/24 interface=ether1</code> lê-se como uma frase: “adicione o endereço X na interface Y”. Aspas só quando o valor tem espaços (<code>comment="link para a torre"</code>).</p>
+</section>
+<section id="peça-3-frame-types-o-que-a-porta-admite" class="level3" data-number="24.1.3">
+<h3 data-number="24.1.3" class="anchored" data-anchor-id="peça-3-frame-types-o-que-a-porta-admite"><span class="header-section-number">24.1.3</span> Peça 3: <code>frame-types</code> — o que a porta admite</h3>
+<p>O terceiro controle é o filtro de <strong>entrada</strong> (ingress): que tipos de quadro a porta aceita?</p>
+<ul>
+<li><code>admit-all</code> (padrão): tagged e untagged;</li>
+<li><code>admit-only-untagged-and-priority-tagged</code>: só untagged — a porta access ortodoxa: se o cliente mandar quadro etiquetado (como o r3 “esperto” do capítulo passado), <strong>descarte</strong>;</li>
+<li><code>admit-only-vlan-tagged</code>: só tagged — o trunk ortodoxo: quadro sem etiqueta num tronco é acidente ou ataque à VLAN nativa; descarte.</li>
+</ul>
+<p>Com as três peças, o caminho do quadro fecha: <strong>ingress</strong> (frame-types admite? untagged ganha o PVID) → comutação <strong>dentro da VLAN</strong> (host table por VLAN) → <strong>egress</strong> (a tabela diz se sai e se sai tagged/untagged).</p>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -504,21 +505,18 @@ Tabela&nbsp;9.1: Os cinco verbos fundamentais
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>O terminal do RouterOS é um sistema de arquivos onde cada “pasta” (menu) contém “planilhas” (itens em linhas numeradas), e os verbos são as operações de linha: listar, inserir, editar, apagar, ocultar. Quem pensa assim nunca se perde — só pergunta “em que menu estou e que linha quero mexer?”.</p>
+<p>O switch filtrado é uma <strong>portaria de eventos com pulseiras</strong>: na entrada, o segurança da porta confere o traje (frame-types) e coloca a pulseira da casa em quem chega sem (PVID); lá dentro, cada salão é uma VLAN; na saída, a porta VIP mantém a pulseira (tagged, trunk) e a porta do salão único a corta (untagged, access). Pulseira trazida de casa não vale: quem manda é a portaria.</p>
 </div>
 </div>
 </section>
-<section id="itens-números-e-o-perigo-escondido" class="level2" data-number="9.2">
-<h2 data-number="9.2" class="anchored" data-anchor-id="itens-números-e-o-perigo-escondido"><span class="header-section-number">9.2</span> Itens, números e o perigo escondido</h2>
-<p>Faça um <code>print</code> em qualquer menu populado e observe a primeira coluna:</p>
-<pre class="routeros"><code>[vitor@lab-r1] &gt; /ip service print
-Columns: NAME, PORT, ADDRESS
-#   NAME     PORT  ADDRESS
-0 X telnet     23
-1 X ftp        21
-2 X www        80
-3   ssh        22  192.168.56.0/24</code></pre>
-<p>O <code>#</code> é o <strong>número do item</strong> — o endereço da linha, usado pelos verbos: <code>set 3 port=2222</code>, <code>remove numbers=0,1</code>, <code>disable numbers=2</code>. Funciona, e você usará o tempo todo em sessões interativas. Mas guarde o aviso:</p>
+</section>
+<section id="a-gerência-e-a-pegadinha-do-taggedbridge" class="level2" data-number="24.2">
+<h2 data-number="24.2" class="anchored" data-anchor-id="a-gerência-e-a-pegadinha-do-taggedbridge"><span class="header-section-number">24.2</span> A gerência e a pegadinha do <code>tagged=bridge</code></h2>
+<p>Releia a linha da tabela: <code>tagged=bridge-sw,ether2</code>. Por que a <strong>própria bridge</strong> aparece como membro tagged?</p>
+<p>Porque o switch também é um equipamento com IP de gerência — e se a gerência mora numa VLAN (como deve, <a href="05-segmentacao-rede-provedor.html" class="quarto-xref"><span>Capítulo 26</span></a>), os quadros dela precisam chegar <strong>à CPU do próprio switch</strong>. Na arquitetura do RouterOS, a CPU é alcançada “saindo” pela interface bridge: incluir a bridge como <code>tagged</code> na VLAN é abrir o cano entre aquela VLAN e o cérebro do equipamento — e é sobre esse cano que a <code>/interface vlan</code> de gerência (com o IP) se pendura:</p>
+<pre class="routeros"><code>/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-sw
+/ip address add address=10.99.0.2/24 interface=vlan99-ger</code></pre>
+<p>Esquecer o <code>bridge</code> na lista tagged da VLAN 99 = gerência morta no momento em que o filtering ligar. O que nos leva à pegadinha-mor:</p>
 <div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -529,52 +527,10 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>A numeração <strong>não é estável</strong>: ela é recalculada a cada <code>print</code> — remover um item renumera os seguintes, e menus diferentes têm numerações independentes. Número de item em <strong>script</strong>, em <strong>procedimento documentado</strong> ou em comando executado “de memória” sem um <code>print</code> imediatamente antes é receita para apagar a linha errada — às vezes, a que segurava seu acesso.</p>
+<p><strong><code>vlan-filtering=yes</code> é a última linha, nunca a primeira.</strong> No momento em que o filtering liga, a tabela de VLANs vira lei — e tudo que não está nela <strong>para de passar</strong>, incluindo o seu acesso. A ordem segura: (1) montar a tabela <code>/interface bridge vlan</code> completa (com a bridge nos tagged das VLANs de gerência); (2) configurar PVIDs e frame-types das portas; (3) conferir tudo com <code>print</code>; (4) <strong>só então</strong> ligar o filtering — de preferência com acesso por um caminho fora da bridge (nossa <code>ether1</code> de gerência do laboratório, o console serial no CRS real) e Safe Mode.</p>
 </div>
 </div>
-<p>A alternativa profissional é selecionar por <strong>conteúdo</strong>, com <code>[find ...]</code>:</p>
-<pre class="routeros"><code>/ip address remove [find comment=teste-lab-a]
-/ip service set [find name=ssh] port=2222</code></pre>
-<p>O <code>find</code> devolve os itens que casam com o critério, e o verbo age sobre eles — não importa em que posição estejam. Você já o usou no laboratório do <a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>; nos scripts do Volume 12 ele será onipresente. Regra prática: <strong>números na exploração interativa; <code>find</code> em tudo que será repetido</strong>.</p>
-<p>Duas colunas de metadados ajudam o <code>find</code> e os humanos:</p>
-<ul>
-<li><strong><code>comment</code></strong> — todo item aceita um comentário. Em rede de provedor, comentário é documentação de campo: <code>comment="uplink operadora X"</code> salva madrugadas;</li>
-<li><strong>flags</strong> — as letras à esquerda do <code>print</code>: <code>X</code> (desabilitado), <code>D</code> (dinâmico: criado por um processo, como DHCP — não se edita, se edita a origem), <code>I</code> (inválido: aponta para algo que não existe mais, ex.: endereço numa interface removida).</li>
-</ul>
-</section>
-<section id="tab-e-o-manual-que-mora-no-equipamento" class="level2" data-number="9.3">
-<h2 data-number="9.3" class="anchored" data-anchor-id="tab-e-o-manual-que-mora-no-equipamento"><span class="header-section-number">9.3</span> TAB e <code>?</code>: o manual que mora no equipamento</h2>
-<p>O RouterOS carrega a própria documentação, e dois atalhos a liberam:</p>
-<ul>
-<li><strong><code>TAB</code></strong> completa o que você começou a digitar: <code>/ip add</code> + <code>TAB</code> vira <code>/ip address</code>; dois <code>TAB</code>s listam as opções possíveis. Além de poupar dedos, o TAB <strong>valida</strong> — se não completa, o comando não existe (ou você está no menu errado);</li>
-<li><strong><code>?</code></strong> mostra a ajuda do ponto onde você está: os submenus de um menu, os argumentos de um comando, os valores válidos de um argumento (<code>address=?</code>).</li>
-</ul>
-<p>A combinação transforma qualquer menu desconhecido em terreno explorável — foi assim que você descobriu o <code>/system shutdown</code> no primeiro capítulo, e é assim que se aprende recurso novo sem sair do terminal.</p>
-<p>Complete o kit de exploração com:</p>
-<ul>
-<li><strong>histórico</strong>: setas ↑/↓ navegam os comandos anteriores da sessão;</li>
-<li><strong><code>/undo</code> e <code>/redo</code></strong>: desfazem/refazem a última ação de configuração — o Ctrl+Z do RouterOS (o Safe Mode do <a href="../v01-primeiros-passos/04-formas-de-acesso.html" class="quarto-xref"><span>Capítulo 4</span></a> continua sendo o cinto de segurança para <em>sequências</em> de mudanças);</li>
-<li><strong><code>/system history print</code></strong>: quem fez o quê, quando — o <code>undo</code> sabe até o que desfazer porque essa trilha existe.</li>
-</ul>
-</section>
-<section id="print-afiado-e-export-como-lupa" class="level2" data-number="9.4">
-<h2 data-number="9.4" class="anchored" data-anchor-id="print-afiado-e-export-como-lupa"><span class="header-section-number">9.4</span> <code>print</code> afiado e <code>export</code> como lupa</h2>
-<p>O <code>print</code> cru despeja tudo; os modificadores o transformam em ferramenta de precisão:</p>
-<pre class="routeros"><code>/ip address print detail          # todos os campos de cada item
-/ip address print where interface=ether1   # filtra por condição
-/ip route print count-only        # só conta
-/interface print stats            # estatísticas (tráfego, erros)
-/ip address print interval=2      # re-executa a cada 2s (monitor ao vivo)</code></pre>
-<p>O <code>where</code> merece atenção: é o irmão interativo do <code>find</code> — mesma sintaxe de condições, mas para <strong>ver</strong> em vez de agir. <code>print where</code> para investigar, <code>[find]</code> para operar.</p>
-<p>E quando a pergunta é “como este menu está configurado, por inteiro?”, a resposta é o velho conhecido <code>export</code> (<a href="../v01-primeiros-passos/07-backup-export-reset.html" class="quarto-xref"><span>Capítulo 7</span></a>), que funciona em <strong>qualquer</strong> menu:</p>
-<pre class="routeros"><code>/ip service export</code></pre>
-<pre class="routeros"><code># 2026-07-06 15:12:40 by RouterOS 7.15.3
-/ip service
-set telnet disabled=yes
-set ftp disabled=yes
-set www disabled=yes
-set ssh address=192.168.56.0/24</code></pre>
-<p><code>export</code> responde à pergunta que o <code>print</code> não responde: <em>o que foi mudado em relação à fábrica?</em> — só as alterações aparecem. Por isso ele é a lupa deste livro: sempre que um laboratório disser “confira a seção X”, o <code>export</code> da seção é a conferência.</p>
+<p>Uma nota de desempenho para fechar a teoria: nos <strong>CRS3xx</strong>, tudo isso — tabela, PVID, frame-types — é programado <strong>no switch chip</strong>: filtering com flag <code>H</code> viva, em velocidade de fio (<a href="01-bridge-hardware-offload.html" class="quarto-xref"><span>Capítulo 22</span></a>). Nos CRS1xx/2xx antigos, ligar o filtering derruba o tráfego para a CPU — lá, usa-se o menu legado do chip (<a href="04-switch-chip-crs.html" class="quarto-xref"><span>Capítulo 25</span></a>). Saber <strong>qual</strong> dos dois mundos é o seu equipamento é o primeiro passo de qualquer projeto de POP.</p>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -585,71 +541,73 @@ set ssh address=192.168.56.0/24</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>O terminal inteiro cabe numa gramática: <strong>menu</strong> (onde) + <strong>verbo</strong> (o quê) + <strong><code>chave=valor</code></strong> (como) + <strong>seleção por número ou <code>find</code></strong> (em quem). Com TAB e <code>?</code> para explorar e <code>export</code> para conferir, você opera qualquer recurso do RouterOS — inclusive os que este livro não cobre.</p>
+<p>Com VLAN filtering, quem manda é o <strong>switch</strong>, não as pontas: ingress (frame-types + PVID) decide o que entra e com que VLAN; a tabela <code>/interface bridge vlan</code> decide por onde sai e se sai tagged. Porta access e trunk são só combinações dessas peças (<a href="#tbl-port-roles" class="quarto-xref">Tabela&nbsp;<span>24.1</span></a>). E a liturgia de ativação — tabela primeiro, bridge tagged para gerência, filtering por último — é o que separa a segmentação do POP de uma viagem até ele.</p>
 </div>
 </div>
 </section>
-<section id="laboratório" class="level2" data-number="9.5">
-<h2 data-number="9.5" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">9.5</span> 🧪 Laboratório</h2>
-<section id="ambiente" class="level3" data-number="9.5.1">
-<h3 data-number="9.5.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">9.5.1</span> Ambiente</h3>
-<p>O laboratório padrão (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>): apenas <strong><code>lab-r1</code></strong>, a partir do snapshot <code>seguranca-inicial</code>. Acesso: <code>ssh vitor@192.168.56.11</code>.</p>
+<section id="laboratório" class="level2" data-number="24.3">
+<h2 data-number="24.3" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">24.3</span> 🧪 Laboratório</h2>
+<section id="ambiente" class="level3" data-number="24.3.1">
+<h3 data-number="24.3.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">24.3.1</span> Ambiente</h3>
+<p>Os três CHRs com papéis novos: <strong><code>lab-r2</code> será o switch</strong>. No VirtualBox, devolva o Adaptador 2 de <code>lab-r3</code> para a rede interna <strong><code>lab-b</code></strong> (desfazendo o ajuste do <a href="01-bridge-hardware-offload.html" class="quarto-xref"><span>Capítulo 22</span></a>). Topologia:</p>
+<ul>
+<li><code>lab-r1</code> (roteador): <code>ether2</code> → lab-a — já tem a <code>vlan10-svc</code> (<code>10.10.0.1/24</code>) sobre a <code>bridge-lan</code> (<a href="02-vlans-8021q.html" class="quarto-xref"><span>Capítulo 23</span></a>);</li>
+<li><code>lab-r2</code> (switch): <code>ether2</code> → lab-a (<strong>trunk</strong> para o r1), <code>ether3</code> → lab-b (<strong>access VLAN 10</strong> para o r3). Gerência intacta pela <code>ether1</code> (fora da bridge — nosso “console serial”);</li>
+<li><code>lab-r3</code> (dispositivo final): <code>ether2</code> → lab-b, <strong>sem nenhuma configuração de VLAN</strong> — o ponto do exercício.</li>
+</ul>
+<p>Limpe no r2 as interfaces vlan do capítulo anterior (<code>/interface vlan remove [find]</code> após remover os IPs correspondentes: <code>/ip address remove [find interface~"vlan"]</code>).</p>
 </section>
-<section id="comandos-passo-a-passo" class="level3" data-number="9.5.2">
-<h3 data-number="9.5.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">9.5.2</span> Comandos passo a passo</h3>
-<p><strong>Passo 1 — navegar.</strong> Percorra a árvore dos dois jeitos e observe o prompt:</p>
-<pre class="routeros"><code>/ip
-address
-print
-..
-service
-print
-/</code></pre>
-<p><strong>Passo 2 — explorar com TAB e <code>?</code>.</strong> No menu raiz, digite <code>/ip a</code> e pressione <code>TAB</code> duas vezes: o RouterOS lista os menus que começam com <code>a</code> (<code>address</code>, <code>arp</code>, …). Entre em <code>/ip dns</code> (que nunca usamos) e descubra, usando apenas <code>?</code>, qual comando mostra a configuração e qual argumento ativa a resposta a consultas remotas — <strong>não altere nada</strong>; a hora do DNS chega no <a href="04-dns.html" class="quarto-xref"><span>Capítulo 12</span></a>.</p>
-<p><strong>Passo 3 — os verbos num alvo inofensivo.</strong> Vamos exercitar <code>add</code>/<code>set</code>/<code>disable</code>/<code>remove</code> num menu sem risco: as entradas estáticas de DNS locais.</p>
-<pre class="routeros"><code>/ip dns static add name=teste1.lab address=10.99.0.1 comment="cobaia 1"
-/ip dns static add name=teste2.lab address=10.99.0.2 comment="cobaia 2"
-/ip dns static print</code></pre>
-<pre class="routeros"><code>[vitor@lab-r1] &gt; /ip dns static print
-Columns: NAME, ADDRESS, TTL
-# NAME        ADDRESS    TTL
-0 teste1.lab  10.99.0.1  1d
-1 teste2.lab  10.99.0.2  1d</code></pre>
-<p>Altere, desabilite, observe as flags:</p>
-<pre class="routeros"><code>/ip dns static set 0 address=10.99.0.100
-/ip dns static disable 1
-/ip dns static print</code></pre>
-<p>A entrada <code>1</code> agora exibe <code>X</code>. Confira a seção com a lupa:</p>
-<pre class="routeros"><code>/ip dns static export</code></pre>
-<p><strong>Passo 4 — sentir a renumeração.</strong> Remova o item <code>0</code> e imprima de novo:</p>
-<pre class="routeros"><code>/ip dns static remove numbers=0
-/ip dns static print</code></pre>
-<p>O antigo item <code>1</code> (<code>teste2.lab</code>) agora é o <strong><code>0</code></strong> — a prova concreta do aviso deste capítulo. Remova-o pelo caminho seguro, por conteúdo:</p>
-<pre class="routeros"><code>/ip dns static remove [find comment="cobaia 2"]
-/ip dns static print</code></pre>
-<p><strong>Passo 5 — undo e history.</strong> Crie uma cobaia nova, desfaça e confira a trilha:</p>
-<pre class="routeros"><code>/ip dns static add name=teste3.lab address=10.99.0.3
-/undo
-/ip dns static print
-/system history print</code></pre>
-<p>O <code>print</code> volta vazio, e o history mostra as duas ações (o <code>add</code> e o desfazer).</p>
+<section id="comandos-passo-a-passo" class="level3" data-number="24.3.2">
+<h3 data-number="24.3.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">24.3.2</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — a bridge do switch.</strong> Em <code>lab-r2</code>:</p>
+<pre class="routeros"><code>/interface bridge add name=bridge-sw comment="switch do lab"
+/interface bridge port add bridge=bridge-sw interface=ether2
+/interface bridge port add bridge=bridge-sw interface=ether3</code></pre>
+<p><strong>Passo 2 — a tabela ANTES do filtering.</strong> A VLAN 10 sai tagged pelo trunk e untagged pela porta do r3; e já deixamos a bridge como membro tagged (gerência futura na VLAN — desafio 3 usa):</p>
+<pre class="routeros"><code>/interface bridge vlan add bridge=bridge-sw vlan-ids=10 tagged=bridge-sw,ether2 untagged=ether3</code></pre>
+<p><strong>Passo 3 — os papéis das portas.</strong> Trunk ortodoxo na ether2, access ortodoxo na ether3:</p>
+<pre class="routeros"><code>/interface bridge port set [find interface=ether2] frame-types=admit-only-vlan-tagged
+/interface bridge port set [find interface=ether3] pvid=10 frame-types=admit-only-untagged-and-priority-tagged</code></pre>
+<p><strong>Passo 4 — conferir, e só então ligar.</strong> A liturgia:</p>
+<pre class="routeros"><code>/interface bridge vlan print
+/interface bridge port print
+/interface bridge set bridge-sw vlan-filtering=yes</code></pre>
+<p>(Seu SSH ao r2 chega pela <code>ether1</code>, fora da bridge — o filtering não o toca. Num CRS real, este seria o momento do Safe Mode.)</p>
+<p><strong>Passo 5 — o milagre do access.</strong> Em <code>lab-r3</code> — que não sabe o que é VLAN — apenas um endereço na rede da VLAN 10:</p>
+<pre class="routeros"><code>/ip address add address=10.10.0.30/24 interface=ether2
+/ping 10.10.0.1 count=3</code></pre>
+<p><strong>Funciona.</strong> Acompanhe o quadro: sai do r3 untagged → entra na ether3 do switch (frame-types admite; PVID carimba VLAN 10) → comutado na VLAN 10 → sai pelo trunk ether2 <strong>tagged</strong> → chega ao r1, cuja <code>vlan10-svc</code> sobre a bridge o reconhece. O r3 nunca soube da etiqueta — o switch cuidou de tudo. É exatamente assim que a ONU do cliente recebe “a VLAN de PPPoE” sem saber.</p>
+<p><strong>Passo 6 — a lei nas portas.</strong> Duas tentativas de violação:</p>
+<ol type="a">
+<li>Em <code>lab-r3</code>, banque o esperto do capítulo passado — tente entrar tagged pela porta access:</li>
+</ol>
+<pre class="routeros"><code>/interface vlan add name=vlan10 vlan-id=10 interface=ether2
+/ip address add address=10.10.0.31/24 interface=vlan10
+/ping 10.10.0.1 count=3</code></pre>
+<p><strong>Silêncio total</strong> — o <code>frame-types</code> da access descarta quadros etiquetados na entrada. A tranca que faltava no <a href="02-vlans-8021q.html" class="quarto-xref"><span>Capítulo 23</span></a> existe. Desfaça (<code>/ip address remove [find interface=vlan10]</code>, <code>/interface vlan remove vlan10</code>).</p>
+<ol start="2" type="a">
+<li>Em <code>lab-r1</code>, tente uma VLAN que <strong>não está na tabela</strong> do switch:</li>
+</ol>
+<pre class="routeros"><code>/interface vlan add name=vlan30-teste vlan-id=30 interface=bridge-lan
+/ip address add address=10.30.0.1/24 interface=vlan30-teste</code></pre>
+<p>De <code>lab-r3</code>… nada a testar: a VLAN 30 morre no trunk do r2 (egress: não está na tabela, não sai por porta nenhuma). Confirme no r2 que só a 10 (e a 1 padrão) existem: <code>/interface bridge vlan print</code>. Limpe o teste no r1.</p>
 </section>
-<section id="verificação" class="level3" data-number="9.5.3">
-<h3 data-number="9.5.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">9.5.3</span> Verificação</h3>
+<section id="verificação" class="level3" data-number="24.3.3">
+<h3 data-number="24.3.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">24.3.3</span> Verificação</h3>
 <ol type="1">
-<li>Você navegou com prompt mudando (<code>/ip/address&gt;</code> etc.) e voltou à raiz;</li>
-<li>O <code>TAB</code> duplo listou menus, e o <code>?</code> revelou os argumentos de <code>/ip dns</code> sem você alterar nada;</li>
-<li>Após o Passo 4, <code>/ip dns static print</code> está vazio — e você viu a renumeração acontecer no meio do caminho;</li>
-<li><code>/system history print</code> conta a história completa do laboratório.</li>
+<li><code>/interface bridge vlan print</code> no r2 mostra a VLAN 10 com <code>tagged=bridge-sw,ether2</code> e <code>untagged=ether3</code> (a flag <code>D</code> da VLAN 1 padrão é normal);</li>
+<li>O r3, <strong>sem configuração de VLAN</strong>, pinga <code>10.10.0.1</code> através do switch — access + PVID funcionando;</li>
+<li>As duas violações do Passo 6 falharam em silêncio (tagged na access; VID fora da tabela no trunk);</li>
+<li>Sua gerência ao r2 continuou viva o tempo todo (ela está fora da bridge — e você sabe por que isso importou).</li>
 </ol>
 </section>
-<section id="desafios" class="level3" data-number="9.5.4">
-<h3 data-number="9.5.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">9.5.4</span> Desafios</h3>
+<section id="desafios" class="level3" data-number="24.3.4">
+<h3 data-number="24.3.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">24.3.4</span> Desafios</h3>
 <ol type="1">
-<li>Usando apenas <code>TAB</code> e <code>?</code> (sem internet), descubra o que faz o comando <code>/interface ethernet print stats</code> e identifique duas colunas úteis para diagnosticar um cabo ruim.</li>
-<li>Em uma linha, desabilite <strong>todas</strong> as entradas de <code>/ip dns static</code> que contenham a palavra <code>lab</code> no nome. (Dica: <code>find</code> aceita <code>name~"lab"</code> — o <code>~</code> casa por expressão regular.)</li>
-<li>O comando <code>/ip service set [find name=ssh] port=2222</code> muda a porta do SSH. Se você o executasse agora, o que aconteceria com a sua sessão atual? E como você se conectaria depois? (Pense antes; se testar, use o Safe Mode e desfaça.)</li>
-<li>Explique a diferença entre <code>print where interface=ether1</code> e <code>[find interface=ether1]</code> — quando cada um é a ferramenta certa?</li>
+<li>No Passo 6a, o quadro do r3 morreu na <strong>entrada</strong> da porta access. Se o <code>frame-types</code> fosse o padrão <code>admit-all</code>, o ataque funcionaria? Percorra ingress → comutação → egress e responda com precisão.</li>
+<li>Migre a gerência do <strong>r2</strong> para dentro da VLAN 99 pelo trunk: acrescente a VLAN 99 à tabela (quem é tagged?), crie a <code>/interface vlan</code> sobre a bridge com IP <code>10.99.0.2/24</code> e a contraparte no r1 (<code>10.99.0.1/24</code> sobre a bridge-lan). Liste os comandos nos dois lados e o teste. (Não desative a ether1 — rede de segurança do laboratório.)</li>
+<li>Um trunk com <code>pvid=1</code> e <code>frame-types=admit-all</code> transporta as VLANs 10 e 20. Explique o ataque clássico de <strong>VLAN hopping</strong> por dupla etiqueta (802.1Q-in-802.1Q) que essa configuração permite — e como as receitas da <a href="#tbl-port-roles" class="quarto-xref">Tabela&nbsp;<span>24.1</span></a> o previnem.</li>
+<li>No CRS326 do POP, você ligou <code>vlan-filtering=yes</code> e o tráfego continuou em velocidade de fio; no CRS125 antigo do armário, a CPU foi a 100%. Explique a diferença — e onde a configuração de VLAN do CRS125 deveria viver (dica: próximo capítulo).</li>
 </ol>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
@@ -663,39 +621,39 @@ Columns: NAME, ADDRESS, TTL
 </div>
 <div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p><strong>1.</strong> <code>/interface ethernet print stats</code> mostra contadores por porta física. Para cabo ruim, procure <code>rx-fcs-error</code>/<code>rx-align-error</code> (quadros corrompidos chegando — clássico de cabo/conector ruim) e <code>rx-too-short</code>/colisões. Contadores subindo continuamente = camada física suspeita.</p>
-<p><strong>2.</strong></p>
-<pre class="routeros"><code>/ip dns static disable [find name~"lab"]</code></pre>
-<p><strong>3.</strong> A sessão <strong>atual não cai</strong> — conexões TCP já estabelecidas sobrevivem à mudança do serviço; mas a <strong>próxima</strong> conexão precisa de <code>ssh -p 2222 vitor@192.168.56.11</code>. O risco real é esquecer a porta nova (ou um firewall no caminho que só libera a 22) — por isso: Safe Mode, testar a conexão nova antes de fechar a antiga (a mesma regra de ouro do <a href="../v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="quarto-xref"><span>Capítulo 6</span></a> com usuários).</p>
-<p><strong>4.</strong> São a mesma sintaxe de seleção com destinos diferentes: <code>print where</code> <strong>mostra</strong> o subconjunto (investigação, sem efeito colateral); <code>[find]</code> <strong>entrega os itens a um verbo</strong> (<code>set</code>, <code>remove</code>, <code>disable</code>…) para agir sobre eles. Investigue com <code>where</code>, opere com <code>find</code> — e nunca opere com números decorados.</p>
+<p><strong>1.</strong> Com <code>admit-all</code> no ingress, o quadro tagged VID 10 <strong>entraria</strong>. Comutação: ele pertence à VLAN 10, que existe na bridge — segue. Egress pelo trunk: a tabela permite a 10 tagged — <strong>sai</strong>. Ou seja: sim, o ataque voltaria a funcionar; a única defesa da porta access contra etiquetas trazidas de casa é o <code>frame-types</code> restritivo. (O PVID não ajuda aqui — ele só age sobre quadros <em>sem</em> etiqueta.)</p>
+<p><strong>2.</strong> No r2:</p>
+<pre class="routeros"><code>/interface bridge vlan add bridge=bridge-sw vlan-ids=99 tagged=bridge-sw,ether2
+/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-sw
+/ip address add address=10.99.0.2/24 interface=vlan99-ger</code></pre>
+<p>No r1:</p>
+<pre class="routeros"><code>/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-lan
+/ip address add address=10.99.0.1/24 interface=vlan99-ger</code></pre>
+<p>Teste: do r1, <code>/ping 10.99.0.2</code>. Os pontos didáticos: a VLAN 99 é tagged <strong>no trunk e na própria bridge</strong> (sem <code>bridge-sw</code> na lista, o IP de gerência nunca veria os quadros), e <strong>não</strong> aparece na ether3 — o r3 não tem como alcançá-la.</p>
+<p><strong>3.</strong> O atacante numa porta com PVID 1 envia quadro com <strong>duas</strong> tags: externa VID 1, interna VID 20. O switch remove a externa (casa com o PVID/nativa do trunk em alguns cenários de egress untagged) e reenvia — o quadro chega ao próximo switch <strong>com a tag interna exposta</strong> (VID 20): o atacante injetou tráfego na VLAN 20 sem pertencer a ela. As receitas previnem por três lados: trunk <code>admit-only-vlan-tagged</code> sem VLAN nativa untagged (nada sai untagged no trunk), PVID de access em VLAN sem privilégio, e a VLAN 1 fora do uso (nem na tabela).</p>
+<p><strong>4.</strong> O CRS326 (série 3xx) programa o filtering <strong>no switch chip</strong> — a CPU só vê o que é para ela (gerência); dados correm em hardware com a flag <code>H</code>. O CRS125 (série 1xx) não sabe fazer 802.1Q da bridge no chip: <code>vlan-filtering=yes</code> derruba a comutação para a CPU — 100% e vazão de roteadorzinho. No CRS125, a VLAN se configura no <strong>menu legado do switch chip</strong> (<code>/interface ethernet switch</code>), assunto do <a href="04-switch-chip-crs.html" class="quarto-xref"><span>Capítulo 25</span></a> — o mesmo resultado, programado na linguagem daquele hardware.</p>
 </div>
 </div>
 </div>
 </section>
 </section>
-<section id="resumo" class="level2" data-number="9.6">
-<h2 data-number="9.6" class="anchored" data-anchor-id="resumo"><span class="header-section-number">9.6</span> Resumo</h2>
+<section id="resumo" class="level2" data-number="24.4">
+<h2 data-number="24.4" class="anchored" data-anchor-id="resumo"><span class="header-section-number">24.4</span> Resumo</h2>
 <ul>
-<li>Configuração = <strong>árvore de menus</strong> + <strong>itens numerados</strong> + <strong>verbos</strong> (<code>print</code>, <code>add</code>, <code>set</code>, <code>remove</code>, <code>enable</code>/<code>disable</code>; <a href="#tbl-verbos" class="quarto-xref">Tabela&nbsp;<span>9.1</span></a>), com argumentos <code>chave=valor</code>.</li>
-<li>Números de item <strong>mudam</strong> (renumeração após remoções): use-os só com um <code>print</code> fresco na tela; em tudo repetível, selecione com <code>[find ...]</code>.</li>
-<li>Flags contam estado: <code>X</code> desabilitado, <code>D</code> dinâmico, <code>I</code> inválido — e <code>comment</code> é a documentação de campo do provedor.</li>
-<li><strong><code>TAB</code></strong> completa e valida; <strong><code>?</code></strong> é o manual embutido; ↑/↓, <code>/undo</code>, <code>/redo</code> e <code>/system history</code> completam o kit interativo.</li>
-<li><code>print</code> tem modificadores (<code>detail</code>, <code>where</code>, <code>stats</code>, <code>interval</code>); <code>export</code> em qualquer menu mostra <strong>o que difere da fábrica</strong> — a lupa para conferir laboratórios e auditar equipamentos.</li>
+<li>VLAN filtering transforma a bridge em <strong>switch que policia</strong>: ingress (<code>frame-types</code> + <strong>PVID</strong> carimbando untagged), comutação por VLAN, egress pela tabela <strong><code>/interface bridge vlan</code></strong> (sai/não sai; tagged/untagged).</li>
+<li><strong>Access</strong> = untagged na tabela + PVID + só-untagged; <strong>trunk</strong> = tagged na tabela + só-tagged (<a href="#tbl-port-roles" class="quarto-xref">Tabela&nbsp;<span>24.1</span></a>) — e etiqueta trazida pelo cliente morre na porta.</li>
+<li>Gerência em VLAN exige a <strong>bridge como membro tagged</strong> e a <code>/interface vlan</code> sobre a bridge — esquecer é gerência morta.</li>
+<li>Liturgia de ativação: <strong>tabela → portas → conferir → filtering por último</strong>, com acesso alternativo garantido (console/ether fora da bridge) — <code>vlan-filtering=yes</code> prematuro é a viagem clássica ao POP.</li>
+<li>CRS3xx: filtering em hardware (<code>H</code> vivo); CRS1xx/2xx: filtering na CPU — lá, o caminho é o switch chip legado (próximo capítulo).</li>
 </ul>
-<p>No próximo capítulo, a gramática entra em serviço: endereçamento IP no RouterOS e a rota padrão — os dois primeiros tijolos do roteador de borda que construiremos ao longo deste volume.</p>
+<p>No próximo capítulo, descemos ao porão: o <strong>switch chip</strong> dos CRS — o menu legado, as diferenças entre gerações e como extrair velocidade de fio de cada uma.</p>
 </section>
 <section id="bibliografia-do-capítulo" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
-<p>A seção <em>Console</em> da documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> detalha a navegação, os modificadores de <code>print</code> e a sintaxe completa de seleção (<code>find</code>, <code>where</code>, expressões regulares). <span class="citation" data-cites="discher-rosv7">Discher (<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">2016</a>)</span> e <span class="citation" data-cites="burgess-mikrotik">Burgess (<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">2011</a>)</span> dedicam capítulos iniciais à filosofia da CLI. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
+<p>A página <em>Bridge VLAN Filtering</em> da documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> é a referência canônica — inclusive a tabela de quais modelos fazem filtering em hardware. Os guias <em>Basic VLAN switching</em> da mesma documentação cobrem cenários por família de produto. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
 
 
 <div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
-<div id="ref-burgess-mikrotik" class="csl-entry" role="listitem">
-BURGESS, Dennis. <strong>Learn RouterOS</strong>. 2. ed. Raleigh: Lulu Press, 2011.
-</div>
-<div id="ref-discher-rosv7" class="csl-entry" role="listitem">
-DISCHER, Stephen R. W. <strong>RouterOS by Example</strong>. 2. ed. College Station: ISP Services, Inc., 2016.
-</div>
 <div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
 MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
 </div>
@@ -1105,13 +1063,13 @@ MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikroti
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="pagination-link" aria-label="Netinstall">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span>
+      <a href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html" class="pagination-link" aria-label="VLANs e 802.1Q">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="pagination-link" aria-label="Endereçamento IP e rota padrão">
-        <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html" class="pagination-link" aria-label="Switch chip nos CRS">
+        <span class="nav-page-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
@@ -1120,4 +1078,4 @@ MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikroti
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v02-cli-configuracao/01-anatomia-terminal.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v04-bridge-vlans/03-bridge-vlan-filtering.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
