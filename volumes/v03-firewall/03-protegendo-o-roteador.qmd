@@ -1,7 +1,322 @@
-# Protegendo o roteador
+# Protegendo o roteador {#sec-protegendo-roteador}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Aplicar a filosofia **default deny** à chain `input`: tudo fechado, e
+  cada abertura é uma decisão documentada;
+- Organizar interfaces em **interface lists** (`WAN`, `LAN`, `gerencia`) e
+  escrever regras que sobrevivem a mudanças de topologia;
+- Inventariar os serviços que o roteador **precisa** servir (gerência,
+  DNS da LAN, DHCP, ICMP) e liberá-los com o mínimo de exposição;
+- Definir uma política de **ICMP** sensata — nem "bloqueia tudo", nem
+  porta aberta a flood;
+- Fechar o `input` com **drop all** sem se trancar para fora — usando Safe
+  Mode, ensaio com log e teste de cada acesso antes do aperto final.
 :::
+
+## Default deny: a inversão que muda tudo
+
+Até aqui, o `input` do nosso roteador aceita tudo que as regras não
+descartam — a política permissiva de fábrica. Este capítulo faz a inversão
+profissional: **negar por padrão** e abrir apenas o necessário. A diferença
+filosófica é enorme:
+
+- No modelo permissivo, cada serviço esquecido aberto é uma
+  vulnerabilidade — e você descobre pelo pior caminho (o DNS aberto do
+  @sec-dns virando refletor de ataque, o WinBox exposto sendo forçado);
+- No modelo default deny, cada porta aberta é uma **decisão consciente**,
+  com dono e comentário. O que você esqueceu fica **fechado** — esquecer
+  vira seguro, não risco.
+
+O preço é o cuidado: fechar o input de um roteador remoto é serrar o galho
+em que se está sentado. Por isso este capítulo é tanto sobre **método**
+(ensaio → liberações → teste → aperto) quanto sobre regras.
+
+## Interface lists: regras que sobrevivem à topologia
+
+Escrever `in-interface=ether3` funciona — até o dia em que a WAN vira um
+PPPoE, ganha uma segunda operadora ou muda de porta. A ferramenta
+profissional são as **interface lists** (que você conheceu no
+@sec-primeiro-acesso): grupos nomeados de interfaces, usados como matcher:
+
+```routeros
+/interface list add name=WAN comment="interfaces de fronteira"
+/interface list add name=LAN comment="interfaces de clientes"
+/interface list member add list=WAN interface=ether3
+/interface list member add list=LAN interface=ether2
+```
+
+Daqui em diante, as regras dizem `in-interface-list=WAN` — e quando a
+topologia mudar, você atualiza a **lista**, não o firewall. Num parque de
+centenas de equipamentos com o mesmo firewall-base, essa indireção é o que
+torna o padrão aplicável a todos (o hardening do @sec-hardening depende
+disso).
+
+A lista `gerencia` do @sec-primeiro-acesso completa o trio. Nossa
+convenção de projeto, deste capítulo até o fim do livro:
+
+| Lista | Contém | Papel no firewall |
+|:------|:-------|:------------------|
+| `WAN` | interfaces de fronteira (operadora, internet) | de onde **nada** abre conversa com o roteador |
+| `LAN` | interfaces de clientes/serviços | abre só os serviços servidos (DNS, DHCP) |
+| `gerencia` | interfaces (e redes) da equipe | única origem de SSH/WinBox |
+
+: As três interface lists do projeto {#tbl-int-lists}
+
+## O inventário: o que o input precisa aceitar
+
+O log de ensaio do @sec-chains-firewall respondeu empiricamente; agora o
+inventário raciocinado do nosso roteador de borda:
+
+1. **Gerência** — SSH e WinBox, **apenas** da lista `gerencia` (no
+   laboratório, a `ether1`; na vida real, a rede de gerência do provedor).
+   Note a defesa em camadas: o `allowed-address` do `/ip service`
+   (@sec-primeiro-acesso) continua lá — o firewall é a segunda tranca;
+2. **DNS para a LAN** — o roteador é o resolvedor dos clientes
+   (@sec-dns): UDP e TCP 53, **da LAN apenas**. É exatamente a regra que
+   fecha o buraco do open resolver: da WAN, ninguém alcança a porta 53;
+3. **DHCP na LAN** — detalhe que derruba iniciantes: o pedido DHCP
+   (Discover) chega por broadcast **antes de o cliente ter IP**, e é
+   julgado no `input`. Sem liberar UDP 67–68 da LAN, o DHCP server para de
+   servir — e o defeito ("ninguém pega IP depois do firewall!") é dos que
+   fazem técnico duvidar da própria sanidade;
+4. **ICMP** — a seguir, com política própria;
+5. **Nada mais.** NTP, upstream de DNS, atualizações — tudo isso o
+   roteador **inicia** (output → volta como established). Não se abre
+   porta para resposta; o conntrack cuida (@sec-conntrack).
+
+### A política de ICMP
+
+Há duas superstições opostas sobre ping: "bloqueie tudo" (esconde nada e
+quebra diagnóstico — e pior, quebra *path MTU discovery*, causando
+defeitos bizarros de páginas que não carregam) e "libere tudo" (porta
+aberta a flood). O equilíbrio de provedor:
+
+```routeros
+add chain=input protocol=icmp limit=20,10:packet action=accept comment="ICMP com teto"
+```
+
+Aceita ICMP — ping, os erros de que o TCP depende — mas com **limite de
+taxa**: 20 pacotes/s com rajada de 10. Diagnóstico funciona; flood de
+ICMP encontra teto. (Quem quiser esconder o roteador de ping da WAN pode
+restringir por lista — mas mantenha o ICMP de **erro** vivo, ou pagará em
+chamados estranhos.)
+
+## A sequência completa
+
+O input final do nosso roteador de borda — o esqueleto do
+@sec-chains-firewall com o miolo preenchido:
+
+```routeros
+/ip firewall filter
+add chain=input action=accept connection-state=established,related comment="conversas em andamento"
+add chain=input action=drop connection-state=invalid comment="lixo do conntrack"
+add chain=input action=accept in-interface-list=gerencia comment="gerencia: SSH/WinBox/tudo"
+add chain=input action=accept protocol=icmp limit=20,10:packet comment="ICMP com teto"
+add chain=input action=accept in-interface-list=LAN protocol=udp dst-port=53 comment="DNS da LAN"
+add chain=input action=accept in-interface-list=LAN protocol=tcp dst-port=53 comment="DNS da LAN (TCP)"
+add chain=input action=accept in-interface-list=LAN protocol=udp dst-port=67-68 comment="DHCP da LAN"
+add chain=input action=drop comment="drop all"
+```
+
+Oito regras. Leia de novo, linha a linha, e note as escolhas: a gerência
+aceita **tudo** (é rede de confiança — e se ela for comprometida, o
+firewall é o menor dos problemas); a LAN só alcança os **serviços que o
+roteador serve a ela**; a WAN não aparece em accept nenhum — para ela, só
+resta o drop all. O silêncio é a resposta.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+No `input`, a pergunta de projeto é: "**quem precisa abrir conversa com o
+roteador, e para quê?**" — e a resposta vira uma lista curta de accepts
+(gerência; serviços servidos à LAN; ICMP com teto) sobre o esqueleto
+stateful, selada por um drop all. Da WAN, nenhum accept: roteador de
+borda não conversa com estranhos — ele apenas encaminha.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+`lab-r1` (borda completa) e `lab-r2` (cliente na LAN), continuando do
+capítulo anterior (o esqueleto com log de ensaio já aplicado). Trabalhe
+por SSH **da gerência** — e o laboratório inteiro dentro do **Safe Mode**
+(`Ctrl+X`): é o exercício definitivo do cinto de segurança.
+
+### Comandos passo a passo
+
+**Passo 0 — Safe Mode.** Na sessão SSH do r1, `Ctrl+X`. Confirme o
+`<SAFE>` no prompt. Se qualquer passo der errado a ponto de derrubar seu
+acesso, a reversão automática desfaz tudo.
+
+**Passo 1 — as listas.** Formalize a topologia:
+
+```routeros
+/interface list add name=WAN comment="fronteira"
+/interface list add name=LAN comment="clientes"
+/interface list member add list=WAN interface=ether3
+/interface list member add list=LAN interface=ether2
+```
+
+(A lista `gerencia` já existe desde o @sec-primeiro-acesso, com a
+`ether1`.)
+
+**Passo 2 — o miolo, acima do log.** As liberações entram **entre** o
+`drop invalid` e o log de ensaio (use `place-before` apontando para o
+número da regra de log — confira com `print`):
+
+```routeros
+/ip firewall filter print
+/ip firewall filter add chain=input action=accept in-interface-list=gerencia comment="gerencia: acesso total" place-before=2
+/ip firewall filter add chain=input action=accept protocol=icmp limit=20,10:packet comment="ICMP com teto" place-before=3
+/ip firewall filter add chain=input action=accept in-interface-list=LAN protocol=udp dst-port=53 comment="DNS da LAN" place-before=4
+/ip firewall filter add chain=input action=accept in-interface-list=LAN protocol=tcp dst-port=53 comment="DNS da LAN (TCP)" place-before=5
+/ip firewall filter add chain=input action=accept in-interface-list=LAN protocol=udp dst-port=67-68 comment="DHCP da LAN" place-before=6
+```
+
+**Passo 3 — auditar o ensaio.** Com as liberações no lugar, o log de
+ensaio (última regra) só deve pegar o que **morreria** no futuro drop all.
+Zere contadores, gere tráfego normal e leia:
+
+```routeros
+/ip firewall filter reset-counters-all
+```
+
+Em `lab-r2`: `/ping 192.168.10.1 count=3`, `/ping google.com count=3`,
+renove o DHCP (`/ip dhcp-client release numbers=0`). Em `lab-r1`:
+
+```routeros
+/ip firewall filter print stats
+/log print where message~"INPUT-NEW"
+```
+
+Os accepts engordaram; o log deve estar **silencioso** (ou mostrando só
+ruído da WAN — que é exatamente o que queremos matar). Se algo legítimo
+aparecer no log, é serviço que faltou liberar: **investigue antes de
+apertar**.
+
+**Passo 4 — o aperto.** Troque o log de ensaio pelo drop all:
+
+```routeros
+/ip firewall filter set [find comment~"ENSAIO"] action=drop log=no comment="drop all"
+```
+
+**Passo 5 — testar tudo, antes de confirmar.** A bateria de testes,
+**ainda dentro do Safe Mode**:
+
+- Sua sessão SSH continua viva (gerência OK — você está nela);
+- Em `lab-r2`: `/ping 192.168.10.1` (ICMP OK), `/ping google.com` (DNS +
+  forward OK), renovar DHCP (DHCP OK);
+- Em `lab-r2`, o teste de **bloqueio**: `ssh vitor@192.168.10.1` deve
+  **falhar** — a LAN não é gerência; o drop all a barrou. (Reflita: antes
+  deste capítulo, esse acesso funcionava — só o `allowed-address` do
+  serviço segurava.)
+
+Tudo verde? `Ctrl+X` para **sair do Safe Mode confirmando**. O firewall
+está valendo.
+
+**Passo 6 — documentar.** O ritual do @sec-backup-export:
+
+```routeros
+/ip firewall filter export file=input-borda-v1
+/system backup save name=pos-input
+```
+
+### Verificação
+
+1. `/ip firewall filter print` mostra as 8 regras na ordem do capítulo,
+   todas comentadas;
+2. A bateria do Passo 5 passou: gerência viva, LAN com DNS/DHCP/ping,
+   e SSH **da LAN** morto no drop all;
+3. `print stats` conta a história certa (established/related engordando,
+   drop all pegando só ruído);
+4. O export do filter está fora do equipamento.
+
+### Desafios
+
+1. Por que a regra da gerência (`accept in-interface-list=gerencia`) está
+   **acima** do ICMP e dos serviços da LAN? O que mudaria (funcional e em
+   desempenho) se ela fosse a última antes do drop?
+2. Um técnico esqueceu o notebook em campo e precisa acessar o r1 **da
+   LAN do cliente**, excepcionalmente, por 1 hora. Escreva a liberação
+   mais **estreita** possível (origem única, serviço único) e o plano de
+   remoção — sem editar as regras permanentes.
+3. Sua WAN ganhou IPv6? Não — mas o roteador tem um segundo IP público na
+   mesma ether3 (um `/29` da operadora). O firewall deste capítulo o
+   protege? Por quê — o que os matchers usam, endereço ou interface?
+4. Reproduza o desastre com rede de segurança: dentro do Safe Mode,
+   **desabilite** a regra da gerência e confirme que sua sessão SSH
+   morre em seguida (tente digitar). O que acontece ~15 s depois? Explique
+   a mágica revendo @sec-formas-de-acesso.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Funcionalmente quase nada mudaria (não há drop entre elas que
+pegasse gerência), mas: (a) **desempenho** — todo pacote da gerência
+percorreria as regras de ICMP/DNS/DHCP antes de ser aceito; (b)
+**robustez** — a posição no topo garante que nenhuma regra futura
+inserida no miolo possa, por engano, descartar gerência antes do accept.
+Regra de sobrevivência primeiro; o resto depois.
+
+**2.**
+
+```routeros
+/ip firewall filter add chain=input src-address=192.168.10.105 protocol=tcp dst-port=22 action=accept comment="TEMP: tecnico em campo ate 18h" place-before=[find comment="drop all"]
+```
+
+(Como o serviço SSH tem `allowed-address` da gerência, seria preciso
+também um ajuste temporário lá — as duas trancas existem.) Plano de
+remoção: comentário com prazo + remover com
+`remove [find comment~"TEMP"]` — e, elegante, um agendamento no
+`/system scheduler` que remove sozinho (Volume 12).
+
+**3.** Protege. Os accepts usam **interface lists** e a WAN não tem accept
+algum — o drop all barra conversas novas para *qualquer* endereço do
+roteador chegando por *qualquer* interface. É a vantagem do default deny
+por interface sobre listas de IPs: endereços novos nascem protegidos por
+padrão.
+
+**4.** A sessão congela (os pacotes do seu SSH — established — continuam
+aceitos pela regra 0... até você digitar? Não: established continua
+passando! O que morre é **conversa nova**). Surpreso? Teste de verdade:
+com a regra da gerência desabilitada, a sessão atual sobrevive
+(established/related está acima), mas uma **nova** conexão SSH falha. Para
+derrubar tudo, seria preciso desabilitar também a regra 0 — e aí sim, ao
+travar a sessão, o Safe Mode detecta a queda e **reverte tudo** em
+segundos, devolvendo as duas regras. A mágica: o Safe Mode
+(@sec-formas-de-acesso) desfaz mudanças não confirmadas quando a sessão
+que as fez morre. (E a lição extra: o esqueleto stateful protege até você
+dos seus erros — por camadas.)
+:::
+
+## Resumo
+
+- **Default deny** no input: cada abertura é decisão documentada; o
+  esquecido nasce fechado.
+- **Interface lists** (`WAN`/`LAN`/`gerencia`, @tbl-int-lists) desacoplam
+  regras de topologia — o firewall-base do parque agradece.
+- O miolo do input de borda: gerência (tudo), ICMP **com teto de taxa**
+  (nunca bloquear ICMP inteiro — path MTU!), DNS e DHCP **da LAN** (DHCP
+  = UDP 67–68 no input — a pegadinha clássica), e **nenhum accept da
+  WAN**.
+- Método de aplicação: Safe Mode + ensaio com log + auditoria dos logs +
+  bateria de testes + aperto + export. Nessa ordem, sempre.
+- As duas trancas convivem: `allowed-address` nos serviços **e** firewall
+  — defesa em camadas.
+
+No próximo capítulo, o tribunal dos clientes: a chain `forward` — o que
+pode atravessar o roteador — e as **address lists**, a ferramenta que
+transforma listas de IPs em política.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A página *Securing your router* e a seção *Building Advanced Firewall* da
+documentação oficial [@mikrotik-docs] trazem as recomendações que este
+capítulo adapta ao roteador de borda de provedor. @discher-rosv7 cobre
+proteção de input com exemplos comentados. As referências completas, em
+ABNT, estão no apêndice [Referências](../../referencias.qmd).
