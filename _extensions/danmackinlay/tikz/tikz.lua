@@ -313,7 +313,7 @@ local function compile_tikz_to_svg(code, user_opts, conf, basename)  -- Added co
 \usepackage{tikz}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
-\usetikzlibrary{calc,angles,quotes,arrows.meta,positioning,intersections,decorations.pathreplacing,decorations.markings,patterns,through,backgrounds}
+\usetikzlibrary{calc,angles,quotes,arrows.meta,positioning,intersections,decorations.pathreplacing,decorations.markings,patterns,through,backgrounds,shapes.geometric}
 \usepackage{amsmath,amssymb}
 % Paleta do manual (alinhada ao tema "cosmo" do HTML).
 \definecolor{manualblue}{HTML}{2780E3}
