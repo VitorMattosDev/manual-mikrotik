@@ -1,7 +1,349 @@
-# VLANs e 802.1Q
+# VLANs e 802.1Q {#sec-vlans-8021q}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o problema que a VLAN resolve: **redes separadas sem cabos
+  separados**;
+- Descrever a etiqueta **802.1Q**: onde ela entra no quadro, o que é o
+  **VID** e o que significa um quadro *tagged* ou *untagged*;
+- Usar o vocabulário sem tropeçar: **trunk**, **access**, VLAN nativa;
+- Criar interfaces **`/interface vlan`** no RouterOS e montar o
+  *router-on-a-stick* — várias redes roteadas por um cabo só;
+- Reconhecer as VLANs na rede do provedor: serviços, clientes e gerência
+  compartilhando a mesma fibra sem se ver.
 :::
+
+## O problema: um cabo, várias redes
+
+O capítulo anterior terminou com um alerta: colocar clientes diferentes
+na mesma bridge é colocá-los na mesma sala. A solução ingênua — um cabo e
+uma porta para cada rede — morre na primeira conta: o POP atende a rede
+de clientes, a de gerência, a de servidores e a VLAN da operadora... por
+**uma** fibra até a torre. Precisamos de redes logicamente separadas
+sobre o mesmo meio físico.
+
+A resposta tem trinta anos e está em todo equipamento de rede do planeta:
+a **VLAN** (*Virtual LAN*), padronizada como **IEEE 802.1Q**. A ideia
+cabe numa frase: **cada quadro Ethernet ganha uma etiqueta dizendo a que
+rede pertence** — e switches e roteadores tratam cada etiqueta como se
+fosse um cabo separado.
+
+A etiqueta (*tag*) são 4 bytes inseridos dentro do cabeçalho Ethernet
+(@fig-quadro-8021q), dos quais importam dois campos: o **VID** (*VLAN
+ID*, 12 bits — redes de 1 a 4094) e a **prioridade** (3 bits — que o QoS
+do Volume 7 conhece como CoS).
+
+::: {#fig-quadro-8021q}
+
+```{.tikz}
+%%| filename: fig-quadro-8021q
+%%| alt: Comparação entre um quadro Ethernet comum e um quadro com etiqueta 802.1Q. Acima, o quadro comum: MAC de destino, MAC de origem, tipo e dados. Abaixo, o quadro etiquetado: entre o MAC de origem e o tipo, quatro bytes são inseridos, destacados em azul, contendo o identificador de protocolo 0x8100, três bits de prioridade e doze bits de VLAN ID, exemplificado com VID 10. Uma seta indica o ponto de inserção da etiqueta.
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize,
+  campo/.style={draw=manualgray, thick, fill=manualgray!10,
+                minimum height=8mm, align=center, inner sep=1.5pt},
+  tag/.style={draw=manualblue, very thick, fill=manualblue!12,
+              minimum height=8mm, align=center, inner sep=1.5pt,
+              font=\sffamily\scriptsize\bfseries},
+  rotulo/.style={font=\sffamily\scriptsize\bfseries, text=manualgray}
+]
+  % Quadro comum
+  \node[rotulo, anchor=west] at (0,10mm) {quadro Ethernet comum};
+  \node[campo, minimum width=22mm, anchor=west] (d1) at (0,0) {MAC destino};
+  \node[campo, minimum width=22mm, anchor=west] (d2) at (d1.east) {MAC origem};
+  \node[campo, minimum width=12mm, anchor=west] (d3) at (d2.east) {tipo};
+  \node[campo, minimum width=30mm, anchor=west] (d4) at (d3.east) {dados...};
+
+  % Quadro etiquetado
+  \node[rotulo, anchor=west] at (0,-14mm) {quadro com 802.1Q};
+  \node[campo, minimum width=22mm, anchor=west] (t1) at (0,-24mm) {MAC destino};
+  \node[campo, minimum width=22mm, anchor=west] (t2) at (t1.east) {MAC origem};
+  \node[tag, minimum width=13mm, anchor=west] (t3) at (t2.east) {0x8100};
+  \node[tag, minimum width=9mm, anchor=west] (t4) at (t3.east) {prio};
+  \node[tag, minimum width=13mm, anchor=west] (t5) at (t4.east) {VID=10};
+  \node[campo, minimum width=12mm, anchor=west] (t6) at (t5.east) {tipo};
+  \node[campo, minimum width=20mm, anchor=west] (t7) at (t6.east) {dados...};
+
+  \draw[very thick, -stealth, manualblue]
+    ($(d2.south east)+(0,-1mm)$) -- ($(t3.north)+(0,1mm)$)
+    node[midway, right, font=\sffamily\scriptsize, text=manualblue]
+    {a tag entra aqui (4 bytes)};
+\end{tikzpicture}
+```
+
+A etiqueta 802.1Q: 4 bytes entre o MAC de origem e o tipo — com o VID
+dizendo "este quadro pertence à VLAN 10".
+
+:::
+
+Com a etiqueta, nasce o vocabulário que você usará todos os dias:
+
+- Quadro **tagged**: carrega a etiqueta — viaja pelos enlaces entre
+  equipamentos de rede;
+- Quadro **untagged**: quadro comum, sem etiqueta — o que computadores,
+  câmeras e ONUs falam (dispositivos finais em geral ignoram VLANs);
+- Porta/enlace **trunk** (tronco): transporta **várias** VLANs, todas
+  tagged — a fibra do POP à torre;
+- Porta **access** (acesso): pertence a **uma** VLAN; recebe/entrega
+  quadros untagged e o switch etiqueta/desetiqueta por ela — a porta do
+  computador;
+- **VLAN nativa**: a VLAN dos quadros untagged que chegam a um trunk
+  (tradicionalmente a VID 1) — fonte clássica de surpresas de segurança;
+  o @sec-vlan-filtering a domará com o conceito de **PVID**.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O 802.1Q transforma um cabo num **feixe de canos coloridos**: cada quadro
+ganha uma pulseira de cor (o VID) ao entrar, viaja pelo cano da sua cor e
+perde a pulseira ao sair para um dispositivo final. Trunk é o feixe
+inteiro; porta access é a boca de um cano só — e quem decide a cor é o
+switch, nunca o visitante.
+:::
+
+## VLANs no RouterOS: a interface `vlan`
+
+No RouterOS, cada VLAN que o roteador deve **enxergar em camada 3** vira
+uma interface virtual sobre a interface física (ou sobre uma bridge):
+
+```routeros
+/interface vlan add name=vlan10-clientes vlan-id=10 interface=ether2
+/interface vlan add name=vlan20-gerencia vlan-id=20 interface=ether2
+```
+
+Cada `vlan` é uma interface completa: recebe IP, DHCP server, entra em
+interface lists, aparece no firewall — tudo que uma `ether` faz. Os
+quadros que saem por ela nascem tagged com o VID configurado; os que
+chegam tagged com aquele VID são entregues a ela.
+
+O desenho que isso habilita é o **router-on-a-stick** ("roteador no
+palito"): um roteador pendurado por **um** cabo trunk num switch, roteando
+entre todas as VLANs:
+
+```routeros
+/ip address add address=10.10.0.1/24 interface=vlan10-clientes
+/ip address add address=10.20.0.1/24 interface=vlan20-gerencia
+```
+
+Duas redes, um cabo. O tráfego **dentro** de cada VLAN é comutado pelo
+switch (camada 2, sem tocar o roteador); o tráfego **entre** VLANs sobe o
+palito, é **roteado** — e aqui está o prêmio de segurança: a travessia
+passa pelo firewall `forward`, exatamente o que faltava no desafio do
+@sec-bridge-offload. Segmentar em VLANs devolve ao firewall a visão que a
+bridge única roubava.
+
+Três notas de campo antes do laboratório:
+
+1. **Os dois lados do enlace devem concordar**: VID 10 aqui é VID 10 lá.
+   Uma ponta tagged e outra untagged = silêncio absoluto (o quadro chega,
+   a etiqueta não casa, ninguém reclama). É o defeito número 1 de VLAN —
+   e o motivo de documentar VIDs como se documenta endereçamento;
+2. **MTU**: a tag rouba 4 bytes. Equipamentos modernos aceitam quadros de
+   1522 bytes sem drama; em rádios antigos e caminhos com túneis, VLANs
+   somam-se ao problema de MTU que você já conhece do `change-mss`
+   (@sec-mangle-raw);
+3. **`/interface vlan` não filtra** — ela apenas dá ao roteador presença
+   nas VLANs. Impor "a porta X só fala VLAN 10" é papel do **bridge VLAN
+   filtering**, o próximo capítulo. Aqui as duas pontas cooperam; lá, o
+   switch policia.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+VLAN = **um cabo, várias redes**: a tag 802.1Q (VID) faz cada quadro
+pertencer a uma rede lógica, trunk transporta muitas (tagged), access
+entrega uma (untagged). No RouterOS, `/interface vlan` dá ao roteador um
+"pé" em cada VLAN — e rotear **entre** VLANs devolve o tráfego ao
+firewall. Regra de ouro do campo: as duas pontas do enlace precisam
+contar a mesma história de VIDs.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+Topologia do volume (@sec-bridge-offload): `lab-r1` com a `bridge-lan`, e
+`lab-r2`/`lab-r3` na rede `lab-a`. Neste capítulo, r1 e r2 conversarão
+por VLANs **sobre o mesmo enlace** que já os liga; o r3 fará o papel de
+"intruso sem VLAN" na prova de isolamento.
+
+### Comandos passo a passo
+
+**Passo 1 — as VLANs no r1.** Sobre a bridge da LAN (é o caso realista —
+o "palito" costuma ser uma bridge/trunk), crie duas VLANs com suas redes:
+
+```routeros
+/interface vlan add name=vlan10-svc vlan-id=10 interface=bridge-lan comment="servicos"
+/interface vlan add name=vlan20-ger vlan-id=20 interface=bridge-lan comment="gerencia de equipamentos"
+/ip address add address=10.10.0.1/24 interface=vlan10-svc
+/ip address add address=10.20.0.1/24 interface=vlan20-ger
+```
+
+**Passo 2 — o outro lado, no r2.** O r2 precisa contar a mesma história
+de VIDs sobre a `ether2`:
+
+```routeros
+/interface vlan add name=vlan10 vlan-id=10 interface=ether2
+/interface vlan add name=vlan20 vlan-id=20 interface=ether2
+/ip address add address=10.10.0.2/24 interface=vlan10
+/ip address add address=10.20.0.2/24 interface=vlan20
+```
+
+**Passo 3 — provar os canos.** De `lab-r2`, um ping por cano:
+
+```routeros
+/ping 10.10.0.1 count=3
+/ping 10.20.0.1 count=3
+```
+
+Ambos limpos. Repare no que acabou de acontecer: pelo **mesmo cabo**
+(lab-a) onde já viviam a LAN untagged (`192.168.10.0/24`) e o DHCP, agora
+trafegam **mais duas redes**, cada uma no seu cano tagged — três redes,
+zero cabos novos.
+
+**Passo 4 — a prova do isolamento.** O r3 está no mesmo cabo, **sem**
+VLANs configuradas. De `lab-r3`:
+
+```routeros
+/ping 10.10.0.1 count=3
+```
+
+`no route to host` — para o r3, a VLAN 10 **não existe**: os quadros
+tagged passam pela placa dele e são descartados (etiqueta desconhecida).
+Mesmo que ele tivesse uma rota, não tem interface naquela rede. Agora dê
+a ele o "crachá" e veja a porta abrir:
+
+```routeros
+/interface vlan add name=vlan10 vlan-id=10 interface=ether2
+/ip address add address=10.10.0.3/24 interface=vlan10
+/ping 10.10.0.1 count=3
+```
+
+Funciona. E é exatamente essa a limitação a entender: **quem controla a
+própria configuração pode "entrar" na VLAN** — num cabo compartilhado, a
+tag separa, mas não tranca. A tranca (a porta do switch decidindo quais
+VIDs aceita) é o bridge VLAN filtering do próximo capítulo. Remova o
+crachá do r3 ao terminar:
+
+```routeros
+/ip address remove [find interface=vlan10]
+/interface vlan remove [find name=vlan10]
+```
+
+**Passo 5 — o roteador vendo os canos.** Em `lab-r1`, o torch mostra os
+quadros por interface — observe a VLAN 10 enquanto o r2 pinga
+`10.10.0.1`:
+
+```routeros
+/tool torch interface=vlan10-svc
+```
+
+(Interrompa com `q`.) E as interfaces contam sua natureza:
+
+```routeros
+/interface vlan print
+/interface print where type=vlan
+```
+
+### Verificação
+
+1. r1 e r2 se pingam pelas **duas** VLANs, sobre o mesmo enlace da LAN
+   untagged — três redes num cabo;
+2. O r3 sem configuração de VLAN não alcança `10.10.0.1` (e você viu o
+   erro certo: sem interface na rede, `no route to host`);
+3. Com o "crachá" (interface vlan + IP), o r3 entrou — e você sabe
+   explicar por que isso é uma limitação, não um recurso;
+4. `/interface vlan print` nos dois roteadores conta a **mesma** história
+   de VIDs (10 e 20).
+
+### Desafios
+
+1. No r1 as VLANs foram criadas sobre a `bridge-lan`; no r2, sobre a
+   `ether2`. Por que essa assimetria funciona — e quando criar a VLAN
+   sobre a bridge é **obrigatório**?
+2. Um provedor entrega ao cliente corporativo "internet na VLAN 100 e
+   telefonia na VLAN 200" por uma fibra. Desenhe (comandos) o lado do
+   cliente num RB5009: as duas VLANs sobre a `sfp-sfpplus1`, com DHCP
+   client na 100 e um IP fixo `10.200.0.2/30` na 200.
+3. O ping na VLAN 20 entre r1 e r2 funciona — mas deveria? A VLAN 20 é
+   "gerência de equipamentos" e o r2 faz papel de CPE de cliente.
+   Critique o desenho do laboratório com os olhos do @sec-hardening e
+   proponha a correção (que o @sec-segmentacao-pop consagrará).
+4. Sobre o quadro da @fig-quadro-8021q: um quadro já tagged com VID 10
+   pode receber **outra** tag por fora? Investigue o nome da técnica, o
+   EtherType envolvido e um uso clássico de provedor.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** A tag viaja no quadro — não importa se quem a lê/escreve é uma
+interface física ou uma bridge: os VIDs casam e pronto. Criar sobre a
+**bridge é obrigatório** quando os quadros tagged podem chegar **por mais
+de uma porta** (o trunk pode migrar de porta, ou há redundância): a VLAN
+sobre a bridge enxerga todas as portas-membro; sobre uma `ether`
+específica, só aquele cabo. Regra prática moderna: se existe bridge,
+crie a VLAN sobre ela (com o filtering do próximo capítulo mandando no
+resto).
+
+**2.**
+
+```routeros
+/interface vlan add name=vlan100-inet vlan-id=100 interface=sfp-sfpplus1
+/interface vlan add name=vlan200-voz vlan-id=200 interface=sfp-sfpplus1
+/ip dhcp-client add interface=vlan100-inet
+/ip address add address=10.200.0.2/30 interface=vlan200-voz
+```
+
+(E, sendo o RB5009 a borda do cliente: NAT com
+`out-interface=vlan100-inet` e o firewall do Volume 3 — as VLANs entram
+nas interface lists como qualquer WAN.)
+
+**3.** O defeito: o CPE do cliente **tem um pé na VLAN de gerência** —
+qualquer cliente curioso (ou comprometido) com acesso ao próprio CPE
+alcança a rede que administra o parque. Ferido o princípio "gerência
+intocável" (@sec-forward-lists). Correção: gerência em VLAN que **só
+existe** entre equipamentos do provedor (o switch não a entrega em portas
+de cliente — filtering, próximo capítulo), CPEs gerenciados por outra
+via (a própria sessão PPPoE/túnel dedicado), e firewall barrando a VLAN
+20 de qualquer origem não-provedor. No laboratório seguimos didáticos;
+no POP real, a VLAN 20 jamais desceria ao cliente.
+
+**4.** Pode — é o **QinQ** (802.1ad): uma tag de serviço (S-TAG,
+EtherType 0x88a8) envelopando a tag do cliente (C-TAG, 0x8100). Uso
+clássico: o provedor transporta as VLANs **do cliente** (quaisquer VIDs
+que ele use) através do backbone dentro de uma única VLAN de serviço —
+"VLAN do cliente 55" viaja intacta por dentro da "VLAN de transporte
+1055". No RouterOS: `/interface vlan` sobre `/interface vlan`, ou
+`ethertype=0x88a8` no bridge VLAN filtering.
+:::
+
+## Resumo
+
+- VLAN = redes lógicas sobre o mesmo físico: a tag **802.1Q** (4 bytes,
+  @fig-quadro-8021q) com o **VID** (1–4094) diz a que rede o quadro
+  pertence.
+- Vocabulário: **tagged** (com etiqueta, entre equipamentos),
+  **untagged** (dispositivos finais), **trunk** (muitas VLANs),
+  **access** (uma, untagged), VLAN nativa (untagged no trunk — cuidado).
+- `/interface vlan` sobre ether/bridge dá ao roteador um pé em cada
+  VLAN — IP, DHCP, firewall, tudo normal; **router-on-a-stick** roteia
+  entre VLANs por um cabo, devolvendo a travessia ao firewall.
+- As duas pontas devem contar a **mesma história de VIDs** — ponta
+  errada não gera erro, gera silêncio.
+- A tag separa, mas **não tranca** num cabo compartilhado: quem configura
+  a própria ponta entra na VLAN — a tranca é o bridge VLAN filtering.
+
+No próximo capítulo, exatamente ela: **bridge VLAN filtering** — o
+switch (de software e de hardware) decidindo quais VIDs entram e saem em
+cada porta: trunk e access de verdade, com PVID e tudo.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/interface vlan` e os
+cenários de combinação com bridge (incluindo os casos a evitar). O padrão
+IEEE 802.1Q define tag, VIDs e prioridades; @tanenbaum-redes o apresenta
+didaticamente. As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
