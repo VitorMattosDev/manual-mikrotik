@@ -1,4 +1,4 @@
-# BGP: conceitos e peering {#sec-bgp-basico}
+# BGP: conceitos e peering {#sec-bgp-peering}
 
 ::: {.callout-note}
 ## Objetivos de aprendizagem

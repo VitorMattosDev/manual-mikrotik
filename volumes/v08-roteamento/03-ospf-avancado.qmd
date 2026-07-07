@@ -338,7 +338,7 @@ alcançabilidade. As duas se somam.
   aceitar rota indevida — e **sumarizar** no ABR derruba a carga.
 
 Com OSPF interno sólido, falta o protocolo que conversa com o **mundo
-de fora**: o BGP. O próximo capítulo (@sec-bgp-basico) abre a conexão
+de fora**: o BGP. O próximo capítulo (@sec-bgp-peering) abre a conexão
 com a operadora e o IX.
 
 ## Bibliografia do capítulo {.unnumbered}
