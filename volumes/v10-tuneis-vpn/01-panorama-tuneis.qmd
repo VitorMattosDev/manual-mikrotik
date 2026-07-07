@@ -1,7 +1,274 @@
-# Panorama de túneis no RouterOS
+# Panorama de túneis no RouterOS {#sec-panorama-tuneis}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que é um **túnel** (encapsular um pacote dentro de outro) e
+  as duas perguntas que classificam qualquer um deles: **que camada** ele
+  transporta e **se cifra**;
+- Mapear os túneis do RouterOS — **WireGuard, IPsec, GRE, EoIP,
+  L2TP/SSTP, ZeroTier** — em uma tabela de decisão por caso de uso;
+- Entender **overhead** e o problema de **MTU/MSS** que **todo** túnel
+  cria, e como o `mss-clamp` evita a dor de cabeça nº 1 de VPN;
+- Escolher o túnel certo para três cenários de provedor: **gerência
+  remota**, **site-to-site entre POPs** e **camada 2 estendida**;
+- Preparar o terreno para os capítulos seguintes, que detalham cada
+  tecnologia.
 :::
+
+O provedor tem POPs espalhados, técnicos em campo e a necessidade de
+alcançar equipamentos que estão atrás de CGNAT (@sec-cgnat) ou sem IP
+público. A resposta é o **túnel**: uma forma de fazer dois pontos
+distantes se comportarem como se estivessem no mesmo cabo, atravessando
+a internet no meio. O RouterOS oferece **muitos** tipos de túnel — e a
+primeira habilidade é **escolher**, porque usar o errado custa
+segurança, desempenho ou noites de diagnóstico de MTU. Este capítulo é o
+mapa; os próximos são o território.
+
+## O que é um túnel, em uma frase
+
+Um túnel **encapsula** um pacote dentro de outro: o pacote "de dentro"
+(o que você quer transportar) vira **carga** de um pacote "de fora" que
+viaja pela internet até o outro extremo, onde é desencapsulado. É por
+isso que dois roteadores em cidades diferentes podem trocar tráfego como
+se um cabo os ligasse — o cabo é **virtual**, feito de encapsulamento.
+
+Duas perguntas classificam **qualquer** túnel:
+
+1. **Que camada ele transporta?** Camada 3 (IP dentro de IP — a maioria)
+   ou camada 2 (Ethernet dentro de IP — EoIP/VXLAN, para "esticar" uma
+   LAN)?
+2. **Ele cifra?** Alguns protegem o conteúdo (WireGuard, IPsec, SSTP);
+   outros **só encapsulam, sem segredo** (GRE, EoIP, L2TP puro) e
+   precisam de IPsec por baixo se o sigilo importa.
+
+```{.tikz}
+%%| filename: fig-tunel-encaps
+%%| alt: Anatomia do encapsulamento. Um pacote original (cabeçalho IP interno + dados) é envolvido por um novo cabeçalho de túnel e um cabeçalho IP externo com os IPs públicos dos dois roteadores. O resultado viaja pela internet; no destino, as camadas externas são removidas e o pacote original emerge. Uma chave indica se o túnel cifra ou não a carga.
+\begin{tikzpicture}[
+  font=\small,
+  seg/.style={draw, minimum height=8mm, font=\scriptsize, align=center},
+]
+\node[seg, fill=manualgray!20, minimum width=18mm] (ipx) at (0,0) {IP externo\\\scriptsize (públicos)};
+\node[seg, fill=manualyellow!25, minimum width=16mm, right=0pt of ipx] (tun) {cab.\\túnel};
+\node[seg, fill=manualblue!18, minimum width=16mm, right=0pt of tun] (ipi) {IP interno};
+\node[seg, fill=manualgreen!18, minimum width=20mm, right=0pt of ipi] (dat) {dados};
+\draw[decorate, decoration={brace, amplitude=5pt}] (ipi.north west) -- (dat.north east)
+  node[midway, above=5pt]{\scriptsize carga (pacote original)};
+\draw[decorate, decoration={brace, mirror, amplitude=5pt}] (ipx.south west) -- (dat.south east)
+  node[midway, below=5pt]{\scriptsize o que trafega na internet — \textbf{maior} que o original (overhead)};
+\end{tikzpicture}
+```
+
+::: {#fig-tunel-encaps}
+Encapsular **aumenta** o pacote: os cabeçalhos externo e de túnel são
+overhead que "come" MTU. Guardar essa imagem evita o erro clássico —
+esquecer que o pacote encapsulado pode não caber no caminho.
+:::
+
+## O menu de túneis do RouterOS
+
+| Túnel | Camada | Cifra? | Caso de uso típico |
+|---|---|---|---|
+| **WireGuard** | L3 | **Sim** | Gerência remota, site-to-site moderno — simples e rápido |
+| **IPsec** | L3 | **Sim** | Site-to-site padrão de mercado, interoperar com outros fabricantes |
+| **GRE** | L3 | Não* | Transportar roteamento (OSPF/BGP) entre POPs; *cifra com IPsec |
+| **EoIP** | **L2** | Não* | Esticar uma LAN/bridge entre sites (camada 2); *cifra com IPsec |
+| **L2TP** | L3/L2 | Não* | Acesso remoto legado; *quase sempre com IPsec (L2TP/IPsec) |
+| **SSTP** | L3 | **Sim** | Acesso remoto atravessando firewalls (roda em TCP/443) |
+| **ZeroTier** | L2 | **Sim** | Malha gerenciada na nuvem, atravessa NAT sem IP público |
+
+\* GRE, EoIP e L2TP **puros não cifram** — combine com IPsec quando o
+tráfego for sensível.
+
+A leitura da tabela: **WireGuard** é a escolha padrão moderna (simples,
+rápido, cifrado); **IPsec** quando precisa interoperar com equipamento
+de terceiros; **GRE/EoIP** quando o que importa é **transportar
+roteamento ou camada 2** (com IPsec por baixo para sigilo);
+**SSTP/L2TP** para acesso remoto (SSTP fura firewall em 443); **ZeroTier**
+quando os dois lados estão atrás de CGNAT/NAT sem IP público.
+
+## O overhead e o problema de MTU (o inimigo comum)
+
+Todo túnel **adiciona cabeçalhos**, então o pacote encapsulado é **maior**
+que o original. Se o original já tinha 1500 bytes (o MTU típico da
+Ethernet), o encapsulado passa de 1500 e **não cabe** no caminho — ele
+precisa fragmentar (lento) ou, se marcado *don't fragment*, é
+**descartado**. O sintoma é conhecido do OSPF, do PPPoE e do PMTUD
+(@sec-firewall-ipv6): **ping pequeno funciona, tráfego real trava**.
+
+A defesa universal é o **MSS clamp**: o roteador reescreve o *Maximum
+Segment Size* anunciado nas conexões TCP que entram no túnel, forçando
+os dois lados a mandar segmentos que **cabem** mesmo com o overhead:
+
+```routeros
+# aplicar MSS clamp ao tráfego que entra num túnel (evita travamento TCP)
+/ip firewall mangle
+add chain=forward tcp-flags=syn protocol=tcp \
+    out-interface=<interface-do-tunel> action=change-mss \
+    new-mss=clamp-to-pmtu comment="MSS clamp no tunel"
+```
+
+::: {.callout-warning}
+**80% dos "problemas de VPN" são MTU/MSS.** O túnel sobe, o ping passa,
+e-mails pequenos vão — mas páginas grandes, transferências e HTTPS
+travam no meio. Antes de culpar o túnel, **aplique o MSS clamp**. É a
+primeira coisa a verificar, não a última.
+:::
+
+## Escolhendo por cenário de provedor
+
+- **Gerência remota** de um roteador atrás de CGNAT: **WireGuard**
+  (leve, sempre ativo, cifrado) ou **ZeroTier** (se nenhum lado tem IP
+  público). Detalhe no @sec-wireguard;
+- **Site-to-site entre dois POPs** com roteamento dinâmico: **GRE +
+  IPsec** (o GRE carrega o OSPF/BGP, o IPsec cifra) ou **WireGuard**
+  (moderno, roteia direto). Fecha o volume no @sec-interligacao-pops;
+- **Estender uma VLAN/bridge** entre sites (mesmo domínio L2):
+  **EoIP + IPsec** ou **VXLAN**. Detalhe no @sec-gre-eoip;
+- **Interoperar** com um firewall de outro fabricante: **IPsec IKEv2**,
+  o padrão universal (@sec-ipsec).
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Escolher túnel é responder **duas** perguntas — **que camada** (L3 ou L2)
+e **cifra ou não** — e casá-las com o caso de uso: **WireGuard** como
+padrão moderno cifrado, **IPsec** para interoperar, **GRE/EoIP** para
+transportar roteamento/camada 2 (com IPsec por baixo), **SSTP/ZeroTier**
+para atravessar firewall/NAT. E acima de qualquer escolha, uma verdade
+que vale para **todos**: o túnel adiciona overhead, o pacote cresce, e
+sem **MSS clamp** o TCP trava. Domine a tabela de decisão e o clamp, e os
+próximos capítulos viram só sintaxe.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Dois CHRs (@sec-lab-chr) simulando dois POPs em cidades diferentes,
+ligados por uma "internet" (uma rede de trânsito no meio, ou ligação
+direta representando o público): **lab-pop-a** e **lab-pop-b**, cada um
+com um IP "público" e uma LAN interna. Este laboratório é **conceitual**:
+o objetivo é enxergar overhead e MSS antes de montar túneis reais nos
+próximos capítulos.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — meça o MTU do caminho.** Do lab-pop-a para o "público" do
+lab-pop-b, ache o maior ping que passa sem fragmentar:
+
+```routeros
+/ping <publico-pop-b> size=1500 do-not-fragment
+/ping <publico-pop-b> size=1472 do-not-fragment
+```
+
+Anote onde começa a passar — é o MTU útil do caminho, o teto que
+qualquer túnel terá de respeitar **menos** o overhead.
+
+**Passo 2 — simule o overhead.** Estime: um túnel WireGuard adiciona
+~60 bytes; GRE, ~24; IPsec, ~50–70. Se o caminho aceita 1500, um TCP de
+1500 dentro de WireGuard vira ~1560 — **não cabe**. Essa é a origem do
+travamento.
+
+**Passo 3 — a regra de MSS clamp (padrão).** Prepare a regra que os
+próximos capítulos vão aplicar em cada túnel:
+
+```routeros
+/ip firewall mangle
+add chain=forward protocol=tcp tcp-flags=syn action=change-mss \
+    new-mss=clamp-to-pmtu passthrough=yes comment="MSS clamp universal"
+```
+
+**Passo 4 — planeje a escolha.** Para cada cenário, escreva qual túnel
+usaria e por quê (confira depois com a tabela): (a) acessar um CPE atrás
+de CGNAT; (b) rodar OSPF entre os dois POPs de forma cifrada; (c)
+esticar a VLAN de gerência entre os POPs.
+
+### Verificação
+
+1. Você identificou o MTU útil do caminho com `do-not-fragment`;
+2. Sabe estimar o overhead de cada túnel e por que ele estoura o MTU;
+3. A regra de MSS clamp está entendida e pronta para reuso;
+4. Você consegue justificar a escolha de túnel para os três cenários.
+
+### Desafios
+
+1. Um túnel site-to-site sobe, o ping entre as LANs passa, mas os
+   sistemas internos (ERP, compartilhamento de arquivos) travam ao
+   transferir arquivos grandes. Qual é a causa quase certa e a regra que
+   resolve? Por que o ping "enganou" o diagnóstico?
+2. Você precisa que o **OSPF** (@sec-ospf-basico) rode entre dois POPs
+   por um túnel, com o tráfego **cifrado**. Por que WireGuard sozinho ou
+   GRE+IPsec servem, mas IPsec puro (policy-based) tradicional
+   **complica** rodar um IGP? (dica: interface vs. política)
+3. Um técnico quer "esticar" a bridge de gerência (camada 2) de um POP
+   para outro para que os equipamentos apareçam no mesmo domínio de
+   broadcast. Que **família** de túnel ele precisa, e qual seria a
+   escolha no RouterOS?
+4. Dois roteadores estão **ambos** atrás de CGNAT, sem IP público em
+   nenhum lado. Qual(is) túnel(is) da tabela ainda funciona(m), e por
+   que os demais falham?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** **MTU/overhead do túnel** sem **MSS clamp**. O ping usa pacotes
+pequenos que cabem; a transferência real manda segmentos TCP de 1500
+que, somados ao cabeçalho do túnel, estouram o MTU do caminho e são
+descartados (ou fragmentados com perda). A regra: `change-mss
+new-mss=clamp-to-pmtu` no `forward` para o tráfego do túnel. O ping
+enganou porque testou tamanho pequeno, não o tamanho real do tráfego.
+
+**2.** OSPF precisa de uma **interface** sobre a qual formar adjacência e
+trocar Hellos multicast. WireGuard e **GRE** criam uma **interface de
+túnel** (ponto a ponto) — o IGP roda sobre ela naturalmente, e o IPsec
+cifra por baixo. O IPsec **policy-based** clássico não cria interface:
+ele casa tráfego por **política** (seletores), sem um objeto de
+interface para o OSPF usar — daí a preferência por GRE+IPsec ou por
+IPsec **em modo interface/VTI** quando se quer roteamento dinâmico.
+
+**3.** Ele precisa de um túnel de **camada 2** (Ethernet dentro de IP).
+No RouterOS, a escolha é **EoIP** (com IPsec por baixo para cifrar) ou
+**VXLAN**. Túneis L3 (WireGuard, GRE, IPsec puro) transportam **IP**, não
+quadros Ethernet, então não colocam os dois lados no mesmo domínio de
+broadcast.
+
+**4.** Túneis que dependem de **um lado ter porta/IP público alcançável**
+(WireGuard clássico com peer fixo, IPsec, GRE, EoIP, SSTP) falham quando
+**ambos** estão atrás de CGNAT — ninguém consegue iniciar para o outro.
+**ZeroTier** funciona porque usa **servidores intermediários** (na nuvem)
+para orquestrar a conexão e furar o NAT dos dois lados (hole punching).
+A alternativa é dar IP público (ou porta redirecionada) a **um** dos
+lados, aí os demais túneis voltam a ser possíveis.
+:::
+
+## Resumo
+
+- Um **túnel** encapsula um pacote dentro de outro; classifique qualquer
+  um por **camada transportada** (L3/L2) e **se cifra**;
+- Menu: **WireGuard** (padrão moderno cifrado), **IPsec** (interoperar),
+  **GRE/EoIP** (transportar roteamento/L2, cifrar com IPsec),
+  **SSTP** (fura firewall em 443), **ZeroTier** (malha atravessa NAT);
+- **Todo** túnel adiciona **overhead** → o pacote cresce → sem **MSS
+  clamp** o TCP **trava** (o ping engana): é a causa nº 1 de "problema
+  de VPN";
+- Escolha por cenário: gerência atrás de CGNAT → WireGuard/ZeroTier;
+  site-to-site com IGP → GRE+IPsec/WireGuard; esticar L2 → EoIP/VXLAN;
+- Os próximos capítulos detalham cada um; a tabela de decisão é o mapa.
+
+Começamos pela escolha padrão de hoje — simples, rápida e cifrada. O
+@sec-wireguard monta o WireGuard do zero, do acesso de gerência ao
+site-to-site.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções de *Interfaces/Tunnels* e *VPN* do
+  RouterOS [@mikrotik-docs];
+- Encapsulamento, overhead e PMTUD: [@tanenbaum-redes];
+- Túneis no v7 na prática: [@discher-rosv7];
+- VPNs em provedores: [@burgess-mikrotik].
