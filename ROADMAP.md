@@ -112,7 +112,7 @@ Pré-requisitos: Vols. 3 e 6.*
 *Objetivo: rotear a rede do provedor com OSPF e BGP no RouterOS v7.
 Pré-requisitos: Vol. 3.*
 
-- [ ] `volumes/v08-roteamento/01-rotas-estaticas-distancia.qmd` — Rotas estáticas, distância administrativa, check-gateway, blackhole.
+- [x] `volumes/v08-roteamento/01-rotas-estaticas-distancia.qmd` — Rotas estáticas, distância administrativa, check-gateway, blackhole.
 - [ ] `volumes/v08-roteamento/02-ospf-conceitos-configuracao.qmd` — OSPF: conceitos (LSA, DR/BDR, custo) e configuração no v7 (instance/area/template).
 - [ ] `volumes/v08-roteamento/03-ospf-avancado.qmd` — OSPF avançado: múltiplas áreas, autenticação, custos, filtragem, stub.
 - [ ] `volumes/v08-roteamento/04-bgp-conceitos-peering.qmd` — BGP: AS, eBGP/iBGP, sessão com operadora/IX, anúncio de prefixos.

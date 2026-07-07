@@ -1,0 +1,384 @@
+# Rotas estáticas, distância e failover {#sec-rotas-estaticas}
+
+::: {.callout-note}
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Ler a tabela de rotas do RouterOS v7 (flags, `dst-address`,
+  `gateway`, `distance`) e prever qual rota vence para cada destino;
+- Aplicar as duas regras da decisão de roteamento: **prefixo mais
+  longo primeiro; menor distância como desempate**;
+- Construir failover de dois links com rotas flutuantes +
+  **`check-gateway`** — e conhecer os limites dessa detecção;
+- Usar rotas **blackhole** para descartar tráfego com propósito
+  (agregados, proteção anti-loop);
+- Diagnosticar roteamento com `/ip route check` e
+  `traceroute` antes de culpar o resto da rede.
+:::
+
+Até aqui, nossa rede tinha um roteador de cada lado e uma rota padrão
+resolvia tudo. Mas o provedor cresceu: dois POPs, um enlace de rádio
+entre eles (Volume 5), concentradores com pools distintos
+(@sec-concentrador-bng)... e de repente "para onde mando este pacote?"
+tem mais de uma resposta certa — e várias erradas. Este volume é sobre
+**roteamento**: primeiro o controle manual (rotas estáticas), depois a
+automação (OSPF, BGP). Como sempre, o fundamento manda: quem não domina
+a tabela de rotas só transfere a confusão para o protocolo dinâmico.
+
+## Como o roteador decide
+
+Para cada pacote, o RouterOS consulta a tabela (`/ip route print`) e
+aplica **duas regras, nesta ordem**:
+
+1. **Prefixo mais longo vence** (*longest prefix match*): entre as
+   rotas cujo `dst-address` contém o destino, ganha a mais específica.
+   `10.20.30.0/24` vence `10.0.0.0/8`, que vence `0.0.0.0/0` — a rota
+   padrão é só "o prefixo mais curto possível", o plano Z de todo
+   pacote;
+2. **Menor distância desempata prefixos iguais**: se duas rotas têm o
+   MESMO prefixo, vence a de menor `distance`.
+
+A **distância administrativa** é a nota de confiança da *origem* da
+rota — quanto menor, mais confiável:
+
+| Origem | Distância padrão |
+|---|---|
+| Conectada (IP na interface) | 0 |
+| Estática | 1 |
+| eBGP | 20 |
+| OSPF | 110 |
+| RIP | 120 |
+| iBGP | 200 |
+
+: Distâncias administrativas no RouterOS {#tbl-distancias}
+
+É ela que responde "quem manda quando o OSPF e uma estática discordam"
+(a estática, 1 < 110) — e é ela que vamos explorar de propósito no
+failover.
+
+```{.tikz}
+%%| filename: fig-decisao-rota
+%%| alt: Fluxo de decisão de roteamento para um pacote com destino 10.20.30.7. A tabela tem quatro rotas candidatas. Primeiro filtram-se as que contêm o destino; entre elas vence a de prefixo mais longo, a rota /24. A distância só desempataria prefixos idênticos.
+\begin{tikzpicture}[
+  font=\small,
+  rota/.style={draw, rounded corners, minimum width=52mm, minimum height=6.5mm, align=left, inner sep=3pt},
+]
+\node[anchor=west] at (-1.2,3.2) {\textbf{pacote para 10.20.30.7} — quem leva?};
+\node[rota, fill=manualgray!20]   (r1) at (0,2.2) {\scriptsize 0.0.0.0/0 \quad gw 200.1.1.1 \quad d=1};
+\node[rota, fill=manualyellow!25] (r2) at (0,1.3) {\scriptsize 10.0.0.0/8 \quad gw 172.16.9.1 \quad d=110};
+\node[rota, fill=manualgreen!25]  (r3) at (0,0.4) {\scriptsize 10.20.30.0/24 \quad gw 172.16.9.2 \quad d=1};
+\node[rota, fill=manualgray!20]   (r4) at (0,-0.5) {\scriptsize 10.99.0.0/24 \quad gw 172.16.9.3 \quad d=1};
+% anotações
+\node[right=3mm of r1, manualgray]  {\scriptsize contém (0 bits)};
+\node[right=3mm of r2, manualgray]  {\scriptsize contém (8 bits)};
+\node[right=3mm of r3, manualgreen!60!black] {\scriptsize \textbf{contém (24 bits) — vence}};
+\node[right=3mm of r4, manualred]   {\scriptsize não contém — fora};
+\draw[-{Stealth}, destaque, manualgreen!60!black] (-2.9,3.0) to[bend right=20] (r3.west);
+\node[manualgray, align=left, anchor=west] at (-1.2,-1.5)
+  {\scriptsize 1º prefixo mais longo entre as que contêm o destino;\\
+   \scriptsize 2º menor \texttt{distance} — só entre prefixos \textbf{idênticos}.};
+\end{tikzpicture}
+```
+
+::: {#fig-decisao-rota}
+A decisão para 10.20.30.7: das rotas que contêm o destino, vence a de
+prefixo mais longo (/24) — a distância nem é consultada. Ela só
+desempata rotas com o **mesmo** prefixo.
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+**Prefixo primeiro, distância depois — e nunca o contrário.** Uma
+estática `/32` vence qualquer rota padrão, por melhor que seja a
+distância desta; e duas rotas padrão disputam **apenas** pela
+distância. Metade dos mistérios de roteamento ("por que isso está
+saindo pelo link errado?!") morre quando se pergunta, na ordem: *qual
+é o prefixo mais longo que contém o destino? entre iguais, qual a
+menor distância? e essa rota está ativa?*
+:::
+
+## Anatomia de uma rota no v7
+
+```routeros
+/ip route add dst-address=10.20.30.0/24 gateway=172.16.9.2 \
+    distance=1 comment="rede do POP rural via radio"
+/ip route print
+```
+
+```
+Flags: D - DYNAMIC; A - ACTIVE; c - CONNECT, s - STATIC
+Columns: DST-ADDRESS, GATEWAY, DISTANCE
+    DST-ADDRESS      GATEWAY       DISTANCE
+DAc 172.16.9.0/24    ether2                0
+ As 10.20.30.0/24    172.16.9.2            1
+ As 0.0.0.0/0        200.1.1.1             1
+```
+
+As flags do v7 que interessam: **`A`** (active — está valendo),
+**`D`** (dynamic — criada por protocolo/sistema, não por você),
+**`c`/`s`/`o`/`b`** (connect/static/ospf/bgp — a origem). Uma rota
+**sem** `A` existe mas não decide nada — os motivos clássicos:
+gateway inalcançável (não há rota conectada que o cubra) ou perdeu a
+disputa para outra de mesma dst e menor distância.
+
+O `gateway` pode ser um IP (resolvido para uma interface via tabela) ou
+uma **interface** diretamente — o normal em túneis e PPPoE
+(`gateway=pppoe-wan`, como o `add-default-route` do Volume 6 faz por
+baixo).
+
+## Failover: rotas flutuantes + check-gateway
+
+O caso real: o POP tem dois caminhos para a internet — fibra (principal)
+e um rádio de contingência. Queremos: tudo pela fibra; se ela cair,
+migrar sozinho; quando voltar, voltar.
+
+```routeros
+/ip route
+add dst-address=0.0.0.0/0 gateway=200.1.1.1 distance=1 \
+    check-gateway=ping comment="fibra (principal)"
+add dst-address=0.0.0.0/0 gateway=189.50.7.1 distance=10 \
+    comment="radio (contingencia) - rota flutuante"
+```
+
+Mesmo prefixo, distâncias diferentes: a de `distance=10` fica
+**inativa** (perdeu o desempate) — é a *rota flutuante*, flutuando à
+espera. O **`check-gateway=ping`** pinga o gateway a cada 10 s; **duas
+falhas seguidas** e a rota principal é marcada inativa → a flutuante
+assume no mesmo instante. Fibra voltou a responder → hierarquia
+restaurada.
+
+O limite honesto do `check-gateway`: ele testa **o vizinho**, não o
+mundo. Se a operadora aceita o ping do gateway mas está sem trânsito
+(cai o upstream dela), sua rota continua "ativa" apontando para um
+buraco. O antídoto é vigiar um alvo remoto: rotas `/32` para IPs de
+teste + `netwatch` trocando rotas — receita que fica para os scripts
+do Volume 12 — ou roteamento dinâmico de verdade (BGP com a operadora,
+@sec-bgp-peering), onde a queda de trânsito derruba a sessão e as
+rotas juntas.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+Rotas flutuantes são a **geladeira com gerador**: a casa liga na rede
+elétrica (distância 1); o gerador está instalado e pronto (distância
+10), mas só entra quando o sensor detecta a queda (check-gateway) — e
+sai de cena quando a rede volta. E o limite é o mesmo: o sensor mede a
+tomada da SUA casa. Se a concessionária está de pé mas a subestação do
+bairro caiu... a tomada tem energia, a rua não — e o sensor não vê.
+:::
+
+## Blackhole: descartar com propósito
+
+Uma rota **blackhole** descarta silenciosamente o que casar com ela:
+
+```routeros
+/ip route add dst-address=100.64.100.0/22 blackhole \
+    comment="agregado dos pools PPPoE - anti-loop"
+```
+
+Por que um provedor descarta o próprio agregado? Anti-loop: o
+concentrador anuncia `100.64.100.0/22` inteiro para a rede
+(@sec-bgp-peering fará isso), mas cada sessão PPPoE cria rota `/32`
+individual. Um pacote para um IP do bloco **sem sessão ativa** (cliente
+desconectado) casaria com... a rota padrão, sairia para a operadora,
+voltaria (o bloco é seu), sairia de novo — loop até o TTL morrer, banda
+queimada em atacante escaneando seu bloco. Com a blackhole: IP com
+sessão casa a `/32` (mais específica!); IP sem sessão casa a blackhole
+e morre em paz. O prefixo mais longo trabalhando a seu favor.
+
+## Diagnóstico em dois comandos
+
+```routeros
+/ip route check 8.8.8.8
+/tool traceroute 8.8.8.8
+```
+
+O `route check` responde "qual rota este destino casaria AGORA" — a
+decisão da @fig-decisao-rota sem adivinhação. O `traceroute` mostra o
+caminho de fato, salto a salto: divergência entre os dois = rota
+assimétrica ou NAT no caminho. Diagnóstico de roteamento começa nesses
+dois, não no reboot.
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+O trio em linha (@sec-lab-chr): lab-r2 (172.16.1.2, `lab-a`) —
+lab-r1 (172.16.1.1 / 172.16.2.1) — lab-r3 (172.16.2.3, `lab-b`), e o
+lab-r1 também com a NAT WAN (ether3/ether1 conforme seu setup). Vamos
+fazer o lab-r2 alcançar a `lab-b` sem rota padrão, montar failover
+artificial e ver a blackhole proteger.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — a dor da falta de rota.** No lab-r2, remova a rota padrão
+(se houver) e pingue o lab-r3:
+
+```routeros
+/ip route remove [find dst-address=0.0.0.0/0]
+/ping 172.16.2.3 count=3
+```
+
+`no route to host` — o pacote nem sai. Roteador sem rota não "tenta":
+descarta e avisa.
+
+**Passo 2 — a estática específica.** Ainda no lab-r2:
+
+```routeros
+/ip route add dst-address=172.16.2.0/24 gateway=172.16.1.1 \
+    comment="lab-b via lab-r1"
+/ping 172.16.2.3 count=3
+```
+
+O ping sai... e pode voltar? Só se o lab-r3 souber **voltar** — confira
+nele a rota para `172.16.1.0/24` (a lição eterna: rota é ida E volta,
+cada uma decidida na sua tabela).
+
+**Passo 3 — prefixo vence distância.** No lab-r2, adicione uma rota
+padrão e uma `/32` provocadora:
+
+```routeros
+/ip route add dst-address=0.0.0.0/0 gateway=172.16.1.1 distance=1
+/ip route add dst-address=172.16.2.3/32 gateway=172.16.1.99 distance=200
+/ip route check 172.16.2.3
+```
+
+O `check` aponta a `/32` de distância **200** (gateway até
+inexistente!) — prefixo mais longo primeiro, sempre. Como o gateway
+não resolve, a rota fica inativa e o tráfego cai para a `/24`…
+remova a provocação e siga.
+
+**Passo 4 — failover flutuante.** No lab-r2, duas rotas padrão:
+
+```routeros
+/ip route remove [find dst-address=0.0.0.0/0]
+/ip route add dst-address=0.0.0.0/0 gateway=172.16.1.1 distance=1 \
+    check-gateway=ping comment="principal"
+/ip route add dst-address=0.0.0.0/0 gateway=172.16.1.254 distance=10 \
+    comment="contingencia (gateway ficticio p/ demonstrar)"
+/ip route print where dst-address=0.0.0.0/0
+```
+
+Só a `distance=1` está `A`tiva. Agora derrube o "principal": no
+VirtualBox, desconecte o cabo da `lab-a` do **lab-r1** (não do r2!) e
+acompanhe no lab-r2:
+
+```routeros
+/ip route print interval=2 where dst-address=0.0.0.0/0
+```
+
+Em ~20–30 s (2 pings falhos), a principal perde o `A` e a flutuante
+assume. Reconecte o cabo: a hierarquia volta sozinha. (A contingência
+aponta para um gateway fictício — o objetivo aqui é ver a **troca de
+flags**, não navegar por ela.)
+
+**Passo 5 — blackhole anti-varredura.** No lab-r1, simule o agregado
+de clientes:
+
+```routeros
+/ip route add dst-address=100.64.100.0/22 blackhole
+/ping 100.64.100.77 count=2
+```
+
+Resposta imediata: inalcançável — sem viajar até a rota padrão, sem
+loop. Uma rota `/32` de "sessão" (`add dst-address=100.64.100.77/32
+gateway=172.16.1.2`) e o mesmo ping muda de destino: a específica fura
+a blackhole, exatamente como as sessões PPPoE farão.
+
+### Verificação
+
+1. Sem rota: `no route to host`; com estática + rota de **volta** no
+   r3: ping completo;
+2. No Passo 3, o `route check` escolheu a `/32` (prefixo > distância);
+3. No failover, você viu a flag `A` migrar entre as rotas e voltar;
+4. A blackhole responde na hora (sem timeout) e a `/32` a sobrepõe.
+
+### Desafios
+
+1. Um júnior configurou o failover com as duas rotas padrão em
+   `distance=1`. O que o RouterOS faz com rotas idênticas em tudo —
+   e por que o resultado (dica: ECMP) pode "funcionar" no teste e
+   quebrar streaming/VoIP na prática?
+2. `check-gateway=ping` na rota principal, e a operadora da fibra
+   **bloqueia ICMP** no gateway. Descreva o desastre em produção e as
+   duas saídas (uma no próprio check-gateway, uma na arquitetura).
+3. O suporte reclama: "criei a rota para a nova sub-rede do cliente,
+   está na tabela, mas não passa tráfego". `print` mostra a rota
+   **sem** a flag `A`, gateway `10.7.7.1`. Liste as duas causas mais
+   prováveis e o comando que distingue uma da outra.
+4. Projete as rotas do lab-r1 para o cenário final do provedor: pools
+   PPPoE (`100.64.100.0/22`) no BNG-01 (`172.16.1.2`) e
+   (`100.64.104.0/22`) no BNG-02 (`172.16.2.3`), com blackhole
+   anti-loop **nos BNGs** e agregação no lab-r1. Escreva os comandos
+   dos três roteadores.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Duas rotas com mesma dst e mesma distância ativas viram
+**ECMP** (*Equal Cost Multi-Path*): o roteador balanceia fluxos entre
+os gateways. No teste (um ping, um site) parece failover funcionando;
+na prática, metade das conexões sai por cada link — com IPs de origem
+diferentes pós-NAT, sessões de streaming/bancos/VoIP quebram ao
+alternar caminho, e a queda de um link ainda leva ~metade do tráfego
+junto até o gateway morto ser detectado. Failover pede distâncias
+**diferentes**; ECMP é ferramenta de balanceamento consciente, não
+failover acidental.
+
+**2.** O check marca a rota principal como morta (pings nunca
+respondem) e TODO o tráfego migra para a contingência — você paga
+rádio lento com a fibra perfeita de pé; pior: é estável, ninguém
+percebe por dias. Saídas: `check-gateway=arp` (testa resolução ARP do
+gateway — funciona se ele está na mesma L2 e responde ARP) ou tirar a
+detecção do vizinho: monitorar alvo remoto via netwatch/script
+(Volume 12) ou BGP com a operadora (@sec-bgp-peering).
+
+**3.** Sem `A` com gateway IP: (a) **gateway irresolvível** — nenhuma
+rota conectada/ativa cobre `10.7.7.1` (interface caiu? IP errado?);
+(b) **perdeu o desempate** — existe outra rota com a MESMA dst e
+distância menor. Distinguir:
+`/ip route print detail where dst-address=<dst>` mostra todas as
+candidatas e seus estados; e `/ip route check 10.7.7.1` (o gateway
+como destino!) revela se ele é alcançável. (a) aparece como
+`unreachable`; (b) mostra a rota rival ativa.
+
+**4.** BNGs (anti-loop local):
+`lab-r2: /ip route add dst-address=100.64.100.0/22 blackhole` e
+`lab-r3: /ip route add dst-address=100.64.104.0/22 blackhole`
+(as `/32` das sessões furam a blackhole). lab-r1 (agregação):
+`/ip route add dst-address=100.64.100.0/22 gateway=172.16.1.2` e
+`/ip route add dst-address=100.64.104.0/22 gateway=172.16.2.3` —
+e, quando houver anúncio externo, anunciar o agregado
+`100.64.100.0/21`… que o @sec-ospf-basico fará circular sozinho.
+:::
+
+## Resumo
+
+- Decisão de roteamento: **prefixo mais longo primeiro**; `distance`
+  desempata só prefixos **idênticos**; rota sem flag `A` não decide
+  nada (gateway irresolvível ou desempate perdido);
+- Distâncias padrão: conectada 0, estática 1, eBGP 20, OSPF 110,
+  iBGP 200 — a nota de confiança da origem da rota;
+- **Failover** = rotas flutuantes (mesma dst, distâncias diferentes) +
+  `check-gateway=ping/arp`; limite: testa o **vizinho**, não o
+  trânsito — para mais, netwatch/BGP;
+- **Blackhole** descarta com propósito: agregados de pools nos BNGs
+  contra loops de varredura (as `/32` de sessão furam por prefixo);
+- Diagnóstico: `/ip route check` (a decisão) + `traceroute` (o caminho
+  real) — sempre antes de mexer.
+
+Rotas estáticas não escalam com a rede: cada enlace novo são N tabelas
+para editar à mão. O próximo capítulo (@sec-ospf-basico) coloca os
+roteadores para **conversarem**: OSPF.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *IP Routing* do RouterOS v7
+  [@mikrotik-docs];
+- Algoritmos de roteamento e longest prefix match: [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- Redes de provedor: [@burgess-mikrotik].

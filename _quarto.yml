@@ -86,7 +86,16 @@ book:
         - volumes/v07-qos/03-mangle-queue-tree.qmd
         - volumes/v07-qos/04-pcq-em-escala.qmd
 
-    # (Volumes 8–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
+    - part: "Volume 8 — Roteamento"
+      chapters:
+        - volumes/v08-roteamento/01-rotas-estaticas-distancia.qmd
+        - volumes/v08-roteamento/02-ospf-conceitos-configuracao.qmd
+        - volumes/v08-roteamento/03-ospf-avancado.qmd
+        - volumes/v08-roteamento/04-bgp-conceitos-peering.qmd
+        - volumes/v08-roteamento/05-bgp-filtros-communities.qmd
+        - volumes/v08-roteamento/06-vrf-boas-praticas-v7.qmd
+
+    # (Volumes 9–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
 
   appendices:
     - referencias.qmd
