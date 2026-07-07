@@ -1,7 +1,376 @@
-# Boas práticas de concentrador
+# Boas práticas de concentrador (BNG) {#sec-concentrador-bng}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Dimensionar um concentrador: o que limita primeiro (CPU de um núcleo,
+  sessões, throughput) e como medir antes de estourar;
+- Ajustar **keepalive** e entender o compromisso entre detecção rápida
+  de queda e tempestade de rediscagem;
+- Blindar o concentrador: firewall específico do papel, PPPoE só nas
+  interfaces de acesso, proteção contra PADI floods e logins de força
+  bruta;
+- Planejar **múltiplos concentradores** (por POP, por serviço) com
+  RADIUS central — e sobreviver à queda de um deles;
+- Reconhecer os sintomas de concentrador saturado e o plano de fuga
+  (dividir, não engordar).
 :::
+
+Os três capítulos anteriores construíram o serviço: protocolo,
+estrutura, gestão central. Este fecha o volume com a pergunta de quem
+já tem centenas de sessões no ar: **como esse concentrador se comporta
+sob estresse — e como evitar descobrir da pior forma?** O BNG é o
+equipamento mais crítico do provedor: quando o roteador de borda cai,
+os clientes ficam sem internet; quando o concentrador cai, eles ficam
+sem internet **e rediscam todos juntos** quando volta.
+
+## O que limita primeiro
+
+A intuição diz "throughput". A prática diz outra coisa:
+
+| Recurso | O que consome | Sintoma de esgotamento |
+|---|---|---|
+| **CPU (um núcleo!)** | criptografia, filas, PPPoE em si | latência sobe p/ todos no pico |
+| Sessões | memória (~alguns KB/sessão) + tabelas | conexões novas recusadas |
+| Throughput agregado | soma dos planos × uso simultâneo | filas dinâmicas sempre cheias |
+| Pool de IPs | 1 IP por sessão | "acabou o pool", cliente não conecta |
+
+: Recursos do concentrador e sintomas de esgotamento {#tbl-recursos-bng}
+
+O detalhe cruel do RouterOS: **o tráfego de uma interface PPPoE é
+processado majoritariamente em um núcleo de CPU**. Um CCR de 16 núcleos
+com um único servidor PPPoE gigante pode saturar o núcleo 0 com os
+outros 15 ociosos. Por isso concentradores se dimensionam olhando
+`/tool profile` (uso de CPU **por processo**) e `/system resource cpu
+print` (por núcleo) — nunca só a média total, que esconde o gargalo:
+
+```routeros
+/tool profile duration=10
+/system resource cpu print
+```
+
+Regras de bolso testadas em campo: um núcleo passando de **60–70% no
+pico** = comece a planejar divisão; filas dinâmicas + criptografia
+desnecessária (`use-encryption=yes` sem motivo) são os dois maiores
+ladrões de CPU; e CHR bem provisionado (@sec-lab-chr) é concentrador
+perfeitamente viável — muitos provedores rodam BNGs virtualizados.
+
+## Keepalive: detectar a queda sem criar avalanche
+
+O `keepalive-timeout` do servidor define em quantos segundos sem
+resposta uma sessão é declarada morta. O compromisso:
+
+- **Curto (10 s)**: sessões fantasma somem rápido — mas qualquer
+  microcorte de 10 s no rádio PtMP (@sec-ptmp-rural) derruba **todas**
+  as sessões daquele setor, que rediscam em massa;
+- **Longo (60 s)**: tolera instabilidades curtas — mas um cliente que
+  desligou o roteador segura IP e sessão por um minuto (irrelevante) e
+  uma queda real demora a aparecer no monitoramento (relevante).
+
+Para acesso via rádio, 30–60 s é mais sensato que os 10 s do capítulo
+anterior; em fibra, 10–30 s. E lembre-se da **tempestade de
+rediscagem**: após uma queda de energia no POP, centenas de clientes
+tentam PADI simultaneamente — o pico de CPU da reconexão em massa é o
+momento mais perigoso do dia. É para ele que se dimensiona, não para a
+tarde tranquila. O RouterOS ajuda se o cadastro for RADIUS: a
+autenticação distribui a carga entre concentrador e servidor.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O concentrador é o **caixa do supermercado**: no fluxo normal, dá conta
+sorrindo. O que o derruba não é o cliente a mais — é a **reabertura
+depois do blecaute**, quando a fila inteira chega junto. Keepalive
+curto demais é o gerente que fecha o caixa ao primeiro cliente que
+demora a achar o cartão: esvazia rápido, mas obriga todo mundo a
+refazer a fila. Dimensione o caixa para a reabertura, não para a
+terça-feira à tarde.
+:::
+
+## Blindando o papel
+
+O hardening geral do @sec-hardening vale todo; o concentrador adiciona
+riscos próprios:
+
+**1. PPPoE só onde deve existir.** O servidor escuta na(s) interface(s)
+de acesso — e em mais nenhuma. Confira com
+`/interface pppoe-server server print`: cada entrada é uma porta
+aberta em L2 (PPPoE nem precisa de IP para ser atacado — PADI é quadro
+Ethernet).
+
+**2. Contra PADI flood.** Um atacante na rede de acesso pode inundar o
+concentrador de PADIs (descoberta custa CPU). Mitigações em camadas: o
+próprio TDMA/access-list do rádio (@sec-ptmp-rural) já barra
+desconhecidos; nos switches do POP (@sec-vlan-filtering),
+*storm-control*/limite de broadcast na VLAN de clientes; e no
+concentrador, monitorar a taxa de tentativas
+(`/log print where message~"PADI"` em picos anormais).
+
+**3. Contra força bruta de logins.** Com RADIUS, cada tentativa custa
+uma consulta — um atacante com dicionário vira carga no AAA inteiro.
+O accounting entrega o padrão (rajadas de Access-Reject do mesmo
+CALLER-ID); a resposta é bloquear o MAC na access-list do rádio ou na
+bridge do POP. O Volume 13 automatiza a detecção.
+
+**4. O concentrador não é bastião.** Gerência só pela VLAN 99
+(@sec-segmentacao-pop), RADIUS/CoA restritos por firewall ao servidor
+de gestão (@sec-radius-userman), e **nenhum** serviço de gerência
+alcançável pelos IPs das sessões — o assinante fala *através* do BNG,
+nunca *com* o BNG (exceto DNS/página de cobrança, se você os hospeda
+ali — melhor não).
+
+## Múltiplos concentradores
+
+Chega o dia em que um só não basta — por capacidade ou por prudência.
+As duas topologias que escalam:
+
+```{.tikz}
+%%| filename: fig-multiplos-bng
+%%| alt: Duas topologias de múltiplos concentradores. À esquerda, um concentrador por POP, cada um atendendo sua própria rede de acesso. À direita, dois concentradores no mesmo POP atendendo a mesma VLAN com service names distintos. Em ambas, todos os concentradores consultam o mesmo servidor RADIUS central.
+\begin{tikzpicture}[
+  font=\small,
+  caixa/.style={draw, rounded corners, align=center, inner sep=4pt},
+]
+% ---- esquerda: por POP ----
+\node[anchor=west] at (-5.2,3.1) {\textbf{a) um BNG por POP}};
+\node[caixa, fill=manualblue!20] (b1) at (-4.2,1.6) {BNG\\ POP centro};
+\node[caixa, fill=manualblue!20] (b2) at (-1.6,1.6) {BNG\\ POP rural};
+\node[caixa, fill=manualgreen!15, minimum width=18mm] (a1) at (-4.2,0.2) {\scriptsize acesso\\ \scriptsize (VLAN 101)};
+\node[caixa, fill=manualgreen!15, minimum width=18mm] (a2) at (-1.6,0.2) {\scriptsize acesso\\ \scriptsize (setores PtMP)};
+\draw (b1) -- (a1); \draw (b2) -- (a2);
+% ---- direita: mesmo POP ----
+\node[anchor=west] at (0.9,3.1) {\textbf{b) dois BNGs, mesma rede}};
+\node[caixa, fill=manualblue!20] (c1) at (1.8,1.6) {BNG-01\\ \scriptsize service-name A};
+\node[caixa, fill=manualblue!20] (c2) at (4.6,1.6) {BNG-02\\ \scriptsize service-name B};
+\node[caixa, fill=manualgreen!15, minimum width=40mm] (a3) at (3.2,0.2) {\scriptsize mesma VLAN de acesso};
+\draw (c1) -- (a3.north west); \draw (c2) -- (a3.north east);
+% ---- radius central ----
+\node[caixa, fill=manualyellow!30, minimum width=34mm] (rad) at (0,-1.6)
+  {\textbf{RADIUS central} (cadastro único)};
+\foreach \b in {b1,b2,c1,c2} \draw[-{Stealth}, manualgray, dashed] (\b.south) to[bend right=10] (rad);
+\end{tikzpicture}
+```
+
+::: {#fig-multiplos-bng}
+Escalando concentradores: (a) um BNG por POP, cada um dono da sua rede
+de acesso — a divisão natural; (b) dois BNGs na mesma rede,
+diferenciados por `service-name`/`ac-name`, para migração ou
+balanceamento. Em ambas, o RADIUS central mantém o cadastro único —
+sem ele, nada disso é administrável.
+:::
+
+- **Por POP** (a divisão natural): cada concentrador atende sua rede de
+  acesso, com seu pool próprio (documente! O roteamento do Volume 8
+  precisa saber qual `/22` sai de onde). A queda de um afeta só seu
+  POP;
+- **Mesmo segmento** (migração/balanceamento): dois servidores PPPoE na
+  mesma VLAN respondem PADO; sem controle, os clientes caem em qualquer
+  um (a corrida do desafio 4 do @sec-pppoe-fundamentos). O controle é
+  `service-name` no servidor + `service-name`/`ac-name` no cliente —
+  ou aceitar a loteria como balanceamento rústico (funciona, com pools
+  distintos!);
+- **Sobrevivência**: com cadastro no RADIUS (@sec-radius-userman) e
+  configuração dos BNGs exportada (@sec-backup-export), perder um
+  concentrador é evento de **reprovisionar hardware**, não de
+  reconstruir cadastro. Clientes do BNG morto rediscam; se houver outro
+  servidor alcançável com `service-name` compatível, conectam nele —
+  failover de pobre, mas failover.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Concentrador se escala **dividindo, não engordando**. O limite real é
+o núcleo de CPU que processa o PPPoE — e nenhum upgrade de caixa muda
+essa aritmética por muito tempo. A arquitetura sustentável é: BNGs
+médios e substituíveis (um por POP), cadastro central via RADIUS,
+pools documentados por concentrador e a certeza de que qualquer um
+deles pode morrer numa sexta à noite sem levar o cadastro junto. Quem
+segue isso troca "milagre na madrugada" por "manutenção na agenda".
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Os três CHRs na configuração final do volume (@sec-radius-userman):
+lab-r1 = BNG-01, lab-r3 = User Manager — e agora o **lab-r2 acumula
+dois papéis**: cliente PPPoE e **BNG-02** (um CHR aceita ser servidor
+numa interface e cliente noutra; na falta de uma quarta VM, é o nosso
+segundo concentrador). Snapshot recomendado antes de começar:
+`pppoe-radius-ok`.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — medição de base no BNG-01.** Com a sessão da maria.silva
+ativa:
+
+```routeros
+/tool profile duration=10
+/system resource cpu print
+/ppp active print count-only
+```
+
+Anote o uso por processo (`ppp`, `queuing`, `networking`) — a
+fotografia do "normal" contra a qual você comparará picos.
+
+**Passo 2 — keepalive na prática.** No lab-r1, ajuste para acesso via
+rádio e provoque um "microcorte" desligando o cabo da lab-a no
+VirtualBox por ~15 s:
+
+```routeros
+/interface pppoe-server server set [find service-name=isp-paoquente] \
+    keepalive-timeout=30
+```
+
+Com 30 s, a sessão **sobrevive** ao corte de 15 s (confira o `uptime`
+intacto em `/ppp active print`). Repita com `keepalive-timeout=10`: a
+sessão morre e redisca. Você acabou de ver o compromisso da seção
+inteira num parâmetro.
+
+**Passo 3 — suba o BNG-02 no lab-r2.** Servindo na `lab-b` (ether3),
+com service-name próprio e o MESMO RADIUS:
+
+```routeros
+/ip pool add name=pool-bng02 ranges=100.64.104.2-100.64.107.254
+/ppp profile add name=plano-generico local-address=100.64.104.1 \
+    remote-address=pool-bng02 change-tcp-mss=yes only-one=yes
+/interface pppoe-server server add interface=ether3 \
+    service-name=isp-paoquente-b default-profile=plano-generico \
+    authentication=chap max-mtu=1492 max-mru=1492 disabled=no
+/radius add service=ppp address=172.16.0.3 secret=SegredoRadius!2026
+/ppp aaa set use-radius=yes accounting=yes
+```
+
+No lab-r3 (User Manager), autorize o novo cliente RADIUS:
+
+```routeros
+/user-manager router add name=bng-pop02 address=<IP-do-lab-r2> \
+    shared-secret=SegredoRadius!2026
+```
+
+**Passo 4 — conecte o lab-r3 como assinante do BNG-02** (o lab-r3
+também acumula papéis — servidor RADIUS e cliente de teste na
+`lab-b`):
+
+```routeros
+/interface pppoe-client add interface=ether2 name=pppoe-teste \
+    user=maria.silva password=Ms!7201xk disabled=no
+```
+
+A mesma `maria.silva` autentica nos **dois** BNGs — cadastro único,
+concentradores independentes. (`only-one` aqui é por concentrador;
+RADIUS pode impor unicidade global — pergunta do desafio 3.)
+
+**Passo 5 — mate um BNG.** Desligue o servidor PPPoE do lab-r1
+(`/interface pppoe-server server disable [find]`) e observe: a sessão
+no lab-r2-cliente cai e fica rediscando (PADI sem PADO na lab-a — não
+há segundo BNG **naquele segmento**); enquanto isso, a sessão do BNG-02
+na lab-b segue intacta. Falha isolada por segmento = topologia (a) da
+@fig-multiplos-bng. Reative ao final.
+
+### Verificação
+
+1. Você tem a fotografia de CPU/processos do BNG-01 sob carga normal;
+2. Sessão sobreviveu ao microcorte com keepalive 30 s e caiu com 10 s;
+3. `maria.silva` conectada simultaneamente nos dois BNGs, ambos
+   aparecendo como `router` distintos no accounting do User Manager;
+4. A queda do BNG-01 não afetou a sessão do BNG-02 — e a rediscagem
+   contínua do cliente órfão ficou visível no log dele.
+
+### Desafios
+
+1. Seu BNG mostra CPU total em 45%, mas os clientes reclamam de
+   lentidão às 20h30. `/system resource cpu print` mostra:
+   `cpu1: 96%`, demais núcleos < 20%. Explique o que está acontecendo,
+   por que a média engana, e as duas saídas possíveis (curto e longo
+   prazo).
+2. Após um blecaute de 40 min no bairro, o POP volta e o concentrador
+   trava por 3 minutos com CPU 100%, derrubando até o WinBox. Nomeie o
+   fenômeno, explique por que o RADIUS **amortece** (em vez de piorar)
+   e cite um parâmetro deste volume que, mal configurado, agrava o
+   quadro.
+3. Com dois BNGs e RADIUS central, `only-one=yes` no profile local
+   ainda deixa a maria.silva conectar duas vezes (uma em cada BNG),
+   como o Passo 4 provou. De quem é a responsabilidade de impor "uma
+   sessão por contrato" nesse cenário — e com que informação o RADIUS
+   decide?
+4. Projete o failover do POP rural: hoje, um BNG único (RB numa torre)
+   atende 3 setores PtMP. Proponha a topologia com um segundo BNG que
+   assuma em caso de falha, listando: onde ele fica, o que compartilham
+   (service-name? pools?), o que o cliente percebe na falha e o tempo
+   estimado de recuperação.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O processamento PPPoE/filas está preso a um núcleo — `cpu1`
+saturado é o teto real da caixa, e a média de 45% dilui o gargalo nos
+núcleos ociosos. Curto prazo: aliviar o núcleo — desligar criptografia
+PPP se estiver ativa, revisar filas/firewall (regras com contadores
+altos no topo, @sec-hardening), mover serviços acessórios (DNS,
+gráficos) para fora do BNG. Longo prazo: **dividir** — segundo
+concentrador por POP/segmento (@fig-multiplos-bng), não caixa maior.
+
+**2.** Tempestade de rediscagem (*reconnect storm*): centenas de
+PADI/CHAP/IPCP simultâneos + criação de filas dinâmicas = pico de CPU
+muito acima do regime. O RADIUS amortece porque a autenticação vira
+requisição-resposta com o servidor externo: o BNG processa em série o
+que o timeout do RADIUS naturalmente espaça (fila, não colapso) — e
+rejeições em massa não custam busca em base local. Agrava o quadro:
+`keepalive-timeout` **curto** (sessões declaradas mortas rápido demais
+→ mais rediscagem em cascata durante a própria recuperação).
+
+**3.** Do **RADIUS** (o único que enxerga os dois BNGs). Ele decide
+com o accounting: se existe sessão ativa (Accounting-Start sem Stop)
+para `maria.silva`, o Access-Request seguinte é rejeitado — ou a
+sessão antiga é derrubada via Disconnect (política "última vence"). No
+User Manager, o atributo de sessões simultâneas do grupo/perfil aplica
+isso; a armadilha operacional são sessões fantasma (Stop perdido)
+travando o cliente — por isso o par interim-update + timeout de
+sessão órfã no servidor.
+
+**4.** Segundo BNG no **mesmo POP/torre** (outro RB, idealmente em
+fonte/nobreak separados), ligado à mesma VLAN de acesso dos 3 setores.
+Compartilham: o RADIUS central e o **mesmo `service-name`** (para o
+cliente rediscar sem reconfiguração); **pools distintos e roteados**
+(cada BNG anuncia o seu — Volume 8). Operação normal: BNG-02 com o
+servidor PPPoE **desabilitado** (standby frio) ou ativo com PADO
+levemente atrasado. Na falha: clientes caem, PADI acha só o BNG-02,
+rediscam e voltam — com IP de outro pool (quem tinha IP fixo via
+`Framed-IP-Address` no RADIUS mantém!). Recuperação = keepalive da
+detecção + rediscagem ≈ **1–3 minutos**, sem intervenção humana. Custo:
+um RB — contra uma madrugada de subida de serra.
+:::
+
+## Resumo
+
+- O gargalo real do BNG é **um núcleo de CPU** (PPPoE/filas não
+  paralelizam bem): monitore por núcleo e por processo
+  (`/tool profile`), planeje divisão a partir de 60–70% no pico — e
+  dimensione para a **tempestade de rediscagem**, não para o regime;
+- `keepalive-timeout`: 10–30 s em fibra, 30–60 s em rádio — curto
+  demais transforma microcorte em queda de setor + rediscagem em massa;
+- Blindagem do papel: PPPoE **só** nas interfaces de acesso, storm
+  control contra PADI flood, RADIUS/CoA cercados por firewall, gerência
+  fora do alcance das sessões;
+- Escala = **dividir**: um BNG por POP com pools próprios documentados,
+  `service-name` disciplinando quem conecta onde, RADIUS central
+  mantendo o cadastro único e a unicidade de sessão;
+- Fecha o Volume 6: o assinante agora conecta (@sec-pppoe-fundamentos),
+  recebe seu plano (@sec-pppoe-server), é gerido centralmente
+  (@sec-radius-userman) e o serviço aguenta o mundo real. O Volume 7
+  pega a fila dinâmica que o profile criou e a transforma em **QoS de
+  verdade**.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *PPPoE Server*, *PPP AAA* e *Tool
+  Profile* [@mikrotik-docs];
+- Dimensionamento e arquitetura de acesso: [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- Operação de provedor com MikroTik: [@burgess-mikrotik];
+- Linhas CCR/RB para BNG: [@mikrotik-products].
