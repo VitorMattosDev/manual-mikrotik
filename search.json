@@ -2062,6 +2062,534 @@
     ]
   },
   {
+    "objectID": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html",
+    "href": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html",
+    "title": "27  Fundamentos de rádio e regulamentação",
+    "section": "",
+    "text": "27.1 A língua dos decibéis\nRádio se projeta em decibéis, e há uma razão prática: as grandezas envolvidas variam por fatores de bilhões (miliwatts transmitidos, femtowatts recebidos), e o decibel transforma multiplicação em soma. Três unidades, três papéis:\nE as duas contas de cabeça que valem o capítulo:\nO que torna tudo somável: potência recebida = potência transmitida + ganhos − perdas. Essa soma tem nome — link budget — e fecharemos o capítulo com ela.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Fundamentos de rádio e regulamentação</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#a-língua-dos-decibéis",
+    "href": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#a-língua-dos-decibéis",
+    "title": "27  Fundamentos de rádio e regulamentação",
+    "section": "",
+    "text": "dBm — potência absoluta, referida a 1 mW: \\(P_{\\text{dBm}} = 10\\log_{10}(P/1\\,\\text{mW})\\). Um rádio que transmite 25 dBm emite ~316 mW; um sinal recebido de −65 dBm são ~0,3 nW;\ndBi — ganho de antena, relativo à antena isotrópica (que irradia igual em todas as direções). A grade de um LHG tem ~24,5 dBi: concentra a energia num feixe estreito;\ndB — razões e perdas: cabo, conectores, atenuação no caminho.\n\n\n\n+3 dB dobra, −3 dB corta pela metade (potência);\n+10 dB é 10× — logo 20 dBm = 100 mW, 30 dBm = 1 W.\n\n\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nPense no enlace como uma conversa num campo aberto: dBm é o volume da voz, dBi é fazer concha com as mãos (a mesma voz, concentrada numa direção), e a perda de percurso é a distância engolindo o som. O link budget responde: “gritando a X dBm, com as mãos em concha de Y dBi, a voz chega ao ouvido do outro lado acima do burburinho?”",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Fundamentos de rádio e regulamentação</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#as-bandas-do-provedor",
+    "href": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#as-bandas-do-provedor",
+    "title": "27  Fundamentos de rádio e regulamentação",
+    "section": "27.2 As bandas do provedor",
+    "text": "27.2 As bandas do provedor\n\n\n\nTabela 27.1: As três bandas na prática do provedor\n\n\n\n\n\n\n\n\n\n\n\n\n2,4 GHz\n5 GHz\n60 GHz\n\n\n\n\nAlcance típico\nmaior\ngrande\ncurto (&lt; 2–3 km)\n\n\nLargura de canais\n3 canais úteis (20 MHz)\ndezenas de canais (20–80 MHz)\ncanais gigantes (2 GHz)\n\n\nCapacidade\nbaixa\nmédia/alta\nmulti-gigabit\n\n\nInterferência\nsaturada\nmoderada (e crescente)\nquase nula\n\n\nChuva/obstáculos\natravessa vegetação leve\nsensível a obstáculos\nbloqueada por quase tudo (e chuva forte atenua)\n\n\nPapel no provedor\nlegado, IoT, última opção\nPtP e PtMP rural — o cavalo de batalha\nPtP curto de alta capacidade (Wire, Capítulo 2)\n\n\n\n\n\n\nA física por trás da tabela: quanto maior a frequência, mais o sinal se comporta como luz — feixes mais estreitos e mais capacidade (canais largos), porém menos capacidade de contornar obstáculos e mais atenuação. Os 2,4 GHz contornam árvores e chegam longe — e justamente por isso todo mundo os usa, e a banda virou um mercado de peixe de interferência. Os 5 GHz equilibram alcance e espectro limpo o suficiente — são a banda do PtMP rural brasileiro. Os 60 GHz são um laser de dados: multi-gigabit entre dois prédios, inúteis atrás de uma folha de bananeira.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Fundamentos de rádio e regulamentação</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#visada-e-a-zona-de-fresnel",
+    "href": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#visada-e-a-zona-de-fresnel",
+    "title": "27  Fundamentos de rádio e regulamentação",
+    "section": "27.3 Visada e a zona de Fresnel",
+    "text": "27.3 Visada e a zona de Fresnel\n“Da torre eu vejo a casa do cliente” — e o enlace não fecha. O erro está em pensar o rádio como um raio de luz fino: a energia viaja num volume elíptico ao redor da linha reta, a zona de Fresnel (Figura 27.1). Obstáculos que invadem esse volume — mesmo sem tocar a linha de visada — roubam sinal.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFigura 27.1: A zona de Fresnel: o sinal viaja num volume elíptico — e é esse volume, não a linha fina, que precisa estar livre.\n\n\n\nO raio máximo da primeira zona, no meio de um enlace de comprimento \\(d\\) (km) na frequência \\(f\\) (GHz):\n\\[r \\approx 8{,}66\\sqrt{\\frac{d}{f}}\\ \\text{metros}\\]\nNum enlace de 10 km em 5,8 GHz: \\(r \\approx 8{,}66\\sqrt{10/5{,}8} \\approx\n11{,}4\\) m. Onze metros de folga no meio do caminho — é por isso que torres têm a altura que têm, e por que o enlace que fechou em agosto cai em dezembro, quando o eucalipto do vizinho cresceu. Regra de projeto: pelo menos 60% da primeira zona livre (no exemplo, ~7 m).",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Fundamentos de rádio e regulamentação</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#o-link-budget-a-conta-que-fecha-enlaces",
+    "href": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#o-link-budget-a-conta-que-fecha-enlaces",
+    "title": "27  Fundamentos de rádio e regulamentação",
+    "section": "27.4 O link budget: a conta que fecha enlaces",
+    "text": "27.4 O link budget: a conta que fecha enlaces\nA perda de percurso no espaço livre (FSPL) também tem fórmula amigável em dB, com \\(d\\) em km e \\(f\\) em GHz:\n\\[\\text{FSPL} \\approx 92{,}45 + 20\\log_{10}(d) + 20\\log_{10}(f)\\ \\text{dB}\\]\nE o link budget é a soma completa, de ponta a ponta:\n\\[P_{rx} = P_{tx} + G_{tx} - \\text{FSPL} + G_{rx}\\]\nExemplo real — enlace PtP de 10 km em 5,8 GHz com dois LHG 5 (24,5 dBi; transmissor a 20 dBm):\n\nFSPL: \\(92{,}45 + 20\\log_{10}(10) + 20\\log_{10}(5{,}8) \\approx 92{,}45 +\n20 + 15{,}3 = 127{,}8\\) dB;\n\\(P_{rx} = 20 + 24{,}5 - 127{,}8 + 24{,}5 = -58{,}8\\) dBm.\n\nEsse número se compara com a sensibilidade do rádio na modulação desejada (a ficha técnica diz: p.ex., −80 dBm para MCS alto) e nasce a margem — aqui, ~21 dB. A regra de campo: margem mínima de 15–20 dB para o enlace sobreviver a chuva, desvanecimento e ao eucalipto que cresce. Menos que 10 dB de margem no papel = enlace que dará chamado.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Fundamentos de rádio e regulamentação</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#anatel-as-regras-do-jogo",
+    "href": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#anatel-as-regras-do-jogo",
+    "title": "27  Fundamentos de rádio e regulamentação",
+    "section": "27.5 Anatel: as regras do jogo",
+    "text": "27.5 Anatel: as regras do jogo\nAs bandas da Tabela 27.1 são de radiação restrita (Resolução Anatel nº 680/2017, herdeira da 506): não exigem licença por estação e podem ser usadas em caráter secundário — sem direito a proteção contra interferência e sem poder causar interferência em serviços primários. As letras que importam ao provedor:\n\nLimites de EIRP — a potência efetivamente irradiada (\\(P_{tx} + G_{ant}\\)) tem tetos por banda e aplicação; em 5,8 GHz ponto-a-ponto há mais folga (o feixe estreito não incomoda os vizinhos), em 2,4 GHz os limites são apertados. O detalhe que muda projeto: antena de mais ganho pode exigir reduzir a potência do rádio para respeitar o teto;\nDFS/radar em parte dos 5 GHz — faixas compartilhadas com radares meteorológicos exigem detecção e desvio automáticos (o RouterOS implementa); ignorar não é opção;\nSCM — o provedor em si opera sob outorga de Serviço de Comunicação Multimídia (dispensada abaixo de 5 mil assinantes, mas o registro tem vantagens) — a camada jurídica acima do rádio;\nHomologação — os equipamentos precisam ser homologados pela Anatel (os MikroTik vendidos no Brasil são; o selo importa em fiscalização).\n\n\n\n\n\n\n\nAviso\n\n\n\nOperar acima dos limites de EIRP — o “destravar a potência” folclórico — é infração sancionável pela Anatel, além de má engenharia: potência a mais no seu rádio é interferência nos vizinhos e no seu próprio setor (você grita mais, e ouve pior os clientes distantes). Enlace bom se faz com antena, altura e alinhamento, não com watt.\n\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nEnlace de rádio não se “tenta” — se calcula: \\(P_{rx} = P_{tx} +\nG_{tx} - \\text{FSPL} + G_{rx}\\), comparado à sensibilidade, com 15–20 dB de margem e 60% da primeira zona de Fresnel livre. A conta cabe num guardanapo, respeita os tetos da Anatel e prevê no papel o que o campo confirmaria a 40 km de distância — a ordem certa é essa.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Fundamentos de rádio e regulamentação</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#laboratório",
+    "href": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#laboratório",
+    "title": "27  Fundamentos de rádio e regulamentação",
+    "section": "27.6 🧪 Laboratório",
+    "text": "27.6 🧪 Laboratório\n\n27.6.1 Ambiente\nPapel, calculadora — e mapa. Este é o laboratório de projeto: o CHR não tem rádio, e as contas deste capítulo são exatamente o que se faz antes de subir em qualquer torre. (Ferramentas de mapa com perfil de elevação — como o modo caminho do Google Earth — ajudam nos desafios.)\n\n\n27.6.2 Comandos passo a passo\nSem comandos hoje — passos de cálculo. Refaça cada um antes de olhar o gabarito ao lado:\nPasso 1 — traduzir potências. Complete de cabeça: 23 dBm = ? mW (gabarito: ~200 mW — 20 dBm são 100 mW, +3 dB dobra); 316 mW = ? dBm (25 dBm); um cabo com 2 dB de perda deixa passar que fração? (~63%).\nPasso 2 — Fresnel. Enlace de 6 km em 5,8 GHz: raio no meio do caminho? (\\(r = 8{,}66\\sqrt{6/5{,}8} \\approx 8{,}8\\) m; 60% ≈ 5,3 m de folga necessária.)\nPasso 3 — FSPL. O mesmo enlace: perda de percurso? (\\(92{,}45 + 20\\log_{10}6 + 20\\log_{10}5{,}8 \\approx 92{,}45 + 15{,}6 +\n15{,}3 = 123{,}3\\) dB.)\nPasso 4 — o budget completo. Dois SXT SA5 não — um enlace PtP com duas LHG 5 (24,5 dBi), rádios a 20 dBm, 6 km, 5,8 GHz: \\(P_{rx} = 20 + 24{,}5 - 123{,}3 + 24{,}5 = -54{,}3\\) dBm. Com sensibilidade de −80 dBm na modulação alvo: margem ≈ 25,7 dB — enlace confortável.\nPasso 5 — o mesmo enlace com equipamento errado. Refaça com duas antenas de 16 dBi (SXT): \\(P_{rx} = 20 + 16 - 123{,}3 + 16 = -71{,}3\\) dBm — margem de ~8,7 dB. No papel “funciona”; na primeira chuva com desvanecimento, cai. É a diferença, em números, entre o SXT e o LHG do desafio do Capítulo 2.\n\n\n27.6.3 Verificação\n\nSuas contas dos Passos 1–4 batem com os gabaritos (erros de ±1 dB são arredondamento; erros de ±10 dB são conceito — refaça);\nVocê sabe justificar a escolha LHG × SXT do Passo 5 com a margem, não com achismo;\nVocê sabe dizer, para seu projeto, o teto de EIRP aplicável — e o que fazer quando antena + potência o excedem.\n\n\n\n27.6.4 Desafios\n\nUm enlace de 15 km em 5,8 GHz precisa fechar com margem ≥ 20 dB usando rádios de 25 dBm e sensibilidade −80 dBm. Que ganho mínimo (idêntico nas duas pontas) as antenas precisam ter? Consulte a Tabela 27.1 e o catálogo mental do Capítulo 2: que produto você especificaria?\nO mesmo enlace do desafio 1 passa sobre um vale, e no meio do caminho há uma mata cujas copas chegam a 18 m. As torres têm 30 m e o terreno é plano. A primeira zona de Fresnel está suficientemente livre?\nUm concorrente instalou um setor de 2,4 GHz “no talo” (potência máxima + antena de alto ganho, EIRP acima do permitido) apontado para a sua área. Liste: (a) o efeito técnico na rede dele; (b) o efeito na sua; (c) as suas opções técnicas e regulatórias.\nPor que um enlace de 60 GHz de 1,5 km pode ser melhor e pior que um de 5,8 GHz no mesmo caminho? Dê duas vantagens e dois riscos, e o critério de decisão.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. FSPL(15 km; 5,8 GHz) = \\(92{,}45 + 23{,}5 + 15{,}3 = 131{,}3\\) dB. Precisamos de \\(P_{rx} \\ge -60\\) dBm (−80 + 20 de margem). Então \\(G_{tx}+G_{rx} \\ge -60 - 25 + 131{,}3 = 46{,}3\\) dB → ≥ 23,2 dBi por antena. Especificação natural: LHG 5 XL (~27 dBi) — folga para chuva e envelhecimento; um LHG 5 comum (24,5 dBi) fecharia justo. E atenção ao EIRP: 25 dBm + 27 dBi = 52 dBm — confira o teto da faixa PtP antes de cravar a potência.\n2. \\(r = 8{,}66\\sqrt{15/5{,}8} \\approx 13{,}9\\) m; 60% ≈ 8,4 m. A linha de visada corre a 30 m; o limite inferior aceitável da zona fica a \\(30 - 8{,}4 = 21{,}6\\) m. As copas a 18 m passam — mas com 3,6 m de folga apenas: mata cresce (1–2 m/ano em eucalipto!) e o meio do vão é onde a elipse é máxima. Veredicto: fecha hoje, com plano de revisita — ou torres mais altas já.\n3. (a) Na rede dele: autointerferência — gritando, ele não ouve os próprios clientes distantes (enlace é via de mão dupla; EIRP alto só na torre não melhora o uplink do cliente); (b) na sua: piso de ruído mais alto em 2,4 GHz, CCQ e MCS caindo nos setores apontados; (c) técnicas: migrar o que puder para 5 GHz (Tabela 27.1), canais mais afastados, antenas mais diretivas, polarização; regulatória: radiação restrita não dá direito a proteção, mas operação fora dos limites é infração — medição documentada e denúncia à Anatel é caminho legítimo (e comum) entre provedores.\n4. Vantagens do 60 GHz: capacidade multi-gigabit (canais de 2 GHz) e espectro limpo (sem vizinhos, feixe a laser). Riscos: atenuação por chuva forte (enlaces &gt; 1 km podem cair em tempestade) e sensibilidade total a obstáculos (um galho novo = enlace morto). Critério: 60 GHz quando a distância é curta, a visada é estéril (urbana, entre prédios) e a demanda de banda justifica — idealmente com backup em 5 GHz (os Wire AP fazem isso sozinhos); 5,8 GHz quando o caminho é rural, verde e longo.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Fundamentos de rádio e regulamentação</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#resumo",
+    "href": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#resumo",
+    "title": "27  Fundamentos de rádio e regulamentação",
+    "section": "27.7 Resumo",
+    "text": "27.7 Resumo\n\nDecibéis: dBm (potência), dBi (ganho), dB (perdas); +3 dB dobra, +10 dB é 10× — e tudo vira soma.\nBandas (Tabela 27.1): 2,4 GHz alcança e está saturada; 5 GHz é o cavalo de batalha do provedor rural; 60 GHz é um laser multi-gigabit de curta distância.\nVisada não basta: zona de Fresnel (\\(r \\approx 8{,}66\\sqrt{d/f}\\) m) com 60% livre — e mata cresce.\nLink budget: \\(P_{rx} = P_{tx} + G_{tx} - \\text{FSPL} + G_{rx}\\), FSPL \\(\\approx 92{,}45 + 20\\log d + 20\\log f\\); margem alvo 15–20 dB.\nAnatel: radiação restrita = sem proteção e com tetos de EIRP; DFS em parte dos 5 GHz; equipamentos homologados; SCM como camada de outorga. Enlace se melhora com antena e altura, não com watt ilegal.\n\nNo próximo capítulo, o rádio entra no RouterOS: modos de interface, registration table, segurança — o wireless como o sistema o vê.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Fundamentos de rádio e regulamentação</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#bibliografia-do-capítulo",
+    "href": "volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html#bibliografia-do-capítulo",
+    "title": "27  Fundamentos de rádio e regulamentação",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\nA documentação oficial (MikroTik, 2026) traz as fichas com sensibilidade por modulação de cada rádio (essenciais ao link budget). A Resolução Anatel nº 680/2017 e os atos de requisitos técnicos correlatos definem os limites de radiação restrita no Brasil — leia-os na fonte (anatel.gov.br). Tanenbaum; Feamster; Wetherall (2021) cobre a física de transmissão sem fio. As referências completas, em ABNT, estão no apêndice Referências.\n\n\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Fundamentos de rádio e regulamentação</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/02-wireless-routeros.html",
+    "href": "volumes/v05-wireless/02-wireless-routeros.html",
+    "title": "28  Wireless no RouterOS",
+    "section": "",
+    "text": "28.1 Duas pilhas, um aviso\nAntes de qualquer comando, o mapa do território no RouterOS v7:\nA separação faz sentido operacional: enlace de provedor (torre, backhaul) é um problema de física e disciplina de meio; WiFi de cliente é um problema de compatibilidade e gerência em massa. A MikroTik os resolve com pilhas diferentes, e este volume os trata em capítulos diferentes.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>28</span>  <span class='chapter-title'>Wireless no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/02-wireless-routeros.html#duas-pilhas-um-aviso",
+    "href": "volumes/v05-wireless/02-wireless-routeros.html#duas-pilhas-um-aviso",
+    "title": "28  Wireless no RouterOS",
+    "section": "",
+    "text": "/interface wireless — o pacote clássico, dos rádios de provedor: SXT, LHG, BaseBox, NetMetal e afins. É onde vivem os protocolos proprietários de PtP/PtMP (Nstreme, NV2 —\n\ne é a pilha deste e dos próximos três capítulos;\n\n/interface wifi — a pilha nova (wave2/ax), dos equipamentos WiFi modernos (hAP ax, cAP ax): WPA3, roaming rápido, CAPsMAN novo. É a pilha da casa do cliente — assunto do Capítulo 32.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>28</span>  <span class='chapter-title'>Wireless no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/02-wireless-routeros.html#os-modos-quem-fala-quem-escuta-quem-repassa",
+    "href": "volumes/v05-wireless/02-wireless-routeros.html#os-modos-quem-fala-quem-escuta-quem-repassa",
+    "title": "28  Wireless no RouterOS",
+    "section": "28.2 Os modos: quem fala, quem escuta, quem repassa",
+    "text": "28.2 Os modos: quem fala, quem escuta, quem repassa\nO parâmetro mode define o papel do rádio — e escolhe errado quem não entende camada 2 sobre o ar (Figura 28.1):\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFigura 28.1: Os modos por papel: ap-bridge na torre PtMP, bridge no PtP, station/station-bridge nos clientes.\n\n\n\n\nap-bridge — o ponto de acesso completo: aceita vários clientes. É o modo da setorial na torre (exige licença nível 4+, Capítulo 3);\nbridge — um AP que aceita um cliente só: o lado “mestre” de um enlace PtP dedicado (e disponível já no nível 3);\nstation — o cliente ortodoxo do 802.11… com uma pegadinha enorme: o padrão só prevê um MAC atrás de cada estação. Um rádio em station não consegue fazer bridge da LAN do cliente — os quadros dos dispositivos atrás dele têm MACs que o AP recusaria. station serve quando o rádio roteia (a LAN do cliente atrás de NAT/rotas do próprio rádio);\nstation-bridge — a solução proprietária MikroTik: AP e estação combinam um encapsulamento que transporta múltiplos MACs, e a LAN do cliente atravessa o ar como se fosse cabo. Exige MikroTik nas duas pontas — na rede do provedor, é o normal. (Evite o station-pseudobridge, uma gambiarra de tradução de MACs para APs de terceiros: funciona “quase sempre”, e “quase” gera chamados.)",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>28</span>  <span class='chapter-title'>Wireless no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/02-wireless-routeros.html#o-enlace-mínimo-banda-canal-ssid-segurança",
+    "href": "volumes/v05-wireless/02-wireless-routeros.html#o-enlace-mínimo-banda-canal-ssid-segurança",
+    "title": "28  Wireless no RouterOS",
+    "section": "28.3 O enlace mínimo: banda, canal, SSID, segurança",
+    "text": "28.3 O enlace mínimo: banda, canal, SSID, segurança\nUm AP de torre nasce com quatro decisões (os valores são exemplo — o projeto do canal é assunto do Capítulo 30):\n/interface wireless security-profiles add name=sp-torre mode=dynamic-keys authentication-types=wpa2-psk wpa2-pre-shared-key=ChaveForte!Torre1\n/interface wireless set wlan1 mode=ap-bridge band=5ghz-a/n/ac channel-width=20/40mhz-Ce frequency=5805 ssid=prov-torre-sul security-profile=sp-torre disabled=no\nLinha a linha do set:\n\nband — a banda e as gerações aceitas (5ghz-a/n/ac: clientes 802.11a, n e ac). Restringir gerações antigas melhora a eficiência do setor — cliente lento ocupa o ar de todos;\nchannel-width — 20 MHz é o conservador de PtMP (mais setores coexistindo, melhor sensibilidade); 40+ MHz para PtP com espectro limpo. Largura dobrada = capacidade quase dobrada e o dobro de exposição a interferência;\nfrequency — o canal, em MHz. No ap-bridge você escolhe (e documenta!); nas estações, usa-se scan-list para procurar o AP;\nssid — o nome da rede. Convenção de provedor: nome que identifica torre/setor (prov-torre-sul-s2), não “WiFi da firma”;\nsecurity-profile — a segurança mora num perfil separado (reutilizável entre interfaces): WPA2-PSK no mínimo, sempre. Rádio aberto em torre é convite a vizinho pendurado e a captura de tráfego. Nos rádios de provedor, some-se o radio-name e, adiante, a access-list (Capítulo 30).\n\nDo lado do cliente, o espelho:\n/interface wireless set wlan1 mode=station-bridge band=5ghz-a/n/ac ssid=prov-torre-sul security-profile=sp-torre disabled=no",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>28</span>  <span class='chapter-title'>Wireless no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/02-wireless-routeros.html#a-registration-table-o-estetoscópio",
+    "href": "volumes/v05-wireless/02-wireless-routeros.html#a-registration-table-o-estetoscópio",
+    "title": "28  Wireless no RouterOS",
+    "section": "28.4 A registration table: o estetoscópio",
+    "text": "28.4 A registration table: o estetoscópio\nConectou? A resposta — e a qualidade da resposta — mora em:\n/interface wireless registration-table print stats\n[admin@torre-sul] &gt; /interface wireless registration-table print stats\n 0 interface=wlan1 mac-address=08:00:27:AA:12:34 ap=no wds=no\n   rx-rate=\"390Mbps-40MHz/2S\" tx-rate=\"390Mbps-40MHz/2S\"\n   uptime=2d4h11m22s signal-strength=-61dBm@40MHz\n   tx-signal-strength=-63dBm tx-ccq=94% p-throughput=182000\nOs campos que o Capítulo 31 transformará em método; por ora, o vocabulário:\n\nsignal-strength / tx-signal-strength — o sinal nos dois sentidos (o que eu ouço dele / o que ele ouve de mim). O link budget do Capítulo 27, medido: os −61 dBm daqui deveriam bater com a conta do papel. Assimetria grande entre os dois = problema (potências desiguais, antena desalinhada num lado);\ntx/rx-rate — a modulação negociada (MCS): o rádio ajusta a velocidade à qualidade do sinal. Taxa baixa com sinal bom = procurar interferência;\ntx-ccq — Client Connection Quality: percentual de eficiência real das transmissões (quantas precisaram de retransmissão). &gt; 90% saudável; &lt; 70% doente;\nuptime — conexão estável ou reconectando toda hora? O contador denuncia.\n\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nA registration table é a ficha médica de cada cliente do setor: sinal é a pressão arterial (nos dois braços!), CCQ é a saturação de oxigênio, a taxa negociada é o pique na esteira, e o uptime é o histórico de desmaios. Antes de culpar “a internet”, o médico de torre abre a ficha.\n\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nWireless de provedor no RouterOS é: modo pelo papel (ap-bridge na torre, bridge no PtP, station-bridge no cliente que faz ponte — nunca station puro para LAN), quatro decisões no enlace (banda, largura, canal, WPA2 em security profile) e a registration table como fonte da verdade sobre a saúde de cada conexão — sinal nos dois sentidos, CCQ e taxa negociada.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>28</span>  <span class='chapter-title'>Wireless no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/02-wireless-routeros.html#laboratório",
+    "href": "volumes/v05-wireless/02-wireless-routeros.html#laboratório",
+    "title": "28  Wireless no RouterOS",
+    "section": "28.5 🧪 Laboratório",
+    "text": "28.5 🧪 Laboratório\n\n28.5.1 Ambiente\nO CHR não tem rádio — este laboratório usa hardware físico opcional: qualquer par de RouterBOARDs com wireless (dois hAP usados, ou um hAP + um SXT) reproduz tudo. Sem hardware, faça o laboratório de leitura: os exports e saídas abaixo estão completos — percorra-os linha a linha como se fossem seus, e responda os desafios (todos independentes de equipamento).\n\n\n28.5.2 Comandos passo a passo\nPasso 1 — o AP. No equipamento A (papel de torre/AP):\n/interface wireless security-profiles add name=sp-lab mode=dynamic-keys authentication-types=wpa2-psk wpa2-pre-shared-key=Lab!Wireless2026\n/interface wireless set wlan1 mode=ap-bridge band=5ghz-a/n/ac channel-width=20mhz frequency=5805 ssid=lab-ptmp security-profile=sp-lab disabled=no\nPasso 2 — a estação. No equipamento B (papel de cliente):\n/interface wireless security-profiles add name=sp-lab mode=dynamic-keys authentication-types=wpa2-psk wpa2-pre-shared-key=Lab!Wireless2026\n/interface wireless set wlan1 mode=station-bridge band=5ghz-a/n/ac ssid=lab-ptmp security-profile=sp-lab disabled=no\nPasso 3 — ver a conexão nascer. No AP:\n/interface wireless registration-table print stats\nIdentifique cada campo da seção anterior na sua saída real. Anote sinal, CCQ e taxa — este é o “exame de sangue” de referência do seu enlace de bancada.\nPasso 4 — a ponte no ar. Prove o station-bridge: no B, coloque a wlan1 e a ether2 numa bridge (Capítulo 22) e pendure um notebook na ether2 — ele deve receber DHCP de quem estiver atrás do AP, atravessando o ar em camada 2. Depois, troque o modo para station puro e repita: o notebook fica mudo (os MACs dele não atravessam) — a pegadinha do modo, sentida na prática.\nPasso 5 — brincar de qualidade. Com o enlace vivo, degrade-o de propósito: afaste os equipamentos, interponha uma parede, desalinhe. A cada mudança, registration-table print stats: veja sinal cair, a taxa negociada despencar junto e o CCQ sofrer com retransmissões. Você está assistindo à física do Capítulo 27 em tempo real.\n\n\n28.5.3 Verificação\n\nA estação aparece na registration table do AP com WPA2 (e não conecta com a chave errada — teste!);\nEm station-bridge, dispositivos atrás da estação atravessam em camada 2; em station, não — e você sabe explicar por quê;\nVocê localizou sinal (nos dois sentidos), CCQ, taxa e uptime na sua saída (ou na do texto) sem consultar a legenda;\n(Bancada) O Passo 5 mostrou a tríade sinal↓ → taxa↓ → CCQ↓ se movendo junta.\n\n\n\n28.5.4 Desafios\n\nUm provedor liga a setorial da torre em mode=bridge “porque bridge é transparente”. Vinte clientes tentam conectar. O que acontece — e qual é o modo certo?\nNa registration table de um cliente rural: signal-strength=-58dBm, tx-signal-strength=-79dBm. O download no cliente está ótimo; o upload, péssimo. Explique a coerência entre os três fatos e proponha duas causas prováveis.\nPor que station-pseudobridge “quase funciona”? Descreva o mecanismo de tradução de MACs e invente um cenário concreto (um serviço comum de LAN) em que ele quebra.\nO security-profile do laboratório usa WPA2-PSK — uma chave única para o setor inteiro. Aponte dois problemas operacionais disso num PtMP de 80 clientes e antecipe (sem detalhar) as alternativas que os próximos capítulos e o Volume 6 trarão.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. mode=bridge aceita uma estação: o primeiro cliente conecta, os outros dezenove ficam de fora (tentando, enchendo o log). O modo da torre PtMP é ap-bridge — múltiplas estações. (bridge existe para o PtP dedicado, onde “só um” é justamente o contrato.)\n2. Coerência: signal-strength é o que a torre ouve do cliente… cuidado — na tabela do cliente, é o que o cliente ouve da torre (−58 dBm, forte → download bom); tx-signal-strength é o eco reportado do outro lado: a torre ouve o cliente a −79 dBm (fraco → upload ruim). Assimetria de 21 dB. Causas prováveis: (a) potência de transmissão do cliente muito menor que a da torre (comum: torre “no talo”, cliente comedido — e o enlace é mão dupla); (b) desalinhamento/polarização — a antena do cliente aponta bem para receber o feixe largo do setor, mas o feixe estreito dela não volta certo (ou um conector/pigtail ruim no transmissor do cliente).\n3. O pseudobridge faz NAT de MAC: apresenta ao AP o MAC do próprio rádio para todos os quadros e mantém uma tabela interna IP↔︎MAC para devolver as respostas. Quebra onde a camada 2 importa de verdade: tráfego não-IP ou baseado em broadcast/MAC — exemplo concreto: um DHCP server atrás da estação (os OFFERs unicast ao MAC do cliente real nunca chegam), descoberta de vizinhos, ARP gratuito de failover (VRRP). Sintoma clássico: “uns aparelhos funcionam, outros não”.\n4. Problemas: (a) revogação impossível — cancelou um cliente? A chave que ele conhece continua abrindo o setor; trocar a chave = reconfigurar 80 rádios; (b) zero identidade — todos são “a chave”: não há como medir, limitar ou cortar um assinante na camada wireless. Alternativas vindouras: access-list por MAC com chaves individuais (Capítulo 30) e — a resposta definitiva do ISP — autenticação por sessão PPPoE em cima do rádio (Volume 6), onde identidade, plano e corte são por assinante.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>28</span>  <span class='chapter-title'>Wireless no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/02-wireless-routeros.html#resumo",
+    "href": "volumes/v05-wireless/02-wireless-routeros.html#resumo",
+    "title": "28  Wireless no RouterOS",
+    "section": "28.6 Resumo",
+    "text": "28.6 Resumo\n\nv7 tem duas pilhas: /interface wireless (rádios de provedor — este capítulo) e /interface wifi (wave2/ax, casa do cliente — Capítulo 32).\nModos pelo papel (Figura 28.1): ap-bridge torre PtMP, bridge PtP, station-bridge cliente com ponte (proprietário MikroTik), station só quando o rádio roteia — e pseudobridge é gambiarra.\nEnlace mínimo = banda + largura de canal + frequência + SSID + WPA2 em security profile — largura dobrada, capacidade e vulnerabilidade dobradas.\nRegistration table é a ficha médica: sinal nos dois sentidos, CCQ (&gt; 90% saudável), taxa negociada (MCS) e uptime — a tríade sinal→taxa→CCQ se move junta.\n\nNo próximo capítulo, o ar deixa de ser padrão: Nstreme e NV2 — os protocolos proprietários que fazem enlaces PtP de provedor renderem o que o 802.11 puro não entrega.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>28</span>  <span class='chapter-title'>Wireless no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/02-wireless-routeros.html#bibliografia-do-capítulo",
+    "href": "volumes/v05-wireless/02-wireless-routeros.html#bibliografia-do-capítulo",
+    "title": "28  Wireless no RouterOS",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\nA documentação oficial (MikroTik, 2026) cobre /interface wireless (modos, security profiles, registration table) e a pilha nova em WiFi. Discher (2016) traz capítulos extensos de wireless para WISPs. As referências completas, em ABNT, estão no apêndice Referências.\n\n\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>28</span>  <span class='chapter-title'>Wireless no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/03-ptp-nstreme-nv2.html",
+    "href": "volumes/v05-wireless/03-ptp-nstreme-nv2.html",
+    "title": "29  Enlaces PtP: Nstreme e NV2",
+    "section": "",
+    "text": "29.1 O problema: 802.11 foi feito para dentro de casa\nNo Capítulo 28 montamos um enlace sem fio e aprendemos a lê-lo pela registration table. Ele funcionava — mas usava o protocolo 802.11 de fábrica, o mesmo do WiFi doméstico. Para dois rádios a 30 cm um do outro, tudo bem. Para o backhaul que liga sua torre rural à sede, a 15 km, o 802.11 padrão joga fora boa parte da capacidade que você pagou. Este capítulo explica por quê — e apresenta as duas respostas da MikroTik: Nstreme e NV2.\nO 802.11 usa CSMA/CA (Carrier Sense Multiple Access with Collision Avoidance): antes de transmitir, o rádio escuta o canal; se está ocupado, espera um tempo aleatório e tenta de novo. Cada quadro entregue exige um ACK de volta — se o ACK não chega dentro de um prazo curto, o transmissor assume perda e retransmite.\nEsse desenho embute duas suposições de ambiente doméstico:\nO resultado prático: quanto mais longo o enlace, maior a fração do tempo de ar gasta em espera e retransmissão, e menor o throughput útil. Um enlace 802.11 de 15 km pode entregar menos da metade do que a taxa aérea sugere — e degrada ainda mais com qualquer interferência.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>29</span>  <span class='chapter-title'>Enlaces PtP: Nstreme e NV2</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#o-problema-802.11-foi-feito-para-dentro-de-casa",
+    "href": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#o-problema-802.11-foi-feito-para-dentro-de-casa",
+    "title": "29  Enlaces PtP: Nstreme e NV2",
+    "section": "",
+    "text": "Todo mundo se escuta. O carrier sense só evita colisões se as estações detectam as transmissões umas das outras. Em enlaces longos, com antenas diretivas apontadas para lados diferentes, isso raramente é verdade.\nA distância é desprezível. O prazo do ACK foi calibrado para metros. A luz percorre ~300 m por microssegundo; em 15 km, só a viagem de ida e volta do quadro + ACK consome ~100 µs. O rádio precisa esperar parado esse tempo a cada quadro — e se o prazo não for esticado (o famoso ajuste de distance), ele retransmite quadros que teriam chegado.\n\n\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nO CSMA/CA é uma reunião educada: cada um espera o silêncio para falar, e quem fala espera o “entendi” do outro lado antes de continuar. Numa sala pequena, funciona. Agora ponha os participantes a 15 km de distância gritando por megafone: o “entendi” demora tanto a voltar que todo mundo passa a reunião esperando — ou repetindo o que já tinha dito. Nstreme e NV2 trocam a reunião educada por um moderador com cronômetro: cada um recebe sua janela de fala e ninguém espera confirmação a cada frase.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>29</span>  <span class='chapter-title'>Enlaces PtP: Nstreme e NV2</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#nstreme-o-polling-da-primeira-geração",
+    "href": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#nstreme-o-polling-da-primeira-geração",
+    "title": "29  Enlaces PtP: Nstreme e NV2",
+    "section": "29.2 Nstreme: o polling da primeira geração",
+    "text": "29.2 Nstreme: o polling da primeira geração\nO Nstreme é o protocolo proprietário original da MikroTik (era do RouterOS v3/v4). Ele substitui a disputa do CSMA/CA por polling: o AP pergunta a cada estação, uma por vez, se tem algo a transmitir. Além disso:\n\nElimina o ACK por quadro — os quadros são agregados em blocos (framer) e confirmados em lote;\nSem limite de distância por protocolo — como não há prazo de ACK por quadro, o enlace não “expira” com a distância;\nSó funciona entre equipamentos MikroTik (os dois lados precisam falar Nstreme).\n\nParâmetros que você verá em configurações legadas:\n\n\n\nTabela 29.1: Parâmetros do Nstreme\n\n\n\n\n\nParâmetro\nO que faz\nValor típico PtP\n\n\n\n\nwireless-protocol=nstreme\nativa o protocolo\nnos dois lados\n\n\nframer-policy\ncomo agregar quadros\nbest-fit\n\n\nframer-limit\ntamanho máx. do bloco agregado (bytes)\n3200\n\n\ndisable-csma\ndesliga o carrier sense (PtP puro)\nyes\n\n\n\n\n\n\nO Nstreme resolve o ACK e a distância, mas o polling tem um custo: o AP gasta tempo de ar perguntando, mesmo a estações sem tráfego. Num PtP (uma estação só) isso é pequeno; num PtMP com dezenas de clientes, o overhead cresce. Foi para isso que veio o sucessor.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>29</span>  <span class='chapter-title'>Enlaces PtP: Nstreme e NV2</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#nv2-tdma-de-verdade",
+    "href": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#nv2-tdma-de-verdade",
+    "title": "29  Enlaces PtP: Nstreme e NV2",
+    "section": "29.3 NV2: TDMA de verdade",
+    "text": "29.3 NV2: TDMA de verdade\nO NV2 (Nstreme version 2) abandona o polling e implementa TDMA (Time Division Multiple Access): o tempo de ar é dividido em períodos fixos, e o AP publica, a cada período, um mapa de alocação dizendo quem transmite em qual fatia — downlink e uplink. Ninguém escuta o canal, ninguém disputa, ninguém espera ACK individual: cada rádio já sabe quando é sua vez.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNo 802.11, cada quadro paga disputa, espera de ACK e eventuais retransmissões — e o custo cresce com a distância. No NV2, o AP publica um mapa e o tempo de ar vira fatias contíguas de downlink e uplink, sem disputa nem ACK individual.\n\n\nFigura 29.1\n\n\n\nAs consequências práticas do TDMA:\n\nLatência previsível: cada estação transmite a intervalos regulares. O jitter despenca — crucial para VoIP e jogos;\nThroughput estável sob carga: sem disputa, adicionar tráfego não multiplica colisões;\nEscala em PtMP: o mapa de alocação distribui o tempo entre dezenas de estações sem overhead de polling (por isso o NV2 é a base do Capítulo 30);\nProprietário: como o Nstreme, exige MikroTik dos dois lados.\n\n\n29.3.1 Os dois parâmetros que você precisa entender\ntdma-period-size (1–10 ms, padrão dinâmico): o tamanho do período. Período maior = mais tempo útil por mapa publicado = mais throughput, porém mais latência (cada estação espera mais pela sua fatia). Período menor = o inverso. Para PtP de backhaul, 2–4 ms costuma equilibrar; deixe dynamic na dúvida.\nnv2-cell-radius (km, padrão 30): informa ao AP a distância da estação mais distante. O AP usa isso para dimensionar os tempos de guarda entre fatias (o sinal precisa ter tempo de viajar!). Valor menor que o real → fatias se atropelam e o enlace perde quadros; valor muito maior que o real → tempo de guarda desperdiçado. Meça no mapa e arredonde para cima.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nProtocolo de acesso ao meio não muda a física — sinal, SNR e taxa aérea continuam os do Capítulo 27. O que Nstreme e NV2 mudam é quanto do tempo de ar vira dado útil. Num enlace curto e limpo, a diferença para o 802.11 é pequena; num enlace longo, ou num PtMP carregado, é a diferença entre entregar 40% e entregar 80% da capacidade aérea. Primeiro garanta o enlace saudável (Volume 5 até aqui); depois escolha o protocolo que não desperdiça o que o enlace oferece.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>29</span>  <span class='chapter-title'>Enlaces PtP: Nstreme e NV2</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#qual-protocolo-usar",
+    "href": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#qual-protocolo-usar",
+    "title": "29  Enlaces PtP: Nstreme e NV2",
+    "section": "29.4 Qual protocolo usar?",
+    "text": "29.4 Qual protocolo usar?\n\n\n\nTabela 29.2: Escolha de protocolo por cenário\n\n\n\n\n\n\n\n\n\n\nCenário\nProtocolo\nPor quê\n\n\n\n\nPtP curto (&lt; 3 km), limpo\n802.11 ou NV2\ndiferença pequena; 802.11 mantém interoperabilidade\n\n\nPtP longo (&gt; 3 km)\nNV2\nTDMA elimina o custo de ACK/distância\n\n\nPtP com hardware antigo (um lado sem suporte a NV2)\nNstreme\nainda melhor que 802.11 puro\n\n\nPtMP (torre com vários clientes)\nNV2\nmapa TDMA escala; polling e CSMA não\n\n\nEnlace com equipamento de outro fabricante\n802.11\nNstreme/NV2 são proprietários\n\n\n\n\n\n\nRegra de bolso do provedor: NV2 em tudo que for MikroTik↔︎MikroTik e esteja fora da sua sala. Use wireless-protocol=any na estação durante a migração (ela segue o AP), e trave em nv2 quando o setor inteiro tiver migrado.\n\n29.4.1 Taxa aérea não é throughput\nA registration table do capítulo anterior mostrava, por exemplo, rate 866Mbps-80MHz/2S. Essa é a taxa aérea (PHY): o ritmo com que os bits voam enquanto o rádio transmite. O throughput útil desconta preâmbulos, mapas TDMA, tempos de guarda, retransmissões e o fato de o canal ser half-duplex (download e upload dividem o mesmo ar).\nEstimativa honesta para dimensionar backhaul:\n\\[\n\\text{throughput útil} \\approx \\text{taxa aérea} \\times 0{,}55\n\\quad \\text{(NV2, enlace saudável, soma down+up)}\n\\]\nUm enlace que negocia 866 Mbps entrega na prática ~450–480 Mbps agregados. Se o seu plano de capacidade precisa de 400 Mbps de download, esse enlace não sobra — dimensione o rádio pela conta, não pelo número da caixa.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>29</span>  <span class='chapter-title'>Enlaces PtP: Nstreme e NV2</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#laboratório",
+    "href": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#laboratório",
+    "title": "29  Enlaces PtP: Nstreme e NV2",
+    "section": "29.5 🧪 Laboratório",
+    "text": "29.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nO CHR não tem rádio, então este é um laboratório de configuração e leitura: os comandos abaixo são exatamente os que você aplicaria em um par de rádios reais (ex.: dois LHG 5) formando o backhaul sede ↔︎ torre do nosso provedor fictício. Se você tem dois equipamentos MikroTik com wireless na bancada, tudo funciona neles; senão, valide a sintaxe num CHR (os menus /interface wireless existem, sem interfaces) e concentre-se em prever cada saída antes de lê-la. Topologia de referência do livro: Capítulo 5.\n\n\n\n29.5.1 Comandos passo a passo\nPasso 1 — lado A (sede, AP do enlace). PtP com NV2, banda de 5 GHz, canal de 40 MHz fora da faixa DFS mais disputada, e SSID exclusivo do enlace:\n/interface wireless security-profiles\nadd name=ptp-sede-torre authentication-types=wpa2-psk mode=dynamic-keys \\\n    wpa2-pre-shared-key=Backhaul!Forte2026\n\n/interface wireless\nset wlan1 disabled=no mode=ap-bridge band=5ghz-a/n/ac \\\n    channel-width=20/40mhz-Ce frequency=5500 ssid=ptp-sede-torre-01 \\\n    wireless-protocol=nv2 security-profile=ptp-sede-torre \\\n    nv2-cell-radius=15 tdma-period-size=3\nO nv2-cell-radius=15 cobre nossos 15 km de enlace com folga mínima; tdma-period-size=3 favorece throughput sem arruinar a latência.\nPasso 2 — lado B (torre, estação). station-bridge (queremos L2 transparente para o backhaul, como visto no Capítulo 28) e wireless-protocol=nv2:\n/interface wireless security-profiles\nadd name=ptp-sede-torre authentication-types=wpa2-psk mode=dynamic-keys \\\n    wpa2-pre-shared-key=Backhaul!Forte2026\n\n/interface wireless\nset wlan1 disabled=no mode=station-bridge band=5ghz-a/n/ac \\\n    channel-width=20/40mhz-Ce ssid=ptp-sede-torre-01 \\\n    wireless-protocol=nv2 security-profile=ptp-sede-torre\nNa estação não se define frequency nem parâmetros de TDMA: ela segue o AP — varre a banda, encontra o SSID e obedece ao mapa de alocação que ele publica.\nPasso 3 — conferir que o NV2 está de fato ativo. Em rádios reais:\n/interface wireless registration-table print detail\n 0 interface=wlan1 mac-address=CC:2D:E0:11:22:33 ap=no wds=no\n   rx-rate=\"390Mbps-40MHz/2S\" tx-rate=\"390Mbps-40MHz/2S\"\n   uptime=12m4s signal-strength=-61dBm tx-signal-strength=-62dBm\n   signal-to-noise=39dB nv2=yes tx-ccq=96% rx-ccq=95%\nA linha que interessa: nv2=yes. Se aparecer nv2=no, um dos lados caiu para 802.11 (protocolo any + AP mal configurado é a causa clássica) e todo o ganho do capítulo evaporou.\nPasso 4 — medir o throughput real. O RouterOS traz um gerador de tráfego embutido, o bandwidth-test. Do lado B contra o lado A (IP 10.99.0.1 na gerência do enlace):\n/tool bandwidth-test address=10.99.0.1 protocol=udp direction=both \\\n    user=vitor password=Lab!Segura2026\n    status: running\n  duration: 18s\ntx-current: 231.4Mbps\nrx-current: 224.9Mbps\n\n\n\n\n\n\nAviso\n\n\n\nO bandwidth-test satura o enlace e o CPU dos dois rádios. Em produção, rode fora do horário de pico, por poucos segundos, e nunca a partir do rádio que está roteando clientes — os resultados saem distorcidos e os clientes sentem.\n\n\nPasso 5 — a prova da conta. Taxa aérea negociada: 390 Mbps (40 MHz/2S). Nossa estimativa: \\(390 \\times 0{,}55 \\approx 214\\) Mbps agregados. O teste mostrou ~230+225 = 455? Não — direction=both mede os dois sentidos simultaneamente dividindo o ar: o agregado real é tx+rx ≈ 456 Mbps aparentes apenas se o enlace fosse full-duplex. Compare cada sentido isolado (direction=transmit, depois receive) com a taxa aérea para ver o half-duplex em ação.\n\n\n29.5.2 Verificação\n\nregistration-table print detail mostra nv2=yes nos dois lados;\nO CCQ ficou ≥ 90% durante o bandwidth-test (rode os dois ao mesmo tempo em janelas separadas) — TDMA sob carga não colapsa;\ndirection=transmit e direction=receive isolados somam mais que o both de cada sentido — você viu o half-duplex;\nVocê sabe dizer, sem olhar o texto, o que acontece se nv2-cell-radius for menor que a distância real do enlace.\n\n\n\n29.5.3 Desafios\n\nUm enlace PtP de 25 km com NV2 funciona, mas perde ~3% dos pacotes de forma constante, com bom sinal (-58 dBm) e SNR de 35 dB. O nv2-cell-radius está no padrão de fábrica de um firmware antigo:\n\nExplique a relação.\n\nO gerente quer “dobrar a banda do backhaul” trocando tdma-period-size de 3 para 10. Estime o efeito real no throughput e o efeito colateral na latência — e proponha a mudança que de fato dobraria a capacidade (dica: física, não protocolo).\nVocê precisa fechar um PtP entre um SXT MikroTik e um rádio de outro fabricante que “fala 802.11ac”. Quais linhas dos Passos 1 e 2 mudam, e o que você perde?\nNum PtP saudável, bandwidth-test protocol=tcp mostra bem menos que protocol=udp. O enlace está ruim? Justifique pensando em quem gera e quem confirma o tráfego em cada protocolo.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. O nv2-cell-radius=10 dimensiona os tempos de guarda para 10 km, mas o sinal leva o tempo de 25 km para chegar. Transmissões da estação chegam ao AP depois do fim da fatia reservada, invadindo a fatia seguinte: quadros corrompidos de forma constante e independente do sinal — exatamente o sintoma. Ajustar nv2-cell-radius=25 resolve.\n2. Período maior reduz a fração de ar gasta em mapas e guardas — ganho real, porém modesto (tipicamente &lt; 10–15%, longe de dobrar), ao custo de a estação esperar até 10 ms pela sua fatia: a latência (e o jitter percebido em VoIP) sobe. Para dobrar capacidade de verdade: mais espectro ou mais fluxos — canal de 40→80 MHz (se o espectro local permitir) ou hardware com mais cadeias/frequência mais limpa. Protocolo não cria hertz.\n3. Muda uma linha em cada lado: wireless-protocol=nv2 → wireless-protocol=802.11 (ou any no lado MikroTik). Perde-se o TDMA: volta o ACK por quadro com prazo sensível à distância (ajuste distance no AP!), a latência fica irregular e o throughput cai — e nv2-cell-radius/tdma-period-size passam a ser ignorados.\n4. Não necessariamente. O teste UDP mede o ar bruto: o gerador empurra datagramas sem esperar confirmação. O TCP embute controle de congestionamento e confirmações — que atravessam o mesmo enlace half-duplex no sentido contrário e disputam CPU no rádio. Menos TCP que UDP é esperado; preocupante é TCP muito abaixo (aí investigue perda de pacotes, que derruba TCP desproporcionalmente).",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>29</span>  <span class='chapter-title'>Enlaces PtP: Nstreme e NV2</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#resumo",
+    "href": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#resumo",
+    "title": "29  Enlaces PtP: Nstreme e NV2",
+    "section": "29.6 Resumo",
+    "text": "29.6 Resumo\n\nO 802.11 paga disputa + ACK por quadro, e o prazo do ACK foi calibrado para ambientes internos: em enlaces longos, a espera e as retransmissões comem o throughput;\nNstreme (polling, sem ACK por quadro) foi a primeira resposta; NV2 (TDMA com mapa de alocação) é a atual — latência previsível, throughput estável e escala em PtMP; ambos exigem MikroTik dos dois lados;\ntdma-period-size troca latência por throughput; nv2-cell-radius deve cobrir a estação mais distante, senão as fatias TDMA se atropelam;\nRegra de bolso: NV2 em todo enlace MikroTik↔︎MikroTik externo; 802.11 apenas para interoperar com outros fabricantes;\nTaxa aérea ≠ throughput: estime ~55% da PHY (agregado, half-duplex) e valide com bandwidth-test — fora do pico e com cautela.\n\nNo próximo capítulo (Capítulo 30) o NV2 mostra sua força de verdade: uma setorial atendendo dezenas de assinantes rurais em PtMP.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>29</span>  <span class='chapter-title'>Enlaces PtP: Nstreme e NV2</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#bibliografia-do-capítulo",
+    "href": "volumes/v05-wireless/03-ptp-nstreme-nv2.html#bibliografia-do-capítulo",
+    "title": "29  Enlaces PtP: Nstreme e NV2",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seções Wireless — Nstreme/NV2 protocols e Bandwidth Test (MikroTik, 2026);\nFundamentos de acesso ao meio (CSMA/CA, TDMA): (Tanenbaum; Feamster; Wetherall, 2021);\nConfiguração wireless no RouterOS v7: (Discher, 2016);\nPrática de enlaces MikroTik: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>29</span>  <span class='chapter-title'>Enlaces PtP: Nstreme e NV2</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/04-ptmp-rural.html",
+    "href": "volumes/v05-wireless/04-ptmp-rural.html",
+    "title": "30  PtMP rural: a torre que atende dezenas de clientes",
+    "section": "",
+    "text": "30.1 Anatomia de uma célula PtMP\nO PtP do Capítulo 29 levou a internet da sede até a torre. Agora vem a parte que paga as contas do provedor rural: distribuir essa banda para as fazendas, sítios e vilas ao redor — dezenas de assinantes pendurados na mesma torre. Isso é PtMP (ponto-multiponto): um AP com antena setorial servindo muitas estações com antenas diretivas (LHG, SXT) apontadas de volta.\nA física é a mesma do Capítulo 27 e os modos são os do Capítulo 28. O que muda é a escala — e com ela aparecem problemas que não existiam no PtP: clientes que não se escutam, vizinhos que conectam sem contrato, e o assinante de sinal ruim que degrada o setor inteiro.\nNo lado da torre, antenas setoriais: cobrem um leque horizontal (60°, 90° ou 120°) com ganho moderado. Três setoriais de 120° fecham o círculo. No lado do cliente, o CPE (Customer Premises Equipment): um rádio integrado a uma antena diretiva — LHG (grade parabólica, mais ganho, enlaces longos) ou SXT (painel compacto, instalações mais simples).\nRegras de projeto que evitam dor de cabeça:",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>30</span>  <span class='chapter-title'>PtMP rural: a torre que atende dezenas de clientes</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/04-ptmp-rural.html#anatomia-de-uma-célula-ptmp",
+    "href": "volumes/v05-wireless/04-ptmp-rural.html#anatomia-de-uma-célula-ptmp",
+    "title": "30  PtMP rural: a torre que atende dezenas de clientes",
+    "section": "",
+    "text": "Célula PtMP vista de cima: três setoriais de 120° na torre, cada uma em uma frequência diferente para não interferirem entre si, e os CPEs dos assinantes apontados de volta. Cada setor é um domínio TDMA independente.\n\n\nFigura 30.1\n\n\n\n\n\nUma frequência por setor, com separação suficiente para não haver sobreposição (com canais de 20 MHz: ex.: 5500/5580/5660);\nNV2 obrigatório: com dezenas de estações que não se escutam (fazendas em lados opostos da torre — o hidden node clássico), o CSMA/CA colapsa em colisões; o mapa TDMA do Capítulo 29 simplesmente ignora o problema, pois ninguém disputa o ar;\nCanais de 20 MHz no rural: metade do throughput de 40 MHz, mas o dobro de opções de frequência e ~3 dB a mais de sensibilidade — num setor, robustez vale mais que pico;\nnv2-cell-radius = distância do cliente mais distante do setor (arredondada para cima), como no capítulo anterior;\nCPE sempre em mode=station (roteando ou com NAT) ou station-bridge se o projeto exigir L2 — decisão que o Volume 6 revisita com PPPoE.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>30</span>  <span class='chapter-title'>PtMP rural: a torre que atende dezenas de clientes</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/04-ptmp-rural.html#o-ap-setorial",
+    "href": "volumes/v05-wireless/04-ptmp-rural.html#o-ap-setorial",
+    "title": "30  PtMP rural: a torre que atende dezenas de clientes",
+    "section": "30.2 O AP setorial",
+    "text": "30.2 O AP setorial\nConfiguração de um setor (ex.: setor A da figura), consolidando o que os capítulos anteriores ensinaram:\n/interface wireless security-profiles\nadd name=setor-clientes authentication-types=wpa2-psk mode=dynamic-keys \\\n    wpa2-pre-shared-key=SetorRural!2026\n\n/interface wireless\nset wlan1 disabled=no mode=ap-bridge band=5ghz-a/n \\\n    channel-width=20mhz frequency=5500 ssid=isp-rural-setor-a \\\n    wireless-protocol=nv2 security-profile=setor-clientes \\\n    nv2-cell-radius=12 tdma-period-size=dynamic \\\n    default-authentication=no\nDuas escolhas pedem explicação:\n\nband=5ghz-a/n (e não a/n/ac): CPEs rurais de entrada (SXT Lite, LHG 5) são 802.11n; travar a banda evita negociações instáveis;\ndefault-authentication=no: eis a novidade do capítulo. Com no, o AP recusa qualquer estação que não esteja na access-list. O setor deixa de ser “quem tem a senha entra” e vira “entra quem está no contrato”.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>30</span>  <span class='chapter-title'>PtMP rural: a torre que atende dezenas de clientes</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/04-ptmp-rural.html#access-list-o-porteiro-do-setor",
+    "href": "volumes/v05-wireless/04-ptmp-rural.html#access-list-o-porteiro-do-setor",
+    "title": "30  PtMP rural: a torre que atende dezenas de clientes",
+    "section": "30.3 access-list: o porteiro do setor",
+    "text": "30.3 access-list: o porteiro do setor\nA access-list é avaliada antes da associação: quando uma estação tenta conectar, o AP procura a primeira entrada que case com o MAC (e opcionalmente com a interface e a faixa de sinal) e obedece ao authentication=yes/no dela. Com default-authentication=no no AP, quem não casa com nenhuma entrada fica de fora.\n/interface wireless access-list\nadd interface=wlan1 mac-address=CC:2D:E0:AA:11:01 comment=\"cli-fazenda-boavista\" \\\n    signal-range=-80..120\nadd interface=wlan1 mac-address=CC:2D:E0:AA:11:02 comment=\"cli-sitio-ipe\" \\\n    signal-range=-80..120\nO parâmetro discreto que muda o jogo é signal-range=-80..120: a entrada só autoriza a associação se o sinal do cliente estiver acima de -80 dBm. Cliente com antena desalinhada (ou árvore que cresceu na zona de Fresnel, Capítulo 27) não conecta a -87 dBm com taxa de 6 Mbps — ele fica fora até a instalação ser corrigida.\nPor que isso importa: no TDMA, tempo de ar é o recurso compartilhado. Um cliente a 6 Mbps ocupa ~24× mais tempo de ar para transferir os mesmos bytes que um a 144 Mbps. Um único CPE ruim consome as fatias do setor inteiro — o “cliente lento que arrasta o setor”. O signal-range transforma um problema técnico invisível em um chamado de instalação explícito.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nNum setor PtMP, o recurso escasso é o tempo de ar, e ele é de todos. Cada decisão do capítulo — NV2, 20 MHz, access-list com signal-range, limites por cliente — existe para proteger o tempo de ar coletivo de um indivíduo mal instalado ou mal-intencionado. Setor bom não é o que aceita todo mundo; é o que só aceita enlaces saudáveis e reparte o ar de forma previsível.\n\n\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nO setor é um ônibus rural com horário certo (TDMA): cada passageiro tem seu assento e a viagem rende. A access-list é o motorista conferindo a passagem na porta (default-authentication=no: sem lista, ninguém sobe) — e o signal-range é a regra de não deixar embarcar quem vai viajar pendurado na porta com o ônibus andando: atrasa a viagem de todos, não só a dele.\n\n\n\n30.3.1 Limites de banda no rádio\nA access-list também aceita ap-tx-limit (download para o cliente) e client-tx-limit (upload dele, bits/s):\n/interface wireless access-list\nset [find comment=\"cli-fazenda-boavista\"] ap-tx-limit=20M client-tx-limit=5M\nIsso é um limitador bruto, por rádio — útil como cinto de segurança no setor. O controle de planos de verdade (fila por assinante, burst, prioridade) é assunto do Volume 7 (QoS), e a entrega comercial por cliente será via PPPoE no Volume 6. Regra prática: limite no rádio um pouco acima do plano vendido, e deixe a fila fazer o trabalho fino.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>30</span>  <span class='chapter-title'>PtMP rural: a torre que atende dezenas de clientes</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/04-ptmp-rural.html#o-cpe-do-cliente",
+    "href": "volumes/v05-wireless/04-ptmp-rural.html#o-cpe-do-cliente",
+    "title": "30  PtMP rural: a torre que atende dezenas de clientes",
+    "section": "30.4 O CPE do cliente",
+    "text": "30.4 O CPE do cliente\nNo telhado da fazenda, um LHG 5 em mode=station:\n/interface wireless security-profiles\nadd name=setor-clientes authentication-types=wpa2-psk mode=dynamic-keys \\\n    wpa2-pre-shared-key=SetorRural!2026\n\n/interface wireless\nset wlan1 disabled=no mode=station band=5ghz-a/n ssid=isp-rural-setor-a \\\n    wireless-protocol=nv2 security-profile=setor-clientes\nE o teste de aceitação da instalação — a leitura que o instalador deve mandar no grupo antes de descer do telhado:\n/interface wireless registration-table print detail\nCritérios de aceite (nossa política de instalação): signal-strength e tx-signal-strength melhores que -65 dBm e equilibrados (|diferença| ≤ 5 dB), signal-to-noise ≥ 25 dB, CCQ ≥ 90%. Instalação que não bate isso volta para o alinhamento (Capítulo 31) — antes de o signal-range da torre fazer isso virar um chamado noturno.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>30</span>  <span class='chapter-title'>PtMP rural: a torre que atende dezenas de clientes</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/04-ptmp-rural.html#laboratório",
+    "href": "volumes/v05-wireless/04-ptmp-rural.html#laboratório",
+    "title": "30  PtMP rural: a torre que atende dezenas de clientes",
+    "section": "30.5 🧪 Laboratório",
+    "text": "30.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nLaboratório de configuração e leitura (o CHR não tem rádio), como no Capítulo 29: os blocos são os que você aplicaria numa torre real com uma setorial e dois CPEs. Com hardware físico (um AP wireless e dois clientes — até roteadores domésticos MikroTik servem), você reproduz tudo de verdade. Topologia de referência: Capítulo 5.\n\n\n\n30.5.1 Comandos passo a passo\nPasso 1 — o setor. Aplique no AP o bloco do setor A (security profile + set wlan1 ... default-authentication=no) mostrado acima.\nPasso 2 — tente conectar um CPE sem access-list. Configure o CPE (bloco do LHG acima) e observe no AP:\n/log print where topics~\"wireless\"\n12:40:18 wireless,info CC:2D:E0:AA:11:01@wlan1: connected\n12:40:18 wireless,info CC:2D:E0:AA:11:01@wlan1: disconnected, banned by access-list\nO CPE conecta e cai imediatamente: sem entrada na lista e com default-authentication=no, o porteiro barra — mesmo com a senha certa.\nPasso 3 — autorize o cliente. No AP:\n/interface wireless access-list\nadd interface=wlan1 mac-address=CC:2D:E0:AA:11:01 \\\n    comment=\"cli-fazenda-boavista\" signal-range=-80..120 \\\n    ap-tx-limit=20M client-tx-limit=5M\nAgora o CPE associa e permanece:\n/interface wireless registration-table print\n # INTERFACE  MAC-ADDRESS        AP  SIGNAL-STRENGTH  TX-RATE   UPTIME\n 0 wlan1      CC:2D:E0:AA:11:01  no  -61dBm           130Mbps   4m12s\nPasso 4 — repita para o segundo CPE (...:02, comment “cli-sitio-ipe”) e confirme os dois na registration table.\nPasso 5 — simule o cliente degradado. Edite a entrada do cliente 1 apertando o piso de sinal para um valor que ele não alcança:\n/interface wireless access-list\nset [find comment=\"cli-fazenda-boavista\"] signal-range=-55..120\n/log print where topics~\"wireless\"\nCom sinal real de -61 dBm (&lt; -55), o CPE cai e o log registra o banned by access-list. Foi exatamente o que aconteceria com um cliente desalinhado num setor com política de sinal. Restaure signal-range=-80..120 ao final.\n\n\n30.5.2 Verificação\n\nSem entrada na access-list, o CPE não fica associado (banned by access-list no log) apesar da senha correta;\nCom a entrada, os dois CPEs aparecem na registration table com uptime crescendo;\nO Passo 5 derrubou só o cliente com signal-range apertado — o outro nem piscou (uptime preservado);\nVocê sabe apontar, na configuração do setor, as quatro defesas do tempo de ar coletivo (protocolo, largura de canal, porteiro, limites).\n\n\n\n30.5.3 Desafios\n\nUm setor com 40 clientes NV2 funciona bem até ~19h, quando a latência de todos sobe para 300 ms. A registration table mostra um único cliente com tx-rate=13Mbps e tráfego alto constante. Explique o mecanismo e proponha duas correções (uma imediata, uma definitiva).\nO vizinho do cliente descobriu a senha WPA2 do setor (ela é única, Capítulo 28 alertou). Com a configuração deste capítulo, o que ele consegue? E se o AP estivesse com default-authentication=yes?\nProjete as frequências de uma torre com quatro setores de 90° em 5 GHz, canais de 20 MHz, sabendo que setores opostos (costas um para o outro) podem reusar frequência. Quantas frequências você precisa no mínimo? Desenhe a atribuição.\nUm cliente reclama de velocidade à noite, mas sua leitura é impecável (-58 dBm, SNR 32 dB, CCQ 97%). O ap-tx-limit dele é 20M e o plano vendido é 20M. Onde mais o gargalo pode estar? Liste três suspeitos na ordem em que você investigaria.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. É o cliente lento arrastando o setor: a 13 Mbps, cada byte dele custa ~10× mais tempo de ar que o de um cliente saudável; no pico de tráfego, as fatias TDMA que sobram para os demais encolhem e a fila de espera (latência) explode para todos. Imediata: signal-range na entrada dele (ou disabled=yes) para tirá-lo do ar e proteger o coletivo. Definitiva: visita técnica — realinhar/trocar o CPE (ou elevar, se a Fresnel foi obstruída) até ele voltar a taxas altas.\n2. Quase nada: ele associa por ter a senha, mas o MAC dele não está na access-list e default-authentication=no o derruba (banned by access-list). Com default-authentication=yes, ele entraria como cliente pleno — consumindo tempo de ar e alcançando a rede do setor. (Clonar um MAC autorizado ainda seria possível — por isso a senha por assinante do PPPoE, no Volume 6, fecha o ciclo.)\n3. Duas frequências bastam. Setores opostos irradiam para lados contrários com antenas diretivas: o isolamento costas-com-costas permite reuso. Atribuição clássica em X: N=5500, L=5580, S=5500, O=5580 (padrão A-B-A-B). Na prática, confirme o isolamento real medindo o sinal do setor oposto num CPE de borda — reuso é projeto, não fé.\n4. (a) O backhaul da torre no pico — se o PtP do Capítulo 29 satura às 19h, todos os setores sofrem juntos (verifique o gráfico da interface do PtP); (b) o tempo de ar do setor consumido pelos vizinhos (um cliente lento como no desafio 1 prejudica até quem tem leitura perfeita); (c) o lado LAN do cliente — WiFi doméstico ruim atrás do CPE (teste cabeado no CPE isola). A leitura de rádio impecável só isenta o enlace dele, nada mais.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>30</span>  <span class='chapter-title'>PtMP rural: a torre que atende dezenas de clientes</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/04-ptmp-rural.html#resumo",
+    "href": "volumes/v05-wireless/04-ptmp-rural.html#resumo",
+    "title": "30  PtMP rural: a torre que atende dezenas de clientes",
+    "section": "30.6 Resumo",
+    "text": "30.6 Resumo\n\nPtMP rural: setoriais na torre (uma frequência por setor, TDMA independente) e CPEs diretivos (LHG/SXT) nos clientes;\nNV2 é obrigatório em PtMP: estações que não se escutam inviabilizam o CSMA/CA (hidden node); o mapa TDMA elimina a disputa;\nCanais de 20 MHz privilegiam robustez e reuso de espectro; nv2-cell-radius cobre o cliente mais distante;\ndefault-authentication=no + access-list = só entra quem está no contrato; signal-range barra instalações ruins antes que arrastem o setor; ap-tx-limit/client-tx-limit são o cinto de segurança bruto (QoS fino no Volume 7, entrega por assinante no Volume 6);\nPolítica de aceite de instalação (sinal, simetria, SNR, CCQ) vale mais que qualquer troubleshooting posterior — e o Capítulo 31 ensina a alcançá-la.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>30</span>  <span class='chapter-title'>PtMP rural: a torre que atende dezenas de clientes</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/04-ptmp-rural.html#bibliografia-do-capítulo",
+    "href": "volumes/v05-wireless/04-ptmp-rural.html#bibliografia-do-capítulo",
+    "title": "30  PtMP rural: a torre que atende dezenas de clientes",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seções Wireless — Access List e NV2 (MikroTik, 2026a);\nHidden node e acesso ao meio: (Tanenbaum; Feamster; Wetherall, 2021);\nWireless no RouterOS v7: (Discher, 2016);\nOperação de provedor com MikroTik: (Burgess, 2011);\nLinhas de produto (setoriais, LHG, SXT): (MikroTik, 2026b).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, a2026.\n\n\nMIKROTIK. MikroTik Product Catalog. https://mikrotik.com/products, b2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>30</span>  <span class='chapter-title'>PtMP rural: a torre que atende dezenas de clientes</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/05-alinhamento-troubleshooting.html",
+    "href": "volumes/v05-wireless/05-alinhamento-troubleshooting.html",
+    "title": "31  Alinhamento e troubleshooting de enlaces",
+    "section": "",
+    "text": "31.1 Alinhar é maximizar, não “achar”\nO Capítulo 30 terminou com uma política de aceite: sinal melhor que -65 dBm, simétrico, SNR ≥ 25 dB, CCQ ≥ 90%. Este capítulo ensina a alcançar esses números no telhado — e a recuperá-los quando um enlace que funcionava começa a degradar. É o capítulo mais “de campo” do volume: métodos, instrumentos e assinaturas de defeito.\nUma antena diretiva concentra energia num lóbulo principal estreito — mas o diagrama de radiação (Capítulo 27) também tem lóbulos laterais: direções secundárias onde a antena ainda ganha alguns dB. Eis a armadilha do instalador apressado: girando a antena, o sinal sobe de -85 para -74 dBm e ele para — só que -74 dBm era um lóbulo lateral, e o principal daria -58 dBm alguns graus adiante.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>31</span>  <span class='chapter-title'>Alinhamento e troubleshooting de enlaces</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#alinhar-é-maximizar-não-achar",
+    "href": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#alinhar-é-maximizar-não-achar",
+    "title": "31  Alinhamento e troubleshooting de enlaces",
+    "section": "",
+    "text": "O sinal em função do ângulo da antena: os lóbulos laterais formam picos falsos ~15 dB abaixo do principal. O método correto varre todo o arco, anota o melhor valor e só então retorna a ele — nunca para no primeiro pico.\n\n\nFigura 31.1\n\n\n\n\n31.1.1 O método (vale para PtP e CPE)\n\nAponte no grosso pela geografia: bússola/aplicativo de mapa, ou mire um marco visível (a torre, morro conhecido). Isso coloca você perto do lóbulo principal;\nTrave um eixo e varra o outro, devagar (azimute primeiro, depois elevação). Velocidade: a leitura de sinal atualiza ~1×/s — gire 2–3° e espere a leitura assentar;\nVarra o arco inteiro anotando o pico real — não pare no primeiro máximo (Figura 31.1);\nVolte ao pico, aperte o eixo, e repita no outro eixo. Aperto de parafuso desloca a antena: confira a leitura depois de apertar;\nValide contra a política de aceite: sinal, simetria (rx e tx), SNR, CCQ e taxa — os cinco, não só o primeiro.\n\nO RouterOS ajuda com o modo de alinhamento, que emite beeps no compartimento do rádio (frequência do beep sobe com o sinal — mãos livres no mastro):\n/interface wireless align\nset active-mode=yes audio-monitor=CC:2D:E0:00:00:01 filter-mac=CC:2D:E0:00:00:01\nmonitor wlan1\nE na estação, o monitor contínuo (que você já conhece do Capítulo 28) durante a varredura:\n/interface wireless registration-table print interval=1\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nAlinhar antena é sintonizar rádio AM antigo no escuro: girando o botão, você passa por estações fracas (lóbulos laterais) antes de achar a forte (principal). Quem para na primeira estação audível ouve chiado para sempre. O método é o mesmo: varre a faixa toda, decora onde tocou mais alto e volta lá.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>31</span>  <span class='chapter-title'>Alinhamento e troubleshooting de enlaces</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#a-caixa-de-ferramentas-de-diagnóstico",
+    "href": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#a-caixa-de-ferramentas-de-diagnóstico",
+    "title": "31  Alinhamento e troubleshooting de enlaces",
+    "section": "31.2 A caixa de ferramentas de diagnóstico",
+    "text": "31.2 A caixa de ferramentas de diagnóstico\nQuatro instrumentos do RouterOS, cada um respondendo a uma pergunta:\n\n\n\nTabela 31.1: Ferramentas de diagnóstico wireless\n\n\n\n\n\n\n\n\n\n\nFerramenta\nPergunta que responde\nCuidado\n\n\n\n\nscan\n“que redes existem neste canal/banda?”\nderruba o enlace durante a varredura\n\n\nfrequency-usage\n“quais frequências estão ocupadas, e quanto?”\ntambém interrompe o serviço\n\n\nsnooper\n“quem está ocupando o ar, por SSID/estação?”\nidem — use em janela de manutenção\n\n\nregistration-table\n“como está o meu enlace agora?”\npassivo, não interrompe nada\n\n\n\n\n\n\n\n\n\n\n\n\nAviso\n\n\n\nscan, frequency-usage e snooper colocam o rádio em modo de varredura: todos os clientes do setor caem enquanto rodam. Em produção, use dentro de janela de manutenção ou num rádio de teste dedicado — nunca “só um scan rapidinho” no setor cheio às 20h.\n\n\nExemplos de leitura:\n/interface wireless frequency-usage wlan1 duration=30s\nFREQ    USAGE\n5500    12.5%\n5520     3.1%\n5580    67.4%\n5660     8.9%\nA frequência 5580 está 67% ocupada — se o seu setor está nela, achou o vilão; migre para 5520 (após conferir com scan quem é o ocupante).\n/interface wireless scan wlan1 duration=20s\nFLAGS  ADDRESS            SSID             CHANNEL          SIG  NF   SNR\nAP     D4:CA:6D:99:88:77  outro-provedor   5580/20/an       -66  -110 44\nAP     CC:2D:E0:BB:22:33  isp-rural-setor-b 5660/20/an      -71  -110 39",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>31</span>  <span class='chapter-title'>Alinhamento e troubleshooting de enlaces</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#as-quatro-assinaturas-de-enlace-degradado",
+    "href": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#as-quatro-assinaturas-de-enlace-degradado",
+    "title": "31  Alinhamento e troubleshooting de enlaces",
+    "section": "31.3 As quatro assinaturas de enlace degradado",
+    "text": "31.3 As quatro assinaturas de enlace degradado\nO ouro do troubleshooting é saber que cada causa deixa uma impressão digital diferente nos indicadores:\n\n\n\nTabela 31.2: Assinaturas de degradação e seus vilões\n\n\n\n\n\n\n\n\n\n\n\n\n\nAssinatura\nSinal\nSNR\nCCQ\nPadrão temporal\nVilão provável\n\n\n\n\nSinal caiu nos dois lados, piso de ruído normal\n↓↓\n↓\n↓\napós vento/tempestade; degrada de vez\ndesalinhamento (antena girou)\n\n\nSinal normal, ruído subiu, CCQ despenca\n=\n↓↓\n↓↓\nhorários certos (ex.: 18–23h)\ninterferência (novo AP vizinho)\n\n\nSinal caiu aos poucos ao longo de meses\n↓ (lento)\n↓\n↓\nsazonal/progressivo\nFresnel (árvore cresceu, Capítulo 27)\n\n\nSinal assimétrico ou instável, quedas secas\n↕ errático\n↕\n↕\naleatório, piora com chuva\nhardware/cabo (conector, RF, fonte)\n\n\n\n\n\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nNão existe “o enlace está ruim” — existe desalinhamento, interferência, obstrução ou hardware, e cada um assina os indicadores de um jeito (Tabela 31.2). Antes de subir no telhado, leia a assinatura: o que mudou (sinal? ruído? simetria?), quando mudou (de vez? por horário? aos poucos?) e dos dois lados ou de um só. Três perguntas separam a visita técnica certeira da troca de peças por adivinhação.\n\n\nO interrogatório remoto, em ordem:\n\nSinal mudou? Compare com a leitura de aceite da instalação (você guardou, certo? O Volume 13 automatiza esse histórico);\nSimétrico? signal-strength ≈ tx-signal-strength? Assimetria forte = problema de um lado (potência, cabo, LNA queimado);\nSNR acompanhou o sinal? Sinal igual + SNR pior = ruído novo = interferência; sinal e SNR caindo juntos = enlace (alinhamento ou obstrução);\nPadrão no tempo? Por horário = interferência (ou saturação de tráfego — confira antes!); pós-tempestade = mecânico; progressivo = vegetação;\nSó então: frequency-usage/scan em janela de manutenção, e visita com a Figura 31.1 na cabeça.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>31</span>  <span class='chapter-title'>Alinhamento e troubleshooting de enlaces</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#laboratório",
+    "href": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#laboratório",
+    "title": "31  Alinhamento e troubleshooting de enlaces",
+    "section": "31.4 🧪 Laboratório",
+    "text": "31.4 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nEste é um laboratório de diagnóstico: sem rádio no CHR, o exercício é ler cenários reais e apontar o vilão — exatamente a habilidade que o plantão exige. Com hardware físico (qualquer par wireless dos capítulos anteriores), reproduza os passos 1–2 de verdade; os passos 3–5 são casos clínicos em texto. Topologia de referência: Capítulo 5.\n\n\n\n31.4.1 Comandos passo a passo\nPasso 1 — (bancada) monte o “alinhamento de mesa”. Com o enlace do Capítulo 28 ativo, rode na estação:\n/interface wireless registration-table print interval=1\nGire lentamente a antena (ou o roteador) e observe o sinal responder a cada segundo. Procure de propósito um “falso pico”: posições diferentes com sinal parecido — a versão de mesa dos lóbulos laterais.\nPasso 2 — (bancada) meça o ambiente.\n/interface wireless frequency-usage wlan1 duration=30s\n/interface wireless scan wlan1 duration=20s\nAnote as frequências mais ocupadas da sua vizinhança e confira com o scan quem são os ocupantes. Note que o enlace caiu durante as varreduras — a lição do callout-warning em carne própria.\nPasso 3 — caso clínico A. Enlace PtP de 8 km, funcionava com -59/-60 dBm. Após um temporal: -78 dBm/-79 dBm, SNR de 20 dB, piso de ruído inalterado (-110 dBm), CCQ 61%. Aponte o vilão e o plano.\nPasso 4 — caso clínico B. CPE rural: sinal -62 dBm estável o dia todo, mas das 19h às 23h o SNR cai de 34 dB para 14 dB e o CCQ para 55%. frequency-usage (madrugada, em manutenção) mostra 5500 com 8%; às 20h, 71%. Vilão e plano.\nPasso 5 — caso clínico C. PtP: signal-strength=-58dBm, tx-signal-strength=-81dBm. Chove, os dois pioram 10 dB e o lado fraco derruba o enlace. Vilão e plano.\n\n\n31.4.2 Verificação\n\nNo Passo 1 você encontrou pelo menos um falso pico e o pico real — e o pico real permaneceu após apertar/soltar o suporte;\nNo Passo 2 o enlace caiu durante o scan (confirme pelo uptime zerado na registration table) — você viu o custo da ferramenta;\nNos casos A–C, você apontou o vilão citando a linha correspondente da Tabela 31.2 — antes de ler as soluções.\n\n\n\n31.4.3 Desafios\n\nResolva os casos clínicos A, B e C (Passos 3–5) por escrito: vilão, evidência que o denuncia e plano de ação em ordem.\nUm instalador alinhou um LHG e reportou -67 dBm “aprovado”. Dez minutos de varredura teriam achado -55 dBm. Usando a Figura 31.1, explique o que provavelmente aconteceu e escreva a instrução de UMA frase que você colocaria no procedimento de instalação para impedir isso.\nPor que a política de aceite exige simetria entre signal-strength e tx-signal-strength, e não apenas um bom valor de recepção? Dê um defeito concreto que só a assimetria revela.\nSeu setor está na frequência 5580 — a mesma que o scan mostrou ocupada por outro-provedor com sinal -66 dBm. Antes de migrar de frequência, que conversa (humana) pode resolver melhor que qualquer comando? O que propor?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Caso A: queda simétrica e abrupta pós-temporal, ruído inalterado — assinatura de desalinhamento mecânico (vento girou uma antena). Plano: visita ao lado com suporte mais suspeito, realinhar pelo método completo, apertar e re-medir. Caso B: sinal estável, SNR desabando por horário, frequência 67%+ ocupada no pico — interferência de um transmissor ativo à noite. Plano: scan para identificar, migrar o setor para frequência limpa (5520) em janela de manutenção, re-testar às 20h. Caso C: assimetria de 23 dB é hardware do lado fraco — o transmissor de um lado (ou a recepção do outro) está comprometido: conector mal crimpado, pigtail, umidade; chuva piorando aponta infiltração. Plano: inspecionar conectores/vedação do lado que transmite fraco, trocar cabo/rádio em bancada, e só realinhar depois de sanar o hardware.\n2. Ele parou no primeiro pico — um lóbulo lateral ~12 dB abaixo do principal (exatamente o ponto vermelho da figura). Instrução de uma frase: “Varra o arco completo de azimute e elevação anotando o melhor valor e retorne a ele; só aceite a instalação se nenhuma outra posição do arco superar a leitura final.”\n3. Recepção boa prova só metade do enlace: signal-strength é o que eu ouço; tx-signal-strength é o que o outro lado me ouve. Um amplificador de transmissão degradado, um conector ruim no caminho de TX ou potências mal configuradas produzem exatamente rx ótimo + tx péssimo — download bom, upload péssimo (o cenário do desafio 2 do Capítulo 28). Só a comparação dos dois lados pega defeitos unidirecionais.\n4. Coordenação de espectro entre provedores: vocês dois perdem com a sobreposição (o TDMA de cada um enxerga o outro como ruído). Propor divisão do espectro local — cada um com suas frequências fixas documentadas, potência mínima necessária e, idealmente, um canal de contato para mudanças futuras. Uma planilha compartilhada de frequências por torre resolve o que meses de “guerra de potência” só pioram — subir potência contra interferência eleva o piso de ruído de todos (Capítulo 27).",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>31</span>  <span class='chapter-title'>Alinhamento e troubleshooting de enlaces</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#resumo",
+    "href": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#resumo",
+    "title": "31  Alinhamento e troubleshooting de enlaces",
+    "section": "31.5 Resumo",
+    "text": "31.5 Resumo\n\nAlinhamento é método: apontar no grosso, varrer o arco inteiro eixo a eixo, desconfiar de picos precoces (lóbulos laterais, Figura 31.1), apertar e re-conferir, validar pelos cinco indicadores;\nInstrumentos: align/beep e registration-table print interval=1 para alinhar; scan, frequency-usage e snooper para investigar o espectro — os três interrompem o serviço;\nCada vilão tem assinatura (Tabela 31.2): desalinhamento (queda abrupta simétrica, ruído normal), interferência (SNR cai com sinal estável, padrão por horário), Fresnel (degradação lenta e progressiva), hardware (assimetria e comportamento errático);\nInterrogatório remoto antes da visita: o que mudou, quando mudou, de que lado — e leitura de aceite arquivada vale ouro (o Volume 13 automatiza esse histórico).\n\nCom enlaces montados, protegidos e alinhados, falta o último capítulo do volume: o WiFi dentro da casa do cliente, com CAPsMAN e o pacote wifi moderno (Capítulo 32).",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>31</span>  <span class='chapter-title'>Alinhamento e troubleshooting de enlaces</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#bibliografia-do-capítulo",
+    "href": "volumes/v05-wireless/05-alinhamento-troubleshooting.html#bibliografia-do-capítulo",
+    "title": "31  Alinhamento e troubleshooting de enlaces",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seções Wireless — Scan, Frequency Usage, Snooper, Align (MikroTik, 2026);\nPropagação e antenas (lóbulos, diagrama de radiação): (Tanenbaum; Feamster; Wetherall, 2021);\nWireless no RouterOS v7: (Discher, 2016);\nOperação de campo com MikroTik: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>31</span>  <span class='chapter-title'>Alinhamento e troubleshooting de enlaces</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/06-capsman-wifi-moderno.html",
+    "href": "volumes/v05-wireless/06-capsman-wifi-moderno.html",
+    "title": "32  CAPsMAN e o WiFi moderno",
+    "section": "",
+    "text": "32.1 Os dois stacks de wireless do v7\nO volume até aqui viveu do lado de fora: torres, setoriais, CPEs. Este último capítulo entra na casa do assinante — o WiFi que ele de fato usa e pelo qual julga o provedor inteiro. E traz um problema novo, de gestão: 500 clientes = 500 APs. Mudar a senha de um SSID corporativo em 30 pontos de um cliente empresarial, ou padronizar o canal de 200 comodatos, um a um, não escala. A resposta da MikroTik é o CAPsMAN (Controlled Access Point system Manager): APs que buscam sua configuração num controlador central.\nAntes do CAPsMAN, um esclarecimento que evita horas de confusão — no RouterOS v7 convivem dois subsistemas wireless:\nOs capítulos 1 a Capítulo 31 usaram o stack legado — é ele que fala NV2 e vive nas torres. Dentro de casa a história inverte: ninguém precisa de TDMA na sala, e sim de WiFi 6, WPA3 e roaming decente. Os dois CAPsMANs são incompatíveis entre si: controlador wifi gerencia CAPs wifi; o /caps-man legado, apenas rádios legados. Este capítulo usa o moderno — é o presente dos APs indoor e o futuro da linha.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>32</span>  <span class='chapter-title'>CAPsMAN e o WiFi moderno</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/06-capsman-wifi-moderno.html#os-dois-stacks-de-wireless-do-v7",
+    "href": "volumes/v05-wireless/06-capsman-wifi-moderno.html#os-dois-stacks-de-wireless-do-v7",
+    "title": "32  CAPsMAN e o WiFi moderno",
+    "section": "",
+    "text": "Tabela 32.1: Os dois stacks wireless do RouterOS v7\n\n\n\n\n\n\n\n\n\n\n\n/interface wireless (legado)\n/interface wifi (moderno)\n\n\n\n\nPadrões\naté 802.11n/ac (wave1)\n802.11ac wave2, 802.11ax (WiFi 6)\n\n\nHardware\nrádios Atheros antigos (SXT, LHG, setoriais clássicas)\nhAP ax², hAP ax³, cAP ax, Audience…\n\n\nProtocolos MikroTik\nNstreme, NV2\n— (só 802.11)\n\n\nSegurança\nWPA/WPA2\nWPA2, WPA3\n\n\nCAPsMAN\nCAPsMAN “v1” (/caps-man)\nCAPsMAN “v2” (/interface wifi capsman)\n\n\nPapel no provedor\nenlaces externos (Vol. 5 até aqui)\nWiFi indoor do cliente",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>32</span>  <span class='chapter-title'>CAPsMAN e o WiFi moderno</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/06-capsman-wifi-moderno.html#o-modelo-controlador-e-caps",
+    "href": "volumes/v05-wireless/06-capsman-wifi-moderno.html#o-modelo-controlador-e-caps",
+    "title": "32  CAPsMAN e o WiFi moderno",
+    "section": "32.2 O modelo: controlador e CAPs",
+    "text": "32.2 O modelo: controlador e CAPs\nNo CAPsMAN há dois papéis:\n\nCAPsMAN (controlador): qualquer RouterOS com o pacote wifi (nem precisa ter rádio — pode ser o roteador de borda do POP ou até um CHR). Guarda toda a configuração: SSIDs, senhas, canais, datapaths;\nCAP (Controlled Access Point): o AP na casa do cliente. De fábrica, só precisa saber encontrar o controlador; recebe dele a configuração e passa a ser gerenciado remotamente.\n\nA descoberta é automática na L2 (broadcast na mesma rede/VLAN) ou por IP na L3 (caps-man-addresses apontando para o controlador — o caso típico do provedor, com o controlador no POP).\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCAPsMAN com local forwarding: entre controlador e CAPs viaja apenas controle (configuração, estatísticas); os dados dos usuários saem direto na rede local de cada casa. O controlador pode gerenciar centenas de CAPs sem tocar num único pacote de dados deles.\n\n\nFigura 32.1\n\n\n\nA decisão de arquitetura mais importante é por onde fluem os dados:\n\nLocal forwarding (padrão no stack wifi): o tráfego WiFi entra direto na bridge do CAP, na casa do cliente. O controlador só configura. Escala sem esforço — o caso do provedor;\nDatapath centralizado: o tráfego é tunelado até o controlador, que o injeta na rede dele. Útil quando as políticas (VLANs por SSID, firewall central) precisam se aplicar num ponto único — comum em ambiente corporativo, raro em casa de assinante.\n\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nCAPsMAN é a franquia de fast-food: a matriz (controlador) define o cardápio, os preços e o padrão da loja (SSID, senha, canal); cada loja (CAP) atende os clientes localmente — a comida não passa pela matriz (local forwarding). Abrir loja nova é assinar o contrato e pendurar a placa: o padrão desce sozinho da matriz (provisionamento). E quando a matriz muda o cardápio, muda em todas as lojas no mesmo instante.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>32</span>  <span class='chapter-title'>CAPsMAN e o WiFi moderno</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/06-capsman-wifi-moderno.html#configurando-o-controlador",
+    "href": "volumes/v05-wireless/06-capsman-wifi-moderno.html#configurando-o-controlador",
+    "title": "32  CAPsMAN e o WiFi moderno",
+    "section": "32.3 Configurando o controlador",
+    "text": "32.3 Configurando o controlador\nCenário: o roteador de borda do POP (nosso cli-paoquente-r1 de tantos capítulos) vira controlador dos APs em comodato. Três blocos: perfil de segurança, configuração e provisionamento.\n/interface wifi security\nadd name=sec-clientes authentication-types=wpa2-psk,wpa3-psk \\\n    passphrase=WiFiDoCliente!2026\n\n/interface wifi configuration\nadd name=cfg-clientes-2g ssid=PaoQuente-WiFi security=sec-clientes \\\n    country=brazil channel.band=2ghz-ax channel.width=20mhz\nadd name=cfg-clientes-5g ssid=PaoQuente-WiFi security=sec-clientes \\\n    country=brazil channel.band=5ghz-ax channel.width=20/40/80mhz\n\n/interface wifi capsman\nset enabled=yes interfaces=all upgrade-policy=suggest-same-version\n\n/interface wifi provisioning\nadd action=create-dynamic-enabled supported-bands=2ghz-ax,2ghz-n \\\n    master-configuration=cfg-clientes-2g\nadd action=create-dynamic-enabled supported-bands=5ghz-ax,5ghz-ac \\\n    master-configuration=cfg-clientes-5g\nLendo de cima para baixo:\n\nsecurity: WPA2+WPA3 misto (wpa2-psk,wpa3-psk) — dispositivos novos sobem em WPA3, antigos caem para WPA2. country=brazil na configuração aplica os limites da Anatel automaticamente (Capítulo 27);\nconfiguration: um perfil por banda. Mesmo SSID nas duas — os dispositivos escolhem (e o band steering dos clientes modernos prefere 5 GHz);\ncapsman set enabled=yes: liga o controlador; upgrade-policy=suggest-same-version mantém os CAPs na mesma versão do RouterOS que o controlador, sem forçar;\nprovisioning: a regra de ouro — quando um CAP aparecer, case suas bandas com um perfil e crie as interfaces automaticamente (create-dynamic-enabled). É isso que torna o sistema zero-touch.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>32</span>  <span class='chapter-title'>CAPsMAN e o WiFi moderno</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/06-capsman-wifi-moderno.html#ligando-um-cap",
+    "href": "volumes/v05-wireless/06-capsman-wifi-moderno.html#ligando-um-cap",
+    "title": "32  CAPsMAN e o WiFi moderno",
+    "section": "32.4 Ligando um CAP",
+    "text": "32.4 Ligando um CAP\nNo AP da casa do cliente (ex.: um cAP ax em comodato), uma linha:\n/interface wifi cap\nset enabled=yes caps-man-addresses=10.99.0.1\ncaps-man-addresses aponta para o controlador (nosso plano de gerência da VLAN 99, definido no Capítulo 26). Na mesma L2, o CAP acharia o controlador sozinho, sem endereço. Segundos depois, no controlador:\n/interface wifi remote-cap print\n # ADDRESS          NAME          BOARD      VERSION  STATE\n 0 10.99.0.57       cAP-casa-A    cAPGi-5HaxD2HaxD  7.15  provisioned\nE as interfaces dinâmicas criadas pelo provisionamento:\n/interface wifi print where dynamic\n # NAME              MASTER  SSID             STATE\n 0 cap-wifi1         yes     PaoQuente-WiFi   running   (2ghz-ax)\n 1 cap-wifi2         yes     PaoQuente-WiFi   running   (5ghz-ax)\nO AP saiu da caixa, recebeu cabo e energia, e está no ar com o padrão da empresa — ninguém configurou WiFi nele. Trocar a senha dos 200 comodatos amanhã é editar sec-clientes no controlador: os CAPs recebem a mudança sozinhos.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nCAPsMAN separa configuração de equipamento. A configuração mora no controlador, versionada e única; o AP é descartável — quebrou, troca-se a caixa e o provisionamento reveste o hardware novo com a mesma configuração em segundos. Depois de operar assim, configurar AP por AP parece o que é: artesanato que não escala. (É o mesmo princípio que você verá em provisionamento de clientes PPPoE no Volume 6 e em automação no Volume 12.)\n\n\n\n32.4.1 Quando não usar CAPsMAN\nCAPsMAN compensa quando há frota: comodatos padronizados, clientes corporativos multi-AP, WiFi público em praças. Não compensa para o AP único da casa de um cliente avulso com configuração própria — ali, o hAP configurado à mão (ou pelo app) resolve sem criar dependência do controlador. E lembre: com local forwarding, se o controlador cair os CAPs continuam operando com a última configuração recebida — só o provisionamento de novos APs para; com datapath centralizado, o tráfego morre junto com o controlador. Mais um ponto para o local forwarding no provedor.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>32</span>  <span class='chapter-title'>CAPsMAN e o WiFi moderno</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/06-capsman-wifi-moderno.html#laboratório",
+    "href": "volumes/v05-wireless/06-capsman-wifi-moderno.html#laboratório",
+    "title": "32  CAPsMAN e o WiFi moderno",
+    "section": "32.5 🧪 Laboratório",
+    "text": "32.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nFinalmente um laboratório de wireless que o CHR roda de verdade! O controlador CAPsMAN não precisa de rádio: suba-o no lab-r1. O CAP, sim, precisa — use um AP físico com pacote wifi (hAP ax, cAP ax) ligado na rede do laboratório, se tiver. Sem hardware: os Passos 1–2 e 5 rodam integralmente no CHR; os Passos 3–4 ficam como leitura guiada. Topologia: Capítulo 5, snapshot pop-segmentado.\n\n\n\n32.5.1 Comandos passo a passo\nPasso 1 — controlador no lab-r1. Aplique os quatro blocos da seção “Configurando o controlador” (security, duas configurations, capsman enabled, duas regras de provisioning).\nPasso 2 — confira o que existe antes de qualquer CAP:\n/interface wifi configuration print\n/interface wifi provisioning print\n/interface wifi capsman print\nA saída deve mostrar os dois perfis, as duas regras e enabled: yes — o controlador está pronto, ainda sem nenhum CAP.\nPasso 3 — (hardware) plugue o CAP. No AP físico, de fábrica: reset sem configuração padrão (Capítulo 7), IP via DHCP na rede do lab, e:\n/interface wifi cap\nset enabled=yes caps-man-addresses=192.168.56.11\nPasso 4 — (hardware) acompanhe o provisionamento no lab-r1:\n/interface wifi remote-cap print\n/interface wifi print where dynamic\n/interface wifi registration-table print\nConecte um celular no SSID PaoQuente-WiFi e veja-o na registration table do controlador — a visão central de todos os clientes WiFi da frota.\nPasso 5 — a mágica da gestão central. Troque a senha da frota inteira com um comando:\n/interface wifi security\nset sec-clientes passphrase=NovaSenha!2026\nCom hardware: o celular cai e só volta com a senha nova — sem ninguém tocar no CAP. Sem hardware: /interface wifi security print confirma a mudança que os CAPs receberiam.\n\n\n32.5.2 Verificação\n\ncapsman print mostra enabled: yes e as regras de provisioning listam create-dynamic-enabled com as bandas corretas;\n(Hardware) o CAP aparece em remote-cap print como provisioned sem nenhuma configuração de WiFi feita nele;\n(Hardware) as interfaces em print where dynamic são dinâmicas — some o CAP, somem elas; volte o CAP, voltam provisionadas;\nVocê sabe explicar o que acontece com o WiFi das casas se o lab-r1 (controlador) for desligado — e por quê.\n\n\n\n32.5.3 Desafios\n\nSua frota tem 150 cAP ax (stack wifi) e 40 wAP ac antigos (stack legado). Um único CAPsMAN resolve? Desenhe a solução de gestão para a frota mista.\nUm cliente empresarial quer dois SSIDs em cada um dos seus 12 APs: Escritorio (rede interna) e Visitantes (isolada, só internet). Esboce os objetos CAPsMAN necessários (configurations, securities, e o papel do datapath/VLAN) — sem escrever os comandos completos.\nO controlador CAPsMAN do POP caiu numa sexta à noite e só será restaurado na segunda. Liste o que para e o que continua na frota (local forwarding), e o que muda nessa lista se você tivesse escolhido datapath centralizado.\nPor que authentication-types=wpa2-psk,wpa3-psk em vez de só wpa3-psk, se WPA3 é mais seguro? Que tipo de chamado de suporte a escolha “só WPA3” geraria?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Não — os CAPsMANs são incompatíveis entre stacks. Solução: dois controladores (podem morar no mesmo roteador do POP): /interface wifi capsman para os 150 cAP ax e /caps-man legado para os 40 wAP ac, cada frota apontando para o seu. Padronize os perfis (mesmos SSIDs/senhas nos dois) e planeje a aposentadoria do stack legado junto com a troca do hardware.\n2. Duas security (uma por rede — senhas distintas), duas configuration por banda (Escritorio, Visitantes), e o isolamento via datapath: cada configuration com um datapath que etiqueta uma VLAN diferente (vlan-id=10 interna, vlan-id=20 visitantes) na bridge do CAP — as VLANs do Volume 4 fazendo o isolamento, e o firewall do escritório cuidando de “visitantes só internet”. As regras de provisioning criam os SSIDs extras como slave configurations nos mesmos rádios.\n3. Com local forwarding continua: o WiFi de todas as casas no ar, com a última configuração válida — clientes autenticam, tráfego flui. Para: provisionar CAPs novos/trocados, mudanças de configuração da frota, e a visão central (registration table agregada, estatísticas). Com datapath centralizado, a lista muda dramaticamente: o tráfego dos usuários morre com o controlador — a frota inteira fica sem internet até segunda. É o argumento decisivo pró-local forwarding no provedor.\n4. Porque a base instalada manda: dispositivos anteriores a ~2019/2020 (smart TVs, câmeras, celulares antigos) não falam WPA3. Com “só WPA3”, eles simplesmente não encontram como conectar — e o suporte recebe uma enxurrada de “a TV não pega o WiFi novo” sem mensagem de erro útil. O modo misto sobe cada dispositivo no melhor que ele suporta e deixa a migração acontecer pela renovação natural dos aparelhos.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>32</span>  <span class='chapter-title'>CAPsMAN e o WiFi moderno</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/06-capsman-wifi-moderno.html#resumo",
+    "href": "volumes/v05-wireless/06-capsman-wifi-moderno.html#resumo",
+    "title": "32  CAPsMAN e o WiFi moderno",
+    "section": "32.6 Resumo",
+    "text": "32.6 Resumo\n\nO v7 tem dois stacks: /interface wireless (legado — NV2, torres, Vol. 5 até aqui) e /interface wifi (wave2/ax — WPA3, WiFi 6, indoor); cada um com seu CAPsMAN, incompatíveis entre si;\nCAPsMAN = configuração no controlador, rádio no CAP: security + configuration + provisioning no controlador; no CAP, só cap set enabled=yes caps-man-addresses=... — zero-touch;\nLocal forwarding (dados saem na casa do cliente) escala e sobrevive à queda do controlador; datapath centralizado só quando políticas centrais exigem;\nFrota padronizada (comodatos, corporativo multi-AP) → CAPsMAN; AP avulso personalizado → configuração local;\nFecha o Volume 5: física (Capítulo 27) → enlace e leitura\n\n→ PtP (Capítulo 29) → PtMP\n→ campo (Capítulo 31) → a casa do cliente. O Volume 6 pega daqui: PPPoE, o contrato técnico entre o provedor e cada assinante.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>32</span>  <span class='chapter-title'>CAPsMAN e o WiFi moderno</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v05-wireless/06-capsman-wifi-moderno.html#bibliografia-do-capítulo",
+    "href": "volumes/v05-wireless/06-capsman-wifi-moderno.html#bibliografia-do-capítulo",
+    "title": "32  CAPsMAN e o WiFi moderno",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seções WiFi e WiFi CAPsMAN do RouterOS v7 (MikroTik, 2026a);\nWPA2/WPA3 e 802.11ax: (Tanenbaum; Feamster; Wetherall, 2021);\nRouterOS v7 na prática: (Discher, 2016);\nGestão de frota em provedores: (Burgess, 2011);\nLinha de APs (hAP ax, cAP ax, Audience): (MikroTik, 2026b).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, a2026.\n\n\nMIKROTIK. MikroTik Product Catalog. https://mikrotik.com/products, b2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 5 — Wireless e enlaces de rádio",
+      "<span class='chapter-number'>32</span>  <span class='chapter-title'>CAPsMAN e o WiFi moderno</span>"
+    ]
+  },
+  {
     "objectID": "referencias.html",
     "href": "referencias.html",
     "title": "Referências",

@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>31&nbsp; Alinhamento e troubleshooting de enlaces – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v05-wireless/06-capsman-wifi-moderno.html" rel="next">
+<link href="../../volumes/v05-wireless/04-ptmp-rural.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html">Volume 5 — Wireless e enlaces de rádio</a></li><li class="breadcrumb-item"><a href="../../volumes/v05-wireless/05-alinhamento-troubleshooting.html"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Alinhamento e troubleshooting de enlaces</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 4 — Bridge, switching e VLANs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Bridge e hardware offload</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Segmentação da rede do provedor</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 5 — Wireless e enlaces de rádio</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Fundamentos de rádio e regulamentação</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/02-wireless-routeros.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Wireless no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/03-ptp-nstreme-nv2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Enlaces PtP: Nstreme e NV2</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/04-ptmp-rural.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">PtMP rural: a torre que atende dezenas de clientes</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/05-alinhamento-troubleshooting.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Alinhamento e troubleshooting de enlaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/06-capsman-wifi-moderno.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">CAPsMAN e o WiFi moderno</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#alinhar-é-maximizar-não-achar" id="toc-alinhar-é-maximizar-não-achar" class="nav-link active" data-scroll-target="#alinhar-é-maximizar-não-achar"><span class="header-section-number">31.1</span> Alinhar é maximizar, não “achar”</a>
+  <ul class="collapse">
+  <li><a href="#o-método-vale-para-ptp-e-cpe" id="toc-o-método-vale-para-ptp-e-cpe" class="nav-link" data-scroll-target="#o-método-vale-para-ptp-e-cpe"><span class="header-section-number">31.1.1</span> O método (vale para PtP e CPE)</a></li>
+  </ul></li>
+  <li><a href="#a-caixa-de-ferramentas-de-diagnóstico" id="toc-a-caixa-de-ferramentas-de-diagnóstico" class="nav-link" data-scroll-target="#a-caixa-de-ferramentas-de-diagnóstico"><span class="header-section-number">31.2</span> A caixa de ferramentas de diagnóstico</a></li>
+  <li><a href="#as-quatro-assinaturas-de-enlace-degradado" id="toc-as-quatro-assinaturas-de-enlace-degradado" class="nav-link" data-scroll-target="#as-quatro-assinaturas-de-enlace-degradado"><span class="header-section-number">31.3</span> As quatro assinaturas de enlace degradado</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">31.4</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">31.4.1</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">31.4.2</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">31.4.3</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">31.5</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v05-wireless/05-alinhamento-troubleshooting.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html">Volume 5 — Wireless e enlaces de rádio</a></li><li class="breadcrumb-item"><a href="../../volumes/v05-wireless/05-alinhamento-troubleshooting.html"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Alinhamento e troubleshooting de enlaces</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-alinhamento" class="quarto-section-identifier"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Alinhamento e troubleshooting de enlaces</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Alinhar uma antena diretiva com método — usando <code>align</code>, o <em>beep</em> de sinal e a registration table como instrumentos;</li>
+<li>Reconhecer (e não cair em) um <strong>lóbulo lateral</strong> durante o alinhamento;</li>
+<li>Usar as ferramentas de diagnóstico do RouterOS: <code>scan</code>, <code>frequency-usage</code>, <code>snooper</code> e o histórico da registration table;</li>
+<li>Diagnosticar os quatro vilões clássicos de enlace degradado — desalinhamento, interferência, obstrução de Fresnel e hardware/cabo — distinguindo-os pela <strong>assinatura</strong> de cada um nos indicadores;</li>
+<li>Conduzir um troubleshooting ordenado, da leitura remota à visita técnica, sem trocar peças por adivinhação.</li>
+</ul>
+</div>
+</div>
+<p>O <a href="04-ptmp-rural.html" class="quarto-xref"><span>Capítulo 30</span></a> terminou com uma política de aceite: sinal melhor que -65 dBm, simétrico, SNR ≥ 25 dB, CCQ ≥ 90%. Este capítulo ensina a <strong>alcançar</strong> esses números no telhado — e a <strong>recuperá-los</strong> quando um enlace que funcionava começa a degradar. É o capítulo mais “de campo” do volume: métodos, instrumentos e assinaturas de defeito.</p>
+<section id="alinhar-é-maximizar-não-achar" class="level2" data-number="31.1">
+<h2 data-number="31.1" class="anchored" data-anchor-id="alinhar-é-maximizar-não-achar"><span class="header-section-number">31.1</span> Alinhar é maximizar, não “achar”</h2>
+<p>Uma antena diretiva concentra energia num <strong>lóbulo principal</strong> estreito — mas o diagrama de radiação (<a href="01-fundamentos-radio-regulamentacao.html" class="quarto-xref"><span>Capítulo 27</span></a>) também tem <strong>lóbulos laterais</strong>: direções secundárias onde a antena ainda ganha alguns dB. Eis a armadilha do instalador apressado: girando a antena, o sinal sobe de -85 para -74 dBm e ele para — só que -74 dBm era um lóbulo lateral, e o principal daria -58 dBm alguns graus adiante.</p>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="307.707975pt" height="116.750267pt" viewbox="-68.014948 -68.014948 307.707975 116.750267">
+<defs>
+<path id="tz_fig_lobulos_alinhamento_g0-19" d="M3.425156-5.612951C3.541719-5.702615 3.61345-5.774346 3.61345-5.908842C3.61345-6.115068 3.434122-6.258531 3.272727-6.258531C3.120299-6.258531 3.075467-6.195766 2.99477-6.097136L1.900872-4.743213L2.071233-4.554919L3.425156-5.612951Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-34" d="M1.398755-5.272229C1.398755-5.846077 1.165629-6.222665 .789041-6.222665C.475218-6.222665 .304857-5.980573 .304857-5.738481S.475218-5.254296 .789041-5.254296C.905604-5.254296 1.022167-5.290162 1.120797-5.370859C1.13873-5.388792 1.147696-5.397758 1.156663-5.397758C1.174595-5.397758 1.174595-5.34396 1.174595-5.263263C1.174595-4.671482 .905604-4.124533 .475218-3.721046C.457285-3.703113 .430386-3.676214 .430386-3.631382S.484184-3.523786 .546949-3.523786C.636613-3.523786 1.398755-4.196264 1.398755-5.272229ZM3.19203-5.272229C3.19203-5.846077 2.958904-6.222665 2.582316-6.222665C2.268493-6.222665 2.098132-5.980573 2.098132-5.738481S2.268493-5.254296 2.582316-5.254296C2.698879-5.254296 2.815442-5.290162 2.914072-5.370859C2.932005-5.388792 2.940971-5.397758 2.949938-5.397758C2.96787-5.397758 2.96787-5.34396 2.96787-5.263263C2.96787-4.671482 2.698879-4.124533 2.268493-3.721046C2.25056-3.703113 2.223661-3.676214 2.223661-3.631382S2.27746-3.523786 2.340224-3.523786C2.429888-3.523786 3.19203-4.196264 3.19203-5.272229Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-40" d="M3.057534 2.133998C3.057534 2.089166 3.030635 2.062267 2.976837 1.999502C1.820174 .941469 1.470486-.672478 1.470486-2.241594C1.470486-3.631382 1.739477-5.317061 3.003736-6.518555C3.039601-6.554421 3.057534-6.58132 3.057534-6.626152C3.057534-6.688917 3.012702-6.724782 2.949938-6.724782C2.842341-6.724782 2.035367-6.079203 1.551183-5.101868C1.120797-4.241096 .905604-3.317559 .905604-2.25056C.905604-1.604981 .986301-.582814 1.479452 .475218C2.008468 1.578082 2.842341 2.232628 2.949938 2.232628C3.012702 2.232628 3.057534 2.196762 3.057534 2.133998Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-41" d="M2.67198-2.25056C2.67198-2.985803 2.564384-3.972105 2.098132-4.967372C1.569116-6.070237 .735243-6.724782 .627646-6.724782C.537983-6.724782 .52005-6.653051 .52005-6.626152C.52005-6.58132 .537983-6.554421 .600747-6.491656C1.120797-6.025405 2.107098-4.805978 2.107098-2.25056C2.107098-.968369 1.873973 .81594 .573848 2.026401C.555915 2.0533 .52005 2.089166 .52005 2.133998C.52005 2.160897 .537983 2.232628 .627646 2.232628C.735243 2.232628 1.542217 1.587049 2.026401 .609714C2.456787-.251059 2.67198-1.174595 2.67198-2.25056Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-45" d="M2.555417-1.65878V-2.214695H.09863V-1.65878H2.555417Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-52" d="M.260025-1.75741V-1.479452H2.707846V-.708344C2.707846-.376588 2.680946-.277958 2.008468-.277958H1.811208V0C2.37609-.026899 3.003736-.026899 3.066501-.026899C3.111333-.026899 3.756912-.026899 4.321793 0V-.277958H4.124533C3.452055-.277958 3.425156-.376588 3.425156-.708344V-1.479452H4.339726V-1.75741H3.425156V-5.828144C3.425156-6.007472 3.425156-6.070237 3.254795-6.070237C3.147198-6.070237 3.138232-6.06127 3.057534-5.935741L.260025-1.75741ZM.546949-1.75741L2.761644-5.074969V-1.75741H.546949Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-53" d="M.932503-3.0934C.932503-2.932005 .932503-2.833375 1.058032-2.833375C1.129763-2.833375 1.156663-2.86924 1.210461-2.949938C1.479452-3.326526 1.909838-3.541719 2.37609-3.541719C3.335492-3.541719 3.335492-2.160897 3.335492-1.838107C3.335492-1.560149 3.335492-1.004234 3.084433-.600747C2.842341-.224159 2.465753-.053798 2.116065-.053798C1.587049-.053798 .986301-.385554 .771108-1.049066C.780075-1.049066 .833873-1.031133 .896638-1.031133C1.075965-1.031133 1.33599-1.147696 1.33599-1.470486C1.33599-1.748443 1.13873-1.909838 .896638-1.909838C.708344-1.909838 .457285-1.802242 .457285-1.443587C.457285-.627646 1.13873 .19726 2.133998 .19726C3.218929 .19726 4.142466-.681445 4.142466-1.793275C4.142466-2.878207 3.371357-3.765878 2.394022-3.765878C1.963636-3.765878 1.524284-3.622416 1.210461-3.299626V-5.066002C1.479452-4.985305 1.75741-4.940473 2.035367-4.940473C3.138232-4.940473 3.783811-5.738481 3.783811-5.855044C3.783811-5.935741 3.730012-5.971606 3.685181-5.971606C3.667248-5.971606 3.649315-5.971606 3.568618-5.926775C3.147198-5.756413 2.734745-5.684682 2.358157-5.684682C1.972603-5.684682 1.569116-5.756413 1.156663-5.926775C1.066999-5.971606 1.049066-5.971606 1.0401-5.971606C.932503-5.971606 .932503-5.881943 .932503-5.729514V-3.0934Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-55" d="M4.393524-5.469489C4.474222-5.56812 4.474222-5.586052 4.474222-5.774346H2.241594C1.111831-5.774346 1.084932-5.890909 1.058032-6.06127H.806974L.511083-4.187298H.762142C.798007-4.393524 .869738-4.895641 .986301-5.003238C1.049066-5.057036 1.75741-5.057036 1.882939-5.057036H3.765878L2.905106-3.882441C1.739477-2.27746 1.63188-.81594 1.63188-.304857C1.63188-.206227 1.63188 .19726 2.044334 .19726C2.465753 .19726 2.465753-.19726 2.465753-.313823V-.753176C2.465753-2.071233 2.663014-3.111333 3.138232-3.756912L4.393524-5.469489Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-56" d="M1.542217-4.070735C1.273225-4.241096 1.066999-4.483188 1.066999-4.814944C1.066999-5.397758 1.694645-5.747447 2.286426-5.747447C2.976837-5.747447 3.532752-5.263263 3.532752-4.635616S2.99477-3.595517 2.636115-3.38929L1.542217-4.070735ZM2.860274-3.245828C3.308593-3.461021 3.963138-3.90934 3.963138-4.635616C3.963138-5.478456 3.120299-5.971606 2.313325-5.971606C1.371856-5.971606 .636613-5.299128 .636613-4.474222C.636613-4.133499 .762142-3.81071 .977335-3.550685C1.129763-3.380324 1.183562-3.344458 1.703611-3.012702C.91457-2.636115 .385554-2.089166 .385554-1.353923C.385554-.403487 1.327024 .19726 2.295392 .19726C3.335492 .19726 4.214197-.537983 4.214197-1.506351C4.214197-2.37609 3.550685-2.806476 3.326526-2.949938C3.227895-3.021669 2.96787-3.183064 2.860274-3.245828ZM1.945704-2.860274L3.075467-2.160897C3.281694-2.026401 3.730012-1.739477 3.730012-1.192528C3.730012-.484184 3.012702-.053798 2.304359-.053798C1.524284-.053798 .869738-.609714 .869738-1.353923C.869738-1.999502 1.318057-2.537484 1.945704-2.860274Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-92" d="M2.501619-3.999004C2.501619-4.241096 2.331258-4.483188 2.017435-4.483188C1.900872-4.483188 1.784309-4.447323 1.685679-4.366625C1.667746-4.348692 1.65878-4.339726 1.649813-4.339726C1.63188-4.339726 1.63188-4.393524 1.63188-4.474222C1.63188-5.066002 1.900872-5.612951 2.331258-6.016438C2.349191-6.034371 2.37609-6.06127 2.37609-6.106102S2.322291-6.213699 2.259527-6.213699C2.169863-6.213699 1.407721-5.54122 1.407721-4.465255C1.407721-3.891407 1.640847-3.514819 2.017435-3.514819C2.331258-3.514819 2.501619-3.756912 2.501619-3.999004ZM4.294894-3.999004C4.294894-4.241096 4.124533-4.483188 3.81071-4.483188C3.694147-4.483188 3.577584-4.447323 3.478954-4.366625C3.461021-4.348692 3.452055-4.339726 3.443088-4.339726C3.425156-4.339726 3.425156-4.393524 3.425156-4.474222C3.425156-5.066002 3.694147-5.612951 4.124533-6.016438C4.142466-6.034371 4.169365-6.06127 4.169365-6.106102S4.115567-6.213699 4.052802-6.213699C3.963138-6.213699 3.200996-5.54122 3.200996-4.465255C3.200996-3.891407 3.434122-3.514819 3.81071-3.514819C4.124533-3.514819 4.294894-3.756912 4.294894-3.999004Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-94" d="M2.304359-6.222665L1.066999-5.012204L1.228394-4.82391L2.304359-5.729514L3.371357-4.82391L3.532752-5.012204L2.304359-6.222665Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-97" d="M3.066501-.645579C3.111333-.268991 3.371357 .053798 3.756912 .053798C3.981071 .053798 4.545953-.080697 4.545953-.798007V-1.300125H4.294894V-.806974C4.294894-.708344 4.294894-.260025 3.972105-.260025S3.649315-.690411 3.649315-.833873V-2.402989C3.649315-2.914072 3.649315-3.218929 3.245828-3.58655C2.914072-3.882441 2.483686-4.016936 2.035367-4.016936C1.282192-4.016936 .654545-3.640349 .654545-3.066501C.654545-2.788543 .842839-2.636115 1.075965-2.636115C1.318057-2.636115 1.488418-2.815442 1.488418-3.048568C1.488418-3.434122 1.093898-3.478954 1.084932-3.478954C1.327024-3.71208 1.75741-3.792777 2.017435-3.792777C2.47472-3.792777 2.985803-3.452055 2.985803-2.663014V-2.367123C2.501619-2.349191 1.829141-2.304359 1.228394-2.017435C.582814-1.703611 .385554-1.23736 .385554-.878705C.385554-.143462 1.255293 .09863 1.85604 .09863C2.600249 .09863 2.940971-.394521 3.066501-.645579ZM2.985803-1.264259C2.985803-.394521 2.313325-.125529 1.918804-.125529C1.497385-.125529 1.102864-.430386 1.102864-.878705C1.102864-1.470486 1.613948-2.098132 2.985803-2.15193V-1.264259Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-98" d="M1.622914-2.860274C1.622914-3.030635 1.622914-3.039601 1.721544-3.183064C2.026401-3.595517 2.465753-3.738979 2.806476-3.738979C3.19203-3.738979 3.550685-3.523786 3.783811-3.147198C4.016936-2.761644 4.034869-2.232628 4.034869-1.945704C4.034869-1.524284 3.981071-1.049066 3.747945-.690411C3.550685-.403487 3.183064-.125529 2.707846-.125529C2.304359-.125529 1.963636-.340722 1.748443-.672478C1.622914-.860772 1.622914-.869738 1.622914-1.0401V-2.860274ZM1.542217-.546949C1.820174-.152428 2.268493 .09863 2.752677 .09863C3.819676 .09863 4.805978-.762142 4.805978-1.936737C4.805978-3.057534 3.918306-3.963138 2.842341-3.963138C2.232628-3.963138 1.811208-3.649315 1.596015-3.407223V-6.222665L.268991-6.124035V-5.846077C.878705-5.846077 .959402-5.783313 .959402-5.34396V0H1.210461L1.542217-.546949Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-99" d="M3.263761-3.523786C3.075467-3.48792 2.896139-3.362391 2.896139-3.102366C2.896139-2.86924 3.075467-2.689913 3.308593-2.689913S3.730012-2.842341 3.730012-3.120299C3.730012-3.676214 3.102366-4.016936 2.313325-4.016936C1.165629-4.016936 .304857-3.057534 .304857-1.936737C.304857-.780075 1.23736 .09863 2.295392 .09863C3.541719 .09863 3.828643-.986301 3.828643-1.066999C3.828643-1.174595 3.730012-1.174595 3.703113-1.174595C3.604483-1.174595 3.604483-1.156663 3.550685-1.004234C3.344458-.385554 2.842341-.152428 2.385056-.152428C1.811208-.152428 1.075965-.61868 1.075965-1.945704C1.075965-3.344458 1.793275-3.765878 2.331258-3.765878C2.447821-3.765878 2.932005-3.747945 3.263761-3.523786Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-100" d="M3.48792-1.075965C3.48792-.91457 3.48792-.887671 3.353425-.699377C3.075467-.29589 2.663014-.125529 2.304359-.125529C1.918804-.125529 1.560149-.340722 1.327024-.71731C1.093898-1.102864 1.075965-1.63188 1.075965-1.918804C1.075965-2.340224 1.129763-2.815442 1.362889-3.174097C1.560149-3.461021 1.927771-3.738979 2.402989-3.738979C2.779577-3.738979 3.138232-3.550685 3.380324-3.209963C3.48792-3.066501 3.48792-3.057534 3.48792-2.887173V-1.075965ZM3.514819-3.434122C3.469988-3.48792 3.066501-3.963138 2.367123-3.963138C1.264259-3.963138 .304857-3.084433 .304857-1.927771C.304857-.806974 1.201494 .09863 2.268493 .09863C2.923039 .09863 3.326526-.286924 3.48792-.475218V.09863L4.841843 0V-.277958C4.23213-.277958 4.151432-.340722 4.151432-.780075V-6.222665L2.824408-6.124035V-5.846077C3.434122-5.846077 3.514819-5.783313 3.514819-5.34396V-3.434122Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-101" d="M3.58655-2.0533C3.783811-2.0533 3.828643-2.0533 3.828643-2.241594C3.828643-3.165131 3.326526-4.016936 2.178829-4.016936C1.102864-4.016936 .260025-3.084433 .260025-1.972603C.260025-.798007 1.201494 .09863 2.295392 .09863S3.828643-.860772 3.828643-1.066999C3.828643-1.129763 3.783811-1.183562 3.703113-1.183562C3.61345-1.183562 3.58655-1.120797 3.577584-1.084932C3.272727-.170361 2.47472-.152428 2.340224-.152428C1.909838-.152428 1.542217-.394521 1.33599-.699377C1.0401-1.13873 1.031133-1.676712 1.031133-2.0533H3.58655ZM1.0401-2.268493C1.120797-3.649315 1.927771-3.792777 2.178829-3.792777C2.67198-3.792777 3.209963-3.416189 3.218929-2.268493H1.0401Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-103" d="M1.120797-1.604981C1.344956-1.461519 1.622914-1.327024 2.035367-1.327024C2.887173-1.327024 3.532752-1.936737 3.532752-2.645081C3.532752-3.084433 3.281694-3.38929 3.165131-3.514819C3.523786-3.837609 3.945205-3.837609 4.052802-3.837609C4.00797-3.81071 3.936239-3.765878 3.936239-3.604483C3.936239-3.505853 3.999004-3.335492 4.20523-3.335492C4.33076-3.335492 4.474222-3.425156 4.474222-3.61345C4.474222-3.783811 4.348692-4.061768 3.990037-4.061768C3.730012-4.061768 3.326526-3.963138 3.012702-3.640349C2.77061-3.837609 2.420922-3.963138 2.044334-3.963138C1.192528-3.963138 .546949-3.353425 .546949-2.645081C.546949-2.187796 .81594-1.865006 .959402-1.730511C.941469-1.712578 .690411-1.398755 .690411-.986301C.690411-.681445 .833873-.358655 1.075965-.19726C.61868-.053798 .260025 .277958 .260025 .699377C.260025 1.33599 1.147696 1.847073 2.295392 1.847073C3.398257 1.847073 4.339726 1.371856 4.339726 .681445C4.339726 .313823 4.169365-.080697 3.837609-.29589C3.335492-.609714 2.815442-.609714 1.963636-.609714C1.784309-.609714 1.497385-.609714 1.425654-.627646C1.165629-.681445 .995268-.923537 .995268-1.210461C.995268-1.353923 1.0401-1.488418 1.120797-1.604981ZM2.035367-1.569116C1.23736-1.569116 1.23736-2.447821 1.23736-2.645081C1.23736-2.887173 1.255293-3.19203 1.407721-3.407223C1.542217-3.58655 1.784309-3.721046 2.035367-3.721046C2.842341-3.721046 2.842341-2.851308 2.842341-2.645081S2.842341-1.569116 2.035367-1.569116ZM2.447821-.044832C2.734745-.044832 3.837609-.035866 3.837609 .690411C3.837609 1.201494 3.147198 1.604981 2.304359 1.604981C1.425654 1.604981 .762142 1.183562 .762142 .690411C.762142 .546949 .851806-.044832 1.622914-.044832H2.447821Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-105" d="M1.649813-3.963138L.358655-3.864508V-3.58655C.932503-3.58655 1.0132-3.532752 1.0132-3.0934V-.690411C1.0132-.277958 .91457-.277958 .32279-.277958V0C.726276-.017933 .91457-.026899 1.309091-.026899C1.452553-.026899 1.829141-.026899 2.268493 0V-.277958C1.685679-.277958 1.649813-.32279 1.649813-.672478V-3.963138ZM1.676712-5.523288C1.676712-5.792279 1.461519-6.007472 1.192528-6.007472C.91457-6.007472 .708344-5.783313 .708344-5.523288S.91457-5.039103 1.192528-5.039103C1.461519-5.039103 1.676712-5.254296 1.676712-5.523288Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-108" d="M1.649813-6.222665L.32279-6.124035V-5.846077C.932503-5.846077 1.0132-5.783313 1.0132-5.34396V-.690411C1.0132-.277958 .91457-.277958 .32279-.277958V0C.744209-.017933 .91457-.026899 1.327024-.026899C1.748443-.026899 1.900872-.017933 2.340224 0V-.277958C1.748443-.277958 1.649813-.277958 1.649813-.690411V-6.222665Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-109" d="M1.667746-2.322291C1.667746-3.29066 2.367123-3.738979 2.905106-3.738979C3.398257-3.738979 3.559651-3.38929 3.559651-2.761644V-.690411C3.559651-.277958 3.461021-.277958 2.86924-.277958V0C3.29066-.017933 3.461021-.026899 3.891407-.026899S4.438356-.017933 4.913574 0V-.277958C4.321793-.277958 4.223163-.277958 4.223163-.690411V-2.322291C4.223163-3.29066 4.92254-3.738979 5.460523-3.738979C5.953674-3.738979 6.115068-3.38929 6.115068-2.761644V-.690411C6.115068-.277958 6.016438-.277958 5.424658-.277958V0C5.846077-.017933 6.016438-.026899 6.446824-.026899S6.993773-.017933 7.468991 0V-.277958C7.011706-.277958 6.787547-.277958 6.77858-.555915V-2.27746C6.77858-3.057534 6.77858-3.308593 6.48269-3.640349C6.294396-3.855542 5.935741-3.963138 5.523288-3.963138C4.877709-3.963138 4.438356-3.58655 4.187298-3.111333C4.079701-3.640349 3.721046-3.963138 2.96787-3.963138C2.25056-3.963138 1.811208-3.496887 1.622914-3.084433H1.613948V-3.963138L.313823-3.864508V-3.58655C.923537-3.58655 1.004234-3.523786 1.004234-3.084433V-.690411C1.004234-.277958 .905604-.277958 .313823-.277958V0C.735243-.017933 .905604-.026899 1.33599-.026899S1.882939-.017933 2.358157 0V-.277958C1.766376-.277958 1.667746-.277958 1.667746-.690411V-2.322291Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-110" d="M1.667746-2.322291C1.667746-3.272727 2.340224-3.738979 2.905106-3.738979C3.434122-3.738979 3.550685-3.299626 3.550685-2.761644V-.690411C3.550685-.277958 3.452055-.277958 2.860274-.277958V0C3.281694-.017933 3.452055-.026899 3.882441-.026899S4.42939-.017933 4.904608 0V-.277958C4.447323-.277958 4.223163-.277958 4.214197-.555915V-2.27746C4.214197-3.021669 4.214197-3.281694 3.963138-3.595517C3.756912-3.846575 3.416189-3.963138 2.96787-3.963138C2.133998-3.963138 1.748443-3.344458 1.622914-3.0934H1.613948V-3.963138L.313823-3.864508V-3.58655C.923537-3.58655 1.004234-3.523786 1.004234-3.084433V-.690411C1.004234-.277958 .905604-.277958 .313823-.277958V0C.735243-.017933 .905604-.026899 1.33599-.026899S1.882939-.017933 2.358157 0V-.277958C1.766376-.277958 1.667746-.277958 1.667746-.690411V-2.322291Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-111" d="M4.339726-1.909838C4.339726-3.084433 3.407223-4.016936 2.304359-4.016936C1.165629-4.016936 .260025-3.057534 .260025-1.909838C.260025-.789041 1.192528 .09863 2.295392 .09863C3.434122 .09863 4.339726-.806974 4.339726-1.909838ZM2.304359-.152428C1.85604-.152428 1.479452-.376588 1.273225-.726276C1.0401-1.102864 1.031133-1.578082 1.031133-1.990535C1.031133-2.322291 1.031133-2.833375 1.255293-3.200996C1.524284-3.658281 1.972603-3.792777 2.295392-3.792777C2.806476-3.792777 3.174097-3.505853 3.353425-3.200996C3.559651-2.824408 3.568618-2.367123 3.568618-1.990535C3.568618-1.65878 3.568618-1.13873 3.344458-.744209C3.0934-.331756 2.680946-.152428 2.304359-.152428Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-112" d="M1.622914-3.012702C1.927771-3.532752 2.420922-3.71208 2.797509-3.71208C3.496887-3.71208 4.034869-2.905106 4.034869-1.936737C4.034869-.91457 3.425156-.125529 2.698879-.125529C2.295392-.125529 1.95467-.358655 1.739477-.672478C1.622914-.851806 1.622914-.869738 1.622914-1.0401V-3.012702ZM1.622914-.430386C1.85604-.19726 2.160897 .09863 2.752677 .09863C3.819676 .09863 4.805978-.762142 4.805978-1.936737C4.805978-3.066501 3.927273-3.963138 2.86924-3.963138C2.385056-3.963138 1.936737-3.765878 1.596015-3.398257V-3.963138L.268991-3.864508V-3.58655C.905604-3.58655 .959402-3.532752 .959402-3.147198V1.049066C.959402 1.461519 .860772 1.461519 .268991 1.461519V1.739477C.690411 1.721544 .860772 1.712578 1.291158 1.712578S1.838107 1.721544 2.313325 1.739477V1.461519C1.721544 1.461519 1.622914 1.461519 1.622914 1.049066V-.430386Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-114" d="M1.596015-2.0533C1.596015-2.420922 1.694645-3.738979 2.716812-3.738979V-3.730012C2.698879-3.721046 2.555417-3.61345 2.555417-3.398257C2.555417-3.156164 2.743711-3.003736 2.949938-3.003736C3.138232-3.003736 3.344458-3.138232 3.344458-3.407223C3.344458-3.694147 3.075467-3.963138 2.67198-3.963138C2.133998-3.963138 1.75741-3.58655 1.551183-3.030635H1.542217V-3.963138L.268991-3.864508V-3.58655C.878705-3.58655 .959402-3.523786 .959402-3.084433V-.690411C.959402-.277958 .860772-.277958 .268991-.277958V0C.744209-.017933 .860772-.026899 1.318057-.026899C1.676712-.026899 1.891905-.017933 2.456787 0V-.277958H2.27746C1.622914-.277958 1.596015-.376588 1.596015-.708344V-2.0533Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-115" d="M3.084433-3.783811C3.084433-3.936239 3.084433-4.016936 2.976837-4.016936C2.932005-4.016936 2.914072-4.016936 2.797509-3.90934C2.779577-3.891407 2.698879-3.81071 2.645081-3.765878C2.367123-3.963138 2.089166-4.016936 1.784309-4.016936C.600747-4.016936 .304857-3.362391 .304857-2.905106C.304857-2.618182 .430386-2.385056 .636613-2.187796C.941469-1.909838 1.282192-1.847073 1.739477-1.766376C2.196762-1.676712 2.349191-1.649813 2.546451-1.497385C2.636115-1.425654 2.860274-1.255293 2.860274-.91457C2.860274-.125529 1.95467-.125529 1.829141-.125529C.91457-.125529 .681445-.887671 .573848-1.371856C.546949-1.461519 .537983-1.515318 .430386-1.515318C.304857-1.515318 .304857-1.443587 .304857-1.282192V-.134496C.304857 .017933 .304857 .09863 .412453 .09863C.466252 .09863 .475218 .089664 .636613-.080697C.672478-.134496 .771108-.251059 .81594-.29589C1.192528 .071731 1.604981 .09863 1.829141 .09863C2.932005 .09863 3.317559-.546949 3.317559-1.147696C3.317559-1.551183 3.138232-1.793275 2.940971-1.999502C2.636115-2.295392 2.313325-2.358157 1.649813-2.483686C1.416687-2.528518 .762142-2.645081 .762142-3.156164C.762142-3.443088 .968369-3.819676 1.784309-3.819676C2.752677-3.819676 2.815442-3.075467 2.833375-2.851308C2.842341-2.743711 2.842341-2.689913 2.958904-2.689913C3.084433-2.689913 3.084433-2.752677 3.084433-2.923039V-3.783811Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-116" d="M2.914072-3.58655V-3.864508H1.613948V-5.514321H1.362889C1.353923-4.761146 1.0401-3.837609 .170361-3.81071V-3.58655H.950436V-1.111831C.950436-.107597 1.676712 .09863 2.15193 .09863C2.752677 .09863 3.066501-.475218 3.066501-1.111831V-1.622914H2.815442V-1.13873C2.815442-.475218 2.537484-.152428 2.214695-.152428C1.613948-.152428 1.613948-.941469 1.613948-1.102864V-3.58655H2.914072Z"></path>
+<path id="tz_fig_lobulos_alinhamento_g0-117" d="M3.550685-1.497385C3.550685-.699377 3.102366-.125529 2.456787-.125529C1.712578-.125529 1.667746-.511083 1.667746-.995268V-3.963138L.313823-3.864508V-3.58655C1.004234-3.58655 1.004234-3.559651 1.004234-2.761644V-1.416687C1.004234-.833873 1.004234-.457285 1.416687-.143462C1.676712 .035866 2.044334 .09863 2.402989 .09863C2.86924 .09863 3.308593-.107597 3.568618-.645579H3.577584V.09863L4.904608 0V-.277958C4.294894-.277958 4.214197-.340722 4.214197-.780075V-3.963138L2.860274-3.864508V-3.58655C3.469988-3.58655 3.550685-3.523786 3.550685-3.084433V-1.497385Z"></path>
+</defs>
+<g id="tz_fig_lobulos_alinhamento_page1">
+<g stroke-miterlimit="10" transform="translate(75.836706,41.429737)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g fill="#808080" stroke="#808080">
+<g stroke-width="0.4">
+<path d="M-125.1919 0H127.80742" fill="none"></path>
+<g transform="translate(126.08281,0.0)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
+ </g>
+ </g>
+</g>
+<g transform="translate(134.41576,-2.25)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(75.836706,41.429737)scale(-1,-1)">
+<g fill="#808080">
+<g stroke="none">
+<g fill="#808080">
+<use x="75.836706" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-94"></use>
+<use x="75.836706" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="80.444397" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-110"></use>
+<use x="85.564053" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-103"></use>
+<use x="90.171744" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-117"></use>
+<use x="95.2914" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+<use x="97.851228" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#808080" stroke="#808080">
+<g stroke-width="0.4">
+<path d="M-125.1919 0V93.66379" fill="none"></path>
+<g transform="matrix(0.0,1.0,-1.0,0.0,-125.1919,91.93918)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
+ </g>
+ </g>
+</g>
+<g transform="translate(-134.46753,100.27213)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(75.836706,41.429737)scale(-1,-1)">
+<g fill="#808080">
+<g stroke="none">
+<g fill="#808080">
+<use x="75.836706" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-115"></use>
+<use x="79.471669" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-105"></use>
+<use x="82.031497" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-110"></use>
+<use x="87.151153" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="91.758844" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g stroke-width="0.4">
+<g stroke-dasharray="3.0,3.0" stroke-dashoffset="0.0">
+<path d="M-125.1919 82.51277H125.1919" fill="none"></path>
+<g transform="translate(-141.05812,79.61278)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(75.836706,41.429737)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="75.836706" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-45"></use>
+<use x="78.9085" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-53"></use>
+<use x="83.516191" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-56"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g stroke-width="0.4">
+<g stroke-dasharray="3.0,3.0" stroke-dashoffset="0.0">
+<path d="M-125.1919 36.98865H125.1919" fill="none"></path>
+<g transform="translate(-141.05812,34.08865)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(75.836706,41.429737)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="75.836706" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-45"></use>
+<use x="78.9085" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-55"></use>
+<use x="83.516191" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-52"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#2780e3" stroke="#2780e3">
+<g stroke-width="1.2">
+<g fill="#2780e3" stroke="#2780e3">
+<path d="M-119.50143 4.26773C-102.43004 5.69046-96.73915 35.56592-85.35823 36.98865C-73.9773 35.56592-68.2864 8.5359-54.06003 9.95863C-34.1432 14.22636-22.76227 82.51277 0 82.51277S34.1432 14.22636 54.06003 9.95863C68.2864 8.5359 73.9773 35.56592 85.35823 36.98865C96.73915 35.56592 102.43004 5.69046 119.50143 4.26773" fill="none"></path>
+</g>
+</g>
+</g>
+<g fill="#000">
+<g fill="#d7433b">
+<g fill="#000">
+<g fill="#d7433b">
+<path d="M-83.5196 36.98865C-83.5196 38.00409-84.34279 38.82727-85.35823 38.82727S-87.19685 38.00409-87.19685 36.98865C-87.19685 35.9732-86.37367 35.15002-85.35823 35.15002S-83.5196 35.9732-83.5196 36.98865ZM-85.35823 36.98865" stroke="none"></path>
+</g>
+</g>
+<g transform="translate(-85.35823,36.98865)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(75.836706,41.429737)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none"></g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#d7433b" stroke="#d7433b">
+<g fill="#d7433b" stroke="#d7433b">
+</g>
+<g transform="translate(-116.8476,47.03935)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(75.836706,41.429737)scale(-1,-1)">
+<g fill="#d7433b">
+<g stroke="none">
+<g fill="#d7433b">
+<use x="80.574114" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+<use x="83.133942" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-19"></use>
+<use x="83.133942" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+<use x="87.741632" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-98"></use>
+<use x="92.861289" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-117"></use>
+<use x="97.980945" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+<use x="100.540773" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+<use x="108.220257" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+<use x="110.780086" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="115.387776" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-116"></use>
+<use x="118.971536" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-101"></use>
+<use x="123.070724" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-114"></use>
+<use x="126.675245" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="131.282936" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+<use x="75.836706" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-40"></use>
+<use x="79.420465" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-92"></use>
+<use x="84.028156" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-112"></use>
+<use x="89.147812" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="93.755503" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-114"></use>
+<use x="97.360024" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-101"></use>
+<use x="101.459212" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-99"></use>
+<use x="105.554937" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-101"></use>
+<use x="112.725919" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-98"></use>
+<use x="118.101558" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+<use x="122.709249" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-109"></use>
+<use x="130.388734" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-34"></use>
+<use x="134.996424" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#000">
+<g fill="#3fb618">
+<g fill="#000">
+<g fill="#3fb618">
+<path d="M1.83862 82.51277C1.83862 83.52821 1.01544 84.3514 0 84.3514S-1.83862 83.52821-1.83862 82.51277S-1.01544 80.67415 0 80.67415S1.83862 81.49733 1.83862 82.51277ZM0 82.51277" stroke="none"></path>
+</g>
+</g>
+<g transform="translate(0.0,82.51277)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(75.836706,41.429737)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none"></g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#3fb618" stroke="#3fb618">
+<g fill="#3fb618" stroke="#3fb618">
+</g>
+<g transform="translate(-31.61436,90.6412)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(75.836706,41.429737)scale(-1,-1)">
+<g fill="#3fb618">
+<g stroke="none">
+<g fill="#3fb618">
+<use x="75.836706" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+<use x="78.396534" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-19"></use>
+<use x="78.396534" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+<use x="83.004225" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-98"></use>
+<use x="88.123881" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-117"></use>
+<use x="93.243537" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+<use x="95.803366" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+<use x="103.48285" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-112"></use>
+<use x="108.602506" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-114"></use>
+<use x="112.207027" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-105"></use>
+<use x="114.766856" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-110"></use>
+<use x="119.886512" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-99"></use>
+<use x="123.982237" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-105"></use>
+<use x="126.542065" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-112"></use>
+<use x="131.661721" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="136.269412" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#d7433b" stroke="#d7433b">
+<g stroke-width="0.8">
+<g fill="#d7433b" stroke="#d7433b">
+<path d="M-85.35823 25.60728C-51.20679 29.27107-29.104 42.61519-12.2582 67.70662" fill="none"></path>
+<g transform="matrix(0.55737,0.83022,-0.83022,0.55737,-13.6373,65.65244)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M5.4608 0L1.29181 1.57648L2.67429 0L1.29181-1.57648Z"></path>
+ </g>
+ </g>
+</g>
+<g transform="translate(-77.76701,18.06674)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(75.836706,41.429737)scale(-1,-1)">
+<g fill="#d7433b">
+<g stroke="none">
+<g fill="#d7433b">
+<use x="75.836706" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-99"></use>
+<use x="79.932431" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+<use x="84.540122" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-110"></use>
+<use x="89.403795" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-116"></use>
+<use x="92.987555" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-105"></use>
+<use x="95.547383" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-110"></use>
+<use x="100.411056" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-117"></use>
+<use x="105.530712" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="110.138403" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-114"></use>
+<use x="116.814718" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-103"></use>
+<use x="121.422409" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-105"></use>
+<use x="123.982237" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-114"></use>
+<use x="127.586758" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="132.194449" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-110"></use>
+<use x="137.314105" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-100"></use>
+<use x="142.433761" y="30.470833" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+<use x="82.755174" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="87.362865" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-116"></use>
+<use x="90.692359" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-19"></use>
+<use x="90.946624" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-101"></use>
+<use x="98.117606" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+<use x="105.79709" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-112"></use>
+<use x="110.916747" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-105"></use>
+<use x="113.476575" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-99"></use>
+<use x="117.5723" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-111"></use>
+<use x="125.251784" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-114"></use>
+<use x="128.856305" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-101"></use>
+<use x="132.955494" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-97"></use>
+<use x="137.563184" y="41.429737" href="#tz_fig_lobulos_alinhamento_g0-108"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+<div id="fig-lobulos-alinhamento" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lobulos-alinhamento-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<p>O sinal em função do ângulo da antena: os lóbulos laterais formam picos falsos ~15 dB abaixo do principal. O método correto varre <strong>todo</strong> o arco, anota o melhor valor e só então retorna a ele — nunca para no primeiro pico.</p>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-lobulos-alinhamento-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;31.1
+</figcaption>
+</figure>
+</div>
+<section id="o-método-vale-para-ptp-e-cpe" class="level3" data-number="31.1.1">
+<h3 data-number="31.1.1" class="anchored" data-anchor-id="o-método-vale-para-ptp-e-cpe"><span class="header-section-number">31.1.1</span> O método (vale para PtP e CPE)</h3>
+<ol type="1">
+<li><strong>Aponte no grosso</strong> pela geografia: bússola/aplicativo de mapa, ou mire um marco visível (a torre, morro conhecido). Isso coloca você perto do lóbulo principal;</li>
+<li><strong>Trave um eixo e varra o outro, devagar</strong> (azimute primeiro, depois elevação). Velocidade: a leitura de sinal atualiza ~1×/s — gire 2–3° e espere a leitura assentar;</li>
+<li><strong>Varra o arco inteiro</strong> anotando o pico real — não pare no primeiro máximo (<a href="#fig-lobulos-alinhamento" class="quarto-xref">Figura&nbsp;<span>31.1</span></a>);</li>
+<li>Volte ao pico, <strong>aperte o eixo, e repita no outro eixo</strong>. Aperto de parafuso desloca a antena: confira a leitura <em>depois</em> de apertar;</li>
+<li>Valide contra a política de aceite: sinal, <strong>simetria</strong> (rx e tx), SNR, CCQ e taxa — os cinco, não só o primeiro.</li>
+</ol>
+<p>O RouterOS ajuda com o modo de alinhamento, que emite <em>beeps</em> no compartimento do rádio (frequência do beep sobe com o sinal — mãos livres no mastro):</p>
+<pre class="routeros"><code>/interface wireless align
+set active-mode=yes audio-monitor=CC:2D:E0:00:00:01 filter-mac=CC:2D:E0:00:00:01
+monitor wlan1</code></pre>
+<p>E na estação, o monitor contínuo (que você já conhece do <a href="02-wireless-routeros.html" class="quarto-xref"><span>Capítulo 28</span></a>) durante a varredura:</p>
+<pre class="routeros"><code>/interface wireless registration-table print interval=1</code></pre>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Analogia para guardar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Alinhar antena é sintonizar rádio AM antigo no escuro: girando o botão, você passa por estações fracas (lóbulos laterais) antes de achar a forte (principal). Quem para na primeira estação audível ouve chiado para sempre. O método é o mesmo: varre a faixa <strong>toda</strong>, decora onde tocou mais alto e volta lá.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="a-caixa-de-ferramentas-de-diagnóstico" class="level2" data-number="31.2">
+<h2 data-number="31.2" class="anchored" data-anchor-id="a-caixa-de-ferramentas-de-diagnóstico"><span class="header-section-number">31.2</span> A caixa de ferramentas de diagnóstico</h2>
+<p>Quatro instrumentos do RouterOS, cada um respondendo a uma pergunta:</p>
+<div id="tbl-ferramentas-diagnostico" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ferramentas-diagnostico-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;31.1: Ferramentas de diagnóstico wireless
+</figcaption>
+<div aria-describedby="tbl-ferramentas-diagnostico-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Ferramenta</th>
+<th>Pergunta que responde</th>
+<th>Cuidado</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>scan</code></td>
+<td>“que redes existem neste canal/banda?”</td>
+<td><strong>derruba o enlace</strong> durante a varredura</td>
+</tr>
+<tr class="even">
+<td><code>frequency-usage</code></td>
+<td>“quais frequências estão ocupadas, e quanto?”</td>
+<td>também interrompe o serviço</td>
+</tr>
+<tr class="odd">
+<td><code>snooper</code></td>
+<td>“quem está ocupando o ar, por SSID/estação?”</td>
+<td>idem — use em janela de manutenção</td>
+</tr>
+<tr class="even">
+<td><code>registration-table</code></td>
+<td>“como está <em>o meu</em> enlace agora?”</td>
+<td>passivo, não interrompe nada</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Aviso
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>scan</code>, <code>frequency-usage</code> e <code>snooper</code> colocam o rádio em modo de varredura: <strong>todos os clientes do setor caem</strong> enquanto rodam. Em produção, use dentro de janela de manutenção ou num rádio de teste dedicado — nunca “só um scan rapidinho” no setor cheio às 20h.</p>
+</div>
+</div>
+<p>Exemplos de leitura:</p>
+<pre class="routeros"><code>/interface wireless frequency-usage wlan1 duration=30s</code></pre>
+<pre><code>FREQ    USAGE
+5500    12.5%
+5520     3.1%
+5580    67.4%
+5660     8.9%</code></pre>
+<p>A frequência 5580 está 67% ocupada — se o seu setor está nela, achou o vilão; migre para 5520 (após conferir com <code>scan</code> quem é o ocupante).</p>
+<pre class="routeros"><code>/interface wireless scan wlan1 duration=20s</code></pre>
+<pre><code>FLAGS  ADDRESS            SSID             CHANNEL          SIG  NF   SNR
+AP     D4:CA:6D:99:88:77  outro-provedor   5580/20/an       -66  -110 44
+AP     CC:2D:E0:BB:22:33  isp-rural-setor-b 5660/20/an      -71  -110 39</code></pre>
+</section>
+<section id="as-quatro-assinaturas-de-enlace-degradado" class="level2" data-number="31.3">
+<h2 data-number="31.3" class="anchored" data-anchor-id="as-quatro-assinaturas-de-enlace-degradado"><span class="header-section-number">31.3</span> As quatro assinaturas de enlace degradado</h2>
+<p>O ouro do troubleshooting é saber que <strong>cada causa deixa uma impressão digital diferente</strong> nos indicadores:</p>
+<div id="tbl-assinaturas" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-assinaturas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;31.2: Assinaturas de degradação e seus vilões
+</figcaption>
+<div aria-describedby="tbl-assinaturas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Assinatura</th>
+<th>Sinal</th>
+<th>SNR</th>
+<th>CCQ</th>
+<th>Padrão temporal</th>
+<th>Vilão provável</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Sinal caiu nos dois lados, piso de ruído normal</td>
+<td>↓↓</td>
+<td>↓</td>
+<td>↓</td>
+<td>após vento/tempestade; degrada de vez</td>
+<td><strong>desalinhamento</strong> (antena girou)</td>
+</tr>
+<tr class="even">
+<td>Sinal normal, ruído subiu, CCQ despenca</td>
+<td>=</td>
+<td>↓↓</td>
+<td>↓↓</td>
+<td>horários certos (ex.: 18–23h)</td>
+<td><strong>interferência</strong> (novo AP vizinho)</td>
+</tr>
+<tr class="odd">
+<td>Sinal caiu aos poucos ao longo de meses</td>
+<td>↓ (lento)</td>
+<td>↓</td>
+<td>↓</td>
+<td>sazonal/progressivo</td>
+<td><strong>Fresnel</strong> (árvore cresceu, <a href="01-fundamentos-radio-regulamentacao.html" class="quarto-xref"><span>Capítulo 27</span></a>)</td>
+</tr>
+<tr class="even">
+<td>Sinal <strong>assimétrico</strong> ou instável, quedas secas</td>
+<td>↕ errático</td>
+<td>↕</td>
+<td>↕</td>
+<td>aleatório, piora com chuva</td>
+<td><strong>hardware/cabo</strong> (conector, RF, fonte)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Não existe “o enlace está ruim” — existe <strong>desalinhamento</strong>, <strong>interferência</strong>, <strong>obstrução</strong> ou <strong>hardware</strong>, e cada um assina os indicadores de um jeito (<a href="#tbl-assinaturas" class="quarto-xref">Tabela&nbsp;<span>31.2</span></a>). Antes de subir no telhado, leia a assinatura: <em>o que</em> mudou (sinal? ruído? simetria?), <em>quando</em> mudou (de vez? por horário? aos poucos?) e <em>dos dois lados ou de um só</em>. Três perguntas separam a visita técnica certeira da troca de peças por adivinhação.</p>
+</div>
+</div>
+<p>O interrogatório remoto, em ordem:</p>
+<ol type="1">
+<li><strong>Sinal mudou?</strong> Compare com a leitura de aceite da instalação (você guardou, certo? O Volume 13 automatiza esse histórico);</li>
+<li><strong>Simétrico?</strong> <code>signal-strength</code> ≈ <code>tx-signal-strength</code>? Assimetria forte = problema de <strong>um</strong> lado (potência, cabo, LNA queimado);</li>
+<li><strong>SNR acompanhou o sinal?</strong> Sinal igual + SNR pior = ruído novo = interferência; sinal e SNR caindo juntos = enlace (alinhamento ou obstrução);</li>
+<li><strong>Padrão no tempo?</strong> Por horário = interferência (ou saturação de tráfego — confira antes!); pós-tempestade = mecânico; progressivo = vegetação;</li>
+<li>Só então: <code>frequency-usage</code>/<code>scan</code> em janela de manutenção, e visita com a <a href="#fig-lobulos-alinhamento" class="quarto-xref">Figura&nbsp;<span>31.1</span></a> na cabeça.</li>
+</ol>
+</section>
+<section id="laboratório" class="level2" data-number="31.4">
+<h2 data-number="31.4" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">31.4</span> 🧪 Laboratório</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Ambiente
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Este é um <strong>laboratório de diagnóstico</strong>: sem rádio no CHR, o exercício é ler cenários reais e apontar o vilão — exatamente a habilidade que o plantão exige. Com hardware físico (qualquer par wireless dos capítulos anteriores), reproduza os passos 1–2 de verdade; os passos 3–5 são casos clínicos em texto. Topologia de referência: <a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>.</p>
+</div>
+</div>
+<section id="comandos-passo-a-passo" class="level3" data-number="31.4.1">
+<h3 data-number="31.4.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">31.4.1</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — (bancada) monte o “alinhamento de mesa”.</strong> Com o enlace do <a href="02-wireless-routeros.html" class="quarto-xref"><span>Capítulo 28</span></a> ativo, rode na estação:</p>
+<pre class="routeros"><code>/interface wireless registration-table print interval=1</code></pre>
+<p>Gire lentamente a antena (ou o roteador) e observe o sinal responder a cada segundo. Procure de propósito um “falso pico”: posições diferentes com sinal parecido — a versão de mesa dos lóbulos laterais.</p>
+<p><strong>Passo 2 — (bancada) meça o ambiente.</strong></p>
+<pre class="routeros"><code>/interface wireless frequency-usage wlan1 duration=30s
+/interface wireless scan wlan1 duration=20s</code></pre>
+<p>Anote as frequências mais ocupadas da sua vizinhança e confira com o <code>scan</code> quem são os ocupantes. Note que o enlace <strong>caiu</strong> durante as varreduras — a lição do callout-warning em carne própria.</p>
+<p><strong>Passo 3 — caso clínico A.</strong> Enlace PtP de 8 km, funcionava com -59/-60 dBm. Após um temporal: -78 dBm/-79 dBm, SNR de 20 dB, piso de ruído inalterado (-110 dBm), CCQ 61%. Aponte o vilão e o plano.</p>
+<p><strong>Passo 4 — caso clínico B.</strong> CPE rural: sinal -62 dBm estável o dia todo, mas das 19h às 23h o SNR cai de 34 dB para 14 dB e o CCQ para 55%. <code>frequency-usage</code> (madrugada, em manutenção) mostra 5500 com 8%; às 20h, 71%. Vilão e plano.</p>
+<p><strong>Passo 5 — caso clínico C.</strong> PtP: <code>signal-strength=-58dBm</code>, <code>tx-signal-strength=-81dBm</code>. Chove, os dois pioram 10 dB e o lado fraco derruba o enlace. Vilão e plano.</p>
+</section>
+<section id="verificação" class="level3" data-number="31.4.2">
+<h3 data-number="31.4.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">31.4.2</span> Verificação</h3>
+<ol type="1">
+<li>No Passo 1 você encontrou pelo menos um falso pico e o pico real — e o pico real permaneceu após apertar/soltar o suporte;</li>
+<li>No Passo 2 o enlace caiu durante o <code>scan</code> (confirme pelo <code>uptime</code> zerado na registration table) — você <strong>viu</strong> o custo da ferramenta;</li>
+<li>Nos casos A–C, você apontou o vilão citando a linha correspondente da <a href="#tbl-assinaturas" class="quarto-xref">Tabela&nbsp;<span>31.2</span></a> — antes de ler as soluções.</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="31.4.3">
+<h3 data-number="31.4.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">31.4.3</span> Desafios</h3>
+<ol type="1">
+<li>Resolva os casos clínicos A, B e C (Passos 3–5) por escrito: vilão, evidência que o denuncia e plano de ação em ordem.</li>
+<li>Um instalador alinhou um LHG e reportou -67 dBm “aprovado”. Dez minutos de varredura teriam achado -55 dBm. Usando a <a href="#fig-lobulos-alinhamento" class="quarto-xref">Figura&nbsp;<span>31.1</span></a>, explique o que provavelmente aconteceu e escreva a instrução de UMA frase que você colocaria no procedimento de instalação para impedir isso.</li>
+<li>Por que a política de aceite exige <strong>simetria</strong> entre <code>signal-strength</code> e <code>tx-signal-strength</code>, e não apenas um bom valor de recepção? Dê um defeito concreto que só a assimetria revela.</li>
+<li>Seu setor está na frequência 5580 — a mesma que o <code>scan</code> mostrou ocupada por <code>outro-provedor</code> com sinal -66 dBm. Antes de migrar de frequência, que conversa (humana) pode resolver melhor que qualquer comando? O que propor?</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> <strong>Caso A</strong>: queda simétrica e abrupta pós-temporal, ruído inalterado — assinatura de <strong>desalinhamento mecânico</strong> (vento girou uma antena). Plano: visita ao lado com suporte mais suspeito, realinhar pelo método completo, apertar e re-medir. <strong>Caso B</strong>: sinal estável, SNR desabando por horário, frequência 67%+ ocupada no pico — <strong>interferência</strong> de um transmissor ativo à noite. Plano: <code>scan</code> para identificar, migrar o setor para frequência limpa (5520) em janela de manutenção, re-testar às 20h. <strong>Caso C</strong>: assimetria de 23 dB é <strong>hardware do lado fraco</strong> — o transmissor de um lado (ou a recepção do outro) está comprometido: conector mal crimpado, pigtail, umidade; chuva piorando aponta infiltração. Plano: inspecionar conectores/vedação do lado que transmite fraco, trocar cabo/rádio em bancada, e só realinhar depois de sanar o hardware.</p>
+<p><strong>2.</strong> Ele parou no primeiro pico — um lóbulo lateral ~12 dB abaixo do principal (exatamente o ponto vermelho da figura). Instrução de uma frase: “Varra o arco completo de azimute e elevação anotando o melhor valor e retorne a ele; só aceite a instalação se nenhuma outra posição do arco superar a leitura final.”</p>
+<p><strong>3.</strong> Recepção boa prova só metade do enlace: <code>signal-strength</code> é o que <strong>eu ouço</strong>; <code>tx-signal-strength</code> é o que <strong>o outro lado me ouve</strong>. Um amplificador de transmissão degradado, um conector ruim no caminho de TX ou potências mal configuradas produzem exatamente rx ótimo + tx péssimo — download bom, upload péssimo (o cenário do desafio 2 do <a href="02-wireless-routeros.html" class="quarto-xref"><span>Capítulo 28</span></a>). Só a comparação dos dois lados pega defeitos unidirecionais.</p>
+<p><strong>4.</strong> Coordenação de espectro entre provedores: vocês dois perdem com a sobreposição (o TDMA de cada um enxerga o outro como ruído). Propor divisão do espectro local — cada um com suas frequências fixas documentadas, potência mínima necessária e, idealmente, um canal de contato para mudanças futuras. Uma planilha compartilhada de frequências por torre resolve o que meses de “guerra de potência” só pioram — subir potência contra interferência eleva o piso de ruído de todos (<a href="01-fundamentos-radio-regulamentacao.html" class="quarto-xref"><span>Capítulo 27</span></a>).</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="31.5">
+<h2 data-number="31.5" class="anchored" data-anchor-id="resumo"><span class="header-section-number">31.5</span> Resumo</h2>
+<ul>
+<li>Alinhamento é <strong>método</strong>: apontar no grosso, varrer o arco inteiro eixo a eixo, desconfiar de picos precoces (lóbulos laterais, <a href="#fig-lobulos-alinhamento" class="quarto-xref">Figura&nbsp;<span>31.1</span></a>), apertar e re-conferir, validar pelos cinco indicadores;</li>
+<li>Instrumentos: <code>align</code>/beep e <code>registration-table print interval=1</code> para alinhar; <code>scan</code>, <code>frequency-usage</code> e <code>snooper</code> para investigar o espectro — <strong>os três interrompem o serviço</strong>;</li>
+<li>Cada vilão tem assinatura (<a href="#tbl-assinaturas" class="quarto-xref">Tabela&nbsp;<span>31.2</span></a>): desalinhamento (queda abrupta simétrica, ruído normal), interferência (SNR cai com sinal estável, padrão por horário), Fresnel (degradação lenta e progressiva), hardware (assimetria e comportamento errático);</li>
+<li>Interrogatório remoto antes da visita: o que mudou, quando mudou, de que lado — e leitura de aceite arquivada vale ouro (o Volume 13 automatiza esse histórico).</li>
+</ul>
+<p>Com enlaces montados, protegidos e alinhados, falta o último capítulo do volume: o WiFi <strong>dentro</strong> da casa do cliente, com CAPsMAN e o pacote <code>wifi</code> moderno (<a href="06-capsman-wifi-moderno.html" class="quarto-xref"><span>Capítulo 32</span></a>).</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<ul>
+<li>Documentação oficial: seções <em>Wireless — Scan, Frequency Usage, Snooper, Align</em> <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
+<li>Propagação e antenas (lóbulos, diagrama de radiação): <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
+<li>Wireless no RouterOS v7: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
+<li>Operação de campo com MikroTik: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
+</ul>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-burgess-mikrotik" class="csl-entry" role="listitem">
+BURGESS, Dennis. <strong>Learn RouterOS</strong>. 2. ed. Raleigh: Lulu Press, 2011.
+</div>
+<div id="ref-discher-rosv7" class="csl-entry" role="listitem">
+DISCHER, Stephen R. W. <strong>RouterOS by Example</strong>. 2. ed. College Station: ISP Services, Inc., 2016.
+</div>
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+<div id="ref-tanenbaum-redes" class="csl-entry" role="listitem">
+TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Computadores</strong>. 6. ed. Porto Alegre: Bookman, 2021.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../volumes/v05-wireless/04-ptmp-rural.html" class="pagination-link" aria-label="PtMP rural: a torre que atende dezenas de clientes">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">PtMP rural: a torre que atende dezenas de clientes</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v05-wireless/06-capsman-wifi-moderno.html" class="pagination-link" aria-label="CAPsMAN e o WiFi moderno">
+        <span class="nav-page-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">CAPsMAN e o WiFi moderno</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v05-wireless/05-alinhamento-troubleshooting.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
