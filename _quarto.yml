@@ -137,7 +137,13 @@ book:
         - volumes/v14-alta-disponibilidade/03-ecmp-pcc.qmd
         - volumes/v14-alta-disponibilidade/04-failover-multilink.qmd
 
-    # (Volume 15: ver ROADMAP.md; adicionar o bloco part: aqui ao chegar.)
+    - part: "Volume 15 — Operação de ISP de ponta a ponta"
+      chapters:
+        - volumes/v15-operacao-isp/01-desenho-rede-provedor.qmd
+        - volumes/v15-operacao-isp/02-fibra-olt-bng.qmd
+        - volumes/v15-operacao-isp/03-radio-topologia-rural.qmd
+        - volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.qmd
+        - volumes/v15-operacao-isp/05-estudo-de-caso-integrador.qmd
 
   appendices:
     - referencias.qmd
