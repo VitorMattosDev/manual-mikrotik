@@ -2975,6 +2975,919 @@
     ]
   },
   {
+    "objectID": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html",
+    "href": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html",
+    "title": "37  Fundamentos de QoS e simple queues",
+    "section": "",
+    "text": "37.1 O que uma fila realmente faz\nO Volume 6 terminou com cada assinante dentro de uma fila dinâmica criada pelo profile PPPoE — e prometeu explicar o que essa fila realmente faz. Este volume paga a promessa. QoS (Quality of Service) é o conjunto de técnicas para decidir, quando não há banda para todos, quem espera e quem passa — e no provedor isso aparece em dois papéis: entregar o plano vendido (limitar) e proteger o que é sensível (priorizar). Começamos pelo instrumento fundamental: a fila.\nTodo enlace tem uma capacidade. Quando chegam mais pacotes do que o enlace escoa, só existem três destinos possíveis para o excedente:\nLimitar banda a 50 Mbps é, portanto, criar um gargalo artificial administrado: uma fila que escoa a 50 Mbps, segura rajadas curtas no buffer e descarta o excesso persistente para o TCP do cliente entender o recado. QoS não cria banda — organiza a escassez.\nDuas consequências práticas que valem o capítulo:\nQoS só funciona no sentido de saída. Uma interface controla o que transmite; o que chega já atravessou o enlace — descartar depois de receber não desafoga nada. Por isso a fila do plano atua no tráfego saindo em direção ao cliente (download dele) e saindo pela WAN (upload dele).\nQoS só funciona antes do gargalo real. Se o seu limite é 100 Mbps mas o enlace de rádio à frente entrega 40, quem decide quem espera é a fila do rádio (que você não controla), não a sua. A fila administrada precisa ser o gargalo mais estreito do caminho — nem que seja por 1 Mbps.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>37</span>  <span class='chapter-title'>Fundamentos de QoS e simple queues</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#o-que-uma-fila-realmente-faz",
+    "href": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#o-que-uma-fila-realmente-faz",
+    "title": "37  Fundamentos de QoS e simple queues",
+    "section": "",
+    "text": "Esperar numa fila (ganha latência);\nSer descartado (o TCP do remetente percebe e desacelera — é assim que a internet se autorregula);\nNão existe terceira opção. “Guardar para sempre” é só a espera com outro nome — e memória finita.\n\n\n\n\n\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nA fila de QoS é a eclusa de um canal: o rio inteiro não passa de uma vez, e o eclusceiro decide quanto passa por hora (max-limit), quantos barcos aguardam no reservatório (buffer) e o que fazer quando o reservatório enche — recusar barcos (descarte), sinalizando rio acima que parem de mandar (o TCP desacelerando). Construir a eclusa depois da corredeira não organiza nada: quem ordenou a passagem foi a corredeira. A eclusa tem que ser o ponto mais estreito.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>37</span>  <span class='chapter-title'>Fundamentos de QoS e simple queues</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#simple-queue-o-canivete-suíço",
+    "href": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#simple-queue-o-canivete-suíço",
+    "title": "37  Fundamentos de QoS e simple queues",
+    "section": "37.2 Simple queue: o canivete suíço",
+    "text": "37.2 Simple queue: o canivete suíço\nA simple queue é a forma mais direta de QoS no RouterOS: uma regra que casa tráfego por endereço e impõe limites nos dois sentidos:\n/queue simple\nadd name=cliente-padaria target=192.168.10.0/24 max-limit=100M/100M \\\n    comment=\"LAN da padaria: 100M down / 100M up\"\nOs campos que definem tudo:\n\ntarget — quem: o IP, sub-rede ou interface cujo tráfego a fila governa. É o referencial da fila: com target, o RouterOS sabe qual sentido é “download” (indo para o target) e qual é “upload” (vindo do target);\nmax-limit=down/up — o teto de cada sentido, na perspectiva do target (primeiro valor = o que o target baixa). Compare com o rate-limit do profile PPPoE (Capítulo 34) — é o mesmo padrão;\nqueue=default/default — o tipo de fila de cada sentido (o algoritmo interno: fifo, sfq, pcq… — os tipos são assunto do Capítulo 40).\n\nA fila dinâmica que o PPPoE cria é exatamente isto: uma simple queue com target = IP da sessão e max-limit = rate-limit do profile. Você já operava simple queues sem saber.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>37</span>  <span class='chapter-title'>Fundamentos de QoS e simple queues</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#a-ordem-importa-muito",
+    "href": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#a-ordem-importa-muito",
+    "title": "37  Fundamentos de QoS e simple queues",
+    "section": "37.3 A ordem importa (muito)",
+    "text": "37.3 A ordem importa (muito)\nSimple queues são avaliadas em ordem, de cima para baixo, e o pacote entra na primeira fila cujo target o abranja — as demais nem o veem. O erro clássico:\n/queue simple\nadd name=toda-a-lan target=192.168.88.0/24 max-limit=50M/50M\nadd name=servidor-vip target=192.168.88.10/32 max-limit=100M/100M\nO servidor-vip nunca funciona: 192.168.88.10 está contido em 192.168.88.0/24, a fila de cima captura o pacote primeiro e o servidor navega a 50M. A regra de projeto é a mesma do firewall (Capítulo 16): específico em cima, genérico embaixo — e print + move para auditar:\n/queue simple print\n/queue simple move [find name=servidor-vip] destination=0\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nO pacote entra na primeira simple queue cujo target o abrange. Fila genérica acima da específica torna a específica letra morta — a mesma lógica de ordem do firewall.\n\n\nFigura 37.1",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>37</span>  <span class='chapter-title'>Fundamentos de QoS e simple queues</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#lendo-uma-fila-como-um-instrumento",
+    "href": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#lendo-uma-fila-como-um-instrumento",
+    "title": "37  Fundamentos de QoS e simple queues",
+    "section": "37.4 Lendo uma fila como um instrumento",
+    "text": "37.4 Lendo uma fila como um instrumento\nUma fila conta a história do enlace em três números (/queue simple print stats):\n\n\n\nTabela 37.1: Os três instrumentos de uma fila\n\n\n\n\n\n\n\n\n\n\nIndicador\nO que significa\nLeitura operacional\n\n\n\n\nrate\nvazão instantânea (down/up)\nencostado no max-limit = fila saturada\n\n\nqueued-bytes/packets\nquanto espera no buffer agora\ncronicamente alto = latência alta para o cliente\n\n\ndropped\ndescartes acumulados\ncrescendo sob saturação = TCP sendo domado (esperado)\n\n\n\n\n\n\nA tríade diagnóstica: rate colado no teto + queued-bytes alto + dropped subindo = o cliente usa tudo que comprou (e talvez seja hora de lhe oferecer upgrade — dado comercial saído de /queue). Já rate baixo com reclamação de lentidão = o problema não é a fila: volte ao troubleshooting de enlace (Capítulo 31) ou ao concentrador (Capítulo 36).\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nLimitar banda é administrar filas e descartes — e só funciona no gargalo, no sentido de saída. Toda técnica deste volume (burst, priorização, PCQ) é variação sobre esse tema: decidir quais pacotes esperam, quais passam e quais morrem, num ponto onde essa decisão ainda importa. Quem entende a fila como instrumento — rate, queued-bytes, dropped — para de “achar” que o cliente usa o plano e passa a saber.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>37</span>  <span class='chapter-title'>Fundamentos de QoS e simple queues</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#laboratório",
+    "href": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#laboratório",
+    "title": "37  Fundamentos de QoS e simple queues",
+    "section": "37.5 🧪 Laboratório",
+    "text": "37.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nDois CHRs bastam: lab-r1 e lab-r2 pela rede lab-a (Capítulo 5), com conectividade IP simples (ex.: 172.16.1.1 e 172.16.1.2/24 — sem PPPoE desta vez: queremos as filas em primeiro plano). O gerador de tráfego é o bandwidth-test do Capítulo 29 — no lab-r1, habilite o servidor: /tool bandwidth-server set enabled=yes.\n\n\n\n37.5.1 Comandos passo a passo\nPasso 1 — meça o “sem QoS”. Do lab-r2 contra o lab-r1:\n/tool bandwidth-test address=172.16.1.1 protocol=udp direction=receive \\\n    user=vitor password=Lab!Segura2026 duration=15s\nAnote a taxa — é a capacidade bruta da rede virtual (centenas de Mbps num host razoável). Sem gargalo administrado não há QoS: só a abundância.\nPasso 2 — crie o gargalo. No lab-r1, uma simple queue governando o lab-r2:\n/queue simple add name=cliente-r2 target=172.16.1.2/32 max-limit=20M/10M\nRepita o teste do Passo 1: a taxa despenca para ~20M (direction=receive = download do ponto de vista do lab-r2). Rode com direction=transmit e confirme os 10M do upload. A ordem down/up do max-limit, sempre na perspectiva do target.\nPasso 3 — assista à fila trabalhar. Durante um teste de 60 s, no lab-r1:\n/queue simple print stats interval=1\n 0 name=\"cliente-r2\" target=172.16.1.2/32 rate=19.8Mbps/56kbps\n   queued-bytes=48.1KiB/0 dropped=1284/0\nA tríade completa: rate no teto, bytes esperando, descartes crescendo — a fila é o gargalo, exatamente como projetado.\nPasso 4 — prove que a ordem importa. Adicione uma fila genérica acima da específica:\n/queue simple add name=rede-toda target=172.16.1.0/24 max-limit=5M/5M \\\n    place-before=0\nTeste de novo: 5M — a fila cliente-r2 de 20M virou letra morta (confira: rate=0 nela, tudo contando na rede-toda). Agora corrija sem apagar nada:\n/queue simple move [find name=cliente-r2] destination=0\nTeste: 20M de volta. print stats mostra a específica trabalhando e a genérica pegando só o que sobrar (outros IPs da sub-rede).\nPasso 5 — limpeza consciente. Remova a rede-toda e deixe só a cliente-r2 — o próximo capítulo constrói sobre ela:\n/queue simple remove [find name=rede-toda]\n\n\n37.5.2 Verificação\n\nSem fila: taxa livre; com fila: rate cravado no max-limit — nos dois sentidos, cada um com seu teto;\nDurante saturação, queued-bytes &gt; 0 e dropped crescendo — e ambos esvaziam quando o teste para;\nCom a genérica acima, a específica marcou rate=0 (inalcançável); após o move, voltou a trabalhar;\nVocê sabe dizer, sem testar, em qual fila cairia um segundo IP (172.16.1.3) em cada um dos dois arranjos do Passo 4.\n\n\n\n37.5.3 Desafios\n\nUm colega criou target=172.16.1.0/24 max-limit=100M/100M “para a rede toda” e reclama que “o QoS não funciona: um cliente sozinho ocupa 95M e os outros ficam sem”. A fila faz exatamente o que foi pedido. Explique a diferença entre limitar o agregado e repartir por cliente — e qual capítulo deste volume resolve.\nO download de um assinante obedece ao plano, mas o upload fica acima do contratado. A fila dele foi criada num roteador atrás do concentrador, por onde só o tráfego de download passa. Por que o upload não obedece, e onde a fila deveria morar?\nUm cliente de 300 Mbps reclama de “internet travando” em jogos, mas os speedtests dão 300 cravados. print stats na fila: rate=298M, queued-bytes=2.1MiB constante, dropped alto. Converta os 2.1 MiB parados em milissegundos de espera a 300 Mbps e explique por que o speedtest não vê o problema. (Palavra-chave: bufferbloat.)\nNo lab, com a cliente-r2 em 20M e um teste partindo do próprio lab-r2, a fila funcionou. Se o teste partisse de um terceiro roteador (172.16.1.3) contra o lab-r1, o que a cliente-r2 registraria — e por quê?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. max-limit num target de sub-rede cria um balde de 100M que todos dividem por disputa — o TCP mais agressivo (mais conexões paralelas) leva mais. Limitar agregado protege o enlace, não os vizinhos entre si. Repartir por cliente exigiria uma fila por IP — inviável à mão para centenas — ou o PCQ (Capítulo 40), que cria sub-filas dinâmicas por endereço dentro de uma única fila.\n2. Um roteador só enfileira o que passa por ele. No caminho do download ele é o gargalo administrado; o upload do cliente sobe pelo concentrador direto à WAN sem atravessá-lo — a fila nunca vê esses pacotes. Filas de plano moram onde os dois sentidos passam: no concentrador (por isso a fila dinâmica do PPPoE vive lá, Capítulo 34).\n3. 2,1 MiB ≈ 17,6 Mbit; a 300 Mbps, ~59 ms de espera permanente — cada pacote do jogo atravessa essa fila cheia: bufferbloat. O speedtest mede vazão (perfeita: a fila escoa 300M), não latência sob carga. O buffer generoso segura bytes em vez de descartar cedo; o TCP não desacelera e a latência mora alta. Caminhos: buffer menor ou tipos de fila que gerenciam atraso — a conversa de tipos do Capítulo 40.\n4. rate=0: o target 172.16.1.2/32 não abrange 172.16.1.3 — o tráfego do terceiro roteador não casa com a fila e passa sem limite algum (não existe mais a genérica). A lição operacional: fila específica sem uma genérica embaixo = todo IP fora da lista navega livre. No concentrador PPPoE isso não ocorre porque cada sessão ganha sua fila dinâmica — mais um ponto para o modelo do Volume 6.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>37</span>  <span class='chapter-title'>Fundamentos de QoS e simple queues</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#resumo",
+    "href": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#resumo",
+    "title": "37  Fundamentos de QoS e simple queues",
+    "section": "37.6 Resumo",
+    "text": "37.6 Resumo\n\nFila = espera + descarte administrados; limitar banda é criar um gargalo proposital onde o TCP sente o teto. QoS não cria banda — organiza a escassez;\nSó funciona no sentido de saída e antes do gargalo real — e precisa morar onde os dois sentidos do tráfego passam;\nSimple queue: target (quem, e o referencial down/up), max-limit=down/up, avaliação em ordem (primeira-que-casa) — específico acima do genérico, como no firewall;\nA fila dinâmica do PPPoE (Capítulo 34) é uma simple queue criada pelo profile — você já as opera em produção;\nInstrumentação: rate (uso real), queued-bytes (latência embutida), dropped (TCP sendo regulado) — leitura antes de opinião.\n\nO plano de velocidade de verdade tem mais que um teto: tem rajada inicial, garantia mínima e desenho comercial. É o próximo capítulo (Capítulo 38).",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>37</span>  <span class='chapter-title'>Fundamentos de QoS e simple queues</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#bibliografia-do-capítulo",
+    "href": "volumes/v07-qos/01-fundamentos-qos-simple-queues.html#bibliografia-do-capítulo",
+    "title": "37  Fundamentos de QoS e simple queues",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção Queues (MikroTik, 2026);\nFilas, TCP e controle de congestionamento: (Tanenbaum; Feamster; Wetherall, 2021);\nRouterOS v7 na prática: (Discher, 2016);\nQoS em provedores MikroTik: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>37</span>  <span class='chapter-title'>Fundamentos de QoS e simple queues</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/02-burst-planos-velocidade.html",
+    "href": "volumes/v07-qos/02-burst-planos-velocidade.html",
+    "title": "38  Burst e planos de velocidade",
+    "section": "",
+    "text": "38.1 Burst: velocidade emprestada por tempo limitado\nO Capítulo 37 entregou o teto: max-limit e pronto. Mas o plano que o comercial vende raramente é só um teto — é “até 80 Mega com turbo de início”, “garantido 20 no horário de pico”. Esses adereços têm nome técnico e ficam na própria fila: burst (a rajada) e limit-at (a garantia). Este capítulo transforma a fila do capítulo anterior num produto comercial.\nA ideia: navegação típica é feita de rajadas curtas — abrir uma página, baixar um e-mail — separadas por silêncio. Se o cliente de 50M pudesse ir a 80M só nos primeiros segundos, as páginas abririam visivelmente mais rápido sem custar capacidade no agregado (ninguém sustenta 80M por rajada de 3 s). O burst formaliza o empréstimo:\nO mecanismo, passo a passo: cliente ocioso → média recente ≈ 0 &lt; threshold → burst armado. Começa um download → o cliente voa a 80M → a média da janela sobe… ao cruzar 40M, o burst desarma e a fila cai para o max-limit de 50M. Parou de baixar → a média escorre para baixo do threshold → burst re-armado para a próxima página.\nQuanto dura a rajada? Não é burst-time! A 80M com janela de 16 s e gatilho de 40M, a média cruza o gatilho quando:\n\\[\nt = \\frac{\\text{burst-threshold}}{\\text{burst-limit}} \\times \\text{burst-time}\n  = \\frac{40}{80} \\times 16 = 8\\ \\text{segundos}\n\\]\nReceita de projeto que funciona: burst-limit ≈ 1,5–2× o max-limit; burst-threshold ≈ 50–75% do max-limit (sempre abaixo dele, senão o burst re-arma no meio do uso contínuo!); burst-time de 8–32 s lembrando que a duração real é a fração do gatilho. E honestidade comercial: burst é “turbo de abertura de página”, não banda vendável — anuncie o max-limit.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>38</span>  <span class='chapter-title'>Burst e planos de velocidade</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/02-burst-planos-velocidade.html#burst-velocidade-emprestada-por-tempo-limitado",
+    "href": "volumes/v07-qos/02-burst-planos-velocidade.html#burst-velocidade-emprestada-por-tempo-limitado",
+    "title": "38  Burst e planos de velocidade",
+    "section": "",
+    "text": "/queue simple\nadd name=cliente-r2 target=172.16.1.2/32 max-limit=50M/25M \\\n    burst-limit=80M/40M burst-threshold=40M/20M burst-time=16s/16s\n\nburst-limit — o teto emprestado (80M): vale enquanto o burst está ativo;\nburst-threshold — o gatilho (40M): o burst fica disponível enquanto o uso médio recente estiver abaixo dele;\nburst-time — a janela da média (16 s): o RouterOS calcula a taxa média dos últimos burst-time segundos; é essa média que se compara ao threshold.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBurst em ação: a taxa real (azul) voa a 80M enquanto a média móvel dos últimos 16 s (vermelha tracejada) fica abaixo do gatilho de 40M — o cruzamento acontece em \\(t = (40/80)\\times 16 = 8\\) s, e a fila assenta no max-limit.\n\n\nFigura 38.1",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>38</span>  <span class='chapter-title'>Burst e planos de velocidade</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/02-burst-planos-velocidade.html#limit-at-a-garantia-cir",
+    "href": "volumes/v07-qos/02-burst-planos-velocidade.html#limit-at-a-garantia-cir",
+    "title": "38  Burst e planos de velocidade",
+    "section": "38.2 limit-at: a garantia (CIR)",
+    "text": "38.2 limit-at: a garantia (CIR)\nO max-limit é o MIR (Maximum Information Rate) — teto. O limit-at é o CIR (Committed Information Rate) — o piso garantido: a banda que a fila recebe mesmo com o enlace disputado. A pergunta imediata: garantido contra quem? Contra as outras filas — e isso só faz sentido quando todas disputam um teto comum. Entra o parent:\n/queue simple\nadd name=agregado-pop target=172.16.1.0/24 max-limit=90M/90M \\\n    comment=\"teto fisico do enlace do POP\"\nadd name=cliente-a parent=agregado-pop target=172.16.1.2/32 \\\n    limit-at=20M/10M max-limit=50M/25M\nadd name=cliente-b parent=agregado-pop target=172.16.1.3/32 \\\n    limit-at=20M/10M max-limit=50M/25M\nA fila-pai representa o enlace real (os 90M do rádio, do transporte); as filhas, os clientes. O algoritmo de partilha (HTB, o motor por trás de todas as filas do RouterOS) então promete:\n\nCada filha recebe até o limit-at antes de qualquer filha ganhar excedente — a garantia;\nO que sobrar do pai é distribuído entre as filhas que querem mais, até seus max-limit (e nunca além do pai);\nSoma dos limit-at ≤ max-limit do pai: garantia que não cabe no enlace é promessa de político.\n\nÉ assim que se faz overbooking honesto: num enlace de 90M, dez clientes de max-limit=50M cabem — desde que a soma dos limit-at (10 × 5M = 50M, por exemplo) caiba no pai. Todos têm teto alto para rajadas e piso garantido para o pico.\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nO plano de velocidade é um buffet de churrascaria: o max-limit é “coma à vontade” (teto físico do prato), o limit-at é a reserva — seu lugar à mesa com um mínimo de picanha guardado mesmo no salão cheio; e o burst é o garçom liberando a primeira rodada em dobro para quem acabou de sentar — sabendo que ninguém janta no ritmo da primeira rodada. O salão (fila-pai) tem capacidade fixa: o dono pode vender mais “à vontade” do que picanha existe, mas as reservas somadas nunca podem passar do estoque.\n\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nUm plano de velocidade completo é um contrato em três números: max-limit (o que anuncio), limit-at (o que garanto no pico) e burst (a cortesia de abertura). E o contrato só é honesto dentro de uma hierarquia: a fila-pai encarna o enlace físico, e a regra ∑limit-at ≤ pai é a diferença matemática entre overbooking sustentável e venda de banda fantasma. Quem projeta planos sem fila-pai está prometendo garantias que nenhum algoritmo consegue cumprir.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>38</span>  <span class='chapter-title'>Burst e planos de velocidade</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/02-burst-planos-velocidade.html#levando-para-o-pppoe",
+    "href": "volumes/v07-qos/02-burst-planos-velocidade.html#levando-para-o-pppoe",
+    "title": "38  Burst e planos de velocidade",
+    "section": "38.3 Levando para o PPPoE",
+    "text": "38.3 Levando para o PPPoE\nNo concentrador (Capítulo 34), tudo isso viaja no rate-limit do profile, cuja sintaxe completa é:\nrate-limit=\"tx/rx burst-tx/burst-rx threshold-tx/threshold-rx time-tx/time-rx prioridade limit-at-tx/limit-at-rx\"\n(perspectiva do concentrador: tx = download do cliente). O plano 50M com turbo e garantia de 20M:\n/ppp profile set plano-50m \\\n    rate-limit=\"50M/25M 80M/40M 40M/20M 16s/16s 8 20M/10M\"\nCada sessão nasce com a fila dinâmica completa — burst, garantia e tudo. Via RADIUS (Capítulo 35), a mesma string viaja no atributo Mikrotik-Rate-Limit: o sistema de gestão descreve o plano inteiro numa linha.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>38</span>  <span class='chapter-title'>Burst e planos de velocidade</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/02-burst-planos-velocidade.html#laboratório",
+    "href": "volumes/v07-qos/02-burst-planos-velocidade.html#laboratório",
+    "title": "38  Burst e planos de velocidade",
+    "section": "38.4 🧪 Laboratório",
+    "text": "38.4 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nO mesmo do capítulo anterior (Capítulo 37): lab-r1 + lab-r2 na lab-a, bandwidth-server habilitado no lab-r1 e a fila cliente-r2 (20M/10M) ainda de pé. Um terceiro CHR (lab-r3) na mesma rede (172.16.1.3) entra no Passo 4 para a disputa de garantias.\n\n\n\n38.4.1 Comandos passo a passo\nPasso 1 — adicione o burst à fila existente. No lab-r1:\n/queue simple set cliente-r2 burst-limit=40M/20M \\\n    burst-threshold=15M/7M burst-time=16s/16s\nConta antes de medir: gatilho 15M, rajada 40M, janela 16 s → duração esperada \\(\\approx (15/40)\\times 16 = 6\\) s.\nPasso 2 — veja a rajada. No lab-r2, um teste de 30 s (direction=receive), acompanhando no lab-r1:\n/queue simple print stats interval=1\nOs primeiros ~6 s marcam rate ≈ 40M; depois, queda seca para 20M — a Figura 38.1 ao vivo. Espere ~20 s de silêncio (a média precisa escorrer) e repita: o burst re-armou.\nPasso 3 — burst mal projetado. Suba o gatilho para cima do max-limit (burst-threshold=25M/12M) e rode um teste longo: a taxa oscila — vai a 40M, cai, re-arma no meio do uso contínuo (a média em 20M fica abaixo do gatilho de 25M!), sobe de novo. Serrote. Por isso o gatilho fica abaixo do max-limit. Restaure 15M/7M.\nPasso 4 — hierarquia e garantia. Monte o pai e duas filhas com garantias distintas (lab-r3 já com IP 172.16.1.3 e testes prontos):\n/queue simple remove [find name=cliente-r2]\n/queue simple\nadd name=enlace-pop target=172.16.1.0/24 max-limit=30M/30M\nadd name=cliente-a parent=enlace-pop target=172.16.1.2/32 \\\n    limit-at=20M/5M max-limit=30M/10M\nadd name=cliente-b parent=enlace-pop target=172.16.1.3/32 \\\n    limit-at=5M/5M max-limit=30M/10M\nPasso 5 — a disputa. Rode direction=receive simultaneamente no lab-r2 e no lab-r3 (duas janelas). Com 30M no pai e demandas de 30M cada: cliente-a estabiliza ≈ 22–24M, cliente-b ≈ 6–8M — cada um recebeu seu limit-at primeiro (20M vs 5M) e a sobra (~5M) foi repartida. Pare o teste do lab-r2: o lab-r3 sobe na hora para os 30M do teto — a garantia limita a disputa, não a fartura.\n\n\n38.4.2 Verificação\n\nA duração medida da rajada bate com a conta threshold/limit × time (±1 s);\nCom gatilho acima do max-limit, você viu o “serrote” de re-arme em uso contínuo;\nNa disputa, cada filha recebeu ≥ seu limit-at, a soma respeitou o pai, e a folga foi realocada quando um parou;\nVocê sabe escrever o plano completo do Passo 4 como string rate-limit de profile PPPoE.\n\n\n\n38.4.3 Desafios\n\nPlano “100M com turbo de 200M”: o comercial quer que o turbo dure 15 segundos. O max-limit é 100M e você escolheu threshold = 75M. Calcule o burst-time necessário — e aponte o efeito colateral de janelas tão longas no re-arme (quanto tempo de ocioso até o próximo turbo?).\nNum pai de 100M, o júnior configurou 8 filhas com limit-at=20M cada (soma: 160M). Nada “deu erro”. O que acontece de fato no pico quando todas demandam 20M+ — e por que essa falha é pior do que se o RouterOS recusasse a configuração?\nSpeedtests do cliente do plano 50M (com o burst deste capítulo) dão sempre ~77M nos servidores próximos e 50M nos distantes. O suporte acha que “tem servidor mentindo”. Explique com a mecânica do burst (duração da rajada × duração do teste) qual medição reflete o plano.\nO rate-limit de profile aceita um campo de prioridade (o 8 do exemplo). Investigue na documentação/no lab: prioridade de HTB compara o quê com quem, e por que ela só tem efeito entre filas que disputam o mesmo pai?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. \\(t = (\\text{thr}/\\text{limit})\\times\\text{time} \\Rightarrow\n15 = (75/200)\\times\\text{time} \\Rightarrow \\text{time} = 40\\) s. Efeito colateral: a média móvel de 40 s também demora ~40 s de ociosidade (ou proporcionalmente mais de uso leve) para escorrer de volta abaixo de 75M — o cliente que encadeia downloads curtos verá o turbo “sumir” nas repetições. Janela longa = turbo raro e demorado para re-armar; é o preço do turbo longo.\n2. O HTB entrega os limit-at na ordem/proporção possível: com 160M prometidos num pai de 100M, as garantias viram rateio (~12,5M cada em vez de 20M) — nenhuma filha recebe o prometido no pico, exatamente quando a garantia importa. É pior que um erro de configuração porque falha silenciosamente: passa em todo teste fora do pico (onde sobra banda) e quebra o SLA no único momento em que ele vale. A validação ∑limit-at ≤ pai é responsabilidade do projetista.\n3. Rajada deste plano: \\((40/80)\\times16 = 8\\) s a 80M. Speedtest curto (~10–15 s, típico com servidor próximo/rápido): a maior parte da medição acontece dentro da rajada → média ≈ 75–80M. Teste mais longo/lento (servidor distante): a rajada pesa pouco na média → ~50M. O plano vendido é o max-limit: a medição “distante” é a fiel. (E os speedtests conhecidos usam ~15 s — clientes com burst curto veem números acima do plano; explique antes que virem chamado.)\n4. A prioridade (1 = mais alta, 8 = padrão/mais baixa) desempata a distribuição do excedente acima dos limit-at entre filhas do mesmo pai: quem tem prioridade melhor enche seu max-limit primeiro. Entre filas sem pai comum não há recurso disputado a desempatar — cada uma corre contra seu próprio teto — e a prioridade é inócua. (É também por isso que priorizar tipos de tráfego exigirá a queue tree do Capítulo 39, onde a hierarquia é desenhada para isso.)",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>38</span>  <span class='chapter-title'>Burst e planos de velocidade</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/02-burst-planos-velocidade.html#resumo",
+    "href": "volumes/v07-qos/02-burst-planos-velocidade.html#resumo",
+    "title": "38  Burst e planos de velocidade",
+    "section": "38.5 Resumo",
+    "text": "38.5 Resumo\n\nBurst = velocidade emprestada controlada por média móvel: burst-limit (teto emprestado), burst-threshold (gatilho, sempre abaixo do max-limit), burst-time (janela da média); duração real ≈ threshold/limit × time;\nlimit-at (CIR) é o piso garantido; max-limit (MIR) o teto — e a garantia só existe dentro de uma hierarquia com fila-pai encarnando o enlace físico;\nRegra de ouro do overbooking: ∑ limit-at ≤ max-limit do pai — tetos podem somar mais que o enlace; garantias, jamais;\nNo PPPoE, o plano inteiro vira a string rate-limit do profile (\"tx/rx burst threshold time prioridade limit-at\") ou o atributo Mikrotik-Rate-Limit via RADIUS;\nSpeedtest curto mede o burst; teste longo mede o plano — saiba qual número o cliente vai ver antes dele ligar.\n\nFalta a terceira dimensão do QoS: priorizar por tipo de tráfego (VoIP antes de torrent) — mangle marcando e queue tree executando, no próximo capítulo (Capítulo 39).",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>38</span>  <span class='chapter-title'>Burst e planos de velocidade</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/02-burst-planos-velocidade.html#bibliografia-do-capítulo",
+    "href": "volumes/v07-qos/02-burst-planos-velocidade.html#bibliografia-do-capítulo",
+    "title": "38  Burst e planos de velocidade",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seções Queues — Burst e HTB (MikroTik, 2026);\nTraffic shaping, CIR/MIR e HTB: (Tanenbaum; Feamster; Wetherall, 2021);\nRouterOS v7 na prática: (Discher, 2016);\nDesenho de planos em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>38</span>  <span class='chapter-title'>Burst e planos de velocidade</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/03-mangle-queue-tree.html",
+    "href": "volumes/v07-qos/03-mangle-queue-tree.html",
+    "title": "39  Mangle e queue tree: priorizando por tipo de tráfego",
+    "section": "",
+    "text": "39.1 Marcar barato: o padrão connection-mark → packet-mark\nOs capítulos anteriores trataram todos os pacotes de um cliente como iguais: 50M é 50M, seja chamada de voz ou torrent. Mas quando a fila enche, a ordem de saída importa: o pacote de VoIP que espera 60 ms atrás de um torrent vira chiado; o torrent que espera 60 ms não vira nada. Priorizar exige duas ferramentas trabalhando juntas: o mangle (Capítulo 20) para classificar — “este pacote é VoIP” — e a queue tree para executar — “VoIP sai primeiro”.\nO mangle marca pacotes, mas inspecionar cada pacote contra listas de portas/endereços custa CPU — e o concentrador já vive de CPU contada (Capítulo 36). O padrão eficiente usa o connection tracking (Capítulo 15) a favor: classifique a conexão uma vez, e herde a marca em todos os pacotes dela:\nTrês detalhes que separam isso de uma configuração ingênua:",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>39</span>  <span class='chapter-title'>Mangle e queue tree: priorizando por tipo de tráfego</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/03-mangle-queue-tree.html#marcar-barato-o-padrão-connection-mark-packet-mark",
+    "href": "volumes/v07-qos/03-mangle-queue-tree.html#marcar-barato-o-padrão-connection-mark-packet-mark",
+    "title": "39  Mangle e queue tree: priorizando por tipo de tráfego",
+    "section": "",
+    "text": "/ip firewall mangle\n# 1) classificar a CONEXAO (só pacotes novos chegam aqui)\nadd chain=prerouting connection-state=new protocol=udp dst-port=5060,10000-20000 \\\n    action=mark-connection new-connection-mark=conn-voip passthrough=yes \\\n    comment=\"SIP + RTP tipico\"\nadd chain=prerouting connection-state=new protocol=udp dst-port=53 \\\n    action=mark-connection new-connection-mark=conn-interativo passthrough=yes \\\n    comment=\"DNS\"\nadd chain=prerouting connection-state=new protocol=tcp dst-port=80,443 \\\n    connection-bytes=0-2000000 action=mark-connection \\\n    new-connection-mark=conn-navegacao passthrough=yes \\\n    comment=\"web ate 2 MB (paginas)\"\n\n# 2) converter marca de conexao em marca de PACOTE (barato: so le a marca)\nadd chain=prerouting connection-mark=conn-voip action=mark-packet \\\n    new-packet-mark=pkt-voip passthrough=no\nadd chain=prerouting connection-mark=conn-interativo action=mark-packet \\\n    new-packet-mark=pkt-interativo passthrough=no\nadd chain=prerouting connection-mark=conn-navegacao action=mark-packet \\\n    new-packet-mark=pkt-navegacao passthrough=no\nadd chain=prerouting action=mark-packet new-packet-mark=pkt-resto \\\n    passthrough=no comment=\"tudo que nao casou acima\"\n\n\nconnection-state=new nas regras de classificação: só o primeiro pacote da conexão paga a inspeção de portas; os milhões seguintes casam direto pela connection-mark (uma leitura de memória);\npassthrough=yes na marcação de conexão (o pacote continua para as regras seguintes) e passthrough=no na de pacote (marcou, saiu — não desce o resto da lista à toa);\nconnection-bytes=0-2000000 na navegação: os primeiros 2 MB de uma conexão web são “página abrindo” (prioridade); além disso é download grande — a conexão deixa de casar e cai para pkt-resto. Classificação por comportamento, não só por porta.\n\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nO mangle com dois passos é a triagem do pronto-socorro: o enfermeiro avalia o paciente uma vez na chegada e prende a pulseira colorida (connection-mark); dali em diante, ninguém reavalia — todo atendente decide pela cor da pulseira (packet-mark). A queue tree é a sala de espera que chama pela cor: vermelho passa na frente, verde espera. Sem triagem, cada balcão teria que refazer o diagnóstico; sem a chamada por cor, a triagem seria enfeite.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>39</span>  <span class='chapter-title'>Mangle e queue tree: priorizando por tipo de tráfego</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/03-mangle-queue-tree.html#queue-tree-o-htb-exposto",
+    "href": "volumes/v07-qos/03-mangle-queue-tree.html#queue-tree-o-htb-exposto",
+    "title": "39  Mangle e queue tree: priorizando por tipo de tráfego",
+    "section": "39.2 Queue tree: o HTB exposto",
+    "text": "39.2 Queue tree: o HTB exposto\nA queue tree é o motor HTB sem o açúcar da simple queue: você pendura classes numa interface (ou num ponto global) e cada classe casa pacotes pela packet-mark. O que muda em relação à simple queue:\n\n\n\nTabela 39.1: Simple queue × queue tree\n\n\n\n\n\n\n\n\n\n\n\nSimple queue\nQueue tree\n\n\n\n\nCasa tráfego por\ntarget (IP/interface)\npacket-mark (mangle)\n\n\nSentidos\nos dois numa regra\num por árvore (a da interface de saída)\n\n\nHierarquia\nparent opcional\né a essência (HTB puro)\n\n\nPrioridade\nentre filhas do mesmo pai\nidem — e é o motivo de usá-la\n\n\nOrdem de avaliação\nprimeira-que-casa\ntodas as classes-folha que casarem a marca\n\n\n\n\n\n\nA árvore para o sentido download (saindo pela interface dos clientes) do nosso POP:\n/queue tree\nadd name=down-total parent=vlan101-clientes max-limit=90M \\\n    comment=\"teto fisico do enlace de download\"\nadd name=down-voip parent=down-total packet-mark=pkt-voip \\\n    priority=1 limit-at=10M max-limit=20M\nadd name=down-interativo parent=down-total packet-mark=pkt-interativo \\\n    priority=2 limit-at=5M max-limit=20M\nadd name=down-navegacao parent=down-total packet-mark=pkt-navegacao \\\n    priority=4 limit-at=30M max-limit=90M\nadd name=down-resto parent=down-total packet-mark=pkt-resto \\\n    priority=8 limit-at=10M max-limit=90M\nE a espelho para upload (parent=ether1, a WAN — cada sentido tem sua árvore, pendurada na interface por onde sai). A leitura do HTB:\n\nCom folga no down-total, todo mundo flui — prioridade é invisível na abundância;\nSob saturação, cada classe recebe seu limit-at primeiro (garantias, como no Capítulo 38); a sobra é distribuída por ordem de priority (1 = primeiro): VoIP enche até 20M antes de a navegação ver um bit da sobra;\npkt-resto com priority=8 não morre de fome: o limit-at=10M é o seu piso — prioridade decide a sobra, garantia decide o mínimo.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nA árvore de download: a raiz encarna o enlace (90M) e as folhas casam as packet-marks do mangle. Garantia (limit-at) define o mínimo de cada classe; priority define quem fica com a sobra — VoIP primeiro, resto por último.\n\n\nFigura 39.1\n\n\n\n\n39.2.1 Onde pendurar: interface ou global\nparent=&lt;interface&gt; enfileira o que sai por ela — é o normal e o que o hardware agradece. parent=global captura em um ponto único todo tráfego (antes da decisão de interface), útil quando o mesmo tráfego pode sair por várias interfaces — ao custo de enfileirar também o que não precisaria. Regra prática: comece pela interface; vá a global só com motivo (e o Capítulo 40 traz um).\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nPrioridade é quem sofre menos quando falta — não “quem ganha mais banda”. A arquitetura completa tem papéis separados: o mangle classifica (uma vez por conexão, barato), a queue tree executa (garantia + prioridade sob o teto físico), e o plano por assinante continua nas filas do PPPoE — as duas camadas convivem: a simple queue do plano decide quanto cada cliente pode usar; a queue tree do agregado decide o que sai primeiro quando o enlace do POP satura. Priorizar sem classificar é chute; classificar sem hierarquia é enfeite.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>39</span>  <span class='chapter-title'>Mangle e queue tree: priorizando por tipo de tráfego</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/03-mangle-queue-tree.html#laboratório",
+    "href": "volumes/v07-qos/03-mangle-queue-tree.html#laboratório",
+    "title": "39  Mangle e queue tree: priorizando por tipo de tráfego",
+    "section": "39.3 🧪 Laboratório",
+    "text": "39.3 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nlab-r1 (nosso roteador de QoS) entre lab-r2 e lab-r3 (Capítulo 5): lab-r2 na lab-a (172.16.1.2) e lab-r3 na lab-b (ether3 do lab-r1, ex.: 172.16.2.3/24) — assim o tráfego r2↔︎r3 atravessa o lab-r1, que enfileira na interface de saída. bandwidth-server habilitado em r2 e r3. Vamos gerar duas classes de tráfego: UDP “VoIP” (porta destino no range RTP) e TCP “resto”, e ver a prioridade decidir sob saturação.\n\n\n\n39.3.1 Comandos passo a passo\nPasso 1 — mangle no lab-r1. Versão reduzida do padrão de dois passos (só voip e resto):\n/ip firewall mangle\nadd chain=prerouting connection-state=new protocol=udp \\\n    dst-port=10000-20000 action=mark-connection \\\n    new-connection-mark=conn-voip passthrough=yes\nadd chain=prerouting connection-mark=conn-voip action=mark-packet \\\n    new-packet-mark=pkt-voip passthrough=no\nadd chain=prerouting action=mark-packet new-packet-mark=pkt-resto \\\n    passthrough=no\nPasso 2 — a árvore, com gargalo apertado de propósito (10M para a saturação ser fácil), na interface para a lab-b:\n/queue tree\nadd name=down-total parent=ether3 max-limit=10M\nadd name=down-voip parent=down-total packet-mark=pkt-voip \\\n    priority=1 limit-at=2M max-limit=10M\nadd name=down-resto parent=down-total packet-mark=pkt-resto \\\n    priority=8 limit-at=1M max-limit=10M\nPasso 3 — sature com “resto”. Do lab-r3, um teste TCP longo contra o lab-r2 (direction=receive duration=120s) — o download atravessa o lab-r1 e satura os 10M. Confirme no lab-r1:\n/queue tree print stats\ndown-resto com rate≈9.9M, queued-packets alto; down-voip zerada.\nPasso 4 — o VoIP fura a fila. Com o teste TCP ainda rodando, dispare do lab-r3 um segundo teste, agora UDP na faixa marcada (simula o fluxo RTP):\n/tool bandwidth-test address=172.16.1.2 protocol=udp direction=receive \\\n    local-udp-tx-size=200 remote-udp-tx-size=200 \\\n    user=vitor password=Lab!Segura2026\nNo print stats: down-voip sobe na hora (o UDP flui), e down-resto cede exatamente o que o VoIP pediu — a soma cravada nos 10M do pai. Pare o UDP: o resto reocupa em segundos.\nPasso 5 — prove que era a prioridade. Inverta (set down-voip priority=8 e set down-resto priority=1) e repita o Passo 4: agora é o “VoIP” que espera na fila (rate baixo, drops) — o tráfego é o mesmo; a política mudou. Restaure ao final.\n\n\n39.3.2 Verificação\n\n/queue tree print stats mostra os contadores subindo nas classes certas (marcas do mangle funcionando — se tudo cai em pkt-resto, revise portas/ordem das regras);\nSob saturação, a chegada do tráfego prioritário desloca o resto sem estourar o teto do pai;\nCom prioridades invertidas, o comportamento inverte — mesma carga, política oposta;\nqueued-packets alto no resto e baixo no voip durante a disputa — a latência foi para quem aguenta.\n\n\n\n39.3.3 Desafios\n\nAs regras de classificação do Passo 1 usam connection-state=new, mas a regra de mark-packet roda para todo pacote. Um colega propõe “economizar” marcando pacote também só em new. O que quebraria?\nUm provedor marcou VoIP por dst-port=5060 apenas (SIP) e reclama que “a priorização não funciona: as chamadas continuam picotando sob carga”. As chamadas sinalizam mas o áudio pica. O que ele esqueceu de classificar, e por que a chamada “completa” mesmo assim?\nNa árvore do POP (down-total=90M), a classe down-resto tem limit-at=10M. Durante um ataque de download em massa (resto saturado), usuários reclamam que “até o DNS demora”. O down-interativo tem limit-at=5M priority=2. Use a mecânica HTB para explicar por que o DNS não deveria estar sofrendo — e o que investigar se sofre (dica: a marca está certa?).\nQueue tree numa interface bridge (o cenário do CPE do cliente,\n\ntem uma pegadinha famosa: o tráfego encaminhado em L2 com hardware offload nem passa pelo CPU. O que é preciso aceitar (ou perder) para enfileirar ali — e por que no concentrador PPPoE esse problema não existe?\n\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. A marca de pacote não é persistente — cada pacote nasce sem ela e precisa ser marcado individualmente (é a marca de conexão que persiste no conntrack). Marcando pacote só em new, apenas o primeiro pacote de cada conexão entraria na classe certa; todos os demais cairiam em pkt-resto — a árvore veria 99,9% do tráfego como resto. A economia real já está feita: a regra de pacote casa por connection-mark (leitura barata), não por portas.\n2. Esqueceu o RTP — o áudio. SIP (5060) é só a sinalização: convite, toque, desligar; a mídia viaja em UDP de portas altas negociadas na própria sinalização (tipicamente 10000–20000, ou a faixa que o PABX/operadora usar). A chamada completa porque a sinalização está priorizada e é levíssima; o áudio pica porque compete como pkt-resto. Classificar VoIP = SIP e a faixa RTP (como no texto).\n3. Pela mecânica, impossível o interativo passar fome: seu limit-at=5M é servido antes de qualquer sobra ir ao resto, e DNS mal usa kilobits. Se o DNS sofre, o mais provável é que os pacotes não estão na classe down-interativo: consultas indo a um resolver externo por TCP/853 (DoT) ou 443 (DoH) não casam com udp/53 — e caem no resto saturado. print stats (classe interativa zerada?) + /ip firewall mangle print stats confirmam. Moral: priorização erra silenciosamente quando a classificação envelhece.\n4. Para a queue tree ver o tráfego da bridge, ele precisa subir ao CPU: use-ip-firewall=yes nas configurações da bridge (e aceitar a perda do hardware offload — todo o encaminhamento vira software, 1). O custo pode ser proibitivo num switch. No concentrador PPPoE o problema não existe porque o tráfego de cada assinante já termina túneis no CPU (é roteado, não switchado) — mais uma razão estrutural para o QoS de provedor morar no BNG.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>39</span>  <span class='chapter-title'>Mangle e queue tree: priorizando por tipo de tráfego</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/03-mangle-queue-tree.html#resumo",
+    "href": "volumes/v07-qos/03-mangle-queue-tree.html#resumo",
+    "title": "39  Mangle e queue tree: priorizando por tipo de tráfego",
+    "section": "39.4 Resumo",
+    "text": "39.4 Resumo\n\nMangle classifica, queue tree executa: o padrão de dois passos (mark-connection em new → mark-packet por connection-mark) marca com custo mínimo de CPU; passthrough calibrado evita passeios inúteis pela lista;\nQueue tree = HTB puro na interface de saída (uma árvore por sentido), casando pacotes por packet-mark; sob o teto do pai, cada classe recebe seu limit-at e a sobra segue a priority (1 primeiro);\nPrioridade decide quem espera quando falta — garantias decidem o mínimo de cada classe; resto com garantia não morre de fome;\nClassificação envelhece (portas mudam, DoH existe, RTP não é SIP): audite print stats — classe zerada é sintoma de marca errada;\nAs duas camadas do provedor convivem: fila por assinante no concentrador (plano) + árvore por tipo no agregado (prioridade).\n\nFalta escalar: uma fila por cliente, para milhares de clientes, sem criar milhares de filas à mão — o PCQ, no próximo e último capítulo do volume (Capítulo 40).",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>39</span>  <span class='chapter-title'>Mangle e queue tree: priorizando por tipo de tráfego</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/03-mangle-queue-tree.html#bibliografia-do-capítulo",
+    "href": "volumes/v07-qos/03-mangle-queue-tree.html#bibliografia-do-capítulo",
+    "title": "39  Mangle e queue tree: priorizando por tipo de tráfego",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seções Mangle, Queue Trees e HTB (MikroTik, 2026);\nDisciplinas de fila e priorização: (Tanenbaum; Feamster; Wetherall, 2021);\nRouterOS v7 na prática: (Discher, 2016);\nQoS em provedores MikroTik: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>39</span>  <span class='chapter-title'>Mangle e queue tree: priorizando por tipo de tráfego</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/04-pcq-em-escala.html",
+    "href": "volumes/v07-qos/04-pcq-em-escala.html",
+    "title": "40  PCQ: controle de banda por assinante em escala",
+    "section": "",
+    "text": "40.1 Tipos de fila: o algoritmo dentro da fila\nO Capítulo 39 fechou com uma promessa: uma fila por cliente, para milhares de clientes, sem criar milhares de filas. O problema é real — no hotspot da praça, na rede do condomínio atendido por IP fixo, no setor PtMP legado sem PPPoE, você tem uma sub-rede inteira de usuários e nenhuma sessão individual para pendurar fila dinâmica. A resposta do RouterOS é um tipo de fila especial: o PCQ (Per Connection Queue — nome historicamente infeliz: ele enfileira por classificador, quase sempre por endereço, não por conexão).\nToda fila deste volume tem um campo que ignoramos até agora: o tipo (queue=default nas simple queues, queue=default nas classes da tree). O tipo é o algoritmo que decide a ordem interna dos pacotes que esperam:\nO PCQ é o único que multiplica: enquanto os demais organizam uma fila, ele cria uma sub-fila FIFO por valor distinto do classificador — e aplica a cada sub-fila o mesmo teto.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>40</span>  <span class='chapter-title'>PCQ: controle de banda por assinante em escala</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/04-pcq-em-escala.html#tipos-de-fila-o-algoritmo-dentro-da-fila",
+    "href": "volumes/v07-qos/04-pcq-em-escala.html#tipos-de-fila-o-algoritmo-dentro-da-fila",
+    "title": "40  PCQ: controle de banda por assinante em escala",
+    "section": "",
+    "text": "Tabela 40.1: Tipos de fila no RouterOS\n\n\n\n\n\n\n\n\n\n\nTipo\nMecanismo\nUso típico\n\n\n\n\npfifo/bfifo\nprimeiro a chegar, primeiro a sair (por pacotes/bytes)\no default; simples e previsível\n\n\nsfq\nembaralha fluxos para nenhum monopolizar\nmitigar um “porco” dentro da fila\n\n\nred\ndescarta probabilisticamente antes de encher\ndomar TCP sem estourar buffer (anti-bufferbloat)\n\n\npcq\numa sub-fila por valor do classificador\nbanda por assinante em escala",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>40</span>  <span class='chapter-title'>PCQ: controle de banda por assinante em escala</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/04-pcq-em-escala.html#o-mecanismo",
+    "href": "volumes/v07-qos/04-pcq-em-escala.html#o-mecanismo",
+    "title": "40  PCQ: controle de banda por assinante em escala",
+    "section": "40.2 O mecanismo",
+    "text": "40.2 O mecanismo\n/queue type\nadd name=pcq-down-10m kind=pcq pcq-classifier=dst-address pcq-rate=10M \\\n    pcq-limit=50KiB pcq-total-limit=2000KiB\nadd name=pcq-up-5m kind=pcq pcq-classifier=src-address pcq-rate=5M \\\n    pcq-limit=50KiB pcq-total-limit=2000KiB\n\npcq-classifier — o que define “um usuário”. No sentido download, cada destino é um cliente (dst-address); no upload, cada origem (src-address). Errar esse par é o bug nº 1 do PCQ;\npcq-rate — o teto de cada sub-fila: 10M por cliente, não no total;\npcq-limit — o buffer de cada sub-fila (50 KiB ≈ latência controlada; lembre do bufferbloat do Capítulo 37);\npcq-total-limit — a memória de todas as sub-filas somadas.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nUma fila PCQ por dentro: o classificador reparte o agregado em sub-filas dinâmicas — uma por endereço — e aplica o pcq-rate a cada uma. Milhares de “filas por cliente” pelo preço de configurar uma.\n\n\nFigura 40.1\n\n\n\nO tipo sozinho não faz nada: ele precisa ser o algoritmo de uma fila que capture o agregado. Em queue tree (com marcas do Capítulo 39 ou marcando tudo):\n/queue tree\nadd name=down-clientes parent=vlan101-clientes packet-mark=pkt-clientes \\\n    queue=pcq-down-10m max-limit=90M\nadd name=up-clientes parent=ether1 packet-mark=pkt-clientes \\\n    queue=pcq-up-5m max-limit=90M\nOu, sem mangle, numa simple queue da sub-rede inteira:\n/queue simple\nadd name=bairro-fibra target=100.64.101.0/24 max-limit=90M/90M \\\n    queue=pcq-down-10m/pcq-up-5m\nUma regra. Cada morador do /24 com 10M de download e 5M de upload, sub-filas nascendo e morrendo sozinhas, e o teto do enlace respeitado pelo max-limit externo.\n\n40.2.1 Os dois modos do PCQ\npcq-rate=10M — plano único em massa: todo cliente do agregado tem o mesmo teto. Perfeito para hotspot, condomínio, “plano social” de uma faixa;\npcq-rate=0 — repartição justa: sem teto individual; as sub-filas ativas dividem igualmente o que o max-limit externo der. 90M com 3 ativos = 30M cada; chegou o 4º, 22,5M cada. É o “ninguém monopoliza” instantâneo para enlaces compartilhados — o backhaul de rádio do Volume 5 agradece.\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nO PCQ é o rodízio da churrascaria (de novo ela — mas agora o salão): em vez de contratar um garçom por mesa (uma fila por cliente, o modelo PPPoE), um garçom só percorre todas as mesas servindo a mesma cota a cada uma (pcq-rate) — e mesas novas entram no rodízio automaticamente, sem contratar ninguém. Com pcq-rate=0, o rodízio vira “divide o que tiver”: a picanha que há é repartida por igual entre as mesas ocupadas, sejam 3 ou 30.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>40</span>  <span class='chapter-title'>PCQ: controle de banda por assinante em escala</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/04-pcq-em-escala.html#pcq-ou-pppoe-o-critério",
+    "href": "volumes/v07-qos/04-pcq-em-escala.html#pcq-ou-pppoe-o-critério",
+    "title": "40  PCQ: controle de banda por assinante em escala",
+    "section": "40.3 PCQ ou PPPoE? O critério",
+    "text": "40.3 PCQ ou PPPoE? O critério\nOs dois resolvem “banda por assinante”. A escolha é arquitetural:\n\n\n\nTabela 40.2: PPPoE × PCQ para banda por assinante\n\n\n\n\n\n\n\n\n\n\nCritério\nPPPoE + fila dinâmica\nPCQ\n\n\n\n\nPlanos diferentes por cliente\nnatural (profile/RADIUS)\n1 fila PCQ por plano + marcação por address-list\n\n\nIdentidade/corte/accounting\nnativo (Volume 6)\nnão é papel dele (só banda)\n\n\nBurst/garantia por cliente\nstring rate-limit completa\npcq-burst-* (global à fila)\n\n\nCusto por assinante\nsessão + fila (CPU/RAM)\nsub-fila (leve)\n\n\nSem sessão possível (hotspot, IP fixo, trânsito)\ninviável\né o caso dele\n\n\n\n\n\n\nNo provedor da nossa narrativa: assinantes de fibra e rádio conectam por PPPoE (identidade + plano + corte — o pacote completo do Volume 6); o PCQ entra nas beiradas — o WiFi da praça, o condomínio B2B com faixa fixa, a repartição justa de um backhaul — e como cinto de segurança agregado por cima das filas individuais.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nPCQ transforma uma fila em milhares, pelo preço de um classificador — mas repare no que ele não faz: não autentica, não contabiliza, não corta, não diferencia planos dentro da mesma fila. PCQ é fila em escala; PPPoE é assinante em escala. O provedor maduro usa os dois no lugar certo — e desconfia de qualquer projeto que use um só para tudo.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>40</span>  <span class='chapter-title'>PCQ: controle de banda por assinante em escala</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/04-pcq-em-escala.html#laboratório",
+    "href": "volumes/v07-qos/04-pcq-em-escala.html#laboratório",
+    "title": "40  PCQ: controle de banda por assinante em escala",
+    "section": "40.4 🧪 Laboratório",
+    "text": "40.4 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nO trio completo (Capítulo 5): lab-r1 no meio (172.16.1.1 na lab-a, 172.16.2.1 na lab-b), lab-r2 (172.16.1.2) e lab-r3 (172.16.2.3) como “clientes” em redes opostas — e o próprio host (VirtualBox host-only, 192.168.56.1) pode ser o terceiro cliente se você quiser mais disputa. bandwidth-server habilitado em r2 e r3. Limpe filas e mangles dos capítulos anteriores no lab-r1 (/queue tree remove [find], /queue simple remove [find], /ip firewall mangle remove [find]).\n\n\n\n40.4.1 Comandos passo a passo\nPasso 1 — o tipo e a fila. No lab-r1, plano único de 8M/4M por cliente, agregado de 20M (apertado de propósito), tudo numa simple queue da “rede de clientes” (as duas sub-redes do lab):\n/queue type\nadd name=pcq-down-8m kind=pcq pcq-classifier=dst-address pcq-rate=8M\nadd name=pcq-up-4m kind=pcq pcq-classifier=src-address pcq-rate=4M\n/queue simple\nadd name=clientes-pcq target=172.16.1.0/24,172.16.2.0/24 \\\n    max-limit=20M/20M queue=pcq-down-8m/pcq-up-4m\nPasso 2 — um cliente sozinho. Teste receive do lab-r2: ~8M — o pcq-rate limitou, não o max-limit (sobrava agregado). O print stats da simple queue mostra rate=8M: a fila externa enxerga a soma.\nPasso 3 — dois clientes. Testes simultâneos em lab-r2 e lab-r3: ~8M cada (16M no agregado — ainda coube). Cada um na sua sub-fila, tetos independentes. Um terceiro cliente (o host) levaria o agregado a 20M — e aí o max-limit externo passa a repartir: ~6,6M cada.\nPasso 4 — repartição justa. Troque para o modo pcq-rate=0:\n/queue type set pcq-down-8m pcq-rate=0\nUm cliente sozinho: 20M (o agregado inteiro!). Dois: ~10M cada. O PCQ virou divisor igualitário do max-limit — nenhum número de plano envolvido.\nPasso 5 — o clássico bug do classificador. Inverta de propósito o classificador do download (set pcq-down-8m pcq-classifier=src-address pcq-rate=8M) e rode os dois clientes: agora o download de todos divide UMA sub-fila de 8M (a “origem” é o mesmo servidor de teste!) — 4M cada, caindo com cada cliente novo. É exatamente o que acontece em produção quando se copia o tipo do upload para o download. Restaure dst-address.\n\n\n40.4.2 Verificação\n\nUm cliente: teto = pcq-rate; agregado com folga;\nVários clientes: cada um com seu teto até o agregado apertar — e então divisão do max-limit;\nCom pcq-rate=0, a banda de cada um depende só de quantos estão ativos;\nCom o classificador errado, todos os downloads dividiram uma única sub-fila — e você sabe explicar por quê.\n\n\n\n40.4.3 Desafios\n\nO provedor tem três planos (10M, 50M, 100M) numa rede de IP fixo sem PPPoE. Projete a solução PCQ completa: quantos queue types, como separar os clientes de cada plano (dica: address-list + mangle do Capítulo 39), e onde ficam os max-limit.\nNum hotspot com PCQ pcq-rate=0 sobre max-limit=50M, um usuário abre 30 conexões de download e outro navega com 2. O PCQ garante divisão justa entre os dois? Justifique pelo classificador — e diga o que aconteceria se o classificador fosse dst-port.\nCalcule a latência máxima que o pcq-limit=50KiB impõe a um cliente cuja sub-fila está cheia com pcq-rate=10M — e compare com o mesmo buffer a pcq-rate=1M. O que isso diz sobre PCQ para planos muito lentos?\nArquiteto A propõe: “migre tudo para PCQ e desligue o PPPoE — menos CPU, menos complexidade”. Escreva o contra-argumento em três pontos concretos (o que se perde), e o cenário em que A estaria certo.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Três pares de queue types (down/up por plano: pcq-down-10m/50m/100m com os rates respectivos, idem up). Separação: uma address-list por plano (clientes-10m, …) mantida pelo cadastro; mangle marcando pacote por dst-address-list/src-address-list → três packet-marks por sentido; queue tree com três classes por sentido, cada uma com seu queue=pcq-* e max-limit = teto do agregado (ou sub-tetos por plano, se o negócio pedir), todas sob um pai com o teto físico do enlace. É o padrão de mercado para redes IP-fixo sem BNG.\n2. Garante: o classificador é src-address/dst-address — as 30 conexões do usuário A caem na mesma sub-fila dele (o endereço é um só), que disputa de igual para igual com a sub-fila do usuário B: ~25M cada, independentemente do número de conexões. Com dst-port como classificador, cada porta viraria “um usuário”: as 30 conexões de A virariam dezenas de sub-filas contra as 2 de B — A levaria ~94% do enlace. Classificador define o que é “justo”.\n3. Fila cheia = 50 KiB = 409,6 kbit esperando. A 10M: \\(409{,}6/10\\,000 \\approx 41\\) ms — aceitável. A 1M: 410 ms — inutilizável para qualquer coisa interativa. Moral: pcq-limit deve escalar com o pcq-rate (planos lentos pedem buffers menores), senão o plano social vira fábrica de bufferbloat; é a mesma aritmética do desafio 3 do Capítulo 37.\n4. Perde-se: (1) identidade e corte — sem sessão, suspender inadimplente volta a ser caça ao MAC/IP na mão (o Volume 6 inteiro); (2) accounting por assinante (consumo, uptime — dados de cobrança e suporte); (3) planos e exceções por cliente viram malabarismo de address-lists (IP fixo contratado, burst individual, CoA). A ganha em: rede sem contrato individual — hotspot público, evento, cortesia de condomínio — onde identidade não existe mesmo e PCQ entrega tudo que se precisa com uma fração da complexidade. Contexto decide.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>40</span>  <span class='chapter-title'>PCQ: controle de banda por assinante em escala</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/04-pcq-em-escala.html#resumo",
+    "href": "volumes/v07-qos/04-pcq-em-escala.html#resumo",
+    "title": "40  PCQ: controle de banda por assinante em escala",
+    "section": "40.5 Resumo",
+    "text": "40.5 Resumo\n\nO tipo de fila é o algoritmo interno (fifo, sfq, red, pcq); o PCQ multiplica: uma sub-fila FIFO por valor do classificador, cada uma com o mesmo pcq-rate;\nPar clássico: download classifica por dst-address, upload por src-address — inverter é o bug nº 1 (todos numa sub-fila só);\npcq-rate=N = plano único em massa; pcq-rate=0 = repartição igualitária do max-limit externo entre os ativos;\npcq-limit controla a latência por sub-fila (buffer × rate = milissegundos — planos lentos pedem buffers menores);\nPCQ é fila em escala; PPPoE é assinante em escala: identidade, plano individual e corte continuam sendo papel do Volume 6 — PCQ brilha onde não há contrato individual (hotspot, faixas fixas, repartição de backhaul).\n\nFecha o Volume 7 — o tráfego do assinante agora tem plano, turbo, garantia, prioridade e escala. O Volume 8 sai da fila e entra no mapa: roteamento, estático e dinâmico, para a rede que cresceu além de um roteador.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>40</span>  <span class='chapter-title'>PCQ: controle de banda por assinante em escala</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v07-qos/04-pcq-em-escala.html#bibliografia-do-capítulo",
+    "href": "volumes/v07-qos/04-pcq-em-escala.html#bibliografia-do-capítulo",
+    "title": "40  PCQ: controle de banda por assinante em escala",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seções Queue Types — PCQ e Queues (MikroTik, 2026);\nDisciplinas de fila e fairness: (Tanenbaum; Feamster; Wetherall, 2021);\nRouterOS v7 na prática: (Discher, 2016);\nQoS em escala de provedor: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 7 — QoS e controle de banda",
+      "<span class='chapter-number'>40</span>  <span class='chapter-title'>PCQ: controle de banda por assinante em escala</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html",
+    "href": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html",
+    "title": "41  Rotas estáticas, distância e failover",
+    "section": "",
+    "text": "41.1 Como o roteador decide\nAté aqui, nossa rede tinha um roteador de cada lado e uma rota padrão resolvia tudo. Mas o provedor cresceu: dois POPs, um enlace de rádio entre eles (Volume 5), concentradores com pools distintos (Capítulo 36)… e de repente “para onde mando este pacote?” tem mais de uma resposta certa — e várias erradas. Este volume é sobre roteamento: primeiro o controle manual (rotas estáticas), depois a automação (OSPF, BGP). Como sempre, o fundamento manda: quem não domina a tabela de rotas só transfere a confusão para o protocolo dinâmico.\nPara cada pacote, o RouterOS consulta a tabela (/ip route print) e aplica duas regras, nesta ordem:\nA distância administrativa é a nota de confiança da origem da rota — quanto menor, mais confiável:\nÉ ela que responde “quem manda quando o OSPF e uma estática discordam” (a estática, 1 &lt; 110) — e é ela que vamos explorar de propósito no failover.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>41</span>  <span class='chapter-title'>Rotas estáticas, distância e failover</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#como-o-roteador-decide",
+    "href": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#como-o-roteador-decide",
+    "title": "41  Rotas estáticas, distância e failover",
+    "section": "",
+    "text": "Prefixo mais longo vence (longest prefix match): entre as rotas cujo dst-address contém o destino, ganha a mais específica. 10.20.30.0/24 vence 10.0.0.0/8, que vence 0.0.0.0/0 — a rota padrão é só “o prefixo mais curto possível”, o plano Z de todo pacote;\nMenor distância desempata prefixos iguais: se duas rotas têm o MESMO prefixo, vence a de menor distance.\n\n\n\n\n\nTabela 41.1: Distâncias administrativas no RouterOS\n\n\n\n\n\nOrigem\nDistância padrão\n\n\n\n\nConectada (IP na interface)\n0\n\n\nEstática\n1\n\n\neBGP\n20\n\n\nOSPF\n110\n\n\nRIP\n120\n\n\niBGP\n200\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nA decisão para 10.20.30.7: das rotas que contêm o destino, vence a de prefixo mais longo (/24) — a distância nem é consultada. Ela só desempata rotas com o mesmo prefixo.\n\n\nFigura 41.1\n\n\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nPrefixo primeiro, distância depois — e nunca o contrário. Uma estática /32 vence qualquer rota padrão, por melhor que seja a distância desta; e duas rotas padrão disputam apenas pela distância. Metade dos mistérios de roteamento (“por que isso está saindo pelo link errado?!”) morre quando se pergunta, na ordem: qual é o prefixo mais longo que contém o destino? entre iguais, qual a menor distância? e essa rota está ativa?",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>41</span>  <span class='chapter-title'>Rotas estáticas, distância e failover</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#anatomia-de-uma-rota-no-v7",
+    "href": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#anatomia-de-uma-rota-no-v7",
+    "title": "41  Rotas estáticas, distância e failover",
+    "section": "41.2 Anatomia de uma rota no v7",
+    "text": "41.2 Anatomia de uma rota no v7\n/ip route add dst-address=10.20.30.0/24 gateway=172.16.9.2 \\\n    distance=1 comment=\"rede do POP rural via radio\"\n/ip route print\nFlags: D - DYNAMIC; A - ACTIVE; c - CONNECT, s - STATIC\nColumns: DST-ADDRESS, GATEWAY, DISTANCE\n    DST-ADDRESS      GATEWAY       DISTANCE\nDAc 172.16.9.0/24    ether2                0\n As 10.20.30.0/24    172.16.9.2            1\n As 0.0.0.0/0        200.1.1.1             1\nAs flags do v7 que interessam: A (active — está valendo), D (dynamic — criada por protocolo/sistema, não por você), c/s/o/b (connect/static/ospf/bgp — a origem). Uma rota sem A existe mas não decide nada — os motivos clássicos: gateway inalcançável (não há rota conectada que o cubra) ou perdeu a disputa para outra de mesma dst e menor distância.\nO gateway pode ser um IP (resolvido para uma interface via tabela) ou uma interface diretamente — o normal em túneis e PPPoE (gateway=pppoe-wan, como o add-default-route do Volume 6 faz por baixo).",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>41</span>  <span class='chapter-title'>Rotas estáticas, distância e failover</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#failover-rotas-flutuantes-check-gateway",
+    "href": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#failover-rotas-flutuantes-check-gateway",
+    "title": "41  Rotas estáticas, distância e failover",
+    "section": "41.3 Failover: rotas flutuantes + check-gateway",
+    "text": "41.3 Failover: rotas flutuantes + check-gateway\nO caso real: o POP tem dois caminhos para a internet — fibra (principal) e um rádio de contingência. Queremos: tudo pela fibra; se ela cair, migrar sozinho; quando voltar, voltar.\n/ip route\nadd dst-address=0.0.0.0/0 gateway=200.1.1.1 distance=1 \\\n    check-gateway=ping comment=\"fibra (principal)\"\nadd dst-address=0.0.0.0/0 gateway=189.50.7.1 distance=10 \\\n    comment=\"radio (contingencia) - rota flutuante\"\nMesmo prefixo, distâncias diferentes: a de distance=10 fica inativa (perdeu o desempate) — é a rota flutuante, flutuando à espera. O check-gateway=ping pinga o gateway a cada 10 s; duas falhas seguidas e a rota principal é marcada inativa → a flutuante assume no mesmo instante. Fibra voltou a responder → hierarquia restaurada.\nO limite honesto do check-gateway: ele testa o vizinho, não o mundo. Se a operadora aceita o ping do gateway mas está sem trânsito (cai o upstream dela), sua rota continua “ativa” apontando para um buraco. O antídoto é vigiar um alvo remoto: rotas /32 para IPs de teste + netwatch trocando rotas — receita que fica para os scripts do Volume 12 — ou roteamento dinâmico de verdade (BGP com a operadora, Capítulo 44), onde a queda de trânsito derruba a sessão e as rotas juntas.\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nRotas flutuantes são a geladeira com gerador: a casa liga na rede elétrica (distância 1); o gerador está instalado e pronto (distância 10), mas só entra quando o sensor detecta a queda (check-gateway) — e sai de cena quando a rede volta. E o limite é o mesmo: o sensor mede a tomada da SUA casa. Se a concessionária está de pé mas a subestação do bairro caiu… a tomada tem energia, a rua não — e o sensor não vê.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>41</span>  <span class='chapter-title'>Rotas estáticas, distância e failover</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#blackhole-descartar-com-propósito",
+    "href": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#blackhole-descartar-com-propósito",
+    "title": "41  Rotas estáticas, distância e failover",
+    "section": "41.4 Blackhole: descartar com propósito",
+    "text": "41.4 Blackhole: descartar com propósito\nUma rota blackhole descarta silenciosamente o que casar com ela:\n/ip route add dst-address=100.64.100.0/22 blackhole \\\n    comment=\"agregado dos pools PPPoE - anti-loop\"\nPor que um provedor descarta o próprio agregado? Anti-loop: o concentrador anuncia 100.64.100.0/22 inteiro para a rede (Capítulo 44 fará isso), mas cada sessão PPPoE cria rota /32 individual. Um pacote para um IP do bloco sem sessão ativa (cliente desconectado) casaria com… a rota padrão, sairia para a operadora, voltaria (o bloco é seu), sairia de novo — loop até o TTL morrer, banda queimada em atacante escaneando seu bloco. Com a blackhole: IP com sessão casa a /32 (mais específica!); IP sem sessão casa a blackhole e morre em paz. O prefixo mais longo trabalhando a seu favor.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>41</span>  <span class='chapter-title'>Rotas estáticas, distância e failover</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#diagnóstico-em-dois-comandos",
+    "href": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#diagnóstico-em-dois-comandos",
+    "title": "41  Rotas estáticas, distância e failover",
+    "section": "41.5 Diagnóstico em dois comandos",
+    "text": "41.5 Diagnóstico em dois comandos\n/ip route check 8.8.8.8\n/tool traceroute 8.8.8.8\nO route check responde “qual rota este destino casaria AGORA” — a decisão da Figura 41.1 sem adivinhação. O traceroute mostra o caminho de fato, salto a salto: divergência entre os dois = rota assimétrica ou NAT no caminho. Diagnóstico de roteamento começa nesses dois, não no reboot.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>41</span>  <span class='chapter-title'>Rotas estáticas, distância e failover</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#laboratório",
+    "href": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#laboratório",
+    "title": "41  Rotas estáticas, distância e failover",
+    "section": "41.6 🧪 Laboratório",
+    "text": "41.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nO trio em linha (Capítulo 5): lab-r2 (172.16.1.2, lab-a) — lab-r1 (172.16.1.1 / 172.16.2.1) — lab-r3 (172.16.2.3, lab-b), e o lab-r1 também com a NAT WAN (ether3/ether1 conforme seu setup). Vamos fazer o lab-r2 alcançar a lab-b sem rota padrão, montar failover artificial e ver a blackhole proteger.\n\n\n\n41.6.1 Comandos passo a passo\nPasso 1 — a dor da falta de rota. No lab-r2, remova a rota padrão (se houver) e pingue o lab-r3:\n/ip route remove [find dst-address=0.0.0.0/0]\n/ping 172.16.2.3 count=3\nno route to host — o pacote nem sai. Roteador sem rota não “tenta”: descarta e avisa.\nPasso 2 — a estática específica. Ainda no lab-r2:\n/ip route add dst-address=172.16.2.0/24 gateway=172.16.1.1 \\\n    comment=\"lab-b via lab-r1\"\n/ping 172.16.2.3 count=3\nO ping sai… e pode voltar? Só se o lab-r3 souber voltar — confira nele a rota para 172.16.1.0/24 (a lição eterna: rota é ida E volta, cada uma decidida na sua tabela).\nPasso 3 — prefixo vence distância. No lab-r2, adicione uma rota padrão e uma /32 provocadora:\n/ip route add dst-address=0.0.0.0/0 gateway=172.16.1.1 distance=1\n/ip route add dst-address=172.16.2.3/32 gateway=172.16.1.99 distance=200\n/ip route check 172.16.2.3\nO check aponta a /32 de distância 200 (gateway até inexistente!) — prefixo mais longo primeiro, sempre. Como o gateway não resolve, a rota fica inativa e o tráfego cai para a /24… remova a provocação e siga.\nPasso 4 — failover flutuante. No lab-r2, duas rotas padrão:\n/ip route remove [find dst-address=0.0.0.0/0]\n/ip route add dst-address=0.0.0.0/0 gateway=172.16.1.1 distance=1 \\\n    check-gateway=ping comment=\"principal\"\n/ip route add dst-address=0.0.0.0/0 gateway=172.16.1.254 distance=10 \\\n    comment=\"contingencia (gateway ficticio p/ demonstrar)\"\n/ip route print where dst-address=0.0.0.0/0\nSó a distance=1 está Ativa. Agora derrube o “principal”: no VirtualBox, desconecte o cabo da lab-a do lab-r1 (não do r2!) e acompanhe no lab-r2:\n/ip route print interval=2 where dst-address=0.0.0.0/0\nEm ~20–30 s (2 pings falhos), a principal perde o A e a flutuante assume. Reconecte o cabo: a hierarquia volta sozinha. (A contingência aponta para um gateway fictício — o objetivo aqui é ver a troca de flags, não navegar por ela.)\nPasso 5 — blackhole anti-varredura. No lab-r1, simule o agregado de clientes:\n/ip route add dst-address=100.64.100.0/22 blackhole\n/ping 100.64.100.77 count=2\nResposta imediata: inalcançável — sem viajar até a rota padrão, sem loop. Uma rota /32 de “sessão” (add dst-address=100.64.100.77/32 gateway=172.16.1.2) e o mesmo ping muda de destino: a específica fura a blackhole, exatamente como as sessões PPPoE farão.\n\n\n41.6.2 Verificação\n\nSem rota: no route to host; com estática + rota de volta no r3: ping completo;\nNo Passo 3, o route check escolheu a /32 (prefixo &gt; distância);\nNo failover, você viu a flag A migrar entre as rotas e voltar;\nA blackhole responde na hora (sem timeout) e a /32 a sobrepõe.\n\n\n\n41.6.3 Desafios\n\nUm júnior configurou o failover com as duas rotas padrão em distance=1. O que o RouterOS faz com rotas idênticas em tudo — e por que o resultado (dica: ECMP) pode “funcionar” no teste e quebrar streaming/VoIP na prática?\ncheck-gateway=ping na rota principal, e a operadora da fibra bloqueia ICMP no gateway. Descreva o desastre em produção e as duas saídas (uma no próprio check-gateway, uma na arquitetura).\nO suporte reclama: “criei a rota para a nova sub-rede do cliente, está na tabela, mas não passa tráfego”. print mostra a rota sem a flag A, gateway 10.7.7.1. Liste as duas causas mais prováveis e o comando que distingue uma da outra.\nProjete as rotas do lab-r1 para o cenário final do provedor: pools PPPoE (100.64.100.0/22) no BNG-01 (172.16.1.2) e (100.64.104.0/22) no BNG-02 (172.16.2.3), com blackhole anti-loop nos BNGs e agregação no lab-r1. Escreva os comandos dos três roteadores.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Duas rotas com mesma dst e mesma distância ativas viram ECMP (Equal Cost Multi-Path): o roteador balanceia fluxos entre os gateways. No teste (um ping, um site) parece failover funcionando; na prática, metade das conexões sai por cada link — com IPs de origem diferentes pós-NAT, sessões de streaming/bancos/VoIP quebram ao alternar caminho, e a queda de um link ainda leva ~metade do tráfego junto até o gateway morto ser detectado. Failover pede distâncias diferentes; ECMP é ferramenta de balanceamento consciente, não failover acidental.\n2. O check marca a rota principal como morta (pings nunca respondem) e TODO o tráfego migra para a contingência — você paga rádio lento com a fibra perfeita de pé; pior: é estável, ninguém percebe por dias. Saídas: check-gateway=arp (testa resolução ARP do gateway — funciona se ele está na mesma L2 e responde ARP) ou tirar a detecção do vizinho: monitorar alvo remoto via netwatch/script (Volume 12) ou BGP com a operadora (Capítulo 44).\n3. Sem A com gateway IP: (a) gateway irresolvível — nenhuma rota conectada/ativa cobre 10.7.7.1 (interface caiu? IP errado?); (b) perdeu o desempate — existe outra rota com a MESMA dst e distância menor. Distinguir: /ip route print detail where dst-address=&lt;dst&gt; mostra todas as candidatas e seus estados; e /ip route check 10.7.7.1 (o gateway como destino!) revela se ele é alcançável. (a) aparece como unreachable; (b) mostra a rota rival ativa.\n4. BNGs (anti-loop local): lab-r2: /ip route add dst-address=100.64.100.0/22 blackhole e lab-r3: /ip route add dst-address=100.64.104.0/22 blackhole (as /32 das sessões furam a blackhole). lab-r1 (agregação): /ip route add dst-address=100.64.100.0/22 gateway=172.16.1.2 e /ip route add dst-address=100.64.104.0/22 gateway=172.16.2.3 — e, quando houver anúncio externo, anunciar o agregado 100.64.100.0/21… que o Capítulo 42 fará circular sozinho.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>41</span>  <span class='chapter-title'>Rotas estáticas, distância e failover</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#resumo",
+    "href": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#resumo",
+    "title": "41  Rotas estáticas, distância e failover",
+    "section": "41.7 Resumo",
+    "text": "41.7 Resumo\n\nDecisão de roteamento: prefixo mais longo primeiro; distance desempata só prefixos idênticos; rota sem flag A não decide nada (gateway irresolvível ou desempate perdido);\nDistâncias padrão: conectada 0, estática 1, eBGP 20, OSPF 110, iBGP 200 — a nota de confiança da origem da rota;\nFailover = rotas flutuantes (mesma dst, distâncias diferentes) + check-gateway=ping/arp; limite: testa o vizinho, não o trânsito — para mais, netwatch/BGP;\nBlackhole descarta com propósito: agregados de pools nos BNGs contra loops de varredura (as /32 de sessão furam por prefixo);\nDiagnóstico: /ip route check (a decisão) + traceroute (o caminho real) — sempre antes de mexer.\n\nRotas estáticas não escalam com a rede: cada enlace novo são N tabelas para editar à mão. O próximo capítulo (Capítulo 42) coloca os roteadores para conversarem: OSPF.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>41</span>  <span class='chapter-title'>Rotas estáticas, distância e failover</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#bibliografia-do-capítulo",
+    "href": "volumes/v08-roteamento/01-rotas-estaticas-distancia.html#bibliografia-do-capítulo",
+    "title": "41  Rotas estáticas, distância e failover",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção IP Routing do RouterOS v7 (MikroTik, 2026);\nAlgoritmos de roteamento e longest prefix match: (Tanenbaum; Feamster; Wetherall, 2021);\nRouterOS v7 na prática: (Discher, 2016);\nRedes de provedor: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>41</span>  <span class='chapter-title'>Rotas estáticas, distância e failover</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html",
+    "href": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html",
+    "title": "42  OSPF: conceitos e configuração",
+    "section": "",
+    "text": "42.1 Link-state: cada roteador tem o mapa inteiro\nO Capítulo 41 terminou com um incômodo: cada enlace novo são várias tabelas para editar à mão, e um link que cai não avisa ninguém. Numa rede com malha — dois POPs, um anel de fibra, o rádio de contingência — isso não escala nem sobrevive a falhas. O OSPF (Open Shortest Path First) resolve os dois: os roteadores trocam a topologia entre si, cada um calcula sozinho o melhor caminho, e quando algo muda a rede reconverge sem intervenção. É o protocolo de roteamento interno padrão de qualquer provedor.\nHá duas famílias de protocolos internos. Os distance-vector (RIP) dizem ao vizinho “sei chegar em X a N saltos” — cada um confia na palavra do outro, e mudanças se propagam de boca em boca (lento, sujeito a loops). Os link-state (OSPF) fazem o oposto: cada roteador anuncia apenas seus próprios enlaces (a quem está diretamente conectado e com que custo), e esses anúncios — LSAs (Link-State Advertisements) — são inundados intactos por toda a área. Resultado: todo roteador monta o mesmo mapa completo da rede e roda o algoritmo de Dijkstra sobre ele para achar o menor caminho até cada destino.\nA diferença prática: no link-state ninguém “acredita” em rota de terceiro — todos veem a topologia e calculam. Convergência rápida, sem loops de contagem ao infinito, ao custo de mais CPU/memória (o mapa) e de disciplina de projeto (áreas).",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>42</span>  <span class='chapter-title'>OSPF: conceitos e configuração</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#link-state-cada-roteador-tem-o-mapa-inteiro",
+    "href": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#link-state-cada-roteador-tem-o-mapa-inteiro",
+    "title": "42  OSPF: conceitos e configuração",
+    "section": "",
+    "text": "OSPF escolhe por custo somado, não por número de saltos: o caminho POP rural → borda via POP central (10+10=20) vence o enlace direto de rádio (50), embora tenha um salto a mais. Ajustar custos é como você molda o tráfego.\n\n\nFigura 42.1",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>42</span>  <span class='chapter-title'>OSPF: conceitos e configuração</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#vizinhança-custo-e-áreas",
+    "href": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#vizinhança-custo-e-áreas",
+    "title": "42  OSPF: conceitos e configuração",
+    "section": "42.2 Vizinhança, custo e áreas",
+    "text": "42.2 Vizinhança, custo e áreas\nAdjacências. OSPF só troca LSAs com vizinhos com quem formou adjacência — e para isso os pacotes Hello dos dois lados precisam concordar em: mesma área, mesmos temporizadores (hello/dead), mesma sub-rede, autenticação compatível. Hello divergente = vizinho que “aparece e some” — o bug de campo nº 1 do OSPF.\nCusto. O peso de cada enlace. No RouterOS o custo padrão deriva da referência de banda; o que importa é a regra: caminho vence pela menor soma de custos. Você ajusta custo para preferir a fibra e deixar o rádio como reserva (como na figura) — mas com cuidado: mexer no custo de um lado cria caminho assimétrico (ida pela fibra, volta pelo rádio), fonte de dor de cabeça diagnóstica.\nDR/BDR. Numa rede multiacesso (vários roteadores num mesmo segmento L2, ex.: um switch no POP), se todos formassem adjacência com todos seriam N² relações. OSPF elege um DR (Designated Router) e um BDR (backup): todos falam com o DR, que redistribui — reduz a N. Em enlaces ponto a ponto (a maioria no provedor: um PtP de rádio, um túnel) não há DR — são só dois, adjacência direta.\nÁreas. OSPF divide a rede em áreas para não inundar LSAs pelo mundo todo. A área 0 é o backbone — obrigatória, e toda outra área precisa tocá-la. Numa rede pequena (nossos poucos POPs), tudo na área 0 é o certo; áreas adicionais são assunto do próximo capítulo (1), quando a rede cresce a ponto de o mapa único pesar.\n\n\n\n\n\n\nDicaAnalogia para guardar\n\n\n\nRotas estáticas são cada motorista decorando um trajeto fixo: mudou uma rua, todos se perdem até você reensinar um a um. OSPF é o app de trânsito que todos usam: cada carro reporta as ruas que ele vê (os LSAs), o app monta o mapa completo da cidade e cada um calcula sua própria melhor rota (Dijkstra). Fechou uma via? Os relatos se espalham em segundos e todos recalculam sozinhos. O custo do enlace é o “tempo estimado” de cada rua — e é isso, não a distância em quarteirões, que o app minimiza.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>42</span>  <span class='chapter-title'>OSPF: conceitos e configuração</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#configurando-ospfv2-no-routeros-v7",
+    "href": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#configurando-ospfv2-no-routeros-v7",
+    "title": "42  OSPF: conceitos e configuração",
+    "section": "42.3 Configurando OSPFv2 no RouterOS v7",
+    "text": "42.3 Configurando OSPFv2 no RouterOS v7\nO v7 reorganizou o OSPF (quem vem do v6 estranha). São três objetos:\n# 1) a instância: o \"processo\" OSPF e seu router-id (identidade única!)\n/routing ospf instance\nadd name=isp-ospf router-id=10.255.0.1\n\n# 2) a área: aqui, só o backbone\n/routing ospf area\nadd name=backbone area-id=0.0.0.0 instance=isp-ospf\n\n# 3) em quais interfaces falar OSPF (e como) — via template por rede\n/routing ospf interface-template\nadd area=backbone networks=172.16.9.0/30 interfaces=ether2 \\\n    comment=\"enlace PtP para o POP rural\"\nadd area=backbone networks=172.16.9.4/30 interfaces=ether3 \\\n    comment=\"enlace PtP para a borda\"\n\nrouter-id: a identidade do roteador no OSPF — único no domínio, convenção usar um IP de loopback (uma /32 numa bridge sem portas, sempre no ar mesmo se uma interface física cair). Router-id duplicado = adjacências instáveis e LSAs em guerra;\ninterface-template: casa interfaces por networks (as sub-redes que participam) e/ou interfaces; é onde se define custo, tipo (ptp desliga a eleição de DR num enlace ponto a ponto), temporizadores e autenticação.\n\nAnunciar as redes conectadas dos clientes (LANs, pools) sem colocar OSPF nas interfaces dos clientes (não queremos vizinhança com assinante!): use um template passivo ou redistribuição:\n/routing ospf instance\nset isp-ospf redistribute=connected out-filter-chain=ospf-out\n\n/routing filter rule\nadd chain=ospf-out rule=\"if (dst==100.64.100.0/22) { accept }\"\nadd chain=ospf-out rule=\"reject\"\nAssim o backbone aprende o agregado dos pools (Capítulo 41) sem expor o OSPF ao lado do cliente. Filtros de redistribuição são o tema do Capítulo 45 — aqui, o mínimo para não vazar tudo.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>42</span>  <span class='chapter-title'>OSPF: conceitos e configuração</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#lendo-o-ospf",
+    "href": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#lendo-o-ospf",
+    "title": "42  OSPF: conceitos e configuração",
+    "section": "42.4 Lendo o OSPF",
+    "text": "42.4 Lendo o OSPF\n/routing ospf neighbor print\n/routing ospf lsa print\n/ip route print where ospf\n# neighbor print\n 0 instance=isp-ospf router-id=10.255.0.2 address=172.16.9.2\n   state=\"Full\" ...\nO estado que você quer é Full: adjacência completa, bancos sincronizados. Estados travados contam a história: Init/2-Way (vê o Hello mas não fecha — cheque área/timers/autenticação); ExStart/Exchange preso (quase sempre MTU divergente entre os lados — OSPF exige MTU igual). Rota OSPF na tabela aparece com flag Do (dynamic/ospf) e distância 110 (Tabela 41.1) — daí a estática de distância 1 vencê-la, como você já sabia.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nOSPF entrega um mapa idêntico a todos os roteadores e deixa cada um calcular o menor caminho por custo somado — é isso que dá convergência rápida e sem loops que a estática nunca terá. Mas o preço é disciplina: router-id único, temporizadores e MTU iguais entre vizinhos, custos ajustados nos dois sentidos e OSPF jamais na interface do cliente. A tríade v7 (instance → area → template) só funciona bem quando esses fundamentos estão de pé; o resto do volume constrói sobre eles.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>42</span>  <span class='chapter-title'>OSPF: conceitos e configuração</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#laboratório",
+    "href": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#laboratório",
+    "title": "42  OSPF: conceitos e configuração",
+    "section": "42.5 🧪 Laboratório",
+    "text": "42.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nO trio em triângulo (Capítulo 5) — a topologia da Figura 42.1: lab-r1 = POP central, lab-r2 = POP rural, lab-r3 = borda. Enlaces PtP /30: r1–r2 em 172.16.9.0/30, r1–r3 em 172.16.9.4/30, r2–r3 em 172.16.9.8/30 (crie a terceira interface/ rede interna no VirtualBox fechando o triângulo). Cada roteador com um loopback /32 para router-id: r1=10.255.0.1, r2=.2, r3=.3.\n\n\n\n42.5.1 Comandos passo a passo\nPasso 1 — loopback e router-id. Em cada roteador (exemplo r1):\n/interface bridge add name=lo\n/ip address add address=10.255.0.1 interface=lo\nPasso 2 — a tríade OSPF em cada um. No lab-r1 (POP central, tocando os dois enlaces):\n/routing ospf instance add name=isp router-id=10.255.0.1\n/routing ospf area add name=backbone area-id=0.0.0.0 instance=isp\n/routing ospf interface-template \\\n    add area=backbone networks=172.16.9.0/30,172.16.9.4/30,10.255.0.1/32 \\\n    type=ptp\nRéplica análoga em r2 (redes 172.16.9.0/30, 172.16.9.8/30, 10.255.0.2/32) e r3 (172.16.9.4/30, 172.16.9.8/30, 10.255.0.3/32), cada um com seu router-id.\nPasso 3 — veja a vizinhança nascer. No lab-r1:\n/routing ospf neighbor print\nEspere state=Full com r2 e r3. Se travar em ExStart, é MTU — confira /interface ethernet print (iguale os MTUs). Se ficar em Init, revise área/timers.\nPasso 4 — o mapa se formou. Em qualquer roteador:\n/ip route print where ospf\nO lab-r2 (rural) aprendeu sozinho a chegar na rede de r3 (borda) — sem uma linha de rota estática. Confirme o caminho:\n/tool traceroute 10.255.0.3\nPasso 5 — molde o caminho pelo custo. Hoje r2→r3 pode ir direto (um enlace) ou via r1. Encareça o enlace direto r2–r3 nos dois lados (r2 e r3), simulando “rádio caro”:\n/routing ospf interface-template set [find networks~\"172.16.9.8\"] cost=50\nRefaça o traceroute de r2 para r3: agora passa por r1 (custo 10+10=20 &lt; 50) — a Figura 42.1 ao vivo. Mude o custo em um só lado e observe a assimetria (ida por um caminho, volta por outro) no traceroute dos dois sentidos.\nPasso 6 — reconvergência. Com o tráfego indo r2→r1→r3, derrube o enlace r1–r3 (desconecte o cabo no VirtualBox). Em segundos, o traceroute de r2 para r3 passa a usar o enlace direto (custo 50, agora o único vivo) — a rede se curou sozinha. Religue e ela volta ao ótimo.\n\n\n42.5.2 Verificação\n\nneighbor print mostra Full em todas as adjacências esperadas;\nCada roteador tem, sem rota estática, caminho para os loopbacks dos outros dois;\nEncarecer o enlace direto (dois lados) desviou o tráfego pelo POP central; um lado só criou assimetria visível no traceroute;\nA queda de um enlace reconvergeu automaticamente em segundos.\n\n\n\n42.5.3 Desafios\n\nDois roteadores veem o Hello um do outro (neighbor aparece) mas nunca passam de 2-Way num enlace ponto a ponto. Liste as três causas mais prováveis e o comando que confirma cada uma.\nVocê configurou tudo certo, mas as adjacências ficam presas em Exchange e caem. ping entre os roteadores funciona com pacotes pequenos e falha com size=1500 do-not-fragment. Nomeie a causa e a correção — e por que o OSPF é tão sensível a isso quando o ping “normal” funcionava.\nPor que colocar OSPF na interface do cliente (LAN/PPPoE) é um erro de segurança e de estabilidade? Descreva o que um cliente mal-intencionado (ou um roteador doméstico “espancado”) poderia fazer, e a diretiva de template que anuncia a rede sem formar adjacência ali.\nSua rede tem 40 roteadores numa única área 0. Tudo funciona, até que um enlace instável em um POP começa a “piscar” (flapping) e a CPU de todos os 40 sobe em ondas. Explique o mecanismo (LSA → SPF) e antecipe qual recurso do próximo capítulo\n\ncontém o estrago.\n\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Preso em 2-Way num PtP indica que não avançou para adjacência plena. Causas: (a) áreas diferentes nos dois lados (/routing ospf interface-template print — o area); (b) temporizadores hello/dead divergentes (mesmo comando, campos de timer); (c) autenticação só de um lado ou com chave diferente. Em rede multiacesso, 2-Way também é o estado normal entre dois não-DR — mas num PtP (type=ptp) deve ir a Full.\n2. MTU divergente entre as interfaces. O OSPF, na fase Exchange, troca o Database Description e exige que o MTU anunciado bata; além disso os LSAs grandes precisam trafegar inteiros. O ping pequeno funciona porque cabe em qualquer MTU; o size=1500 df falha no enlace de MTU menor — o mesmo diagnóstico do PPPoE (Capítulo 33). Correção: igualar o MTU dos dois lados (ou, em último caso, mtu-ignore no template — trata o sintoma, não a causa).\n3. Segurança: OSPF sem autenticação aceita LSAs de qualquer vizinho — um cliente injeta uma rota 0.0.0.0/0 mais atraente e sequestra o tráfego do POP (ataque clássico). Estabilidade: cada roteador doméstico ruidoso vira uma adjacência que sobe e cai, disparando recálculos. A diretiva certa: template passivo (passive / sem formar adjacência) na interface do cliente, ou redistribuição connected filtrada — anuncia-se a rede, nunca se fala OSPF com o cliente. E autenticação obrigatória nos enlaces internos.\n4. Cada flap gera novos LSAs, inundados por toda a área 0; cada LSA novo obriga todos os 40 roteadores a rodar Dijkstra (SPF) sobre o mapa inteiro — ondas de CPU sincronizadas. Numa área única, não há barreira: o ruído local é problema global. O 1 contém o estrago com áreas (o flap fica confinado à sua área; para o resto da rede, um ABR resume a área como um prefixo estável) e com temporizadores de SPF/LSA que amortecem o flapping.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>42</span>  <span class='chapter-title'>OSPF: conceitos e configuração</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#resumo",
+    "href": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#resumo",
+    "title": "42  OSPF: conceitos e configuração",
+    "section": "42.6 Resumo",
+    "text": "42.6 Resumo\n\nLink-state (OSPF): cada roteador anuncia só seus enlaces (LSAs), todos montam o mesmo mapa e calculam o menor caminho por custo somado (Dijkstra) — convergência rápida, sem loops, ao custo de CPU/memória e disciplina;\nFundamentos que fazem ou quebram: router-id único (use loopback), Hello/timers/MTU iguais entre vizinhos, type=ptp em enlaces ponto a ponto (sem DR), tudo na área 0 enquanto a rede é pequena;\nNo v7: instance → area → interface-template; redes de cliente entram por redistribuição filtrada ou template passivo — nunca OSPF na interface do assinante;\nDiagnóstico: neighbor print (quer Full; 2-Way = área/timers, Exchange preso = MTU), lsa print, route where ospf (distância 110);\nCusto molda o caminho — sempre nos dois sentidos, sob risco de assimetria.\n\nUma área só não escala para dezenas de roteadores nem confina falhas. O próximo capítulo (1) parte a rede em áreas, autentica os enlaces e refina custos e filtros.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>42</span>  <span class='chapter-title'>OSPF: conceitos e configuração</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#bibliografia-do-capítulo",
+    "href": "volumes/v08-roteamento/02-ospf-conceitos-configuracao.html#bibliografia-do-capítulo",
+    "title": "42  OSPF: conceitos e configuração",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção OSPF do RouterOS v7 (MikroTik, 2026);\nRoteamento link-state, Dijkstra e OSPF: (Tanenbaum; Feamster; Wetherall, 2021);\nRouterOS v7 na prática: (Discher, 2016);\nOSPF em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>42</span>  <span class='chapter-title'>OSPF: conceitos e configuração</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/03-ospf-avancado.html",
+    "href": "volumes/v08-roteamento/03-ospf-avancado.html",
+    "title": "43  OSPF avançado: áreas, autenticação e filtros",
+    "section": "",
+    "text": "43.1 Por que múltiplas áreas\nO Capítulo 42 deixou a rede rodando OSPF com tudo na área 0 — o certo enquanto são poucos POPs. Mas o desafio 4 daquele capítulo já avisou: 40 roteadores numa área única viram um mapa gigante que todos recalculam a cada flap, e o ruído de um POP vira problema de todos. Este capítulo resolve isso com o instrumento que o OSPF foi feito para usar: áreas. De quebra, fecha as brechas que uma rede de produção não pode ter — autenticação e filtros.\nNuma área, cada roteador guarda o grafo completo e roda Dijkstra sobre ele. O custo cresce com o tamanho: mais LSAs para inundar, mais memória para o mapa, mais CPU a cada mudança. A solução do OSPF é hierarquia: dividir a rede em áreas que só trocam entre si um resumo, não a topologia inteira.\nO roteador que fica na fronteira de duas áreas é o ABR (Area Border Router). Ele participa das duas, guarda o mapa detalhado de cada uma e anuncia para uma área apenas os prefixos da outra (LSAs tipo 3, summary) — não a topologia crua. Assim, um flap dentro da área 2 gera recálculo só na área 2; para a área 0, o ABR continua anunciando o mesmo prefixo resumido, estável. A falha fica confinada.\nA regra inviolável: toda área não-backbone precisa tocar a área 0. O backbone é o centro da estrela; áreas não conversam entre si direto, sempre via área 0. Uma área que perde contato com a 0 fica isolada (resolve-se com virtual-link, um remendo que o bom projeto evita).",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>43</span>  <span class='chapter-title'>OSPF avançado: áreas, autenticação e filtros</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/03-ospf-avancado.html#por-que-múltiplas-áreas",
+    "href": "volumes/v08-roteamento/03-ospf-avancado.html#por-que-múltiplas-áreas",
+    "title": "43  OSPF avançado: áreas, autenticação e filtros",
+    "section": "",
+    "text": "Cada área é um domínio de inundação próprio. O ABR fica na fronteira, participa da área 0 e da sua área lateral, e resume os prefixos de um lado para o outro. Um flap na área 2 não faz a área 1 recalcular nada — o ABR leste continua anunciando o mesmo resumo.\n\n\nFigura 43.1",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>43</span>  <span class='chapter-title'>OSPF avançado: áreas, autenticação e filtros</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/03-ospf-avancado.html#tipos-de-área-encolhendo-a-tabela-da-ponta",
+    "href": "volumes/v08-roteamento/03-ospf-avancado.html#tipos-de-área-encolhendo-a-tabela-da-ponta",
+    "title": "43  OSPF avançado: áreas, autenticação e filtros",
+    "section": "43.2 Tipos de área: encolhendo a tabela da ponta",
+    "text": "43.2 Tipos de área: encolhendo a tabela da ponta\nUm POP de rádio na ponta da rede não precisa conhecer cada prefixo externo do provedor; ele só precisa saber “para sair, vá pelo ABR”. O OSPF oferece tipos de área que trocam detalhe por simplicidade:\n\nNormal: recebe tudo — prefixos internos (tipo 1/2), sumários de outras áreas (tipo 3) e rotas externas redistribuídas (tipo 5);\nStub: o ABR bloqueia as externas (tipo 5) e injeta no lugar uma rota padrão. O POP para de ver as centenas de rotas de BGP redistribuídas e usa 0.0.0.0/0 → ABR. Tabela menor, CPU menor;\nNSSA (Not-So-Stubby Area): como a stub, mas permite originar externas localmente (tipo 7, convertidas em tipo 5 pelo ABR). É a escolha quando a área de ponta também tem redistribuição própria (ex.: rotas estáticas de um cliente ali).\n\nRegra prática de provedor: áreas de acesso/ponta como stub (ou NSSA se precisarem redistribuir algo local); backbone e áreas de trânsito como normais. Menos LSA na ponta = convergência e memória melhores nos equipamentos mais fracos.\n# no ABR e em todos os roteadores da área: o tipo precisa BATER nos dois lados\n/routing ospf area\nadd name=acesso-radio area-id=0.0.0.2 instance=isp type=stub\n\n\n\n\n\n\nAviso\n\n\n\nO type da área tem de ser idêntico em todos os roteadores da área — se um acha que é stub e o vizinho acha que é normal, a adjacência não forma (o bit E do Hello diverge). É o mesmo tipo de armadilha do MTU no capítulo anterior: divergência silenciosa que só aparece no neighbor print.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>43</span>  <span class='chapter-title'>OSPF avançado: áreas, autenticação e filtros</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/03-ospf-avancado.html#autenticação-ospf-de-produção-não-roda-no-escuro",
+    "href": "volumes/v08-roteamento/03-ospf-avancado.html#autenticação-ospf-de-produção-não-roda-no-escuro",
+    "title": "43  OSPF avançado: áreas, autenticação e filtros",
+    "section": "43.3 Autenticação: OSPF de produção não roda “no escuro”",
+    "text": "43.3 Autenticação: OSPF de produção não roda “no escuro”\nO Capítulo 42 mostrou o ataque: sem autenticação, qualquer um no segmento injeta LSAs e sequestra tráfego. Em produção, todo enlace interno autentica. O v7 configura no interface-template:\n/routing ospf interface-template\nset [find area=backbone] auth=md5 auth-id=1 auth-key=\"Fibr@-P0P-2026\"\n\nauth=md5 (HMAC-MD5) é o mínimo aceitável; prefira quando o hardware suportar chaves mais fortes. Nunca auth=none num enlace que sai do rack;\na chave e o auth-id precisam bater nos dois lados — de novo, a regra de ouro do OSPF é simetria. Chave diferente = adjacência que não fecha.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>43</span>  <span class='chapter-title'>OSPF avançado: áreas, autenticação e filtros</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/03-ospf-avancado.html#contendo-o-flapping-temporizadores-de-spf-e-lsa",
+    "href": "volumes/v08-roteamento/03-ospf-avancado.html#contendo-o-flapping-temporizadores-de-spf-e-lsa",
+    "title": "43  OSPF avançado: áreas, autenticação e filtros",
+    "section": "43.4 Contendo o flapping: temporizadores de SPF e LSA",
+    "text": "43.4 Contendo o flapping: temporizadores de SPF e LSA\nUm enlace que “pisca” gera uma enxurrada de LSAs; cada um dispara um SPF. Os temporizadores amortecem essa rajada, espaçando os recálculos em vez de fazer um por evento:\n/routing ospf instance\nset isp in-filter-chain=ospf-in \\\n    metric-connected=20 \\\n    routing-table=main\n# temporizadores de SPF/LSA moram no instance (throttle exponencial):\n# valor inicial pequeno (reage rápido); teto maior (não recalcula em looping)\nA ideia: o primeiro evento reage quase de imediato (bom para convergência); eventos em sequência aumentam o intervalo exponencialmente até um teto (bom para conter flapping). Combinado com áreas (que já confinam o flap), a rede fica estável mesmo com um enlace ruim num canto.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>43</span>  <span class='chapter-title'>OSPF avançado: áreas, autenticação e filtros</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/03-ospf-avancado.html#filtrando-o-que-entra-e-sai-do-ospf",
+    "href": "volumes/v08-roteamento/03-ospf-avancado.html#filtrando-o-que-entra-e-sai-do-ospf",
+    "title": "43  OSPF avançado: áreas, autenticação e filtros",
+    "section": "43.5 Filtrando o que entra e sai do OSPF",
+    "text": "43.5 Filtrando o que entra e sai do OSPF\nO v7 unificou a filtragem em routing filters — cadeias de regras (iguais em espírito ao firewall) referenciadas por in-filter-chain/out-filter-chain. Dois usos típicos:\n# NÃO redistribua rotas de gestão/loopbacks de terceiros para dentro do OSPF\n/routing filter rule\nadd chain=ospf-out rule=\"if (dst in 100.64.100.0/22) { accept }\"\nadd chain=ospf-out rule=\"if (dst in 10.255.0.0/24) { accept }\"\nadd chain=ospf-out rule=\"reject\"\n\n# NÃO aceite uma rota-padrão vinda de onde não deveria (anti-sequestro)\n/routing filter rule\nadd chain=ospf-in rule=\"if (dst==0.0.0.0/0 && ospf-type==external) { reject }\"\nadd chain=ospf-in rule=\"accept\"\nFiltrar na saída (redistribuição) evita vazar o que não é para rotear; filtrar na entrada protege contra rota indevida (defesa em profundidade, mesmo com autenticação). O tema volta aprofundado no BGP (Capítulo 45), onde os filtros são a peça central.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nÁreas trocam escala por hierarquia: o ABR resume uma área para a outra, e com isso um flap deixa de ser global — vira local. Some a isso stub/NSSA (encolhe a tabela da ponta), autenticação (fecha o sequestro de rota) e temporizadores + filtros (contêm ruído e vazamento), e você tem um OSPF de provedor de verdade. O erro capital é o oposto de tudo isso: uma área só, sem auth, redistribuindo tudo — funciona no lab, colapsa em campo. E lembre da regra que não se dobra: toda área toca a área 0.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>43</span>  <span class='chapter-title'>OSPF avançado: áreas, autenticação e filtros</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/03-ospf-avancado.html#laboratório",
+    "href": "volumes/v08-roteamento/03-ospf-avancado.html#laboratório",
+    "title": "43  OSPF avançado: áreas, autenticação e filtros",
+    "section": "43.6 🧪 Laboratório",
+    "text": "43.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nEstenda o trio do Capítulo 42 para quatro CHRs (Capítulo 5): lab-r1 e lab-r2 formam o backbone (área 0); lab-r1 é ABR para a área 1 (0.0.0.1), onde vive lab-r3; lab-r2 é ABR para a área 2 (0.0.0.2), onde vive lab-r4. Reaproveite os loopbacks 10.255.0.x/32 e enlaces PtP /30 do capítulo anterior, criando as duas novas redes internas (r1–r3 e r2–r4) no VirtualBox.\n\n\n\n43.6.1 Comandos passo a passo\nPasso 1 — declare as áreas nos ABRs. No lab-r1 (backbone + área 1):\n/routing ospf area\nadd name=backbone area-id=0.0.0.0 instance=isp\nadd name=area1     area-id=0.0.0.1 instance=isp\n/routing ospf interface-template\nadd area=backbone networks=172.16.9.0/30 type=ptp auth=md5 auth-id=1 auth-key=\"lab-backbone\"\nadd area=area1     networks=172.16.9.12/30 type=ptp auth=md5 auth-id=1 auth-key=\"lab-area1\"\nNo lab-r2, análogo: backbone + area2 (0.0.0.2). Nos roteadores de ponta (r3, r4), só a sua área lateral.\nPasso 2 — torne a área 2 uma stub. No lab-r2 e no lab-r4:\n/routing ospf area set [find name=area2] type=stub\nPasso 3 — veja as adjacências e o tipo das rotas. Em qualquer nó:\n/routing ospf neighbor print\n/ip route print where ospf\nNos roteadores da área 1 (normal), as rotas da área 2 aparecem como inter-area (tipo 3). No lab-r4 (área stub), confirme que não há externas e que existe uma rota padrão aprendida via OSPF apontando para o ABR.\nPasso 4 — prove o confinamento do flap. No lab-r3 (área 1), suba e derrube o loopback repetidamente:\n/interface disable lo ; :delay 1s ; /interface enable lo\nObserve (com /routing ospf lsa print e o log) que os roteadores da área 2 não recalculam — o ABR lab-r2 continua anunciando o mesmo resumo. O ruído da área 1 ficou na área 1.\nPasso 5 — teste a autenticação. Troque a auth-key de um lado do enlace de backbone e veja a adjacência cair:\n/routing ospf interface-template set [find area=backbone] auth-key=\"errada\"\n/routing ospf neighbor print\nA adjacência some. Restaure a chave e ela volta — a prova de que o enlace só fala com quem tem a chave.\n\n\n43.6.2 Verificação\n\nneighbor print mostra Full no backbone e em cada área lateral;\nRoteador da área normal enxerga prefixos da outra área como inter-area; roteador da área stub vê rota padrão e nenhuma externa;\nFlap na área 1 não dispara SPF na área 2;\nChave de autenticação divergente derruba a adjacência.\n\n\n\n43.6.3 Desafios\n\nVocê criou a area3 (0.0.0.3) num POP novo, mas ela só tem enlace para outra área lateral (a area1), não para a área 0. As rotas não propagam. Explique por quê e liste as duas saídas — a “certa” (reprojeto físico/lógico) e o remendo (virtual-link), com o custo de cada uma.\nUm cliente corporativo na sua área stub precisa originar algumas rotas estáticas para dentro do OSPF. A área stub não deixa. Que tipo de área resolve isso sem abrir mão do resto dos benefícios, e por quê?\nDepois de tornar uma área stub, metade dos roteadores dela perdeu a adjacência. Qual é a causa mais provável (pense no bit E do Hello) e como você confirma?\nSua rede tem 200 prefixos de cliente redistribuídos no OSPF e a CPU dos POPs de ponta vive alta. Descreva duas mudanças de projeto — uma no tipo de área, outra em filtros/sumarização — que derrubam a carga sem perder alcançabilidade.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Toda área não-backbone precisa de contiguidade com a área 0; a area3 tocando só a area1 fica órfã — o OSPF não roteia área↔︎área sem passar pela 0. Saída certa: dar à area3 um enlace (físico ou lógico) até um ABR do backbone, ou reclassificá-la como parte de uma área existente. Remendo: um virtual-link através da area1 (que vira transit area), tunelando a area3 até a 0 — funciona, mas é frágil, depende da area1 estar sempre de pé e complica o diagnóstico. Prefira sempre o reprojeto.\n2. NSSA. Ela mantém o bloqueio das externas vindas de fora (tabela enxuta como a stub), mas permite originar externas locais como LSA tipo 7, que o ABR converte em tipo 5 para o resto da rede. É exatamente o caso “área de ponta que também redistribui algo próprio”.\n3. O type da área não bate em todos os roteadores: os que você marcou como stub têm o bit E=0 no Hello; os que ficaram normal têm E=1 — e Hello com E divergente não forma adjacência. Confirme com /routing ospf area print em cada nó (todos têm de dizer type=stub) e com o neighbor print mostrando quem caiu.\n4. (a) Transformar as áreas de ponta em stub/NSSA: o ABR troca os 200 prefixos por uma rota padrão, e a tabela do POP despenca. (b) Sumarizar no ABR: em vez de vazar 200 rotas específicas, anunciar o agregado (ex.: um /16 que cobre os pools) com um routing filter na redistribuição — menos LSA, menos SPF, mesma alcançabilidade. As duas se somam.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>43</span>  <span class='chapter-title'>OSPF avançado: áreas, autenticação e filtros</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/03-ospf-avancado.html#resumo",
+    "href": "volumes/v08-roteamento/03-ospf-avancado.html#resumo",
+    "title": "43  OSPF avançado: áreas, autenticação e filtros",
+    "section": "43.7 Resumo",
+    "text": "43.7 Resumo\n\nMúltiplas áreas trocam escala por hierarquia: o ABR resume uma área para a outra e confina flaps — mudança dentro de uma área não faz as outras recalcular;\nRegra inviolável: toda área não-backbone toca a área 0;\nTipos de área encolhem a tabela da ponta: stub (sem externas, injeta rota padrão), NSSA (stub que pode originar externas locais); o type tem de ser idêntico em toda a área;\nAutenticação (auth=md5, chave simétrica) fecha o sequestro de rota; temporizadores de SPF/LSA amortecem flapping;\nRouting filters (in/out-filter-chain) evitam vazar e evitam aceitar rota indevida — e sumarizar no ABR derruba a carga.\n\nCom OSPF interno sólido, falta o protocolo que conversa com o mundo de fora: o BGP. O próximo capítulo (Capítulo 44) abre a conexão com a operadora e o IX.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>43</span>  <span class='chapter-title'>OSPF avançado: áreas, autenticação e filtros</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/03-ospf-avancado.html#bibliografia-do-capítulo",
+    "href": "volumes/v08-roteamento/03-ospf-avancado.html#bibliografia-do-capítulo",
+    "title": "43  OSPF avançado: áreas, autenticação e filtros",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção OSPF (áreas, NSSA, autenticação) do RouterOS v7 (MikroTik, 2026);\nHierarquia de áreas, LSAs e SPF: (Tanenbaum; Feamster; Wetherall, 2021);\nConfiguração v7 na prática: (Discher, 2016);\nProjeto OSPF em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>43</span>  <span class='chapter-title'>OSPF avançado: áreas, autenticação e filtros</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/04-bgp-conceitos-peering.html",
+    "href": "volumes/v08-roteamento/04-bgp-conceitos-peering.html",
+    "title": "44  BGP: conceitos e peering",
+    "section": "",
+    "text": "44.1 AS, ASN e a lógica do BGP\nAté agora a rede olhava só para dentro: OSPF distribui o que é seu. Mas para o provedor existir na internet ele precisa anunciar seus prefixos ao mundo e aprender o caminho para todos os outros — isso é trabalho do BGP (Border Gateway Protocol), o protocolo de roteamento entre organizações. Enquanto o OSPF pergunta “qual o menor caminho dentro da minha rede?”, o BGP pergunta “por qual vizinho eu alcanço aquele destino lá fora, e qual política eu aplico a essa escolha?”.\nA internet é um conjunto de Sistemas Autônomos (AS): cada operadora, provedor ou grande empresa é um AS, identificado por um ASN (número de 32 bits, atribuído pelo registro regional — no Brasil, o NIC.br/LACNIC). Seu provedor, para rodar BGP de verdade, precisa de ASN próprio e bloco IP próprio (PI — provider independent).\nO BGP não pensa em “custo de enlace” como o OSPF. Ele pensa em caminhos de AS (AS-path): “para chegar no prefixo X, o caminho passa pelos AS 65010 → 65001 → destino”. A partir daí, aplica política — e é aí que mora a arte. O BGP é um protocolo de policy, não de métrica.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>44</span>  <span class='chapter-title'>BGP: conceitos e peering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#as-asn-e-a-lógica-do-bgp",
+    "href": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#as-asn-e-a-lógica-do-bgp",
+    "title": "44  BGP: conceitos e peering",
+    "section": "",
+    "text": "O provedor (AS 65010) fala eBGP com dois vizinhos externos — uma operadora de trânsito e um par no IX — e iBGP entre seus próprios roteadores de borda, para que os dois concordem sobre o que aprenderam de fora. Anunciar o próprio bloco aos vizinhos é o que coloca o provedor “no mapa” da internet.\n\n\nFigura 44.1",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>44</span>  <span class='chapter-title'>BGP: conceitos e peering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#ebgp-e-ibgp-dois-sabores-um-protocolo",
+    "href": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#ebgp-e-ibgp-dois-sabores-um-protocolo",
+    "title": "44  BGP: conceitos e peering",
+    "section": "44.2 eBGP e iBGP: dois sabores, um protocolo",
+    "text": "44.2 eBGP e iBGP: dois sabores, um protocolo\n\neBGP (external): sessão entre ASNs diferentes — você e a operadora, você e um par no IX. É por aqui que entra a default (ou a tabela cheia) e por onde sai o seu anúncio. TTL curto (vizinho diretamente conectado, em geral);\niBGP (internal): sessão entre roteadores do mesmo AS. Serve para os seus roteadores de borda combinarem o que cada um aprendeu do mundo externo. Regra crucial: o que um roteador aprende por iBGP ele não repassa a outro peer iBGP (prevenção de loop) — por isso iBGP clássico exige malha completa (full mesh) ou um route-reflector quando a rede cresce.\n\nUma sutileza que derruba iniciantes: o iBGP não instala rota se o next-hop não for alcançável pela IGP. É por isso que OSPF e BGP trabalham juntos: o OSPF (capítulo anterior) leva os loopbacks e enlaces internos, e o iBGP roda sobre esses loopbacks. OSPF é o esqueleto; BGP é a pele que toca o mundo.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>44</span>  <span class='chapter-title'>BGP: conceitos e peering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#como-o-bgp-decide",
+    "href": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#como-o-bgp-decide",
+    "title": "44  BGP: conceitos e peering",
+    "section": "44.3 Como o BGP decide",
+    "text": "44.3 Como o BGP decide\nQuando o BGP conhece vários caminhos para o mesmo prefixo, ele escolhe um por uma lista ordenada de critérios. Os que você realmente ajusta no dia a dia:\n\nlocal-preference (maior vence): política de saída — “prefiro sair pela operadora A”. Vale só dentro do seu AS;\nAS-path mais curto (menos ASNs): o desempate “natural” do BGP;\norigem / MED: o MED sugere ao vizinho por qual dos seus enlaces ele deveria entrar — uma dica, que o outro lado pode ignorar;\neBGP sobre iBGP, depois menor custo IGP até o next-hop, e por fim critérios de desempate (menor router-id).\n\nPara influenciar o tráfego que sai, você mexe em local-pref (dentro de casa). Para influenciar o que entra, você trabalha o AS-path prepend e communities (Capítulo 45) — porque a decisão final de entrada é do outro AS, não sua.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>44</span>  <span class='chapter-title'>BGP: conceitos e peering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#configurando-bgp-no-routeros-v7",
+    "href": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#configurando-bgp-no-routeros-v7",
+    "title": "44  BGP: conceitos e peering",
+    "section": "44.4 Configurando BGP no RouterOS v7",
+    "text": "44.4 Configurando BGP no RouterOS v7\nO v7 reescreveu o BGP: some o instance, entram connection (a sessão) e template (parâmetros reutilizáveis). Uma sessão de trânsito eBGP:\n# template com o essencial do NOSSO lado\n/routing bgp template\nadd name=t-transito as=65010 router-id=10.255.0.1 \\\n    output.network=203.0.113.0/24 \\\n    address-families=ip\n\n# a rede que vamos anunciar precisa existir como rota (agregado/estática)\n/ip route add dst-address=203.0.113.0/24 type=blackhole comment=\"agregado anunciado ao BGP\"\n\n# a sessão eBGP com a operadora\n/routing bgp connection\nadd name=operadora template=t-transito \\\n    remote.address=198.51.100.1 remote.as=65001 \\\n    local.role=ebgp\n\nas=65010: seu ASN. remote.as=65001: o da operadora — diferente, logo eBGP;\noutput.network=203.0.113.0/24: o bloco que você anuncia. A rota blackhole correspondente garante que o prefixo exista na tabela (o BGP só anuncia o que ele tem) — o truque padrão do Capítulo 41;\njamais anuncie sem filtro de saída em produção: o Capítulo 45 trata disso. Aqui, o mínimo para a sessão subir.\n\nPara iBGP entre suas bordas, remote.as é o seu próprio ASN e o remote.address é o loopback do par (alcançado via OSPF):\n/routing bgp connection\nadd name=ibgp-borda2 template=t-transito \\\n    remote.address=10.255.0.2 remote.as=65010 \\\n    local.role=ibgp local.address=10.255.0.1",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>44</span>  <span class='chapter-title'>BGP: conceitos e peering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#lendo-e-diagnosticando-a-sessão",
+    "href": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#lendo-e-diagnosticando-a-sessão",
+    "title": "44  BGP: conceitos e peering",
+    "section": "44.5 Lendo e diagnosticando a sessão",
+    "text": "44.5 Lendo e diagnosticando a sessão\n/routing bgp session print\n/ip route print where bgp\nO estado que você quer é established. Se travar, o diagnóstico segue um roteiro curto:\n\nconnect/active sem subir: problema de transporte — não há rota/alcance TCP/179 até o peer (firewall bloqueando, next-hop iBGP sem OSPF), ou o remote.address está errado;\nsobe e cai (idle↔︎established): remote.as divergente, ou temporizadores/multihop mal-configurados;\nestablished mas sem prefixos: filtro barrando (in/out), ou você não declarou output.network, ou o next-hop dos prefixos recebidos é inalcançável (o clássico iBGP sem IGP).\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nBGP não é “OSPF do mundo externo” — é política sobre caminhos de AS. Ele cola ASNs, e você controla o tráfego com atributos, não com custo: local-pref para o que sai, prepend/communities para influenciar o que entra. Duas dependências que, se ignoradas, geram horas de diagnóstico: iBGP precisa da IGP (OSPF) para resolver next-hops, e anúncio sem filtro é acidente esperando acontecer (vazar prefixo alheio já tirou provedores do ar). O BGP dá poder; o próximo capítulo dá a disciplina.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>44</span>  <span class='chapter-title'>BGP: conceitos e peering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#laboratório",
+    "href": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#laboratório",
+    "title": "44  BGP: conceitos e peering",
+    "section": "44.6 🧪 Laboratório",
+    "text": "44.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nTrês CHRs (Capítulo 5) simulando ASNs distintos: lab-r1 = seu provedor (AS 65010), com bloco 203.0.113.0/24; lab-r2 = operadora de trânsito (AS 65001), com um bloco 198.18.0.0/24 para fingir “a internet”; lab-r3 = seu segundo roteador de borda (também AS 65010), para o iBGP. r1–r2 por eBGP; r1–r3 por iBGP sobre loopbacks (rodando OSPF, como no Capítulo 42).\n\n\n\n44.6.1 Comandos passo a passo\nPasso 1 — eBGP com a “operadora”. No lab-r1:\n/ip route add dst-address=203.0.113.0/24 type=blackhole\n/routing bgp connection\nadd name=operadora as=65010 router-id=10.255.0.1 \\\n    remote.address=&lt;ip-r2&gt; remote.as=65001 local.role=ebgp \\\n    output.network=203.0.113.0/24 address-families=ip\nNo lab-r2, o espelho: as=65001, remote.as=65010, anunciando 198.18.0.0/24.\nPasso 2 — a sessão sobe? No lab-r1:\n/routing bgp session print\nEspere established. Se ficar em active, cheque alcance TCP/179 (firewall) e o remote.address.\nPasso 3 — trocaram prefixos? Em cada lado:\n/ip route print where bgp\nO lab-r1 deve ter aprendido 198.18.0.0/24 (via BGP, distância 20) e o lab-r2 deve ter aprendido 203.0.113.0/24. Confirme com um ping entre os blocos.\nPasso 4 — iBGP entre suas bordas. Garanta OSPF de pé entre r1 e r3 (loopbacks 10.255.0.1 e .3 alcançáveis). No lab-r1:\n/routing bgp connection\nadd name=ibgp-r3 as=65010 remote.address=10.255.0.3 remote.as=65010 \\\n    local.role=ibgp local.address=10.255.0.1 address-families=ip\nEspelhe em r3. Confirme que o lab-r3 aprendeu o 198.18.0.0/24 que veio da operadora através do r1 — a prova de que o iBGP propagou o externo por dentro do AS.\nPasso 5 — quebre o next-hop de propósito. No lab-r3, desligue o OSPF por um instante e veja a rota iBGP virar inativa (next-hop inalcançável). Religue o OSPF e ela reativa — a dependência OSPF↔︎iBGP ao vivo.\n\n\n44.6.2 Verificação\n\nsession print mostra established na sessão eBGP e na iBGP;\nlab-r1 aprende o bloco da operadora e vice-versa; ping cruzado passa;\nlab-r3 aprende o prefixo externo via iBGP (sem falar com a operadora diretamente);\nDerrubar a IGP torna a rota iBGP inativa; restaurá-la reativa.\n\n\n\n44.6.3 Desafios\n\nSua sessão eBGP fica em active e nunca sobe. ping para o peer funciona. Liste, em ordem de probabilidade, as causas e o comando que confirma cada uma (pense na porta 179 e no remote.as).\nA sessão iBGP está established, mas o lab-r3 mostra o prefixo externo como rota inativa. Ele não aprendeu errado — está tudo “certo” no BGP. Qual é a peça que falta e por quê?\nVocê tem dois links de trânsito (duas operadoras) e quer que todo o tráfego de saída prefira a operadora A, deixando a B como reserva. Qual atributo você ajusta, em que sentido, e por que ele (e não o AS-path) é a ferramenta certa?\nUm estagiário anunciou, sem filtro de saída, toda a tabela que o roteador tinha — incluindo prefixos da própria operadora aprendidos por BGP. Descreva o estrago (você virou “trânsito” involuntário) e a regra de ouro de filtro de saída que o teria evitado.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. (a) TCP/179 bloqueado — o ping (ICMP) passa, mas o firewall pode barrar a 179; confirme com o contador da regra de firewall. (b) remote.as divergente — o que você configurou não bate com o ASN real do peer; confira com o outro lado. (c) router-id/local.address ausente ou conflitante. O session print costuma trazer a pista no campo de estado/último erro.\n2. O next-hop é inalcançável pela IGP. O iBGP passou o prefixo, mas manteve o next-hop original (o IP da operadora, do outro AS), que o lab-r3 não sabe alcançar por OSPF. Solução: next-hop-self no r1 (reescreve o next-hop para o próprio loopback, que a IGP conhece) — a prática padrão em bordas iBGP.\n3. local-preference, aumentando-o nas rotas aprendidas da operadora A (maior local-pref vence, e ele é avaliado antes do AS-path na decisão). O AS-path não serve aqui porque é um atributo que influencia sobretudo o tráfego de entrada e depende do que os outros ASNs fazem; local-pref é interno e decide o que sai — exatamente o que o enunciado pede.\n4. Ao reanunciar prefixos aprendidos de A para B (e vice-versa), você se ofereceu como trânsito grátis entre as duas operadoras: o tráfego delas passaria a atravessar sua rede, estourando seus links e, pior, podendo desviar tráfego de terceiros (vazamento de rota, um incidente sério e público). Regra de ouro: filtro de saída explícito que só anuncia os SEUS prefixos (e, no IX, os de seus clientes) — reject para todo o resto. É o tema do Capítulo 45.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>44</span>  <span class='chapter-title'>BGP: conceitos e peering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#resumo",
+    "href": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#resumo",
+    "title": "44  BGP: conceitos e peering",
+    "section": "44.7 Resumo",
+    "text": "44.7 Resumo\n\nBGP cola ASNs: cada provedor é um AS (ASN + bloco próprios) e o BGP escolhe caminhos de AS aplicando política, não custo de enlace;\neBGP fala com outro AS (operadora, IX); iBGP alinha seus próprios roteadores — e depende da IGP (OSPF) para resolver next-hops (next-hop-self na borda);\nDecisão: local-pref (o que sai), AS-path, MED (dica de entrada) — para o que entra, trabalha-se prepend/communities;\nNo v7: template + connection (local.role=ebgp|ibgp); anuncie via output.network com a rota (blackhole) correspondente;\nDiagnóstico: session print (established), estados active = transporte/ASN, sem prefixos = filtro ou next-hop inalcançável.\n\nUma sessão que sobe é só o começo: sem filtros, BGP é perigoso. O próximo capítulo (Capítulo 45) transforma o peering em política de verdade — o que anunciar, o que aceitar, e como não virar trânsito de ninguém.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>44</span>  <span class='chapter-title'>BGP: conceitos e peering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#bibliografia-do-capítulo",
+    "href": "volumes/v08-roteamento/04-bgp-conceitos-peering.html#bibliografia-do-capítulo",
+    "title": "44  BGP: conceitos e peering",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção BGP do RouterOS v7 (MikroTik, 2026);\nRoteamento interdomínio, AS-path e política: (Tanenbaum; Feamster; Wetherall, 2021);\nBGP no v7 na prática: (Discher, 2016);\nBGP em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>44</span>  <span class='chapter-title'>BGP: conceitos e peering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "",
+    "text": "45.1 Routing filters: firewall de rotas\nO Capítulo 44 subiu as sessões e já cravou o aviso: BGP sem filtro é perigoso. Anunciar demais transforma você em trânsito de graça; aceitar demais deixa qualquer vizinho sequestrar destinos. Este capítulo é sobre política — a parte do BGP que realmente importa em produção. No v7, tudo passa pelos routing filters, e é neles que se constrói um provedor que não sai no noticiário por vazamento de rota.\nUm routing filter é uma cadeia de regras avaliadas em ordem, do topo para baixo, com a mesma lógica first-match do firewall (Capítulo 16): a primeira regra que casa e decide (accept/reject) encerra. Cada connection referencia uma cadeia de entrada (input.filter) e/ou de saída (output.filter).\nA gramática das regras é uma minilinguagem: condições (if (...)), ações entre chaves e accept/reject/return. Você casa por prefixo (dst in 100.64.0.0/10), por AS-path, por community, e modifica atributos antes de aceitar:",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html#routing-filters-firewall-de-rotas",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html#routing-filters-firewall-de-rotas",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "",
+    "text": "/routing filter rule\nadd chain=bgp-out-transito rule=\"if (dst==203.0.113.0/24) { accept }\"\nadd chain=bgp-out-transito rule=\"reject\"\n\nadd chain=bgp-in-transito \\\n    rule=\"if (dst in 0.0.0.0/0) { set bgp-local-pref 200; accept }\"\n\n\n\n\n\n\nAviso\n\n\n\nToda cadeia de filtro precisa terminar com uma política explícita. Uma cadeia sem reject final tem comportamento de default que varia e já causou vazamentos. Regra de ouro: última linha sempre reject (ou accept) consciente — nunca deixe a decisão ao acaso.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html#o-filtro-de-saída-mínimo-seguro",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html#o-filtro-de-saída-mínimo-seguro",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "45.2 O filtro de saída mínimo seguro",
+    "text": "45.2 O filtro de saída mínimo seguro\nEste é o filtro que todo provedor precisa ter antes de ligar um eBGP em produção. A regra é simples de dizer e crítica de cumprir: anuncie apenas os seus próprios prefixos (e, se você é trânsito de clientes, os deles) — reject para todo o resto.\n/routing filter rule\n# só os prefixos que são MEUS (o bloco PI do provedor)\nadd chain=bgp-out rule=\"if (dst==203.0.113.0/24) { accept }\"\nadd chain=bgp-out rule=\"if (dst==2001:db8:aaaa::/32) { accept }\"\n# tudo mais: NÃO anuncie (nada de reanunciar o que aprendi de trânsito!)\nadd chain=bgp-out rule=\"reject\"\nSem esse reject, um prefixo aprendido da operadora A poderia ser reanunciado para a operadora B — e você vira trânsito involuntário, o incidente descrito no capítulo anterior. O filtro de saída explícito é a cinta de segurança do BGP.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html#o-filtro-de-entrada-bogons-e-o-próprio-bloco",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html#o-filtro-de-entrada-bogons-e-o-próprio-bloco",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "45.3 O filtro de entrada: bogons e o próprio bloco",
+    "text": "45.3 O filtro de entrada: bogons e o próprio bloco\nNa entrada, três higienes valem para qualquer sessão eBGP:\n\nRejeitar bogons — prefixos que nunca deveriam vir de fora: RFC1918 (10/8, 172.16/12, 192.168/16), 100.64/10 (CGNAT), default de quem não deveria mandá-la, prefixos muito específicos (mais longos que /24 em IPv4);\nRejeitar o seu próprio bloco de volta — se alguém te anuncia o 203.0.113.0/24, é erro ou ataque;\nMarcar o que entra com local-pref conforme a política (trânsito com pref menor que peering no IX, por exemplo).\n\n/routing filter rule\nadd chain=bgp-in rule=\"if (dst in 10.0.0.0/8)     { reject }\"\nadd chain=bgp-in rule=\"if (dst in 172.16.0.0/12)  { reject }\"\nadd chain=bgp-in rule=\"if (dst in 192.168.0.0/16) { reject }\"\nadd chain=bgp-in rule=\"if (dst in 100.64.0.0/10)  { reject }\"\nadd chain=bgp-in rule=\"if (dst==203.0.113.0/24)   { reject }\"\nadd chain=bgp-in rule=\"if (dst-len &gt; 24)          { reject }\"\nadd chain=bgp-in rule=\"accept\"",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html#communities-etiquetas-que-disparam-política",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html#communities-etiquetas-que-disparam-política",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "45.4 Communities: etiquetas que disparam política",
+    "text": "45.4 Communities: etiquetas que disparam política\nUma community é uma etiqueta (ASN:valor) que você prende numa rota para sinalizar intenção. Dois papéis:\n\nVocê marca para organizar sua própria política (ex.: 65010:100 = “aprendi no IX”, 65010:200 = “aprendi de trânsito”) e depois decide por community nos filtros;\nA operadora publica communities que você usa para pedir ações a ela: a mais famosa é a blackhole community (RFC 7999, 65535:666), que diz “descarte tudo para este /32” — a defesa padrão contra DDoS: você anuncia o IP atacado com a community de blackhole e a operadora dropa o ataque na borda dela, antes de chegar no seu link.\n\n# marcar na entrada\nadd chain=bgp-in-ix rule=\"set bgp-communities 65010:100; accept\"\n\n# pedir blackhole de um /32 sob ataque para a operadora\n/ip route add dst-address=203.0.113.66/32 type=blackhole\nadd chain=bgp-out rule=\"if (dst==203.0.113.66/32) { set bgp-communities 65535:666; accept }\"\nno-export é outra community bem útil: marca uma rota para não sair do AS vizinho (fica no peering, não vaza adiante).",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html#as-path-prepend-influenciando-o-tráfego-de-entrada",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html#as-path-prepend-influenciando-o-tráfego-de-entrada",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "45.5 AS-path prepend: influenciando o tráfego de entrada",
+    "text": "45.5 AS-path prepend: influenciando o tráfego de entrada\nVocê controla o que sai com local-pref. Mas o tráfego que entra é decidido pelos outros ASNs — e o AS-path é a alavanca. Ao repetir seu próprio ASN no anúncio de um dos links (prepend), você o faz parecer “mais distante”, e os outros passam a preferir o outro link para chegar até você:\n# anunciar pela operadora B com o AS-path alongado -&gt; entrada prefere A\nadd chain=bgp-out-opB \\\n    rule=\"if (dst==203.0.113.0/24) { set bgp-path-prepend 2; accept }\"\nbgp-path-prepend 2 acrescenta seu ASN duas vezes. É a ferramenta de engenharia de tráfego de entrada mais simples — grosseira, mas funciona, e é o que se usa para tirar carga de um link cheio.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nUm filtro de saída lido de cima para baixo: aceita o próprio bloco, trata o caso especial (blackhole com community) e rejeita todo o resto. É a estrutura que impede o vazamento de rota — a decisão nunca “escapa” para um default implícito.\n\n\nFigura 45.1",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html#rpki-e-roa-validação-de-origem-conceitual",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html#rpki-e-roa-validação-de-origem-conceitual",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "45.6 RPKI e ROA: validação de origem (conceitual)",
+    "text": "45.6 RPKI e ROA: validação de origem (conceitual)\nFiltro de prefixo protege você; RPKI protege a internet de você (e de erros alheios). Um ROA (Route Origin Authorization) é um registro assinado que diz “o prefixo P só pode ser originado pelo AS N”. Roteadores com validação RPKI classificam anúncios recebidos como valid, invalid ou unknown, e a boa prática é rejeitar os invalid — barrando sequestros de rota por origem incorreta (o famoso caso em que um AS anuncia prefixo alheio, por erro ou ataque, e desvia tráfego global).\nNo RouterOS v7 há suporte a RPKI (sessão com um validator e uso do resultado nos filtros). O detalhe operacional foge do escopo aqui; o que você precisa levar: crie o ROA do seu bloco no sistema do LACNIC/NIC.br e rejeite invalids nas suas sessões. É barato e evita que seu prefixo seja sequestrado — e que você aceite o sequestro de outro.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nO poder do BGP é político, e a política mora nos filtros. Três peças salvam o provedor: saída = só o que é meu (reject no fim, a cinta de segurança contra vazamento); entrada = higiene (bogons, seu bloco de volta, dst-len grande — fora); e RPKI (crie o ROA, rejeite invalids). Communities e prepend são o ajuste fino — blackhole contra DDoS, prepend para balancear entrada. Quem liga eBGP sem o filtro de saída mínimo não configurou BGP: armou uma bomba de vazamento.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html#laboratório",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html#laboratório",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "45.7 🧪 Laboratório",
+    "text": "45.7 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nReaproveite a topologia do Capítulo 44: lab-r1 (AS 65010, seu provedor, bloco 203.0.113.0/24) em eBGP com lab-r2 (AS 65001, operadora). Adicione um terceiro vizinho eBGP em lab-r1 simulando uma segunda operadora — lab-r3 (AS 65002) — para exercitar seleção de saída e prepend.\n\n\n\n45.7.1 Comandos passo a passo\nPasso 1 — o filtro de saída mínimo. No lab-r1, crie a cadeia e prenda-a nas duas sessões de trânsito:\n/routing filter rule\nadd chain=bgp-out rule=\"if (dst==203.0.113.0/24) { accept }\"\nadd chain=bgp-out rule=\"reject\"\n/routing bgp connection set [find name=operadora] output.filter=bgp-out\nPasso 2 — prove que o vazamento parou. Antes do filtro, anuncie de propósito uma rota extra (add dst-address=198.18.0.0/24 type=blackhole) e veja que ela não aparece mais no advertisements para o vizinho depois do reject:\n/routing bgp advertisements print where peer=operadora\nSó o 203.0.113.0/24 deve sair. O 198.18.0.0/24 foi barrado.\nPasso 3 — filtro de entrada com bogons. Aplique a cadeia bgp-in (bogons + seu bloco de volta) na sessão. No lab-r2, tente anunciar 192.168.50.0/24 e 203.0.113.0/24 de volta:\n/routing bgp connection set [find name=operadora] input.filter=bgp-in\n/ip route print where bgp\nNenhum dos dois deve entrar na tabela do lab-r1.\nPasso 4 — community de blackhole. Coloque um /32 sob “ataque” em blackhole e marque-o para a operadora:\n/ip route add dst-address=203.0.113.66/32 type=blackhole\n/routing filter rule\nadd chain=bgp-out place-before=0 \\\n    rule=\"if (dst==203.0.113.66/32) { set bgp-communities 65535:666; accept }\"\nConfirme no advertisements que o /32 sai com a community.\nPasso 5 — prepend na segunda operadora. Na sessão com lab-r3 (AS 65002), alongue o AS-path do seu anúncio e compare o AS-path visto pelos vizinhos:\n/routing filter rule\nadd chain=bgp-out-r3 rule=\"if (dst==203.0.113.0/24) { set bgp-path-prepend 2; accept }\"\nNo lab-r3, /ip route print detail where bgp deve mostrar o 203.0.113.0/24 com o AS 65010 repetido — logo, ele preferirá chegar até você pela operadora lab-r2.\n\n\n45.7.2 Verificação\n\nApós o filtro de saída, só o seu bloco é anunciado; a rota extra some do advertisements;\nBogons e o próprio bloco de volta não entram pela sessão;\nO /32 de blackhole sai com a community 65535:666;\nO anúncio via segunda operadora mostra AS-path com prepend.\n\n\n\n45.7.3 Desafios\n\nVocê aplicou o filtro de saída, mas esqueceu o reject final da cadeia. O que acontece com um prefixo que não casa nenhuma regra, e por que isso pode virar um vazamento? Escreva a linha que faltou.\nUm cliente seu (que você faz trânsito) precisa que você anuncie o bloco /24 dele para suas operadoras. Como o filtro de saída muda, e que cuidado de segurança (validação) você toma antes de anunciar prefixo de terceiro?\nSob DDoS volumétrico de 20 Gbps num único IP, seu link de 10 Gbps satura e derruba todos os clientes. Explique passo a passo como a blackhole community resolve, onde o tráfego é descartado, e qual é o “preço” dessa mitigação (o que acontece com o IP atacado).\nVocê quer que o tráfego de entrada prefira a operadora A, mas local-pref não muda nada no vizinho. Explique por que local-pref é a ferramenta errada aqui e qual atributo faz o serviço — e por que ele é, ainda assim, apenas uma “sugestão forte”.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Sem reject final, o prefixo que não casa cai no comportamento default da cadeia — que não é garantidamente “negar”. Na prática, uma cadeia incompleta pode aceitar o que deveria barrar, reanunciando rota aprendida de trânsito e causando vazamento. A linha que faltou: add chain=bgp-out rule=\"reject\" como última regra.\n2. O filtro de saída ganha uma regra accept para o /24 do cliente (antes do reject). Antes de anunciar, valide que o bloco é mesmo do cliente e que ele autorizou você a originá-lo: cheque o ROA/RPKI (o ROA deve permitir seu AS ou o dele conforme o desenho) e os registros de rota (IRR). Anunciar prefixo de terceiro sem essa validação é como assinar em nome dos outros — e é assim que sequestros acidentais acontecem.\n3. Você cria uma rota /32 para o IP atacado e a anuncia à operadora com a community 65535:666 (blackhole). A operadora, ao receber, instala um descarte para esse /32 na borda dela — o tráfego de ataque é jogado fora antes de entrar no seu link, que volta a respirar. O preço: aquele IP específico fica inacessível (você sacrifica um endereço para salvar todos os outros clientes). É mitigação de contenção, não de continuidade do serviço atacado.\n4. local-pref só existe dentro do seu AS — ele nunca sai nos anúncios, então o vizinho jamais o vê. Para influenciar entrada, a alavanca é o AS-path prepend (alongar o caminho pelo link que você quer despriorizar) e/ou communities de traffic engineering que a operadora publique. Ainda assim é só uma “sugestão forte”: a decisão final é do outro AS, que pode ter política própria (local-pref dele) que ignore seu prepend.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html#resumo",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html#resumo",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "45.8 Resumo",
+    "text": "45.8 Resumo\n\nRouting filters (v7) são o firewall de rotas: cadeias first-match com accept/reject e ações que modificam atributos; sempre termine com política explícita;\nFiltro de saída mínimo: anuncie só o que é seu, reject no resto — a cinta de segurança contra vazamento/trânsito involuntário;\nFiltro de entrada: barre bogons, seu bloco de volta e prefixos longos demais; marque local-pref por política;\nCommunities sinalizam intenção: 65535:666 (blackhole anti-DDoS), no-export, tags próprias; prepend influencia o tráfego de entrada;\nRPKI/ROA: crie o ROA do seu bloco e rejeite invalids — origem validada barra sequestro de rota.\n\nRoteamento dinâmico dominado — do enlace interno ao peering global. O próximo capítulo (Capítulo 46) fecha o volume com VRF e as boas práticas de tabelas de roteamento no v7, o alicerce para separar serviços (gerência, clientes, trânsito) numa mesma caixa.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/05-bgp-filtros-communities.html#bibliografia-do-capítulo",
+    "href": "volumes/v08-roteamento/05-bgp-filtros-communities.html#bibliografia-do-capítulo",
+    "title": "45  BGP: filtros, communities e segurança",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: Routing filters, BGP e RPKI do RouterOS v7 (MikroTik, 2026);\nPolítica de roteamento e communities: (Tanenbaum; Feamster; Wetherall, 2021);\nFiltros e segurança BGP no v7: (Discher, 2016);\nBoas práticas de peering em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>45</span>  <span class='chapter-title'>BGP: filtros, communities e segurança</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "",
+    "text": "46.1 O problema que a VRF resolve\nO volume construiu o roteamento do provedor camada por camada: estáticas, OSPF, BGP e filtros. Falta a peça que separa mundos dentro de um mesmo equipamento: a VRF (Virtual Routing and Forwarding). Ela deixa uma caixa se comportar como vários roteadores independentes, cada um com sua tabela — indispensável quando gerência, clientes e trânsito precisam conviver sem se enxergar.\nVLANs separam camada 2; firewall separa quem fala com quem. Mas os dois compartilham a mesma tabela de rotas. Há casos em que isso não basta:\nA VRF dá a cada contexto sua própria tabela de rotas e seu próprio espaço de encaminhamento. 192.168.1.10 na VRF-clienteA e o mesmo IP na VRF-clienteB são destinos diferentes — porque vivem em roteadores virtuais diferentes.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#o-problema-que-a-vrf-resolve",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#o-problema-que-a-vrf-resolve",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "",
+    "text": "Sobreposição de endereços: dois clientes usam 192.168.1.0/24 no mesmo BNG. Numa tabela única, é impossível — o roteador não sabe qual 192.168.1.10 é qual;\nIsolamento forte de gerência: você quer uma rede de administração que fisicamente não alcança a internet do cliente, nem por engano de firewall;\nServiços L3 multi-tenant: entregar a clientes corporativos redes privadas isoladas sobre o mesmo backbone (a base de uma L3VPN/MPLS, Volume 11).\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n \n \n\n\n\n \n \n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTrês VRFs numa mesma caixa: cliente-A e cliente-B reusam 192.168.1.0/24 sem conflito, porque cada VRF tem tabela própria. O tráfego só cruza de uma para outra por route leaking explícito — o padrão é o isolamento total.\n\n\nFigura 46.1",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#vrf-routing-tables-e-routing-rules-no-v7",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#vrf-routing-tables-e-routing-rules-no-v7",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "46.2 VRF, routing tables e routing rules no v7",
+    "text": "46.2 VRF, routing tables e routing rules no v7\nO v7 tem três conceitos parecidos que confundem — vale separá-los:\n\n/ip vrf: cria o roteador virtual e associa interfaces a ele. É isolamento de forwarding — cada VRF tem sua FIB;\n/routing table: uma tabela nomeada com fib (para instalar rotas). Toda VRF tem uma tabela associada, mas você também usa tabelas sem VRF para policy routing (mandar tráfego marcado por uma tabela alternativa);\n/routing rule: decide qual tabela consultar para um pacote, por critérios (origem, interface, routing-mark). É o equivalente v7 das antigas routing rules do v6.\n\nRegra mental: VRF isola; routing table + rule direciona. VRF é para “estes mundos não se enxergam”; policy routing é para “este tráfego sai por outro caminho”.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#criando-e-usando-uma-vrf",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#criando-e-usando-uma-vrf",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "46.3 Criando e usando uma VRF",
+    "text": "46.3 Criando e usando uma VRF\n# 1) a VRF e suas interfaces\n/ip vrf\nadd name=gerencia interfaces=ether5\n\n# 2) endereço e rota DENTRO da VRF (note routing-table=gerencia)\n/ip address add address=10.99.0.1/24 interface=ether5\n/ip route add dst-address=0.0.0.0/0 gateway=10.99.0.254%gerencia routing-table=gerencia\nA partir daí, ether5 vive num roteador virtual próprio: seu 0.0.0.0/0 é outro, isolado da tabela main. Um ping originado na gerência não usa a rota da internet do cliente — o isolamento é de encaminhamento, não de firewall.\nPara serviços do próprio roteador (DNS, ping, SSH) saírem por uma VRF, muitos deles aceitam vrf= ou routing-table=; caso contrário, usa-se route leaking.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#route-leaking-vazar-com-controle",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#route-leaking-vazar-com-controle",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "46.4 Route leaking: vazar com controle",
+    "text": "46.4 Route leaking: vazar com controle\nIsolamento total é o padrão, mas às vezes duas VRFs precisam de um caminho pontual (a gerência precisa alcançar um servidor central na VRF de trânsito). O vazamento é feito com rotas que apontam para outra tabela/VRF, sempre explícito e mínimo:\n# levar só a rota do servidor central para dentro da VRF gerencia\n/ip route add dst-address=203.0.113.10/32 \\\n    gateway=&lt;nexthop-na-vrf-transito&gt;@main routing-table=gerencia\nA sintaxe @tabela/%interface diz ao v7 onde resolver o next-hop. A disciplina aqui é a mesma dos filtros de BGP: vaze o mínimo, nomeie o propósito no comment, e nunca “abra tudo” para resolver um caso pontual — isso mata o motivo de existir da VRF.\n\n\n\n\n\n\nAviso\n\n\n\nColocar uma interface numa VRF muda a tabela que o tráfego dela usa. Configurações que assumiam a tabela main (rota padrão, NAT, serviços) param de funcionar até serem replicadas na VRF. Migre uma interface para VRF com console/acesso alternativo garantido — é fácil se trancar para fora.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#policy-routing-tráfego-por-caminho-sem-vrf",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#policy-routing-tráfego-por-caminho-sem-vrf",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "46.5 Policy routing: tráfego por caminho, sem VRF",
+    "text": "46.5 Policy routing: tráfego por caminho, sem VRF\nNem todo direcionamento precisa de VRF. Para “clientes do plano X saem pela operadora B”, basta marcar o tráfego (mangle, Capítulo 20) e mandá-lo por uma tabela alternativa via routing rule:\n/routing table add name=via-opB fib\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;opB&gt; routing-table=via-opB\n/routing rule add src-address=100.64.8.0/22 action=lookup table=via-opB\nAqui não há isolamento de VRF — só uma segunda decisão de rota para um tráfego selecionado. É o que sustenta ECMP/PCC e failover multi-link do Volume 14, e o balanceamento de trânsito do Capítulo 45.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#checklist-de-boas-práticas-de-roteamento-no-v7",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#checklist-de-boas-práticas-de-roteamento-no-v7",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "46.6 Checklist de boas práticas de roteamento no v7",
+    "text": "46.6 Checklist de boas práticas de roteamento no v7\nFechando o volume, o que separa um roteamento de provedor sólido de um frágil:\n\nLoopbacks para tudo: router-id de OSPF/BGP e sessões iBGP sobre /32 de loopback — sobrevivem à queda de uma interface física;\nCamadas na ordem certa: IGP (OSPF) carrega a infraestrutura (loopbacks, enlaces); BGP carrega prefixos de cliente/internet. Não misture — não jogue rota de cliente no OSPF em escala;\nFiltros sempre: OSPF com filtros de redistribuição; BGP com filtro de saída mínimo e de entrada (bogons/RPKI). Nenhuma sessão eBGP sem filtro;\nTabelas e VRFs com propósito nomeado: cada routing table/vrf com comment do porquê; route leaking mínimo;\ncheck-gateway/recursivo onde a detecção de falha importa (Capítulo 41), e temporizadores de SPF/BGP ajustados contra flapping;\nDocumentar o desenho: ASN, blocos, áreas OSPF, comunidades — o Volume 15 retoma isso no desenho de rede fim a fim.\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nVRF isola; policy routing direciona — são respostas a perguntas diferentes. Use VRF quando dois mundos não podem se enxergar (gerência, multi-tenant, endereços sobrepostos); use routing table + rule quando o mesmo mundo precisa sair por caminhos diferentes. Os dois compartilham a mesma disciplina do volume inteiro: isolamento é o padrão, vazamento é exceção explícita e mínima. Roteamento de provedor não é sobre fazer o pacote chegar — é sobre controlar, com política, por onde ele chega.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#laboratório",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#laboratório",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "46.7 🧪 Laboratório",
+    "text": "46.7 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nUm CHR (Capítulo 5) com três interfaces internas: ether5 (gerência), ether6 (cliente-A) e ether7 (cliente-B). Um segundo CHR faz de “servidor central” na tabela main. O objetivo é isolar gerência e provar sobreposição de endereços entre A e B — tudo numa caixa só.\n\n\n\n46.7.1 Comandos passo a passo\nPasso 1 — VRF de gerência isolada.\n/ip vrf add name=gerencia interfaces=ether5\n/ip address add address=10.99.0.1/24 interface=ether5\n/ip route add dst-address=0.0.0.0/0 gateway=10.99.0.254%gerencia routing-table=gerencia\nConfirme que a tabela main não tem essa rota: /ip route print where routing-table=gerencia mostra a rota; /ip route print (main), não.\nPasso 2 — sobreposição de endereços. Ponha A e B em VRFs distintas e dê a ambas o mesmo 192.168.1.0/24:\n/ip vrf add name=cli-a interfaces=ether6\n/ip vrf add name=cli-b interfaces=ether7\n/ip address add address=192.168.1.1/24 interface=ether6\n/ip address add address=192.168.1.1/24 interface=ether7\nSem VRF isso seria rejeitado (endereço duplicado); com VRF, o v7 aceita — cada 192.168.1.1 vive na sua tabela.\nPasso 3 — prove o isolamento. De um host na cli-a, tente pingar um host na cli-b (mesmo IP de rede). Não deve alcançar — são roteadores virtuais diferentes.\nPasso 4 — route leaking controlado. Leve só o servidor central (203.0.113.10/32) para dentro da VRF de gerência:\n/ip route add dst-address=203.0.113.10/32 gateway=&lt;nexthop&gt;@main routing-table=gerencia\nDe um host na gerência, agora o ping ao servidor central passa — mas nada mais da main está acessível. Vazamento mínimo, como manda a regra.\nPasso 5 — policy routing sem VRF. Na tabela main, mande um bloco de clientes sair por um gateway alternativo:\n/routing table add name=via-opB fib\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;opB&gt; routing-table=via-opB\n/routing rule add src-address=100.64.8.0/22 action=lookup table=via-opB\nCom /tool traceroute de um IP dentro e fora do 100.64.8.0/22, observe caminhos de saída diferentes — sem nenhuma VRF envolvida.\n\n\n46.7.2 Verificação\n\nA rota padrão da gerência existe só na tabela gerencia;\nO mesmo 192.168.1.0/24 coexiste em duas VRFs sem erro de duplicado;\nHosts de cli-a e cli-b não se alcançam;\nApós o leak, a gerência alcança só o servidor central;\nO bloco marcado sai por outro gateway (policy routing) sem VRF.\n\n\n\n46.7.3 Desafios\n\nDepois de mover ether5 para a VRF de gerência, você perdeu o acesso ao roteador por essa interface. Explique por que (pense em qual tabela o tráfego de resposta passou a usar) e como você teria evitado o “auto-trancamento”.\nA gerência precisa resolver DNS por um servidor na main. O ping ao IP do DNS (após leak) funciona, mas a resolução de nomes falha. Qual é a peça que ainda falta e por quê?\nQuando escolher VRF e quando escolher routing table + rule para o requisito “clientes do plano premium saem por outro trânsito”? Justifique pela pergunta que cada ferramenta responde.\nUm cliente corporativo quer uma rede privada isolada entre duas filiais, sobre o seu backbone, sem enxergar nem ser enxergado pela internet. Descreva por que VRF é a base e qual tecnologia do Volume 11 a estende de um roteador para toda a rede.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Ao entrar na VRF, ether5 passou a usar a tabela gerencia, que (antes de você configurar) não tinha rota de volta para o seu host de administração — o pacote de resposta não sabia sair. Evita-se configurando a rota/serviço na VRF antes (ou junto) da migração, e sempre com um acesso alternativo garantido (outra interface na main, console) para não depender da interface que está migrando.\n2. O serviço de DNS do roteador precisa saber usar a rota vazada / a VRF certa para alcançar o servidor. O ping funciona porque é tráfego de trânsito comum sujeito às rotas; a resolução do próprio roteador parte de um serviço que, por padrão, usa a tabela main. Falta apontar o resolvedor para sair pela rota correta (leak do /32 do DNS e o serviço configurado para usá-la), ou rodar a resolução dentro do contexto da VRF.\n3. Pergunte “os mundos precisam se enxergar?”. Se o premium é o mesmo cliente/rede que só precisa sair por outro caminho — sem isolamento, sem endereços sobrepostos — a resposta é routing table + rule (policy routing): mais simples, menos coisa para manter. VRF só se houver requisito de isolamento (não devem alcançar os demais) ou sobreposição de endereços. Ferramenta pesada para problema leve vira dívida operacional.\n4. A VRF dá o isolamento local: a rede do cliente vive numa tabela própria, invisível para o resto. Mas uma VRF sozinha morre no roteador onde foi criada. Para levar esse isolamento por todo o backbone — filial A e filial B em roteadores distintos, no mesmo contexto privado — usa-se L3VPN sobre MPLS (Volume 11), que carrega as VRFs entre PEs com labels. VRF é o tijolo; MPLS é a argamassa que a espalha pela rede.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#resumo",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#resumo",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "46.8 Resumo",
+    "text": "46.8 Resumo\n\nVRF = roteador virtual dentro do roteador: tabela e encaminhamento próprios, resolve isolamento forte e endereços sobrepostos que VLAN/firewall não resolvem;\nNo v7: /ip vrf isola (associa interfaces); /routing table + /routing rule direcionam (policy routing) — perguntas diferentes, ferramentas diferentes;\nRoute leaking conecta VRFs de forma explícita e mínima (@tabela/%interface); isolamento é o padrão;\nCuidado operacional: mover interface para VRF muda a tabela dela — garanta acesso alternativo para não se trancar;\nChecklist do volume: loopbacks, IGP para infra + BGP para prefixos, filtros sempre, tabelas/VRFs com propósito nomeado.\n\nFecha-se o Volume 8: a rede do provedor agora roteia com método, do enlace interno ao peering global, com isolamento onde importa. O Volume 9 ataca o problema que todo provedor enfrenta hoje — o esgotamento do IPv4 (CGNAT) e a transição para IPv6.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#bibliografia-do-capítulo",
+    "href": "volumes/v08-roteamento/06-vrf-boas-praticas-v7.html#bibliografia-do-capítulo",
+    "title": "46  VRF e boas práticas de roteamento no v7",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: VRF, Routing tables e Routing rules do RouterOS v7 (MikroTik, 2026);\nRoteamento virtual e L3VPN (fundamentos): (Tanenbaum; Feamster; Wetherall, 2021);\nVRF e policy routing no v7: (Discher, 2016);\nAplicação em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 8 — Roteamento",
+      "<span class='chapter-number'>46</span>  <span class='chapter-title'>VRF e boas práticas de roteamento no v7</span>"
+    ]
+  },
+  {
     "objectID": "referencias.html",
     "href": "referencias.html",
     "title": "Referências",

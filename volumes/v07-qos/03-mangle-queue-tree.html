@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>39&nbsp; Mangle e queue tree: priorizando por tipo de tráfego – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v07-qos/04-pcq-em-escala.html" rel="next">
+<link href="../../volumes/v07-qos/02-burst-planos-velocidade.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v07-qos/01-fundamentos-qos-simple-queues.html">Volume 7 — QoS e controle de banda</a></li><li class="breadcrumb-item"><a href="../../volumes/v07-qos/03-mangle-queue-tree.html"><span class="chapter-number">39</span>&nbsp; <span class="chapter-title">Mangle e queue tree: priorizando por tipo de tráfego</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 4 — Bridge, switching e VLANs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Bridge e hardware offload</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Segmentação da rede do provedor</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 5 — Wireless e enlaces de rádio</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Fundamentos de rádio e regulamentação</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/02-wireless-routeros.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Wireless no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/03-ptp-nstreme-nv2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Enlaces PtP: Nstreme e NV2</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/04-ptmp-rural.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">PtMP rural: a torre que atende dezenas de clientes</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/05-alinhamento-troubleshooting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Alinhamento e troubleshooting de enlaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/06-capsman-wifi-moderno.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">CAPsMAN e o WiFi moderno</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 6 — PPPoE e gestão de assinantes</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v06-pppoe/01-como-funciona-pppoe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">33</span>&nbsp; <span class="chapter-title">Como funciona o PPPoE</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v06-pppoe/02-pppoe-server-profiles-pools.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">34</span>&nbsp; <span class="chapter-title">PPPoE server: profiles, pools e secrets</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v06-pppoe/03-radius-user-manager-gestao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">35</span>&nbsp; <span class="chapter-title">RADIUS, User Manager e gestão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v06-pppoe/04-boas-praticas-concentrador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">36</span>&nbsp; <span class="chapter-title">Boas práticas de concentrador (BNG)</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 7 — QoS e controle de banda</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v07-qos/01-fundamentos-qos-simple-queues.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">37</span>&nbsp; <span class="chapter-title">Fundamentos de QoS e simple queues</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v07-qos/02-burst-planos-velocidade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">38</span>&nbsp; <span class="chapter-title">Burst e planos de velocidade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v07-qos/03-mangle-queue-tree.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">39</span>&nbsp; <span class="chapter-title">Mangle e queue tree: priorizando por tipo de tráfego</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v07-qos/04-pcq-em-escala.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">40</span>&nbsp; <span class="chapter-title">PCQ: controle de banda por assinante em escala</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 8 — Roteamento</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/01-rotas-estaticas-distancia.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">41</span>&nbsp; <span class="chapter-title">Rotas estáticas, distância e failover</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/02-ospf-conceitos-configuracao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">42</span>&nbsp; <span class="chapter-title">OSPF: conceitos e configuração</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/03-ospf-avancado.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">43</span>&nbsp; <span class="chapter-title">OSPF avançado: áreas, autenticação e filtros</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/04-bgp-conceitos-peering.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">44</span>&nbsp; <span class="chapter-title">BGP: conceitos e peering</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/05-bgp-filtros-communities.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">45</span>&nbsp; <span class="chapter-title">BGP: filtros, communities e segurança</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/06-vrf-boas-praticas-v7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">46</span>&nbsp; <span class="chapter-title">VRF e boas práticas de roteamento no v7</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-9" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#marcar-barato-o-padrão-connection-mark-packet-mark" id="toc-marcar-barato-o-padrão-connection-mark-packet-mark" class="nav-link active" data-scroll-target="#marcar-barato-o-padrão-connection-mark-packet-mark"><span class="header-section-number">39.1</span> Marcar barato: o padrão connection-mark → packet-mark</a></li>
+  <li><a href="#queue-tree-o-htb-exposto" id="toc-queue-tree-o-htb-exposto" class="nav-link" data-scroll-target="#queue-tree-o-htb-exposto"><span class="header-section-number">39.2</span> Queue tree: o HTB exposto</a>
+  <ul class="collapse">
+  <li><a href="#onde-pendurar-interface-ou-global" id="toc-onde-pendurar-interface-ou-global" class="nav-link" data-scroll-target="#onde-pendurar-interface-ou-global"><span class="header-section-number">39.2.1</span> Onde pendurar: interface ou global</a></li>
+  </ul></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">39.3</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">39.3.1</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">39.3.2</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">39.3.3</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">39.4</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v07-qos/03-mangle-queue-tree.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v07-qos/01-fundamentos-qos-simple-queues.html">Volume 7 — QoS e controle de banda</a></li><li class="breadcrumb-item"><a href="../../volumes/v07-qos/03-mangle-queue-tree.html"><span class="chapter-number">39</span>&nbsp; <span class="chapter-title">Mangle e queue tree: priorizando por tipo de tráfego</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-queue-tree" class="quarto-section-identifier"><span class="chapter-number">39</span>&nbsp; <span class="chapter-title">Mangle e queue tree: priorizando por tipo de tráfego</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Marcar tráfego com <strong>mangle</strong> usando o padrão de dois passos (connection-mark → packet-mark) sem desperdiçar CPU;</li>
+<li>Explicar o que a <strong>queue tree</strong> faz que a simple queue não faz — e o que ela <em>não</em> faz (limitar por cliente nos dois sentidos numa regra só);</li>
+<li>Construir uma árvore HTB com classes por tipo de tráfego (VoIP, jogos/interativo, navegação, resto) usando <code>priority</code> e <code>limit-at</code>;</li>
+<li>Escolher o ponto de pendura certo (<code>parent=interface</code> vs <code>global</code>) e entender onde cada um enxerga o tráfego;</li>
+<li>Combinar as duas camadas do provedor: plano por assinante (simple queue/PPPoE) + prioridade por tipo (queue tree no agregado).</li>
+</ul>
+</div>
+</div>
+<p>Os capítulos anteriores trataram todos os pacotes de um cliente como iguais: 50M é 50M, seja chamada de voz ou torrent. Mas quando a fila enche, <strong>a ordem de saída importa</strong>: o pacote de VoIP que espera 60 ms atrás de um torrent vira chiado; o torrent que espera 60 ms não vira nada. Priorizar exige duas ferramentas trabalhando juntas: o <strong>mangle</strong> (<a href="../v03-firewall/06-mangle-raw.html" class="quarto-xref"><span>Capítulo 20</span></a>) para <em>classificar</em> — “este pacote é VoIP” — e a <strong>queue tree</strong> para <em>executar</em> — “VoIP sai primeiro”.</p>
+<section id="marcar-barato-o-padrão-connection-mark-packet-mark" class="level2" data-number="39.1">
+<h2 data-number="39.1" class="anchored" data-anchor-id="marcar-barato-o-padrão-connection-mark-packet-mark"><span class="header-section-number">39.1</span> Marcar barato: o padrão connection-mark → packet-mark</h2>
+<p>O mangle marca pacotes, mas inspecionar <strong>cada pacote</strong> contra listas de portas/endereços custa CPU — e o concentrador já vive de CPU contada (<a href="../v06-pppoe/04-boas-praticas-concentrador.html" class="quarto-xref"><span>Capítulo 36</span></a>). O padrão eficiente usa o connection tracking (<a href="../v03-firewall/01-connection-tracking.html" class="quarto-xref"><span>Capítulo 15</span></a>) a favor: classifique <strong>a conexão uma vez</strong>, e herde a marca em todos os pacotes dela:</p>
+<pre class="routeros"><code>/ip firewall mangle
+# 1) classificar a CONEXAO (só pacotes novos chegam aqui)
+add chain=prerouting connection-state=new protocol=udp dst-port=5060,10000-20000 \
+    action=mark-connection new-connection-mark=conn-voip passthrough=yes \
+    comment="SIP + RTP tipico"
+add chain=prerouting connection-state=new protocol=udp dst-port=53 \
+    action=mark-connection new-connection-mark=conn-interativo passthrough=yes \
+    comment="DNS"
+add chain=prerouting connection-state=new protocol=tcp dst-port=80,443 \
+    connection-bytes=0-2000000 action=mark-connection \
+    new-connection-mark=conn-navegacao passthrough=yes \
+    comment="web ate 2 MB (paginas)"
+
+# 2) converter marca de conexao em marca de PACOTE (barato: so le a marca)
+add chain=prerouting connection-mark=conn-voip action=mark-packet \
+    new-packet-mark=pkt-voip passthrough=no
+add chain=prerouting connection-mark=conn-interativo action=mark-packet \
+    new-packet-mark=pkt-interativo passthrough=no
+add chain=prerouting connection-mark=conn-navegacao action=mark-packet \
+    new-packet-mark=pkt-navegacao passthrough=no
+add chain=prerouting action=mark-packet new-packet-mark=pkt-resto \
+    passthrough=no comment="tudo que nao casou acima"</code></pre>
+<p>Três detalhes que separam isso de uma configuração ingênua:</p>
+<ul>
+<li><strong><code>connection-state=new</code></strong> nas regras de classificação: só o primeiro pacote da conexão paga a inspeção de portas; os milhões seguintes casam direto pela <code>connection-mark</code> (uma leitura de memória);</li>
+<li><strong><code>passthrough=yes</code></strong> na marcação de conexão (o pacote continua para as regras seguintes) e <strong><code>passthrough=no</code></strong> na de pacote (marcou, saiu — não desce o resto da lista à toa);</li>
+<li><strong><code>connection-bytes=0-2000000</code></strong> na navegação: os primeiros 2 MB de uma conexão web são “página abrindo” (prioridade); além disso é download grande — a conexão <em>deixa</em> de casar e cai para <code>pkt-resto</code>. Classificação por <strong>comportamento</strong>, não só por porta.</li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Analogia para guardar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O mangle com dois passos é a <strong>triagem do pronto-socorro</strong>: o enfermeiro avalia o paciente <strong>uma vez</strong> na chegada e prende a pulseira colorida (connection-mark); dali em diante, ninguém reavalia — todo atendente decide pela cor da pulseira (packet-mark). A queue tree é a sala de espera que <strong>chama pela cor</strong>: vermelho passa na frente, verde espera. Sem triagem, cada balcão teria que refazer o diagnóstico; sem a chamada por cor, a triagem seria enfeite.</p>
+</div>
+</div>
+</section>
+<section id="queue-tree-o-htb-exposto" class="level2" data-number="39.2">
+<h2 data-number="39.2" class="anchored" data-anchor-id="queue-tree-o-htb-exposto"><span class="header-section-number">39.2</span> Queue tree: o HTB exposto</h2>
+<p>A <strong>queue tree</strong> é o motor HTB sem o açúcar da simple queue: você pendura classes numa interface (ou num ponto global) e cada classe casa pacotes <strong>pela packet-mark</strong>. O que muda em relação à simple queue:</p>
+<div id="tbl-simple-vs-tree" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-simple-vs-tree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;39.1: Simple queue × queue tree
+</figcaption>
+<div aria-describedby="tbl-simple-vs-tree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Simple queue</th>
+<th>Queue tree</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Casa tráfego por</td>
+<td>target (IP/interface)</td>
+<td><strong>packet-mark</strong> (mangle)</td>
+</tr>
+<tr class="even">
+<td>Sentidos</td>
+<td>os dois numa regra</td>
+<td><strong>um</strong> por árvore (a da interface de saída)</td>
+</tr>
+<tr class="odd">
+<td>Hierarquia</td>
+<td>parent opcional</td>
+<td>é a essência (HTB puro)</td>
+</tr>
+<tr class="even">
+<td>Prioridade</td>
+<td>entre filhas do mesmo pai</td>
+<td>idem — e é o motivo de usá-la</td>
+</tr>
+<tr class="odd">
+<td>Ordem de avaliação</td>
+<td>primeira-que-casa</td>
+<td>todas as classes-folha que casarem a marca</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>A árvore para o <strong>sentido download</strong> (saindo pela interface dos clientes) do nosso POP:</p>
+<pre class="routeros"><code>/queue tree
+add name=down-total parent=vlan101-clientes max-limit=90M \
+    comment="teto fisico do enlace de download"
+add name=down-voip parent=down-total packet-mark=pkt-voip \
+    priority=1 limit-at=10M max-limit=20M
+add name=down-interativo parent=down-total packet-mark=pkt-interativo \
+    priority=2 limit-at=5M max-limit=20M
+add name=down-navegacao parent=down-total packet-mark=pkt-navegacao \
+    priority=4 limit-at=30M max-limit=90M
+add name=down-resto parent=down-total packet-mark=pkt-resto \
+    priority=8 limit-at=10M max-limit=90M</code></pre>
+<p>E a espelho para upload (<code>parent=ether1</code>, a WAN — cada sentido tem sua árvore, pendurada na interface por onde <strong>sai</strong>). A leitura do HTB:</p>
+<ul>
+<li>Com folga no <code>down-total</code>, todo mundo flui — prioridade é invisível na abundância;</li>
+<li>Sob saturação, cada classe recebe seu <strong><code>limit-at</code></strong> primeiro (garantias, como no <a href="02-burst-planos-velocidade.html" class="quarto-xref"><span>Capítulo 38</span></a>); a sobra é distribuída <strong>por ordem de <code>priority</code></strong> (1 = primeiro): VoIP enche até 20M antes de a navegação ver um bit da sobra;</li>
+<li><code>pkt-resto</code> com <code>priority=8</code> não morre de fome: o <code>limit-at=10M</code> é o seu piso — prioridade decide a <em>sobra</em>, garantia decide o <em>mínimo</em>.</li>
+</ul>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="348.374296pt" height="136.099198pt" viewbox="-68.014948 -68.014945 348.374296 136.099198">
+<defs>
+<path id="tz_fig_queue_tree_htb_g0-45" d="M2.949938-1.862017C3.02665-1.862017 3.29863-1.862017 3.29863-2.127024C3.29863-2.399004 3.033624-2.399004 2.949938-2.399004H.746202C.669489-2.399004 .397509-2.399004 .397509-2.133998C.397509-1.862017 .662516-1.862017 .746202-1.862017H2.949938Z"></path>
+<path id="tz_fig_queue_tree_htb_g0-97" d="M3.005729-1.966625C3.005729-2.545455 2.552428-3.061519 1.597011-3.061519C1.26924-3.061519 .550934-3.061519 .550934-2.524533C.550934-2.336239 .683437-2.182814 .892653-2.182814C1.025156-2.182814 1.21345-2.266501 1.227397-2.517559C1.227397-2.57335 1.234371-2.580324 1.325031-2.594271C1.401743-2.601245 1.520299-2.601245 1.603985-2.601245C2.175841-2.601245 2.475716-2.343213 2.475716-1.959651C1.729514-1.959651 .369614-1.785305 .369614-.927522C.369614-.411457 .850809 .034869 1.555168 .034869C2.113076 .034869 2.461768-.174346 2.552428-.237111C2.698879-.020922 2.991781 0 3.326526 0C3.514819 0 3.696139 0 3.696139-.230137S3.500872-.460274 3.403238-.460274C3.138232-.460274 3.075467-.481196 3.005729-.509091V-1.966625ZM2.475716-.99726C2.475716-.850809 2.475716-.690411 2.203736-.557908C1.959651-.432379 1.687671-.425405 1.597011-.425405C1.185554-.425405 .899626-.669489 .899626-.927522C.899626-1.297136 1.66675-1.506351 2.475716-1.513325V-.99726Z"></path>
+<path id="tz_fig_queue_tree_htb_g0-105" d="M2.203736-3.891407C2.203736-4.100623 2.036364-4.267995 1.827148-4.267995S1.45056-4.100623 1.45056-3.891407S1.617933-3.514819 1.827148-3.514819S2.203736-3.682192 2.203736-3.891407ZM.913574-3.005729C.808966-3.005729 .606725-3.005729 .606725-2.775592S.81594-2.545455 .913574-2.545455H1.673724V-.460274H.857783C.753176-.460274 .550934-.460274 .550934-.230137S.760149 0 .857783 0H2.908095C3.005729 0 3.214944 0 3.214944-.230137S3.005729-.460274 2.908095-.460274H2.203736V-2.705853C2.203736-2.942964 2.133998-3.005729 1.903861-3.005729H.913574Z"></path>
+<path id="tz_fig_queue_tree_htb_g0-108" d="M2.113076-3.961146C2.113076-4.198257 2.043337-4.261021 1.8132-4.261021H.711333C.606725-4.261021 .404483-4.261021 .404483-4.030884S.613699-3.800747 .711333-3.800747H1.583064V-.460274H.711333C.606725-.460274 .404483-.460274 .404483-.230137S.613699 0 .711333 0H2.984807C3.089415 0 3.291656 0 3.291656-.230137S3.082441-.460274 2.984807-.460274H2.113076V-3.961146Z"></path>
+<path id="tz_fig_queue_tree_htb_g0-109" d="M3.242839-2.099128C3.242839-2.259527 3.242839-3.040598 2.615193-3.040598C2.385056-3.040598 2.099128-2.93599 1.917808-2.698879C1.785305-2.949938 1.590037-3.040598 1.387796-3.040598C1.241345-3.040598 1.011208-2.998755 .795019-2.810461C.753176-3.005729 .592777-3.005729 .488169-3.005729H.265006C.160399-3.005729-.034869-3.005729-.034869-2.775592S.132503-2.545455 .355666-2.545455V-.460274C.132503-.460274-.034869-.460274-.034869-.230137S.160399 0 .265006 0H.878705C.983313 0 1.17858 0 1.17858-.230137S1.011208-.460274 .788045-.460274V-1.680697C.788045-2.259527 1.08792-2.580324 1.366874-2.580324C1.513325-2.580324 1.583064-2.419925 1.583064-2.064259V-.460274C1.513325-.460274 1.311083-.460274 1.311083-.230137S1.506351 0 1.610959 0H2.106102C2.21071 0 2.405978 0 2.405978-.230137S2.238605-.460274 2.015442-.460274V-1.680697C2.015442-2.259527 2.315318-2.580324 2.594271-2.580324C2.740722-2.580324 2.810461-2.419925 2.810461-2.064259V-.460274C2.740722-.460274 2.538481-.460274 2.538481-.230137S2.733748 0 2.838356 0H3.333499C3.438107 0 3.633375 0 3.633375-.230137S3.466002-.460274 3.242839-.460274V-2.099128Z"></path>
+<path id="tz_fig_queue_tree_htb_g0-111" d="M3.312578-1.506351C3.312578-2.357161 2.657036-3.061519 1.84807-3.061519S.383562-2.357161 .383562-1.506351C.383562-.63462 1.053051 .034869 1.84807 .034869S3.312578-.63462 3.312578-1.506351ZM1.84807-.425405C1.345953-.425405 .913574-.920548 .913574-1.555168C.913574-2.161893 1.352927-2.601245 1.84807-2.601245S2.782565-2.161893 2.782565-1.555168C2.782565-.920548 2.350187-.425405 1.84807-.425405Z"></path>
+<path id="tz_fig_queue_tree_htb_g0-112" d="M1.478456 1.548194C1.590037 1.548194 1.778331 1.548194 1.778331 1.318057S1.590037 1.08792 1.478456 1.08792H1.192528V-.292902C1.408717-.083686 1.680697 .034869 1.987547 .034869C2.761644 .034869 3.459029-.620672 3.459029-1.506351C3.459029-2.350187 2.838356-3.040598 2.057285-3.040598C1.729514-3.040598 1.443587-2.922042 1.192528-2.726775C1.192528-3.005729 1.039103-3.005729 .892653-3.005729H.376588C.265006-3.005729 .076712-3.005729 .076712-2.775592S.265006-2.545455 .376588-2.545455H.662516V1.08792H.376588C.265006 1.08792 .076712 1.08792 .076712 1.318057S.265006 1.548194 .376588 1.548194H1.478456ZM1.192528-1.834122C1.192528-2.238605 1.603985-2.580324 2.02939-2.580324C2.517559-2.580324 2.929016-2.106102 2.929016-1.506351C2.929016-.871731 2.454795-.425405 1.966625-.425405C1.45056-.425405 1.192528-1.004234 1.192528-1.352927V-1.834122Z"></path>
+<path id="tz_fig_queue_tree_htb_g0-114" d="M1.57609-1.276214C1.57609-2.036364 2.12005-2.580324 2.796513-2.580324C2.810461-2.308344 3.005729-2.252553 3.11731-2.252553C3.291656-2.252553 3.438107-2.378082 3.438107-2.580324C3.438107-2.75467 3.312578-3.040598 2.768618-3.040598C2.127024-3.040598 1.750436-2.670984 1.57609-2.496638V-2.705853C1.57609-2.942964 1.506351-3.005729 1.276214-3.005729H.516065C.418431-3.005729 .209215-3.005729 .209215-2.775592S.418431-2.545455 .516065-2.545455H1.046077V-.460274H.516065C.418431-.460274 .209215-.460274 .209215-.230137S.418431 0 .516065 0H2.315318C2.426899 0 2.615193 0 2.615193-.230137S2.426899-.460274 2.315318-.460274H1.57609V-1.276214Z"></path>
+<path id="tz_fig_queue_tree_htb_g0-116" d="M1.590037-2.545455H2.705853C2.810461-2.545455 3.005729-2.545455 3.005729-2.775592S2.810461-3.005729 2.705853-3.005729H1.590037V-3.563636C1.590037-3.696139 1.590037-3.863512 1.325031-3.863512S1.060025-3.689166 1.060025-3.563636V-3.005729H.481196C.376588-3.005729 .174346-3.005729 .174346-2.775592S.369614-2.545455 .474222-2.545455H1.060025V-.955417C1.060025-.202242 1.590037 .034869 2.078207 .034869C2.705853 .034869 3.166127-.404483 3.166127-.9066C3.166127-1.143711 2.963885-1.143711 2.901121-1.143711C2.719801-1.143711 2.643088-1.073973 2.636115-.899626C2.622167-.613699 2.371108-.425405 2.106102-.425405C1.590037-.425405 1.590037-.808966 1.590037-.969365V-2.545455Z"></path>
+<path id="tz_fig_queue_tree_htb_g0-121" d="M3.02665-2.545455C3.145205-2.545455 3.333499-2.545455 3.375342-2.559402C3.452055-2.587298 3.521793-2.650062 3.521793-2.775592C3.521793-3.005729 3.319552-3.005729 3.200996-3.005729H2.426899C2.308344-3.005729 2.106102-3.005729 2.106102-2.775592C2.106102-2.75467 2.113076-2.622167 2.231631-2.566376C2.280448-2.545455 2.454795-2.545455 2.57335-2.545455C2.489664-2.315318 2.329265-1.820174 2.217684-1.499377C2.113076-1.17858 1.959651-.718306 1.917808-.54396H1.910834C1.889913-.641594 1.84807-.767123 1.562142-1.520299L1.157659-2.545455C1.262267-2.545455 1.422665-2.545455 1.471482-2.566376C1.534247-2.587298 1.603985-2.657036 1.603985-2.775592C1.603985-3.005729 1.401743-3.005729 1.283188-3.005729H.509091C.390535-3.005729 .188294-3.005729 .188294-2.775592C.188294-2.740722 .202242-2.601245 .334745-2.559402C.376588-2.545455 .571856-2.545455 .690411-2.545455L1.66675-.09066C1.687671-.034869 1.694645-.013948 1.694645 0C1.694645 .020922 1.513325 .578829 1.45056 .704359C1.332005 .941469 1.150685 1.101868 .892653 1.12279L.955417 .990286C.948443 .767123 .795019 .662516 .627646 .662516C.439352 .662516 .299875 .788045 .299875 .99726C.299875 1.276214 .523039 1.583064 .885679 1.583064C1.436613 1.583064 1.799253 1.046077 1.959651 .578829L3.02665-2.545455Z"></path>
+<path id="tz_fig_queue_tree_htb_g1-183" d="M.934496-2.036364C.81594-1.959651 .718306-1.8132 .718306-1.694645C.718306-1.499377 .934496-1.290162 1.12279-1.290162S1.527273-1.499377 1.527273-1.694645C1.527273-1.882939 1.311083-2.099128 1.12279-2.099128C1.073973-2.099128 .990286-2.071233 .934496-2.036364Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-24" d="M3.174097 .107597H2.125031V.546949C2.492653 .546949 3.003736 .609714 3.003736 .995268C3.003736 1.452553 1.95467 1.452553 1.596015 1.452553H1.23736V1.811208H1.766376C4.052802 1.811208 4.052802 1.219427 4.052802 .986301C4.052802 .52005 3.676214 .331756 3.174097 .242092V.107597Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-45" d="M2.932005-1.542217V-2.438854H.116563V-1.542217H2.932005Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-97" d="M4.339726-2.67198C4.339726-3.461021 3.694147-4.061768 2.313325-4.061768C1.802242-4.061768 .654545-4.043836 .654545-3.218929C.654545-2.815442 .959402-2.627148 1.23736-2.627148C1.542217-2.627148 1.820174-2.842341 1.820174-3.209963C1.820174-3.469988 1.667746-3.622416 1.640847-3.649315C1.730511-3.667248 1.945704-3.703113 2.27746-3.703113C2.923039-3.703113 3.29066-3.380324 3.29066-2.67198V-2.385056C1.802242-2.385056 .29589-1.999502 .29589-1.004234C.29589-.116563 1.416687 .053798 2.062267 .053798C2.743711 .053798 3.209963-.242092 3.452055-.663512C3.452055-.430386 3.452055 0 4.411457 0H4.850809C5.021171 0 5.1467 0 5.1467-.224159C5.1467-.439352 5.003238-.439352 4.913574-.439352C4.339726-.448319 4.339726-.537983 4.339726-.753176V-2.67198ZM3.29066-1.246326C3.29066-.304857 2.25056-.304857 2.214695-.304857C1.75741-.304857 1.380822-.600747 1.380822-1.004234C1.380822-1.300125 1.542217-1.999502 3.29066-2.080199V-1.246326Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-99" d="M4.411457-1.0401C4.411457-1.183562 4.276961-1.183562 4.178331-1.183562C3.999004-1.183562 3.999004-1.174595 3.927273-1.0132C3.747945-.582814 3.344458-.331756 2.815442-.331756C1.542217-.331756 1.542217-1.622914 1.542217-2.026401C1.542217-2.564384 1.551183-3.676214 2.725778-3.676214C2.788543-3.676214 3.272727-3.667248 3.272727-3.622416C3.272727-3.61345 3.254795-3.58655 3.245828-3.577584C3.165131-3.478954 3.129265-3.335492 3.129265-3.209963C3.129265-2.842341 3.407223-2.627148 3.71208-2.627148C3.990037-2.627148 4.294894-2.815442 4.294894-3.218929C4.294894-4.061768 3.039601-4.061768 2.689913-4.061768C.968369-4.061768 .349689-2.96787 .349689-1.990535C.349689-.860772 1.156663 .053798 2.645081 .053798C2.976837 .053798 3.416189 0 3.792777-.233126C4.303861-.546949 4.411457-1.0132 4.411457-1.0401Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-100" d="M3.299626-6.150934V-5.711582C3.837609-5.711582 3.90934-5.711582 3.90934-5.361893V-3.631382C3.514819-3.918306 3.0934-4.034869 2.663014-4.034869C1.201494-4.034869 .349689-3.147198 .349689-1.990535C.349689-.798007 1.192528 .053798 2.555417 .053798C3.120299 .053798 3.568618-.161395 3.855542-.394521V.053798L5.514321 0V-.439352C4.976339-.439352 4.904608-.439352 4.904608-.789041V-6.222665L3.299626-6.150934ZM3.855542-.977335C3.658281-.663512 3.227895-.304857 2.654047-.304857C1.542217-.304857 1.542217-1.380822 1.542217-1.972603C1.542217-2.492653 1.551183-2.878207 1.784309-3.209963C2.017435-3.568618 2.447821-3.676214 2.761644-3.676214C3.209963-3.676214 3.577584-3.478954 3.855542-3.129265V-.977335Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-101" d="M4.267995-1.927771C4.456289-1.927771 4.563885-1.927771 4.563885-2.178829C4.563885-2.37609 4.545953-3.165131 3.963138-3.649315C3.559651-3.981071 3.021669-4.061768 2.582316-4.061768C1.049066-4.061768 .29589-3.0934 .29589-2.017435C.29589-.842839 1.183562 .053798 2.707846 .053798C4.187298 .053798 4.563885-.896638 4.563885-1.0401C4.563885-1.219427 4.384558-1.219427 4.33076-1.219427C4.169365-1.219427 4.151432-1.165629 4.097634-1.0401C3.891407-.573848 3.344458-.331756 2.779577-.331756C1.506351-.331756 1.488418-1.488418 1.488418-1.927771H4.267995ZM1.488418-2.25056C1.506351-2.663014 1.551183-3.703113 2.582316-3.703113C3.631382-3.703113 3.667248-2.609215 3.685181-2.25056H1.488418Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-103" d="M1.936737-.762142C1.649813-.762142 1.524284-.762142 1.371856-.878705C1.23736-.995268 1.165629-1.147696 1.165629-1.327024S1.228394-1.596015 1.23736-1.604981C1.569116-1.43462 1.963636-1.371856 2.358157-1.371856C3.730012-1.371856 4.196264-2.116065 4.196264-2.698879C4.196264-3.066501 4.025903-3.362391 3.837609-3.550685C4.079701-3.676214 4.259029-3.694147 4.375592-3.71208C4.366625-3.676214 4.348692-3.622416 4.348692-3.532752C4.348692-3.29066 4.536986-3.129265 4.752179-3.129265C4.94944-3.129265 5.155666-3.272727 5.155666-3.541719C5.155666-3.774844 4.976339-4.088667 4.563885-4.088667C4.124533-4.088667 3.747945-3.873474 3.577584-3.747945C3.200996-3.972105 2.788543-4.034869 2.358157-4.034869C.986301-4.034869 .52005-3.29066 .52005-2.707846C.52005-2.214695 .824907-1.891905 .986301-1.75741C.798007-1.551183 .690411-1.246326 .690411-.977335C.690411-.591781 .878705-.286924 1.066999-.116563C.385554 .071731 .29589 .457285 .29589 .654545C.29589 1.192528 .91457 1.802242 2.645081 1.802242C4.214197 1.802242 5.003238 1.309091 5.003238 .627646C5.003238 .313823 4.886675-.242092 4.267995-.529016C3.747945-.762142 3.272727-.762142 2.385056-.762142H1.936737ZM2.358157-1.730511C1.551183-1.730511 1.551183-2.304359 1.551183-2.698879C1.551183-3.102366 1.551183-3.676214 2.358157-3.676214S3.165131-3.102366 3.165131-2.707846C3.165131-2.304359 3.165131-1.730511 2.358157-1.730511ZM2.887173 .125529C3.165131 .125529 4.20523 .125529 4.20523 .663512C4.20523 .950436 3.873474 1.443587 2.654047 1.443587C1.470486 1.443587 1.093898 .995268 1.093898 .645579C1.093898 .125529 1.667746 .125529 1.802242 .125529H2.887173Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-105" d="M2.15193-5.523288C2.15193-5.989539 1.775342-6.231631 1.452553-6.231631C1.0401-6.231631 .744209-5.881943 .744209-5.532254C.744209-5.155666 1.049066-4.82391 1.452553-4.82391C1.793275-4.82391 2.15193-5.092902 2.15193-5.523288ZM.493151-3.963138V-3.523786C1.0132-3.523786 1.075965-3.523786 1.075965-3.174097V-.439352H.466252V0C1.066999-.017933 1.183562-.026899 1.560149-.026899C1.999502-.026899 2.116065-.017933 2.618182 0V-.439352H2.071233V-4.034869L.493151-3.963138Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-108" d="M2.071233-6.222665L.466252-6.150934V-5.711582C1.004234-5.711582 1.075965-5.711582 1.075965-5.361893V-.439352H.466252V0C1.075965-.026899 1.183562-.026899 1.569116-.026899C1.963636-.026899 2.196762-.017933 2.680946 0V-.439352H2.071233V-6.222665Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-110" d="M5.039103-2.734745C5.039103-3.801743 4.393524-4.034869 3.61345-4.034869C2.510585-4.034869 2.071233-3.227895 2.008468-3.0934H1.999502V-4.034869L.448319-3.963138V-3.523786C.986301-3.523786 1.058032-3.523786 1.058032-3.174097V-.439352H.448319V0C1.111831-.026899 1.219427-.026899 1.578082-.026899C1.945704-.026899 2.035367-.026899 2.716812 0V-.439352H2.107098V-2.27746C2.107098-3.281694 2.932005-3.676214 3.469988-3.676214C3.81071-3.676214 3.990037-3.48792 3.990037-2.815442V-.439352H3.380324V0C4.043836-.026899 4.151432-.026899 4.510087-.026899C4.877709-.026899 4.967372-.026899 5.648817 0V-.439352H5.039103V-2.734745Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-111" d="M5.003238-1.95467C5.003238-3.129265 4.178331-4.061768 2.654047-4.061768C1.075965-4.061768 .29589-3.084433 .29589-1.95467C.29589-.842839 1.102864 .053798 2.645081 .053798C4.250062 .053798 5.003238-.887671 5.003238-1.95467ZM2.654047-.331756C1.488418-.331756 1.488418-1.273225 1.488418-2.0533C1.488418-2.806476 1.488418-3.703113 2.645081-3.703113C3.81071-3.703113 3.81071-2.806476 3.81071-2.0533C3.81071-1.282192 3.81071-.331756 2.654047-.331756Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-112" d="M2.636115 1.300125H2.026401V-.349689C2.555417 .053798 3.048568 .053798 3.218929 .053798C4.62665 .053798 5.532254-.798007 5.532254-1.990535C5.532254-3.174097 4.716314-4.034869 3.362391-4.034869C2.636115-4.034869 2.142964-3.730012 1.972603-3.604483V-4.034869L.367621-3.963138V-3.523786C.546949-3.523786 .690411-3.523786 .806974-3.496887C.977335-3.469988 .977335-3.371357 .977335-3.183064V1.300125H.367621V1.739477C1.031133 1.712578 1.13873 1.712578 1.497385 1.712578C1.865006 1.712578 1.95467 1.712578 2.636115 1.739477V1.300125ZM2.026401-3.0934C2.187796-3.29066 2.609215-3.649315 3.218929-3.649315C3.846575-3.649315 4.339726-3.0934 4.339726-1.999502C4.339726-.753176 3.703113-.304857 3.111333-.304857C2.654047-.304857 2.268493-.564882 2.026401-.932503V-3.0934Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-114" d="M1.972603-1.95467C1.972603-2.609215 2.214695-3.649315 3.084433-3.676214C2.985803-3.577584 2.940971-3.425156 2.940971-3.281694C2.940971-2.887173 3.254795-2.707846 3.505853-2.707846C3.792777-2.707846 4.079701-2.905106 4.079701-3.281694C4.079701-3.738979 3.61345-4.034869 3.084433-4.034869C2.456787-4.034869 2.071233-3.577584 1.873973-3.057534H1.865006V-4.034869L.367621-3.963138V-3.523786C.905604-3.523786 .977335-3.523786 .977335-3.174097V-.439352H.367621V0C1.031133-.026899 1.084932-.026899 1.515318-.026899C1.739477-.026899 2.259527-.026899 2.734745 0V-.439352H1.972603V-1.95467Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-115" d="M3.559651-3.801743C3.559651-3.963138 3.559651-4.061768 3.380324-4.061768C3.29066-4.061768 3.147198-3.990037 2.985803-3.900374C2.698879-4.025903 2.349191-4.061768 2.0533-4.061768C1.775342-4.061768 .349689-4.061768 .349689-2.878207C.349689-1.936737 1.524284-1.739477 1.838107-1.685679C2.57335-1.560149 3.165131-1.461519 3.165131-.950436C3.165131-.304857 2.322291-.304857 2.125031-.304857C1.667746-.304857 1.084932-.42142 .824907-1.246326C.780075-1.398755 .771108-1.425654 .582814-1.425654C.349689-1.425654 .349689-1.371856 .349689-1.156663V-.206227C.349689-.044832 .349689 .053798 .529016 .053798C.591781 .053798 .609714 .053798 .806974-.071731L1.049066-.224159C1.470486 .053798 1.945704 .053798 2.125031 .053798C2.394022 .053798 3.828643 .053798 3.828643-1.255293C3.828643-1.712578 3.568618-1.999502 3.407223-2.133998C3.003736-2.47472 2.716812-2.519552 2.008468-2.636115C1.578082-2.707846 1.0132-2.797509 1.0132-3.200996C1.0132-3.738979 1.847073-3.738979 2.044334-3.738979C3.048568-3.738979 3.084433-3.209963 3.102366-2.96787C3.111333-2.842341 3.236862-2.842341 3.326526-2.842341C3.550685-2.842341 3.559651-2.887173 3.559651-3.102366V-3.801743Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-116" d="M1.999502-3.541719H3.353425V-3.981071H1.999502V-5.693649H1.542217C1.53325-4.850809 1.111831-3.927273 .19726-3.900374V-3.541719H.950436V-1.102864C.950436-.080697 1.838107 .053798 2.394022 .053798C3.0934 .053798 3.523786-.448319 3.523786-1.102864V-1.578082H3.066501V-1.129763C3.066501-.493151 2.743711-.331756 2.519552-.331756C1.999502-.331756 1.999502-.869738 1.999502-1.084932V-3.541719Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-118" d="M4.689415-3.353425C4.752179-3.478954 4.779078-3.541719 5.34396-3.541719V-3.981071C5.092902-3.954172 4.868742-3.954172 4.617684-3.954172C4.357659-3.954172 4.070735-3.954172 3.81071-3.981071V-3.541719C4.061768-3.541719 4.142466-3.496887 4.223163-3.461021C4.214197-3.425156 4.214197-3.407223 4.169365-3.335492L3.0934-1.102864L1.918804-3.541719H2.385056V-3.981071C1.793275-3.963138 1.613948-3.954172 1.282192-3.954172C.959402-3.954172 .780075-3.954172 .251059-3.981071V-3.541719H.81594L2.420922-.206227C2.501619-.035866 2.57335 .044832 2.797509 .044832S3.0934-.035866 3.174097-.206227L4.689415-3.353425Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-119" d="M6.823412-3.344458C6.886177-3.48792 6.90411-3.541719 7.424159-3.541719V-3.981071C7.173101-3.954172 6.948941-3.954172 6.706849-3.954172C6.419925-3.954172 6.141968-3.963138 5.855044-3.981071V-3.541719C5.971606-3.541719 6.177833-3.541719 6.357161-3.461021C6.339228-3.38929 6.339228-3.380324 6.312329-3.317559L5.361893-1.0401L4.321793-3.541719H4.805978V-3.981071C4.375592-3.963138 4.187298-3.954172 3.801743-3.954172C3.71208-3.954172 3.272727-3.954172 2.887173-3.981071V-3.541719H3.407223C3.523786-3.281694 3.523786-3.263761 3.577584-3.129265L2.797509-1.246326L1.838107-3.541719H2.322291V-3.981071C1.721544-3.963138 1.551183-3.954172 1.228394-3.954172C1.022167-3.954172 .690411-3.954172 .233126-3.981071V-3.541719H.753176L2.15193-.188294C2.25056 .044832 2.394022 .044832 2.501619 .044832C2.743711 .044832 2.788543-.053798 2.851308-.206227L3.828643-2.537484L4.805978-.188294C4.904608 .044832 5.039103 .044832 5.155666 .044832C5.263263 .044832 5.406725 .044832 5.505355-.188294L6.823412-3.344458Z"></path>
+<path id="tz_fig_queue_tree_htb_g2-126" d="M4.151432-6.222665C3.936239-5.989539 3.694147-5.890909 3.443088-5.890909C3.245828-5.890909 3.039601-5.944707 2.689913-6.070237C2.411955-6.177833 2.196762-6.222665 2.035367-6.222665C1.649813-6.222665 1.488418-6.052304 1.129763-5.693649C1.049066-5.603985 .932503-5.478456 .887671-5.433624L1.147696-5.182565C1.362889-5.415691 1.604981-5.514321 1.85604-5.514321C2.0533-5.514321 2.259527-5.460523 2.609215-5.334994C2.887173-5.227397 3.102366-5.182565 3.263761-5.182565C3.649315-5.182565 3.81071-5.352927 4.169365-5.711582C4.250062-5.801245 4.366625-5.926775 4.411457-5.971606L4.151432-6.222665Z"></path>
+<path id="tz_fig_queue_tree_htb_g3-48" d="M4.241096-2.86924C4.241096-3.469988 4.214197-4.241096 3.900374-4.913574C3.505853-5.756413 2.824408-5.971606 2.304359-5.971606C1.766376-5.971606 1.084932-5.756413 .690411-4.895641C.403487-4.276961 .358655-3.550685 .358655-2.86924C.358655-2.286426 .376588-1.416687 .762142-.708344C1.183562 .053798 1.882939 .19726 2.295392 .19726C2.878207 .19726 3.541719-.053798 3.918306-.878705C4.187298-1.479452 4.241096-2.15193 4.241096-2.86924ZM2.304359-.026899C2.035367-.026899 1.389788-.152428 1.219427-1.165629C1.129763-1.694645 1.129763-2.465753 1.129763-2.976837C1.129763-3.58655 1.129763-4.294894 1.23736-4.788045C1.416687-5.586052 1.990535-5.747447 2.295392-5.747447C2.636115-5.747447 3.200996-5.56812 3.371357-4.734247C3.469988-4.241096 3.469988-3.541719 3.469988-2.976837C3.469988-2.420922 3.469988-1.667746 3.380324-1.13873C3.19203-.116563 2.528518-.026899 2.304359-.026899Z"></path>
+<path id="tz_fig_queue_tree_htb_g3-57" d="M3.398257-2.824408V-2.627148C3.398257-.439352 2.402989-.053798 1.891905-.053798C1.685679-.053798 1.228394-.089664 .995268-.385554H1.031133C1.102864-.367621 1.452553-.439352 1.452553-.798007C1.452553-1.031133 1.291158-1.210461 1.0401-1.210461S.61868-1.049066 .61868-.780075C.61868-.188294 1.093898 .19726 1.900872 .19726C3.057534 .19726 4.214197-.986301 4.214197-2.949938C4.214197-5.379826 3.138232-5.971606 2.331258-5.971606C1.300125-5.971606 .385554-5.137733 .385554-3.963138C.385554-2.824408 1.210461-1.963636 2.223661-1.963636C2.878207-1.963636 3.236862-2.438854 3.398257-2.824408ZM2.241594-2.187796C2.098132-2.187796 1.65878-2.187796 1.371856-2.743711C1.201494-3.084433 1.201494-3.523786 1.201494-3.954172S1.201494-4.832877 1.389788-5.173599C1.65878-5.630884 2.008468-5.747447 2.331258-5.747447C2.940971-5.747447 3.183064-5.128767 3.218929-5.039103C3.344458-4.707347 3.380324-4.160399 3.380324-3.774844C3.380324-3.120299 3.084433-2.187796 2.241594-2.187796Z"></path>
+<path id="tz_fig_queue_tree_htb_g3-77" d="M6.401993-5.828144L6.410959-5.819178V-.708344C6.410959-.376588 6.393026-.277958 5.702615-.277958H5.496389V0C6.034371-.026899 6.635118-.026899 6.769614-.026899C6.823412-.026899 7.486924-.026899 8.051806 0V-.277958H7.845579C7.155168-.277958 7.137235-.376588 7.137235-.708344V-5.415691C7.137235-5.747447 7.155168-5.846077 7.845579-5.846077H8.051806V-6.124035H6.545455C6.357161-6.124035 6.294396-6.124035 6.231631-5.96264L4.223163-.878705L2.214695-5.926775C2.142964-6.106102 2.133998-6.124035 1.891905-6.124035H.385554V-5.846077H.591781C1.282192-5.846077 1.300125-5.747447 1.300125-5.415691V-.950436C1.300125-.708344 1.300125-.277958 .385554-.277958V0C.878705-.017933 1.004234-.026899 1.443587-.026899C1.873973-.026899 2.008468-.017933 2.492653 0V-.277958C1.578082-.277958 1.578082-.708344 1.578082-.950436V-5.747447L1.587049-5.756413L3.792777-.19726C3.837609-.080697 3.873474 0 3.981071 0C4.079701 0 4.124533-.080697 4.160399-.161395L6.401993-5.828144Z"></path>
+<path id="tz_fig_queue_tree_htb_g3-124" d="M9.208468-2.27746V-2.501619H0V-2.27746H9.208468Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-24" d="M2.259527 .139477H1.708593V.481196C2.175841 .488169 2.350187 .662516 2.350187 .850809C2.350187 1.12279 1.987547 1.227397 1.311083 1.227397H1.060025V1.422665H1.401743C1.408717 1.422665 1.966625 1.422665 2.322291 1.345953C2.608219 1.283188 2.901121 1.164633 2.901121 .850809C2.901121 .571856 2.691905 .390535 2.259527 .320797V.139477Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-40" d="M2.475716-5.230386C1.150685-4.29589 .801993-2.817435 .801993-1.750436C.801993-.767123 1.094894 .760149 2.475716 1.736488C2.531507 1.736488 2.615193 1.736488 2.615193 1.652802C2.615193 1.610959 2.594271 1.597011 2.545455 1.548194C1.617933 .711333 1.276214-.474222 1.276214-1.743462C1.276214-3.626401 1.994521-4.546949 2.566376-5.063014C2.594271-5.090909 2.615193-5.111831 2.615193-5.1467C2.615193-5.230386 2.531507-5.230386 2.475716-5.230386Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-41" d="M.627646-5.230386C.578829-5.230386 .495143-5.230386 .495143-5.1467C.495143-5.111831 .516065-5.090909 .557908-5.042092C1.157659-4.491158 1.827148-3.549689 1.827148-1.750436C1.827148-.292902 1.373848 .808966 .620672 1.492403C.502117 1.610959 .495143 1.617933 .495143 1.652802S.516065 1.736488 .585803 1.736488C.669489 1.736488 1.332005 1.276214 1.792279 .404483C2.099128-.174346 2.30137-.927522 2.30137-1.743462C2.30137-2.726775 2.008468-4.254047 .627646-5.230386Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-45" d="M2.189788-1.262267V-1.736488H.139477V-1.262267H2.189788Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-48" d="M3.598506-2.224658C3.598506-2.991781 3.507846-3.542715 3.187049-4.030884C2.970859-4.351681 2.538481-4.630635 1.980573-4.630635C.36264-4.630635 .36264-2.726775 .36264-2.224658S.36264 .139477 1.980573 .139477S3.598506-1.72254 3.598506-2.224658ZM1.980573-.055791C1.659776-.055791 1.234371-.244085 1.094894-.81594C.99726-1.227397 .99726-1.799253 .99726-2.315318C.99726-2.824408 .99726-3.354421 1.101868-3.737983C1.248319-4.288917 1.694645-4.435367 1.980573-4.435367C2.357161-4.435367 2.719801-4.20523 2.84533-3.800747C2.956912-3.424159 2.963885-2.922042 2.963885-2.315318C2.963885-1.799253 2.963885-1.283188 2.873225-.843836C2.733748-.209215 2.259527-.055791 1.980573-.055791Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-49" d="M2.336239-4.435367C2.336239-4.623661 2.322291-4.630635 2.127024-4.630635C1.680697-4.191283 1.046077-4.184309 .760149-4.184309V-3.93325C.927522-3.93325 1.387796-3.93325 1.771357-4.128518V-.571856C1.771357-.341719 1.771357-.251059 1.073973-.251059H.808966V0C.934496-.006974 1.792279-.027895 2.050311-.027895C2.266501-.027895 3.145205-.006974 3.29863 0V-.251059H3.033624C2.336239-.251059 2.336239-.341719 2.336239-.571856V-4.435367Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-50" d="M3.521793-1.26924H3.284682C3.263761-1.115816 3.194022-.704359 3.103362-.63462C3.047572-.592777 2.510585-.592777 2.412951-.592777H1.129763C1.862017-1.241345 2.106102-1.436613 2.524533-1.764384C3.040598-2.175841 3.521793-2.608219 3.521793-3.270735C3.521793-4.11457 2.782565-4.630635 1.889913-4.630635C1.025156-4.630635 .439352-4.02391 .439352-3.382316C.439352-3.02665 .739228-2.991781 .808966-2.991781C.976339-2.991781 1.17858-3.110336 1.17858-3.361395C1.17858-3.486924 1.129763-3.731009 .767123-3.731009C.983313-4.226152 1.457534-4.379577 1.785305-4.379577C2.48269-4.379577 2.84533-3.835616 2.84533-3.270735C2.84533-2.66401 2.412951-2.182814 2.189788-1.931756L.509091-.27198C.439352-.209215 .439352-.195268 .439352 0H3.312578L3.521793-1.26924Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-51" d="M1.903861-2.329265C2.447821-2.329265 2.838356-1.952677 2.838356-1.206476C2.838356-.341719 2.336239-.083686 1.931756-.083686C1.652802-.083686 1.039103-.160399 .746202-.571856C1.073973-.585803 1.150685-.81594 1.150685-.962391C1.150685-1.185554 .983313-1.345953 .767123-1.345953C.571856-1.345953 .376588-1.227397 .376588-.941469C.376588-.285928 1.101868 .139477 1.945704 .139477C2.915068 .139477 3.584558-.509091 3.584558-1.206476C3.584558-1.750436 3.138232-2.294396 2.371108-2.454795C3.103362-2.719801 3.368369-3.242839 3.368369-3.668244C3.368369-4.219178 2.733748-4.630635 1.959651-4.630635S.592777-4.254047 .592777-3.696139C.592777-3.459029 .746202-3.326526 .955417-3.326526C1.171606-3.326526 1.311083-3.486924 1.311083-3.682192C1.311083-3.884433 1.171606-4.030884 .955417-4.044832C1.199502-4.351681 1.680697-4.428394 1.93873-4.428394C2.252553-4.428394 2.691905-4.274969 2.691905-3.668244C2.691905-3.375342 2.594271-3.054545 2.412951-2.838356C2.182814-2.57335 1.987547-2.559402 1.638854-2.538481C1.464508-2.524533 1.45056-2.524533 1.415691-2.517559C1.401743-2.517559 1.345953-2.503611 1.345953-2.426899C1.345953-2.329265 1.408717-2.329265 1.527273-2.329265H1.903861Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-52" d="M3.689166-1.143711V-1.39477H2.915068V-4.505106C2.915068-4.651557 2.915068-4.700374 2.761644-4.700374C2.677958-4.700374 2.650062-4.700374 2.580324-4.60274L.27198-1.39477V-1.143711H2.322291V-.571856C2.322291-.334745 2.322291-.251059 1.75741-.251059H1.569116V0C1.917808-.013948 2.364134-.027895 2.615193-.027895C2.873225-.027895 3.319552-.013948 3.668244 0V-.251059H3.47995C2.915068-.251059 2.915068-.334745 2.915068-.571856V-1.143711H3.689166ZM2.371108-3.947198V-1.39477H.530012L2.371108-3.947198Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-53" d="M1.080946-3.891407C1.436613-3.800747 1.645828-3.800747 1.75741-3.800747C2.677958-3.800747 3.221918-4.428394 3.221918-4.533001C3.221918-4.609714 3.173101-4.630635 3.138232-4.630635C3.124284-4.630635 3.110336-4.630635 3.082441-4.609714C2.915068-4.546949 2.545455-4.407472 2.02939-4.407472C1.834122-4.407472 1.464508-4.42142 1.011208-4.595766C.941469-4.630635 .927522-4.630635 .920548-4.630635C.829888-4.630635 .829888-4.553923 .829888-4.442341V-2.385056C.829888-2.266501 .829888-2.182814 .941469-2.182814C1.004234-2.182814 1.011208-2.196762 1.080946-2.280448C1.380822-2.66401 1.806227-2.719801 2.050311-2.719801C2.468742-2.719801 2.657036-2.385056 2.691905-2.329265C2.817435-2.099128 2.859278-1.834122 2.859278-1.429639C2.859278-1.220423 2.859278-.808966 2.650062-.502117C2.475716-.251059 2.175841-.083686 1.834122-.083686C1.380822-.083686 .913574-.334745 .739228-.795019C1.004234-.774097 1.136737-.948443 1.136737-1.136737C1.136737-1.436613 .878705-1.492403 .788045-1.492403C.774097-1.492403 .439352-1.492403 .439352-1.115816C.439352-.488169 1.011208 .139477 1.84807 .139477C2.740722 .139477 3.521793-.523039 3.521793-1.401743C3.521793-2.189788 2.922042-2.915068 2.057285-2.915068C1.750436-2.915068 1.387796-2.838356 1.080946-2.57335V-3.891407Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-56" d="M2.475716-2.517559C3.019676-2.782565 3.368369-3.110336 3.368369-3.591532C3.368369-4.267995 2.66401-4.630635 1.987547-4.630635C1.220423-4.630635 .592777-4.128518 .592777-3.466002C.592777-3.138232 .746202-2.901121 .871731-2.761644C.99726-2.615193 1.046077-2.587298 1.457534-2.343213C1.066999-2.175841 .376588-1.799253 .376588-1.066999C.376588-.292902 1.17858 .139477 1.973599 .139477C2.859278 .139477 3.584558-.425405 3.584558-1.17858C3.584558-1.638854 3.312578-2.02939 2.908095-2.266501C2.817435-2.322291 2.57335-2.461768 2.475716-2.517559ZM1.338979-3.180075C1.157659-3.284682 .962391-3.472976 .962391-3.731009C.962391-4.170361 1.471482-4.428394 1.973599-4.428394C2.517559-4.428394 2.998755-4.086675 2.998755-3.591532C2.998755-2.970859 2.273474-2.657036 2.259527-2.657036S2.231631-2.66401 2.182814-2.691905L1.338979-3.180075ZM1.680697-2.21071L2.636115-1.659776C2.817435-1.555168 3.166127-1.345953 3.166127-.934496C3.166127-.411457 2.587298-.083686 1.987547-.083686C1.345953-.083686 .795019-.495143 .795019-1.066999C.795019-1.583064 1.17858-1.980573 1.680697-2.21071Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-57" d="M2.915068-2.078207C2.915068-.348692 2.057285-.083686 1.638854-.083686C1.48543-.083686 1.115816-.097634 .927522-.313823C1.21345-.341719 1.234371-.578829 1.234371-.641594C1.234371-.81594 1.115816-.969365 .9066-.969365S.571856-.829888 .571856-.627646C.571856-.153425 .969365 .139477 1.645828 .139477C2.643088 .139477 3.584558-.801993 3.584558-2.294396C3.584558-4.02391 2.817435-4.630635 2.001494-4.630635C1.771357-4.630635 1.290162-4.595766 .892653-4.20523C.655542-3.975093 .376588-3.703113 .376588-3.075467C.376588-2.189788 1.080946-1.534247 1.896887-1.534247C2.454795-1.534247 2.75467-1.903861 2.915068-2.217684V-2.078207ZM1.931756-1.729514C1.659776-1.729514 1.401743-1.820174 1.206476-2.140971C1.046077-2.399004 1.046077-2.691905 1.046077-3.075467C1.046077-3.47995 1.046077-3.758904 1.248319-4.037858C1.415691-4.281943 1.645828-4.428394 2.008468-4.428394C2.364134-4.428394 2.57335-4.20523 2.684932-4.02391C2.873225-3.731009 2.894147-3.242839 2.894147-2.998755C2.894147-2.092154 2.371108-1.729514 1.931756-1.729514Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-58" d="M1.527273-2.601245C1.527273-2.84533 1.332005-3.005729 1.129763-3.005729C.885679-3.005729 .72528-2.810461 .72528-2.608219C.72528-2.364134 .920548-2.203736 1.12279-2.203736C1.366874-2.203736 1.527273-2.399004 1.527273-2.601245ZM1.527273-.397509C1.527273-.641594 1.332005-.801993 1.129763-.801993C.885679-.801993 .72528-.606725 .72528-.404483C.72528-.160399 .920548 0 1.12279 0C1.366874 0 1.527273-.195268 1.527273-.397509Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-59" d="M1.527273-2.601245C1.527273-2.84533 1.332005-3.005729 1.129763-3.005729C.885679-3.005729 .72528-2.810461 .72528-2.608219C.72528-2.364134 .920548-2.203736 1.12279-2.203736C1.366874-2.203736 1.527273-2.399004 1.527273-2.601245ZM1.352927-.062765C1.345953 .432379 1.17858 .822914 .871731 1.164633C.829888 1.206476 .822914 1.220423 .822914 1.248319C.822914 1.290162 .871731 1.352927 .920548 1.352927C1.011208 1.352927 1.548194 .788045 1.548194-.055791C1.548194-.292902 1.513325-.801993 1.12279-.801993C.857783-.801993 .72528-.592777 .72528-.404483C.72528-.209215 .850809 0 1.129763 0C1.248319 0 1.325031-.048817 1.352927-.062765Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-61" d="M5.355915-2.343213C5.460523-2.343213 5.620922-2.343213 5.620922-2.517559C5.620922-2.684932 5.453549-2.684932 5.362889-2.684932H.746202C.655542-2.684932 .488169-2.684932 .488169-2.517559C.488169-2.343213 .648568-2.343213 .753176-2.343213H5.355915ZM5.362889-.808966C5.453549-.808966 5.620922-.808966 5.620922-.976339C5.620922-1.150685 5.460523-1.150685 5.355915-1.150685H.753176C.648568-1.150685 .488169-1.150685 .488169-.976339C.488169-.808966 .655542-.808966 .746202-.808966H5.362889Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-77" d="M1.917808-4.609714C1.855044-4.763138 1.799253-4.763138 1.652802-4.763138H.432379V-4.51208H.599751C1.136737-4.51208 1.150685-4.442341 1.150685-4.198257V-.753176C1.150685-.564882 1.150685-.251059 .432379-.251059V0C.718306-.020922 .99726-.027895 1.283188-.027895S1.84807-.020922 2.133998 0V-.251059C1.415691-.251059 1.415691-.564882 1.415691-.753176V-4.428394L1.422665-4.435367L3.235866-.160399C3.270735-.076712 3.305604 0 3.410212 0C3.459029 0 3.521793-.020922 3.577584-.146451L5.41868-4.505106L5.425654-4.498132V-.564882C5.425654-.327771 5.411706-.251059 4.87472-.251059H4.707347V0C5.042092-.013948 5.432628-.027895 5.718555-.027895S6.395019-.013948 6.729763 0V-.251059H6.562391C6.025405-.251059 6.011457-.320797 6.011457-.564882V-4.198257C6.011457-4.435367 6.025405-4.51208 6.562391-4.51208H6.729763V-4.763138H5.516314C5.376837-4.763138 5.314072-4.763138 5.258281-4.623661L3.584558-.669489L1.917808-4.609714Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-97" d="M3.110336-1.868991C3.110336-2.238605 3.110336-2.503611 2.789539-2.761644C2.503611-2.998755 2.168867-3.110336 1.75741-3.110336C1.094894-3.110336 .627646-2.859278 .627646-2.433873C.627646-2.21071 .781071-2.092154 .962391-2.092154C1.150685-2.092154 1.290162-2.231631 1.290162-2.419925C1.290162-2.538481 1.234371-2.684932 1.046077-2.740722C1.297136-2.915068 1.701619-2.915068 1.743462-2.915068C2.133998-2.915068 2.559402-2.657036 2.559402-2.071233V-1.855044C2.175841-1.841096 1.715567-1.820174 1.206476-1.63188C.578829-1.401743 .383562-1.018182 .383562-.704359C.383562-.104608 1.108842 .069738 1.603985 .069738C2.161893 .069738 2.489664-.244085 2.636115-.516065C2.66401-.230137 2.852304 .034869 3.173101 .034869C3.187049 .034869 3.863512 .034869 3.863512-.627646V-1.011208H3.626401V-.63462C3.626401-.564882 3.626401-.230137 3.368369-.230137S3.110336-.557908 3.110336-.648568V-1.868991ZM2.559402-.983313C2.559402-.313823 1.973599-.125529 1.659776-.125529C1.30411-.125529 .969365-.36264 .969365-.704359C.969365-1.08792 1.30411-1.624907 2.559402-1.673724V-.983313Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-98" d="M1.387796-4.839851L.341719-4.763138V-4.51208C.81594-4.51208 .864757-4.456289 .864757-4.107597V0H1.101868L1.345953-.425405C1.610959-.076712 1.994521 .069738 2.364134 .069738C3.284682 .069738 4.072727-.620672 4.072727-1.506351C4.072727-2.357161 3.354421-3.075467 2.440847-3.075467C2.022416-3.075467 1.638854-2.908095 1.387796-2.657036V-4.839851ZM1.415691-2.336239C1.610959-2.657036 1.987547-2.880199 2.405978-2.880199C2.796513-2.880199 3.075467-2.657036 3.214944-2.447821C3.354421-2.245579 3.438107-1.973599 3.438107-1.513325C3.438107-1.352927 3.438107-.829888 3.152179-.502117C2.873225-.188294 2.531507-.125529 2.329265-.125529C1.771357-.125529 1.492403-.564882 1.415691-.711333V-2.336239Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-99" d="M2.712827-2.782565C2.587298-2.726775 2.517559-2.615193 2.517559-2.475716C2.517559-2.287422 2.650062-2.147945 2.84533-2.147945C3.033624-2.147945 3.180075-2.266501 3.180075-2.489664C3.180075-3.110336 2.21071-3.110336 2.015442-3.110336C.969365-3.110336 .320797-2.308344 .320797-1.506351C.320797-.627646 1.066999 .069738 1.980573 .069738C3.019676 .069738 3.263761-.753176 3.263761-.836862S3.173101-.920548 3.145205-.920548C3.054545-.920548 3.047572-.899626 3.012702-.801993C2.859278-.369614 2.489664-.153425 2.064259-.153425C1.583064-.153425 .955417-.509091 .955417-1.513325C.955417-2.399004 1.387796-2.887173 2.036364-2.887173C2.127024-2.887173 2.461768-2.887173 2.712827-2.782565Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-100" d="M2.48269-4.763138V-4.51208C2.949938-4.51208 3.005729-4.463263 3.005729-4.121544V-2.677958C2.747696-2.929016 2.412951-3.075467 2.02939-3.075467C1.101868-3.075467 .320797-2.378082 .320797-1.499377C.320797-.627646 1.060025 .069738 1.945704 .069738C2.517559 .069738 2.859278-.237111 2.977833-.36264V.069738L4.051806 0V-.251059C3.584558-.251059 3.528767-.299875 3.528767-.641594V-4.839851L2.48269-4.763138ZM2.977833-.732254C2.796513-.404483 2.440847-.125529 1.987547-.125529C1.597011-.125529 1.318057-.355666 1.17858-.557908C1.039103-.767123 .955417-1.046077 .955417-1.492403C.955417-1.652802 .955417-2.175841 1.241345-2.503611C1.520299-2.817435 1.862017-2.880199 2.064259-2.880199C2.399004-2.880199 2.698879-2.726775 2.894147-2.475716C2.977833-2.364134 2.977833-2.357161 2.977833-2.224658V-.732254Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-101" d="M3.068493-1.590037C3.214944-1.590037 3.263761-1.590037 3.263761-1.743462C3.263761-2.357161 2.922042-3.110336 1.882939-3.110336C.969365-3.110336 .27198-2.385056 .27198-1.527273C.27198-.641594 1.046077 .069738 1.973599 .069738C2.915068 .069738 3.263761-.683437 3.263761-.836862C3.263761-.864757 3.249813-.934496 3.145205-.934496C3.054545-.934496 3.040598-.892653 3.019676-.822914C2.803487-.258032 2.273474-.153425 2.022416-.153425C1.694645-.153425 1.380822-.299875 1.171606-.564882C.913574-.892653 .9066-1.318057 .9066-1.590037H3.068493ZM.913574-1.771357C.990286-2.75467 1.617933-2.915068 1.882939-2.915068C2.740722-2.915068 2.768618-1.945704 2.775592-1.771357H.913574Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-102" d="M1.436613-2.75467H2.308344V-3.005729H1.408717V-3.7868C1.408717-4.42142 1.785305-4.714321 2.085181-4.714321C2.147945-4.714321 2.217684-4.700374 2.287422-4.679452C2.189788-4.623661 2.133998-4.51208 2.133998-4.400498C2.133998-4.212204 2.266501-4.079701 2.454795-4.079701S2.775592-4.212204 2.775592-4.400498C2.775592-4.700374 2.475716-4.909589 2.092154-4.909589C1.54122-4.909589 .913574-4.519054 .913574-3.7868V-3.005729H.313823V-2.75467H.913574V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.425405 0 .899626-.027895 1.185554-.027895C1.48543-.027895 1.792279-.013948 2.092154 0V-.251059H1.952677C1.436613-.251059 1.436613-.327771 1.436613-.564882V-2.75467Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-104" d="M3.591532-2.113076C3.591532-2.719801 3.291656-3.075467 2.545455-3.075467C1.924782-3.075467 1.583064-2.705853 1.429639-2.440847H1.422665V-4.839851L.376588-4.763138V-4.51208C.843836-4.51208 .899626-4.463263 .899626-4.121544V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-2.113076Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-105" d="M1.471482-4.302864C1.471482-4.505106 1.30411-4.700374 1.066999-4.700374C.857783-4.700374 .669489-4.533001 .669489-4.302864C.669489-4.051806 .871731-3.898381 1.066999-3.898381C1.290162-3.898381 1.471482-4.072727 1.471482-4.302864ZM.411457-2.998755V-2.747696C.850809-2.747696 .913574-2.705853 .913574-2.364134V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.415691-.027895 1.66675-.020922 1.910834 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.54396V-3.075467L.411457-2.998755Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-108" d="M1.436613-4.839851L.390535-4.763138V-4.51208C.857783-4.51208 .913574-4.463263 .913574-4.121544V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.436613-.027895 1.694645-.020922 1.959651 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.550934V-4.839851Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-109" d="M5.732503-2.113076C5.732503-2.719801 5.432628-3.075467 4.686426-3.075467C4.135492-3.075467 3.758904-2.775592 3.57061-2.426899C3.431133-2.922042 3.054545-3.075467 2.545455-3.075467C1.973599-3.075467 1.603985-2.761644 1.408717-2.399004H1.401743V-3.075467L.376588-2.998755V-2.747696C.843836-2.747696 .899626-2.698879 .899626-2.357161V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-1.806227C3.591532-2.538481 4.170361-2.880199 4.630635-2.880199C5.118804-2.880199 5.181569-2.496638 5.181569-2.140971V-.550934C5.181569-.251059 5.111831-.251059 4.658531-.251059V0C4.672478 0 5.160648-.027895 5.453549-.027895C5.711582-.027895 6.192777-.006974 6.255542 0V-.251059C5.802242-.251059 5.732503-.251059 5.732503-.550934V-2.113076Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-110" d="M3.591532-2.113076C3.591532-2.719801 3.291656-3.075467 2.545455-3.075467C1.973599-3.075467 1.603985-2.761644 1.408717-2.399004H1.401743V-3.075467L.376588-2.998755V-2.747696C.843836-2.747696 .899626-2.698879 .899626-2.357161V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-2.113076Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-111" d="M3.689166-1.48543C3.689166-2.357161 2.942964-3.110336 1.980573-3.110336S.27198-2.357161 .27198-1.48543C.27198-.620672 1.039103 .069738 1.980573 .069738S3.689166-.620672 3.689166-1.48543ZM1.980573-.153425C1.72254-.153425 1.345953-.237111 1.115816-.578829C.927522-.864757 .9066-1.227397 .9066-1.548194C.9066-1.84807 .913574-2.259527 1.157659-2.559402C1.332005-2.761644 1.624907-2.915068 1.980573-2.915068C2.39203-2.915068 2.684932-2.719801 2.838356-2.503611C3.033624-2.231631 3.054545-1.882939 3.054545-1.548194S3.033624-.843836 2.831382-.557908C2.643088-.292902 2.322291-.153425 1.980573-.153425Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-112" d="M1.93873 1.101868C1.48543 1.101868 1.415691 1.101868 1.415691 .801993V-.334745C1.45056-.299875 1.778331 .069738 2.364134 .069738C3.284682 .069738 4.072727-.620672 4.072727-1.506351C4.072727-2.364134 3.361395-3.075467 2.475716-3.075467C2.078207-3.075467 1.673724-2.929016 1.387796-2.650062V-3.075467L.341719-2.998755V-2.747696C.829888-2.747696 .864757-2.712827 .864757-2.419925V.801993C.864757 1.101868 .795019 1.101868 .341719 1.101868V1.352927C.355666 1.352927 .843836 1.325031 1.136737 1.325031C1.39477 1.325031 1.875965 1.345953 1.93873 1.352927V1.101868ZM1.415691-2.322291C1.624907-2.670984 2.02939-2.852304 2.399004-2.852304C2.984807-2.852304 3.438107-2.238605 3.438107-1.506351C3.438107-.711333 2.915068-.125529 2.322291-.125529C1.708593-.125529 1.436613-.662516 1.415691-.704359V-2.322291Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-114" d="M1.387796-1.590037C1.387796-2.175841 1.659776-2.880199 2.322291-2.880199C2.259527-2.831382 2.203736-2.740722 2.203736-2.629141C2.203736-2.399004 2.385056-2.308344 2.517559-2.308344C2.684932-2.308344 2.838356-2.419925 2.838356-2.629141C2.838356-2.866252 2.615193-3.075467 2.287422-3.075467C1.93873-3.075467 1.555168-2.859278 1.345953-2.329265H1.338979V-3.075467L.341719-2.998755V-2.747696C.808966-2.747696 .864757-2.698879 .864757-2.357161V-.550934C.864757-.251059 .795019-.251059 .341719-.251059V0C.376588 0 .850809-.027895 1.136737-.027895C1.436613-.027895 1.743462-.013948 2.043337 0V-.251059H1.903861C1.387796-.251059 1.387796-.327771 1.387796-.564882V-1.590037Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-115" d="M2.643088-2.929016C2.643088-3.047572 2.643088-3.110336 2.545455-3.110336C2.510585-3.110336 2.496638-3.110336 2.405978-3.02665C2.39203-3.019676 2.322291-2.956912 2.280448-2.922042C2.071233-3.068493 1.806227-3.110336 1.548194-3.110336C.550934-3.110336 .313823-2.587298 .313823-2.238605C.313823-2.015442 .411457-1.834122 .578829-1.694645C.843836-1.464508 1.108842-1.415691 1.54122-1.345953C1.889913-1.283188 2.454795-1.185554 2.454795-.718306C2.454795-.446326 2.266501-.125529 1.597011-.125529S.683437-.564882 .557908-1.039103C.536986-1.129763 .530012-1.157659 .432379-1.157659C.313823-1.157659 .313823-1.108842 .313823-.969365V-.111582C.313823 .006974 .313823 .069738 .411457 .069738C.474222 .069738 .606725-.076712 .746202-.230137C1.053051 .055791 1.429639 .069738 1.597011 .069738C2.503611 .069738 2.838356-.418431 2.838356-.913574C2.838356-1.17858 2.719801-1.387796 2.538481-1.555168C2.273474-1.799253 1.952677-1.855044 1.708593-1.896887C1.150685-1.994521 .697385-2.078207 .697385-2.447821C.697385-2.670984 .885679-2.942964 1.548194-2.942964C2.357161-2.942964 2.39203-2.378082 2.405978-2.175841C2.412951-2.099128 2.496638-2.099128 2.524533-2.099128C2.643088-2.099128 2.643088-2.147945 2.643088-2.280448V-2.929016Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-116" d="M1.401743-2.75467H2.489664V-3.005729H1.401743V-4.288917H1.164633C1.157659-3.66127 .871731-2.970859 .202242-2.949938V-2.75467H.850809V-.871731C.850809-.09066 1.436613 .069738 1.827148 .069738C2.294396 .069738 2.615193-.327771 2.615193-.878705V-1.262267H2.378082V-.885679C2.378082-.411457 2.154919-.153425 1.882939-.153425C1.401743-.153425 1.401743-.739228 1.401743-.864757V-2.75467Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-117" d="M2.517559-2.998755V-2.747696C2.984807-2.747696 3.040598-2.698879 3.040598-2.357161V-1.164633C3.040598-.550934 2.643088-.125529 2.113076-.125529C1.478456-.125529 1.45056-.425405 1.45056-.781071V-3.075467L.376588-2.998755V-2.747696C.899626-2.747696 .899626-2.726775 .899626-2.106102V-1.060025C.899626-.578829 .899626 .069738 2.064259 .069738C2.217684 .069738 2.726775 .069738 3.061519-.516065H3.068493V.069738L4.11457 0V-.251059C3.647323-.251059 3.591532-.299875 3.591532-.641594V-3.075467L2.517559-2.998755Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-118" d="M3.305604-2.322291C3.500872-2.747696 3.849564-2.75467 3.961146-2.75467V-3.005729C3.7868-2.991781 3.605479-2.977833 3.431133-2.977833C3.242839-2.977833 2.984807-2.984807 2.796513-3.005729V-2.75467C3.089415-2.740722 3.089415-2.510585 3.089415-2.489664C3.089415-2.454795 3.082441-2.385056 3.033624-2.287422L2.245579-.564882L1.380822-2.461768C1.380822-2.468742 1.338979-2.545455 1.338979-2.594271C1.338979-2.75467 1.57609-2.75467 1.694645-2.75467V-3.005729C1.680697-3.005729 1.185554-2.977833 .899626-2.977833C.690411-2.977833 .418431-2.984807 .216189-3.005729V-2.75467C.599751-2.75467 .683437-2.740722 .788045-2.503611L1.889913-.076712C1.924782 .006974 1.966625 .069738 2.085181 .069738C2.217684 .069738 2.245579 .006974 2.280448-.069738L3.305604-2.322291Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-123" d="M3.905355-1.75741V-1.952677H.055791V-1.75741H3.905355Z"></path>
+<path id="tz_fig_queue_tree_htb_g4-126" d="M3.124284-4.6934C2.922042-4.47721 2.719801-4.372603 2.524533-4.372603C2.343213-4.372603 2.133998-4.47721 2.078207-4.51208C1.827148-4.630635 1.680697-4.6934 1.527273-4.6934C1.241345-4.6934 1.136737-4.581818 .697385-4.135492L.836862-3.996015C1.039103-4.212204 1.241345-4.316812 1.436613-4.316812C1.617933-4.316812 1.827148-4.212204 1.882939-4.177335C2.133998-4.05878 2.280448-3.996015 2.433873-3.996015C2.719801-3.996015 2.824408-4.107597 3.263761-4.553923L3.124284-4.6934Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-45" d="M1.863014-.881694V-1.265255H.209215V-.881694H1.863014Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-97" d="M2.60523-1.479452C2.60523-1.957659 2.102117-2.231631 1.484433-2.231631C1.180573-2.231631 .60274-2.216687 .60274-1.793275C.60274-1.608966 .742217-1.524284 .86675-1.524284C1.001245-1.524284 1.13076-1.618929 1.13076-1.788294C1.13076-1.907846 1.061021-1.982565 1.016189-2.012453C1.180573-2.067248 1.419676-2.067248 1.474471-2.067248C1.897883-2.067248 2.161893-1.833126 2.161893-1.474471V-1.344956C1.678705-1.32005 1.409714-1.305106 1.026152-1.17061C.697385-1.05604 .408468-.846824 .408468-.523039C.408468-.054795 .986301 .054795 1.384807 .054795C1.768369 .054795 2.067248-.099626 2.221669-.353674C2.241594-.179328 2.356164 .029888 2.610212 .029888C2.645081 .029888 3.212951 .029888 3.212951-.448319V-.722291H3.003736V-.458281C3.003736-.408468 3.003736-.18929 2.804483-.18929S2.60523-.408468 2.60523-.458281V-1.479452ZM2.161893-.707347C2.161893-.159402 1.564134-.109589 1.439601-.109589C1.145704-.109589 .86675-.26401 .86675-.523039C.86675-.687422 .971357-1.145704 2.161893-1.195517V-.707347Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-99" d="M2.236613-2.007472C2.166874-1.957659 2.127024-1.877958 2.127024-1.788294C2.127024-1.62391 2.251557-1.524284 2.391034-1.524284C2.510585-1.524284 2.655044-1.603985 2.655044-1.793275C2.655044-2.216687 2.102117-2.231631 1.753425-2.231631C.777086-2.231631 .358655-1.574097 .358655-1.075965C.358655-.458281 .941469 .054795 1.693649 .054795C2.555417 .054795 2.724782-.552927 2.724782-.597758C2.724782-.667497 2.650062-.667497 2.620174-.667497C2.540473-.667497 2.535492-.652553 2.510585-.592777C2.34122-.179328 1.977584-.124533 1.758406-.124533C1.330012-.124533 .856787-.41345 .856787-1.080946C.856787-1.300125 .901619-1.574097 1.085928-1.783313C1.325031-2.052304 1.618929-2.052304 1.77335-2.052304C1.92279-2.052304 2.062267-2.052304 2.236613-2.007472Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-101" d="M2.575342-1.120797C2.67995-1.120797 2.724782-1.120797 2.724782-1.240349C2.724782-1.574097 2.545455-2.231631 1.613948-2.231631C.856787-2.231631 .323786-1.688667 .323786-1.09589C.323786-.463263 .931507 .054795 1.688667 .054795C2.480697 .054795 2.724782-.498132 2.724782-.592777C2.724782-.67746 2.645081-.67746 2.620174-.67746C2.545455-.67746 2.535492-.657534 2.505604-.587796C2.366127-.244085 1.997509-.124533 1.718555-.124533C1.315068-.124533 1.090909-.348692 1.016189-.433375C.821918-.672478 .821918-.986301 .821918-1.120797H2.575342ZM.83188-1.275218C.891656-1.932752 1.374844-2.067248 1.608966-2.067248C2.30137-2.067248 2.336239-1.419676 2.34122-1.275218H.83188Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-103" d="M2.291407-1.937733C2.530511-2.082192 2.75467-2.087173 2.834371-2.092154C2.819427-2.072229 2.794521-2.042341 2.794521-1.972603C2.794521-1.872976 2.859278-1.788294 2.978829-1.788294S3.163138-1.872976 3.163138-1.972603C3.163138-2.102117 3.058531-2.256538 2.819427-2.256538C2.699875-2.256538 2.435866-2.231631 2.171856-2.027397C2.057285-2.097136 1.833126-2.201743 1.524284-2.201743C.936488-2.201743 .52802-1.853051 .52802-1.469489C.52802-1.215442 .712329-1.031133 .787049-.971357C.667497-.826899 .637609-.67746 .637609-.56787C.637609-.303861 .806974-.139477 .851806-.104608C.60274-.039851 .313823 .119552 .313823 .383562C.313823 .777086 .971357 1.026152 1.693649 1.026152C2.361146 1.026152 3.073474 .806974 3.073474 .373599C3.073474 .14944 2.94396-.089664 2.699875-.209215C2.366127-.368618 2.047323-.368618 1.514321-.368618C1.389788-.368618 1.17061-.368618 1.145704-.373599C.9066-.41345 .851806-.607721 .851806-.702366C.851806-.801993 .901619-.881694 .916563-.881694C.926526-.881694 .936488-.876712 .951432-.871731C1.150685-.767123 1.344956-.737235 1.519303-.737235C2.107098-.737235 2.515567-1.085928 2.515567-1.469489C2.515567-1.708593 2.351183-1.882939 2.291407-1.937733ZM1.524284-.901619C1.085928-.901619 .966376-1.190535 .966376-1.469489C.966376-1.743462 1.085928-2.03736 1.519303-2.03736C1.957659-2.03736 2.07721-1.748443 2.07721-1.469489C2.07721-1.195517 1.957659-.901619 1.524284-.901619ZM1.529265 .009963C2.027397 .009963 2.729763 .009963 2.729763 .383562C2.729763 .627646 2.286426 .861768 1.693649 .861768C1.120797 .861768 .657534 .64259 .657534 .37858C.657534 .224159 .83188 .009963 1.205479 .009963H1.529265Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-105" d="M1.260274-3.068493C1.260274-3.232877 1.125778-3.372354 .956413-3.372354C.801993-3.372354 .652553-3.252802 .652553-3.068493C.652553-2.889166 .801993-2.764633 .956413-2.764633C1.125778-2.764633 1.260274-2.90411 1.260274-3.068493ZM.433375-2.146949V-1.927771C.787049-1.927771 .826899-1.892902 .826899-1.648817V-.418431C.826899-.26401 .826899-.219178 .503113-.219178H.41345V0C.617684-.014944 .826899-.019925 1.031133-.019925C1.220423-.019925 1.439601-.014944 1.62391 0V-.219178C1.290162-.219178 1.250311-.219178 1.250311-.418431V-2.201743L.433375-2.146949Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-107" d="M1.932752-1.344956C2.012453-1.399751 2.465753-1.708593 2.49066-1.718555C2.819427-1.917808 3.078456-1.927771 3.173101-1.927771V-2.146949C2.993773-2.127024 2.809465-2.127024 2.749689-2.127024C2.560399-2.127024 2.261519-2.136986 2.097136-2.146949V-1.927771C2.166874-1.917808 2.171856-1.867995 2.171856-1.858032C2.171856-1.843088 2.171856-1.768369 2.027397-1.668742L1.215442-1.110834V-3.457036L.37858-3.402242V-3.183064C.747198-3.183064 .79203-3.148194 .79203-2.90411V-.418431C.79203-.26401 .79203-.219178 .468244-.219178H.37858V0C.572852-.014944 .797011-.019925 .991283-.019925C1.190535-.019925 1.414695-.014944 1.608966 0V-.219178H1.519303C1.195517-.219178 1.195517-.26401 1.195517-.418431V-.846824L1.603985-1.125778L2.171856-.513076C2.256538-.418431 2.316314-.358655 2.316314-.293898C2.316314-.224159 2.216687-.219178 2.1868-.219178V0C2.391034-.014944 2.729763-.019925 2.804483-.019925C2.993773-.019925 3.13325-.014944 3.312578 0V-.219178C3.088418-.219178 2.963885-.219178 2.749689-.4533L1.932752-1.344956Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-110" d="M2.988792-1.504359C2.988792-2.052304 2.615193-2.201743 2.15193-2.201743C1.618929-2.201743 1.339975-1.907846 1.225405-1.713574V-2.201743L.408468-2.146949V-1.927771C.777086-1.927771 .821918-1.892902 .821918-1.648817V-.418431C.821918-.26401 .821918-.219178 .498132-.219178H.408468V0C.622665-.014944 .83188-.019925 1.046077-.019925C1.255293-.019925 1.469489-.014944 1.678705 0V-.219178H1.589041C1.265255-.219178 1.265255-.26401 1.265255-.418431V-1.285181C1.265255-1.84807 1.783313-2.03736 2.092154-2.03736C2.460772-2.03736 2.545455-1.828144 2.545455-1.50934V-.418431C2.545455-.26401 2.545455-.219178 2.221669-.219178H2.132005V0C2.346202-.014944 2.555417-.019925 2.769614-.019925C2.978829-.019925 3.193026-.014944 3.402242 0V-.219178H3.312578C2.988792-.219178 2.988792-.26401 2.988792-.418431V-1.504359Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-111" d="M3.063512-1.061021C3.063512-1.683686 2.475716-2.231631 1.693649-2.231631S.323786-1.683686 .323786-1.061021C.323786-.463263 .916563 .054795 1.693649 .054795C2.475716 .054795 3.063512-.463263 3.063512-1.061021ZM1.693649-.124533C.821918-.124533 .821918-.86675 .821918-1.110834C.821918-1.334994 .821918-2.067248 1.693649-2.067248S2.56538-1.334994 2.56538-1.110834C2.56538-.86675 2.56538-.124533 1.693649-.124533Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-112" d="M1.648817 .747198H1.559153C1.235367 .747198 1.235367 .702366 1.235367 .547945V-.229141C1.449564-.039851 1.718555 .054795 2.002491 .054795C2.759651 .054795 3.372354-.4533 3.372354-1.075965C3.372354-1.673724 2.824408-2.201743 2.087173-2.201743C1.693649-2.201743 1.384807-2.062267 1.215442-1.917808V-2.201743L.37858-2.146949V-1.927771C.737235-1.927771 .79203-1.927771 .79203-1.713574V.547945C.79203 .702366 .79203 .747198 .468244 .747198H.37858V.966376C.592777 .951432 .801993 .946451 1.016189 .946451C1.225405 .946451 1.439601 .951432 1.648817 .966376V.747198ZM1.235367-1.653798C1.449564-1.957659 1.828144-2.022416 2.027397-2.022416C2.520548-2.022416 2.874222-1.579078 2.874222-1.075965C2.874222-.533001 2.460772-.109589 1.967621-.109589C1.743462-.109589 1.479452-.204234 1.305106-.428394C1.235367-.513076 1.235367-.523039 1.235367-.617684V-1.653798Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-114" d="M1.215442-1.115816C1.215442-1.579078 1.479452-2.027397 1.952677-2.03736C1.947696-2.032379 1.882939-1.967621 1.882939-1.858032C1.882939-1.678705 2.022416-1.603985 2.132005-1.603985C2.256538-1.603985 2.386052-1.688667 2.386052-1.858032C2.386052-2.047323 2.206725-2.201743 1.942715-2.201743C1.693649-2.201743 1.374844-2.072229 1.180573-1.653798H1.175592V-2.201743L.37858-2.146949V-1.927771C.747198-1.927771 .79203-1.892902 .79203-1.648817V-.418431C.79203-.26401 .79203-.219178 .468244-.219178H.37858V0C.587796-.014944 .811955-.019925 1.021171-.019925C1.280199-.019925 1.524284-.009963 1.733499 0V-.219178H1.599004C1.215442-.219178 1.215442-.268991 1.215442-.423412V-1.115816Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-115" d="M2.22665-2.092154C2.22665-2.176837 2.22665-2.231631 2.146949-2.231631C2.122042-2.231631 2.102117-2.22665 2.062267-2.196762C2.042341-2.176837 1.952677-2.097136 1.932752-2.097136C1.927771-2.097136 1.917808-2.097136 1.88792-2.117061C1.77335-2.181818 1.589041-2.231631 1.339975-2.231631C.518057-2.231631 .348692-1.853051 .348692-1.62391C.348692-1.155666 .926526-1.066002 1.384807-.996264C1.673724-.951432 2.132005-.881694 2.132005-.542964C2.132005-.368618 1.987547-.109589 1.384807-.109589C1.046077-.109589 .71731-.234122 .56787-.762142C.542964-.851806 .537983-.86675 .4533-.86675C.348692-.86675 .348692-.826899 .348692-.722291V-.084682C.348692 0 .348692 .054795 .428394 .054795C.468244 .054795 .473225 .049813 .56787-.044832L.697385-.169365C.946451 .049813 1.260274 .054795 1.384807 .054795C2.216687 .054795 2.381071-.37858 2.381071-.627646C2.381071-.851806 2.256538-1.016189 2.067248-1.135741C1.867995-1.260274 1.718555-1.280199 1.300125-1.344956C.98132-1.39477 .597758-1.454545 .597758-1.718555C.597758-1.892902 .79203-2.082192 1.334994-2.082192C1.748443-2.082192 1.987547-1.917808 2.017435-1.574097C2.022416-1.499377 2.027397-1.469489 2.122042-1.469489C2.22665-1.469489 2.22665-1.504359 2.22665-1.608966V-2.092154Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-116" d="M1.225405-1.927771H2.107098V-2.146949H1.225405V-3.063512H1.016189C1.011208-2.595268 .762142-2.107098 .254047-2.092154V-1.927771H.782067V-.627646C.782067-.059776 1.250311 .054795 1.559153 .054795C1.932752 .054795 2.211706-.219178 2.211706-.627646V-.901619H2.002491V-.64259C2.002491-.268991 1.783313-.124533 1.608966-.124533C1.225405-.124533 1.225405-.523039 1.225405-.627646V-1.927771Z"></path>
+<path id="tz_fig_queue_tree_htb_g5-118" d="M2.75467-1.628892C2.839352-1.793275 2.968867-1.92279 3.277709-1.927771V-2.146949C3.148194-2.136986 3.01868-2.127024 2.844334-2.127024C2.839352-2.127024 2.515567-2.132005 2.336239-2.146949V-1.927771C2.470735-1.92279 2.555417-1.863014 2.555417-1.748443C2.555417-1.69863 2.535492-1.653798 2.530511-1.648817L1.897883-.41345L1.215442-1.743462C1.205479-1.763387 1.190535-1.793275 1.190535-1.823163C1.190535-1.927771 1.3599-1.927771 1.459527-1.927771V-2.146949C1.230386-2.132005 .871731-2.127024 .836862-2.127024C.637609-2.127024 .488169-2.127024 .278954-2.146949V-1.927771C.577833-1.927771 .647572-1.927771 .722291-1.778331L1.603985-.059776C1.638854 .009963 1.663761 .054795 1.778331 .054795S1.917808 .004981 1.952677-.059776L2.75467-1.628892Z"></path>
+</defs>
+<g id="tz_fig_queue_tree_htb_page1">
+<g stroke-miterlimit="10" transform="translate(106.172197,7.802224)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g fill="#d4e6fa">
+<g fill="#d4e6fa">
+<path d="M52.9055 75.90149H-52.9055C-55.11467 75.90149-56.9055 74.11066-56.9055 71.90149V53.2904C-56.9055 51.08124-55.11467 49.2904-52.9055 49.2904H52.9055C55.11467 49.2904 56.9055 51.08124 56.9055 53.2904V71.90149C56.9055 74.11066 55.11467 75.90149 52.9055 75.90149ZM-56.9055 49.2904"></path>
+</g>
+<g transform="translate(-41.87936,54.65149)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="106.554431" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-100"></use>
+<use x="112.448919" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-111"></use>
+<use x="117.459214" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-119"></use>
+<use x="125.122049" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-110"></use>
+<use x="131.016538" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-45"></use>
+<use x="134.553232" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-116"></use>
+<use x="138.679373" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-111"></use>
+<use x="143.984415" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-116"></use>
+<use x="148.110556" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-97"></use>
+<use x="153.26823" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-108"></use>
+<use x="159.287272" y="-3.156681" href="#tz_fig_queue_tree_htb_g3-124"></use>
+<use x="171.574447" y="-3.156681" href="#tz_fig_queue_tree_htb_g3-57"></use>
+<use x="176.182138" y="-3.156681" href="#tz_fig_queue_tree_htb_g3-48"></use>
+<use x="180.789829" y="-3.156681" href="#tz_fig_queue_tree_htb_g3-77"></use>
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g4-112"></use>
+<use x="110.572386" y="7.802224" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="114.543627" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="117.65697" y="7.802224" href="#tz_fig_queue_tree_htb_g4-101"></use>
+<use x="121.199262" y="7.802224" href="#tz_fig_queue_tree_htb_g4-110"></use>
+<use x="125.384969" y="7.802224" href="#tz_fig_queue_tree_htb_g4-116"></use>
+<use x="128.498312" y="7.802224" href="#tz_fig_queue_tree_htb_g4-61"></use>
+<use x="134.614296" y="7.802224" href="#tz_fig_queue_tree_htb_g4-118"></use>
+<use x="138.800017" y="7.802224" href="#tz_fig_queue_tree_htb_g4-108"></use>
+<use x="141.055463" y="7.802224" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="145.026704" y="7.802224" href="#tz_fig_queue_tree_htb_g4-110"></use>
+<use x="149.426893" y="7.802224" href="#tz_fig_queue_tree_htb_g4-49"></use>
+<use x="153.398133" y="7.802224" href="#tz_fig_queue_tree_htb_g4-48"></use>
+<use x="157.369374" y="7.802224" href="#tz_fig_queue_tree_htb_g4-49"></use>
+<use x="161.340614" y="7.802224" href="#tz_fig_queue_tree_htb_g4-45"></use>
+<use x="164.025009" y="7.802224" href="#tz_fig_queue_tree_htb_g4-99"></use>
+<use x="167.5673" y="7.802224" href="#tz_fig_queue_tree_htb_g4-108"></use>
+<use x="169.822746" y="7.802224" href="#tz_fig_queue_tree_htb_g4-105"></use>
+<use x="172.078192" y="7.802224" href="#tz_fig_queue_tree_htb_g4-101"></use>
+<use x="175.620484" y="7.802224" href="#tz_fig_queue_tree_htb_g4-110"></use>
+<use x="179.806191" y="7.802224" href="#tz_fig_queue_tree_htb_g4-116"></use>
+<use x="182.919534" y="7.802224" href="#tz_fig_queue_tree_htb_g4-101"></use>
+<use x="186.461826" y="7.802224" href="#tz_fig_queue_tree_htb_g4-115"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#f7dad8">
+<g fill="#f7dad8">
+<path d="M-108.19617 13.30554H-170.64035C-172.84952 13.30554-174.64035 11.51471-174.64035 9.30554V-9.30554C-174.64035-11.51471-172.84952-13.30554-170.64035-13.30554H-108.19617C-105.987-13.30554-104.19617-11.51471-104.19617-9.30554V9.30554C-104.19617 11.51471-105.987 13.30554-108.19617 13.30554ZM-174.64035-13.30554"></path>
+</g>
+<g transform="translate(-170.64035,-7.94446)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="127.551756" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-118"></use>
+<use x="132.856787" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-111"></use>
+<use x="138.161829" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-105"></use>
+<use x="141.109077" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-112"></use>
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g4-112"></use>
+<use x="110.572386" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="113.68573" y="7.802224" href="#tz_fig_queue_tree_htb_g4-105"></use>
+<use x="115.941175" y="7.802224" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="122.596807" y="7.802224" href="#tz_fig_queue_tree_htb_g4-49"></use>
+<use x="129.252439" y="7.802224" href="#tz_fig_queue_tree_htb_g1-183"></use>
+<use x="134.191711" y="7.802224" href="#tz_fig_queue_tree_htb_g4-49"></use>
+<use x="138.162952" y="7.802224" href="#tz_fig_queue_tree_htb_g4-48"></use>
+<use x="142.134192" y="7.802224" href="#tz_fig_queue_tree_htb_g4-77"></use>
+<use x="149.301804" y="7.802224" href="#tz_fig_queue_tree_htb_g4-123"></use>
+<use x="153.273044" y="7.802224" href="#tz_fig_queue_tree_htb_g4-50"></use>
+<use x="157.244285" y="7.802224" href="#tz_fig_queue_tree_htb_g4-48"></use>
+<use x="161.215525" y="7.802224" href="#tz_fig_queue_tree_htb_g4-77"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#ffd6ba">
+<g fill="#ffd6ba">
+<path d="M-19.14053 13.30554H-77.5986C-79.80777 13.30554-81.5986 11.51471-81.5986 9.30554V-9.30554C-81.5986-11.51471-79.80777-13.30554-77.5986-13.30554H-19.14053C-16.93137-13.30554-15.14053-11.51471-15.14053-9.30554V9.30554C-15.14053 11.51471-16.93137 13.30554-19.14053 13.30554ZM-81.5986-13.30554"></path>
+</g>
+<g transform="translate(-77.5986,-7.94446)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="112.912379" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-105"></use>
+<use x="115.859627" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-110"></use>
+<use x="121.459368" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-116"></use>
+<use x="125.585509" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-101"></use>
+<use x="130.454014" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-114"></use>
+<use x="134.830639" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-97"></use>
+<use x="139.988313" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-116"></use>
+<use x="144.114454" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-105"></use>
+<use x="147.061703" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-118"></use>
+<use x="152.366733" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-111"></use>
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g4-112"></use>
+<use x="110.572386" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="113.68573" y="7.802224" href="#tz_fig_queue_tree_htb_g4-105"></use>
+<use x="115.941175" y="7.802224" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="122.596807" y="7.802224" href="#tz_fig_queue_tree_htb_g4-50"></use>
+<use x="129.252439" y="7.802224" href="#tz_fig_queue_tree_htb_g1-183"></use>
+<use x="134.191711" y="7.802224" href="#tz_fig_queue_tree_htb_g4-53"></use>
+<use x="138.162952" y="7.802224" href="#tz_fig_queue_tree_htb_g4-77"></use>
+<use x="145.330564" y="7.802224" href="#tz_fig_queue_tree_htb_g4-123"></use>
+<use x="149.301804" y="7.802224" href="#tz_fig_queue_tree_htb_g4-50"></use>
+<use x="153.273044" y="7.802224" href="#tz_fig_queue_tree_htb_g4-48"></use>
+<use x="157.244285" y="7.802224" href="#tz_fig_queue_tree_htb_g4-77"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#d9f1d1">
+<g fill="#d9f1d1">
+<path d="M79.59166 13.30554H17.14748C14.93831 13.30554 13.14748 11.51471 13.14748 9.30554V-9.30554C13.14748-11.51471 14.93831-13.30554 17.14748-13.30554H79.59166C81.80083-13.30554 83.59166-11.51471 83.59166-9.30554V9.30554C83.59166 11.51471 81.80083 13.30554 79.59166 13.30554ZM13.14748-13.30554"></path>
+</g>
+<g transform="translate(17.14748,-7.94446)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="113.991705" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-110"></use>
+<use x="119.886194" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-97"></use>
+<use x="124.74912" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-118"></use>
+<use x="130.054151" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-101"></use>
+<use x="134.922656" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-103"></use>
+<use x="140.227698" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-97"></use>
+<use x="145.385372" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-24"></use>
+<use x="145.385374" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-99"></use>
+<use x="150.027272" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-126"></use>
+<use x="150.10097" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-97"></use>
+<use x="155.258644" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-111"></use>
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g4-112"></use>
+<use x="110.572386" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="113.68573" y="7.802224" href="#tz_fig_queue_tree_htb_g4-105"></use>
+<use x="115.941175" y="7.802224" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="122.596807" y="7.802224" href="#tz_fig_queue_tree_htb_g4-52"></use>
+<use x="129.252439" y="7.802224" href="#tz_fig_queue_tree_htb_g1-183"></use>
+<use x="134.191711" y="7.802224" href="#tz_fig_queue_tree_htb_g4-51"></use>
+<use x="138.162952" y="7.802224" href="#tz_fig_queue_tree_htb_g4-48"></use>
+<use x="142.134192" y="7.802224" href="#tz_fig_queue_tree_htb_g4-77"></use>
+<use x="149.301804" y="7.802224" href="#tz_fig_queue_tree_htb_g4-123"></use>
+<use x="153.273044" y="7.802224" href="#tz_fig_queue_tree_htb_g4-57"></use>
+<use x="157.244285" y="7.802224" href="#tz_fig_queue_tree_htb_g4-48"></use>
+<use x="161.215525" y="7.802224" href="#tz_fig_queue_tree_htb_g4-77"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#dbdddf">
+<g fill="#dbdddf">
+<path d="M170.64035 13.03769H108.19617C105.987 13.03769 104.19617 11.24686 104.19617 9.03769V-9.03769C104.19617-11.24686 105.987-13.03769 108.19617-13.03769H170.64035C172.84952-13.03769 174.64035-11.24686 174.64035-9.03769V9.03769C174.64035 11.24686 172.84952 13.03769 170.64035 13.03769ZM104.19617-13.03769"></path>
+</g>
+<g transform="translate(108.19617,-7.6766)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="125.846967" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-114"></use>
+<use x="130.223593" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-101"></use>
+<use x="135.092098" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-115"></use>
+<use x="139.277198" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-116"></use>
+<use x="143.403339" y="-3.156681" href="#tz_fig_queue_tree_htb_g2-111"></use>
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g4-112"></use>
+<use x="110.572386" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="113.68573" y="7.802224" href="#tz_fig_queue_tree_htb_g4-105"></use>
+<use x="115.941175" y="7.802224" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="122.596807" y="7.802224" href="#tz_fig_queue_tree_htb_g4-56"></use>
+<use x="129.252439" y="7.802224" href="#tz_fig_queue_tree_htb_g1-183"></use>
+<use x="134.191711" y="7.802224" href="#tz_fig_queue_tree_htb_g4-49"></use>
+<use x="138.162952" y="7.802224" href="#tz_fig_queue_tree_htb_g4-48"></use>
+<use x="142.134192" y="7.802224" href="#tz_fig_queue_tree_htb_g4-77"></use>
+<use x="149.301804" y="7.802224" href="#tz_fig_queue_tree_htb_g4-123"></use>
+<use x="153.273044" y="7.802224" href="#tz_fig_queue_tree_htb_g4-57"></use>
+<use x="157.244285" y="7.802224" href="#tz_fig_queue_tree_htb_g4-48"></use>
+<use x="161.215525" y="7.802224" href="#tz_fig_queue_tree_htb_g4-77"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<path d="M0 49.09041L-139.41826 13.50554" fill="none"></path>
+<path d="M0 49.09041L-48.36957 13.50554" fill="none"></path>
+<path d="M0 49.09041L48.36957 13.50554" fill="none"></path>
+<path d="M0 49.09041L139.41826 13.23769" fill="none"></path>
+<g fill="#6c757d" stroke="#6c757d">
+<path d="M-139.41826-33.42245V-16.5809" fill="none"></path>
+<g transform="matrix(0.0,1.0,-1.0,0.0,-139.41826,-18.30551)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
+ </g>
+ </g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(-135.88528,-24.714)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g5-112"></use>
+<use x="109.908249" y="7.802224" href="#tz_fig_queue_tree_htb_g5-107"></use>
+<use x="113.471333" y="7.802224" href="#tz_fig_queue_tree_htb_g5-116"></use>
+<use x="116.169588" y="7.802224" href="#tz_fig_queue_tree_htb_g5-45"></use>
+<use x="118.521912" y="7.802224" href="#tz_fig_queue_tree_htb_g5-118"></use>
+<use x="121.912014" y="7.802224" href="#tz_fig_queue_tree_htb_g5-111"></use>
+<use x="125.302135" y="7.802224" href="#tz_fig_queue_tree_htb_g5-105"></use>
+<use x="127.308528" y="7.802224" href="#tz_fig_queue_tree_htb_g5-112"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<path d="M-48.36957-33.42245V-16.5809" fill="none"></path>
+<g transform="matrix(0.0,1.0,-1.0,0.0,-48.36957,-18.30551)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
+ </g>
+ </g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(-44.8366,-24.714)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g5-112"></use>
+<use x="109.908249" y="7.802224" href="#tz_fig_queue_tree_htb_g5-107"></use>
+<use x="113.471333" y="7.802224" href="#tz_fig_queue_tree_htb_g5-116"></use>
+<use x="116.169588" y="7.802224" href="#tz_fig_queue_tree_htb_g5-45"></use>
+<use x="118.521912" y="7.802224" href="#tz_fig_queue_tree_htb_g5-105"></use>
+<use x="120.528305" y="7.802224" href="#tz_fig_queue_tree_htb_g5-110"></use>
+<use x="124.091375" y="7.802224" href="#tz_fig_queue_tree_htb_g5-116"></use>
+<use x="126.78963" y="7.802224" href="#tz_fig_queue_tree_htb_g5-101"></use>
+<use x="129.833815" y="7.802224" href="#tz_fig_queue_tree_htb_g5-114"></use>
+<use x="132.53207" y="7.802224" href="#tz_fig_queue_tree_htb_g5-97"></use>
+<use x="135.922191" y="7.802224" href="#tz_fig_queue_tree_htb_g5-116"></use>
+<use x="138.620445" y="7.802224" href="#tz_fig_queue_tree_htb_g5-105"></use>
+<use x="140.626838" y="7.802224" href="#tz_fig_queue_tree_htb_g5-118"></use>
+<use x="144.016941" y="7.802224" href="#tz_fig_queue_tree_htb_g5-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<path d="M48.36957-33.42245V-16.5809" fill="none"></path>
+<g transform="matrix(0.0,1.0,-1.0,0.0,48.36957,-18.30551)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
+ </g>
+ </g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(51.90254,-24.714)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g5-112"></use>
+<use x="109.908249" y="7.802224" href="#tz_fig_queue_tree_htb_g5-107"></use>
+<use x="113.471333" y="7.802224" href="#tz_fig_queue_tree_htb_g5-116"></use>
+<use x="116.169588" y="7.802224" href="#tz_fig_queue_tree_htb_g5-45"></use>
+<use x="118.521912" y="7.802224" href="#tz_fig_queue_tree_htb_g5-110"></use>
+<use x="122.257963" y="7.802224" href="#tz_fig_queue_tree_htb_g5-97"></use>
+<use x="125.475103" y="7.802224" href="#tz_fig_queue_tree_htb_g5-118"></use>
+<use x="128.865206" y="7.802224" href="#tz_fig_queue_tree_htb_g5-101"></use>
+<use x="131.909392" y="7.802224" href="#tz_fig_queue_tree_htb_g5-103"></use>
+<use x="135.299513" y="7.802224" href="#tz_fig_queue_tree_htb_g5-97"></use>
+<use x="138.689634" y="7.802224" href="#tz_fig_queue_tree_htb_g5-99"></use>
+<use x="141.733819" y="7.802224" href="#tz_fig_queue_tree_htb_g5-97"></use>
+<use x="145.12394" y="7.802224" href="#tz_fig_queue_tree_htb_g5-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<path d="M139.41826-33.1546V-16.31305" fill="none"></path>
+<g transform="matrix(0.0,1.0,-1.0,0.0,139.41826,-18.03766)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
+ </g>
+ </g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(142.95123,-24.44615)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g5-112"></use>
+<use x="109.908249" y="7.802224" href="#tz_fig_queue_tree_htb_g5-107"></use>
+<use x="113.471333" y="7.802224" href="#tz_fig_queue_tree_htb_g5-116"></use>
+<use x="116.169588" y="7.802224" href="#tz_fig_queue_tree_htb_g5-45"></use>
+<use x="118.521912" y="7.802224" href="#tz_fig_queue_tree_htb_g5-114"></use>
+<use x="121.220166" y="7.802224" href="#tz_fig_queue_tree_htb_g5-101"></use>
+<use x="124.264352" y="7.802224" href="#tz_fig_queue_tree_htb_g5-115"></use>
+<use x="126.997204" y="7.802224" href="#tz_fig_queue_tree_htb_g5-116"></use>
+<use x="129.695459" y="7.802224" href="#tz_fig_queue_tree_htb_g5-111"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#6c757d" stroke="#6c757d">
+<g fill="#6c757d" stroke="#6c757d">
+</g>
+<g transform="translate(-82.45259,-55.42511)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(106.172197,7.802224)scale(-1,-1)">
+<g fill="#6c757d">
+<g stroke="none">
+<g fill="#6c757d">
+<use x="110.979883" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-115"></use>
+<use x="114.136123" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="118.107364" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-98"></use>
+<use x="125.191944" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-115"></use>
+<use x="128.348185" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="132.319425" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-116"></use>
+<use x="135.432769" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-117"></use>
+<use x="139.832958" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="142.946301" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="146.917541" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-24"></use>
+<use x="146.917544" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-99"></use>
+<use x="150.459836" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-126"></use>
+<use x="150.459839" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="154.431079" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="158.40232" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-58"></use>
+<use x="164.200054" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-99"></use>
+<use x="167.742346" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="171.713587" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-100"></use>
+<use x="176.113776" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="182.769408" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-102"></use>
+<use x="185.239334" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="189.210575" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-108"></use>
+<use x="191.466021" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-104"></use>
+<use x="195.86621" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="202.521842" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="205.635185" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-101"></use>
+<use x="209.177477" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-99"></use>
+<use x="212.719768" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-101"></use>
+<use x="216.26206" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-98"></use>
+<use x="220.876716" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-101"></use>
+<use x="227.103399" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="233.759031" y="-3.156681" href="#tz_fig_queue_tree_htb_g0-108"></use>
+<use x="237.463941" y="-3.156681" href="#tz_fig_queue_tree_htb_g0-105"></use>
+<use x="241.168851" y="-3.156681" href="#tz_fig_queue_tree_htb_g0-109"></use>
+<use x="244.873761" y="-3.156681" href="#tz_fig_queue_tree_htb_g0-105"></use>
+<use x="248.578671" y="-3.156681" href="#tz_fig_queue_tree_htb_g0-116"></use>
+<use x="252.283581" y="-3.156681" href="#tz_fig_queue_tree_htb_g0-45"></use>
+<use x="255.988491" y="-3.156681" href="#tz_fig_queue_tree_htb_g0-97"></use>
+<use x="259.693401" y="-3.156681" href="#tz_fig_queue_tree_htb_g0-116"></use>
+<use x="263.398311" y="-3.156681" href="#tz_fig_queue_tree_htb_g4-59"></use>
+<use x="106.172197" y="7.802224" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="112.827829" y="7.802224" href="#tz_fig_queue_tree_htb_g4-115"></use>
+<use x="115.98407" y="7.802224" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="119.95531" y="7.802224" href="#tz_fig_queue_tree_htb_g4-98"></use>
+<use x="124.3555" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="127.468843" y="7.802224" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="134.124475" y="7.802224" href="#tz_fig_queue_tree_htb_g4-118"></use>
+<use x="137.881247" y="7.802224" href="#tz_fig_queue_tree_htb_g4-97"></use>
+<use x="141.852488" y="7.802224" href="#tz_fig_queue_tree_htb_g4-105"></use>
+<use x="146.792325" y="7.802224" href="#tz_fig_queue_tree_htb_g4-112"></use>
+<use x="151.406981" y="7.802224" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="155.378221" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="161.175956" y="7.802224" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="165.147197" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="168.26054" y="7.802224" href="#tz_fig_queue_tree_htb_g4-100"></use>
+<use x="172.660729" y="7.802224" href="#tz_fig_queue_tree_htb_g4-101"></use>
+<use x="176.203021" y="7.802224" href="#tz_fig_queue_tree_htb_g4-109"></use>
+<use x="185.432345" y="7.802224" href="#tz_fig_queue_tree_htb_g4-100"></use>
+<use x="189.832534" y="7.802224" href="#tz_fig_queue_tree_htb_g4-101"></use>
+<use x="196.059217" y="7.802224" href="#tz_fig_queue_tree_htb_g0-112"></use>
+<use x="199.764127" y="7.802224" href="#tz_fig_queue_tree_htb_g0-114"></use>
+<use x="203.469037" y="7.802224" href="#tz_fig_queue_tree_htb_g0-105"></use>
+<use x="207.173947" y="7.802224" href="#tz_fig_queue_tree_htb_g0-111"></use>
+<use x="210.878857" y="7.802224" href="#tz_fig_queue_tree_htb_g0-114"></use>
+<use x="214.583767" y="7.802224" href="#tz_fig_queue_tree_htb_g0-105"></use>
+<use x="218.288677" y="7.802224" href="#tz_fig_queue_tree_htb_g0-116"></use>
+<use x="221.993587" y="7.802224" href="#tz_fig_queue_tree_htb_g0-121"></use>
+<use x="228.382889" y="7.802224" href="#tz_fig_queue_tree_htb_g4-40"></use>
+<use x="231.496232" y="7.802224" href="#tz_fig_queue_tree_htb_g4-49"></use>
+<use x="238.151864" y="7.802224" href="#tz_fig_queue_tree_htb_g4-112"></use>
+<use x="242.552053" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="245.665396" y="7.802224" href="#tz_fig_queue_tree_htb_g4-105"></use>
+<use x="247.920842" y="7.802224" href="#tz_fig_queue_tree_htb_g4-109"></use>
+<use x="254.465774" y="7.802224" href="#tz_fig_queue_tree_htb_g4-101"></use>
+<use x="258.008066" y="7.802224" href="#tz_fig_queue_tree_htb_g4-105"></use>
+<use x="260.263512" y="7.802224" href="#tz_fig_queue_tree_htb_g4-114"></use>
+<use x="263.376855" y="7.802224" href="#tz_fig_queue_tree_htb_g4-111"></use>
+<use x="267.348095" y="7.802224" href="#tz_fig_queue_tree_htb_g4-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+<div id="fig-queue-tree-htb" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-queue-tree-htb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<p>A árvore de download: a raiz encarna o enlace (90M) e as folhas casam as packet-marks do mangle. Garantia (<code>limit-at</code>) define o mínimo de cada classe; <code>priority</code> define quem fica com a sobra — VoIP primeiro, resto por último.</p>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-queue-tree-htb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;39.1
+</figcaption>
+</figure>
+</div>
+<section id="onde-pendurar-interface-ou-global" class="level3" data-number="39.2.1">
+<h3 data-number="39.2.1" class="anchored" data-anchor-id="onde-pendurar-interface-ou-global"><span class="header-section-number">39.2.1</span> Onde pendurar: interface ou global</h3>
+<p><code>parent=&lt;interface&gt;</code> enfileira o que <strong>sai</strong> por ela — é o normal e o que o hardware agradece. <code>parent=global</code> captura em um ponto único todo tráfego (antes da decisão de interface), útil quando o mesmo tráfego pode sair por várias interfaces — ao custo de enfileirar também o que não precisaria. Regra prática: comece pela interface; vá a global só com motivo (e o <a href="04-pcq-em-escala.html" class="quarto-xref"><span>Capítulo 40</span></a> traz um).</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Prioridade é <strong>quem sofre menos quando falta</strong> — não “quem ganha mais banda”. A arquitetura completa tem papéis separados: o <strong>mangle classifica</strong> (uma vez por conexão, barato), a <strong>queue tree executa</strong> (garantia + prioridade sob o teto físico), e o <strong>plano por assinante continua nas filas do PPPoE</strong> — as duas camadas convivem: a simple queue do plano decide <em>quanto</em> cada cliente pode usar; a queue tree do agregado decide <em>o que sai primeiro</em> quando o enlace do POP satura. Priorizar sem classificar é chute; classificar sem hierarquia é enfeite.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="laboratório" class="level2" data-number="39.3">
+<h2 data-number="39.3" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">39.3</span> 🧪 Laboratório</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Ambiente
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>lab-r1</code> (nosso roteador de QoS) entre <code>lab-r2</code> e <code>lab-r3</code> (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>): lab-r2 na <code>lab-a</code> (172.16.1.2) e lab-r3 na <code>lab-b</code> (ether3 do lab-r1, ex.: 172.16.2.3/24) — assim o tráfego r2↔︎r3 <strong>atravessa</strong> o lab-r1, que enfileira na interface de saída. <code>bandwidth-server</code> habilitado em r2 e r3. Vamos gerar duas classes de tráfego: UDP “VoIP” (porta destino no range RTP) e TCP “resto”, e ver a prioridade decidir sob saturação.</p>
+</div>
+</div>
+<section id="comandos-passo-a-passo" class="level3" data-number="39.3.1">
+<h3 data-number="39.3.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">39.3.1</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — mangle no lab-r1.</strong> Versão reduzida do padrão de dois passos (só voip e resto):</p>
+<pre class="routeros"><code>/ip firewall mangle
+add chain=prerouting connection-state=new protocol=udp \
+    dst-port=10000-20000 action=mark-connection \
+    new-connection-mark=conn-voip passthrough=yes
+add chain=prerouting connection-mark=conn-voip action=mark-packet \
+    new-packet-mark=pkt-voip passthrough=no
+add chain=prerouting action=mark-packet new-packet-mark=pkt-resto \
+    passthrough=no</code></pre>
+<p><strong>Passo 2 — a árvore, com gargalo apertado de propósito</strong> (10M para a saturação ser fácil), na interface para a <code>lab-b</code>:</p>
+<pre class="routeros"><code>/queue tree
+add name=down-total parent=ether3 max-limit=10M
+add name=down-voip parent=down-total packet-mark=pkt-voip \
+    priority=1 limit-at=2M max-limit=10M
+add name=down-resto parent=down-total packet-mark=pkt-resto \
+    priority=8 limit-at=1M max-limit=10M</code></pre>
+<p><strong>Passo 3 — sature com “resto”.</strong> Do lab-r3, um teste TCP longo contra o lab-r2 (<code>direction=receive duration=120s</code>) — o download atravessa o lab-r1 e satura os 10M. Confirme no lab-r1:</p>
+<pre class="routeros"><code>/queue tree print stats</code></pre>
+<p><code>down-resto</code> com <code>rate≈9.9M</code>, <code>queued-packets</code> alto; <code>down-voip</code> zerada.</p>
+<p><strong>Passo 4 — o VoIP fura a fila.</strong> Com o teste TCP ainda rodando, dispare do lab-r3 um segundo teste, agora UDP na faixa marcada (simula o fluxo RTP):</p>
+<pre class="routeros"><code>/tool bandwidth-test address=172.16.1.2 protocol=udp direction=receive \
+    local-udp-tx-size=200 remote-udp-tx-size=200 \
+    user=vitor password=Lab!Segura2026</code></pre>
+<p>No <code>print stats</code>: <code>down-voip</code> sobe na hora (o UDP flui), e <code>down-resto</code> <strong>cede</strong> exatamente o que o VoIP pediu — a soma cravada nos 10M do pai. Pare o UDP: o resto reocupa em segundos.</p>
+<p><strong>Passo 5 — prove que era a prioridade.</strong> Inverta (<code>set down-voip priority=8</code> e <code>set down-resto priority=1</code>) e repita o Passo 4: agora é o “VoIP” que espera na fila (rate baixo, drops) — o tráfego é o mesmo; a política mudou. Restaure ao final.</p>
+</section>
+<section id="verificação" class="level3" data-number="39.3.2">
+<h3 data-number="39.3.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">39.3.2</span> Verificação</h3>
+<ol type="1">
+<li><code>/queue tree print stats</code> mostra os contadores subindo nas classes certas (marcas do mangle funcionando — se tudo cai em <code>pkt-resto</code>, revise portas/ordem das regras);</li>
+<li>Sob saturação, a chegada do tráfego prioritário <strong>desloca</strong> o resto sem estourar o teto do pai;</li>
+<li>Com prioridades invertidas, o comportamento inverte — mesma carga, política oposta;</li>
+<li><code>queued-packets</code> alto no resto e baixo no voip durante a disputa — a latência foi para quem aguenta.</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="39.3.3">
+<h3 data-number="39.3.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">39.3.3</span> Desafios</h3>
+<ol type="1">
+<li>As regras de classificação do Passo 1 usam <code>connection-state=new</code>, mas a regra de <code>mark-packet</code> roda para <strong>todo</strong> pacote. Um colega propõe “economizar” marcando pacote também só em <code>new</code>. O que quebraria?</li>
+<li>Um provedor marcou VoIP por <code>dst-port=5060</code> apenas (SIP) e reclama que “a priorização não funciona: as chamadas continuam picotando sob carga”. As chamadas <em>sinalizam</em> mas o áudio pica. O que ele esqueceu de classificar, e por que a chamada “completa” mesmo assim?</li>
+<li>Na árvore do POP (<code>down-total=90M</code>), a classe <code>down-resto</code> tem <code>limit-at=10M</code>. Durante um ataque de download em massa (resto saturado), usuários reclamam que “até o DNS demora”. O <code>down-interativo</code> tem <code>limit-at=5M priority=2</code>. Use a mecânica HTB para explicar por que o DNS <strong>não deveria</strong> estar sofrendo — e o que investigar se sofre (dica: a marca está certa?).</li>
+<li>Queue tree numa interface <strong>bridge</strong> (o cenário do CPE do cliente,
+<ol class="example" type="1">
+<li>tem uma pegadinha famosa: o tráfego encaminhado em L2 com hardware offload nem passa pelo CPU. O que é preciso aceitar (ou perder) para enfileirar ali — e por que no concentrador PPPoE esse problema não existe?</li>
+</ol></li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> A marca de <strong>pacote</strong> não é persistente — cada pacote nasce sem ela e precisa ser marcado individualmente (é a marca de <strong>conexão</strong> que persiste no conntrack). Marcando pacote só em <code>new</code>, apenas o primeiro pacote de cada conexão entraria na classe certa; todos os demais cairiam em <code>pkt-resto</code> — a árvore veria 99,9% do tráfego como resto. A economia real já está feita: a regra de pacote casa por <code>connection-mark</code> (leitura barata), não por portas.</p>
+<p><strong>2.</strong> Esqueceu o <strong>RTP</strong> — o áudio. SIP (5060) é só a sinalização: convite, toque, desligar; a mídia viaja em UDP de portas altas negociadas na própria sinalização (tipicamente 10000–20000, ou a faixa que o PABX/operadora usar). A chamada completa porque a sinalização está priorizada e é levíssima; o áudio pica porque compete como <code>pkt-resto</code>. Classificar VoIP = SIP <strong>e</strong> a faixa RTP (como no texto).</p>
+<p><strong>3.</strong> Pela mecânica, impossível o interativo passar fome: seu <code>limit-at=5M</code> é servido <strong>antes</strong> de qualquer sobra ir ao resto, e DNS mal usa kilobits. Se o DNS sofre, o mais provável é que os pacotes <strong>não estão na classe</strong> <code>down-interativo</code>: consultas indo a um resolver externo por TCP/853 (DoT) ou 443 (DoH) não casam com <code>udp/53</code> — e caem no resto saturado. <code>print stats</code> (classe interativa zerada?) + <code>/ip firewall mangle print stats</code> confirmam. Moral: priorização erra silenciosamente quando a <strong>classificação</strong> envelhece.</p>
+<p><strong>4.</strong> Para a queue tree ver o tráfego da bridge, ele precisa subir ao CPU: <code>use-ip-firewall=yes</code> nas configurações da bridge (e aceitar a perda do <strong>hardware offload</strong> — todo o encaminhamento vira software, 1). O custo pode ser proibitivo num switch. No concentrador PPPoE o problema não existe porque o tráfego de cada assinante <strong>já</strong> termina túneis no CPU (é roteado, não switchado) — mais uma razão estrutural para o QoS de provedor morar no BNG.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="39.4">
+<h2 data-number="39.4" class="anchored" data-anchor-id="resumo"><span class="header-section-number">39.4</span> Resumo</h2>
+<ul>
+<li><strong>Mangle classifica, queue tree executa</strong>: o padrão de dois passos (mark-connection em <code>new</code> → mark-packet por connection-mark) marca com custo mínimo de CPU; <code>passthrough</code> calibrado evita passeios inúteis pela lista;</li>
+<li><strong>Queue tree</strong> = HTB puro na interface de <strong>saída</strong> (uma árvore por sentido), casando pacotes por packet-mark; sob o teto do pai, cada classe recebe seu <code>limit-at</code> e a sobra segue a <code>priority</code> (1 primeiro);</li>
+<li>Prioridade decide <strong>quem espera quando falta</strong> — garantias decidem o mínimo de cada classe; resto com garantia não morre de fome;</li>
+<li>Classificação envelhece (portas mudam, DoH existe, RTP não é SIP): audite <code>print stats</code> — classe zerada é sintoma de marca errada;</li>
+<li>As duas camadas do provedor convivem: fila por assinante no concentrador (plano) + árvore por tipo no agregado (prioridade).</li>
+</ul>
+<p>Falta escalar: uma fila <strong>por cliente</strong>, para milhares de clientes, sem criar milhares de filas à mão — o <strong>PCQ</strong>, no próximo e último capítulo do volume (<a href="04-pcq-em-escala.html" class="quarto-xref"><span>Capítulo 40</span></a>).</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<ul>
+<li>Documentação oficial: seções <em>Mangle</em>, <em>Queue Trees</em> e <em>HTB</em> <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
+<li>Disciplinas de fila e priorização: <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
+<li>RouterOS v7 na prática: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
+<li>QoS em provedores MikroTik: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
+</ul>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-burgess-mikrotik" class="csl-entry" role="listitem">
+BURGESS, Dennis. <strong>Learn RouterOS</strong>. 2. ed. Raleigh: Lulu Press, 2011.
+</div>
+<div id="ref-discher-rosv7" class="csl-entry" role="listitem">
+DISCHER, Stephen R. W. <strong>RouterOS by Example</strong>. 2. ed. College Station: ISP Services, Inc., 2016.
+</div>
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+<div id="ref-tanenbaum-redes" class="csl-entry" role="listitem">
+TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Computadores</strong>. 6. ed. Porto Alegre: Bookman, 2021.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../volumes/v07-qos/02-burst-planos-velocidade.html" class="pagination-link" aria-label="Burst e planos de velocidade">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">38</span>&nbsp; <span class="chapter-title">Burst e planos de velocidade</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v07-qos/04-pcq-em-escala.html" class="pagination-link" aria-label="PCQ: controle de banda por assinante em escala">
+        <span class="nav-page-text"><span class="chapter-number">40</span>&nbsp; <span class="chapter-title">PCQ: controle de banda por assinante em escala</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v07-qos/03-mangle-queue-tree.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>

@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>42&nbsp; OSPF: conceitos e configuração – Manual de MikroTik</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 1em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../volumes/v08-roteamento/03-ospf-avancado.html" rel="next">
+<link href="../../volumes/v08-roteamento/01-rotas-estaticas-distancia.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-87cc102b4e0e18bfb1533bf0063377dc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v08-roteamento/01-rotas-estaticas-distancia.html">Volume 8 — Roteamento</a></li><li class="breadcrumb-item"><a href="../../volumes/v08-roteamento/02-ospf-conceitos-configuracao.html"><span class="chapter-number">42</span>&nbsp; <span class="chapter-title">OSPF: conceitos e configuração</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">Manual de MikroTik</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/VitorMattosDev/manual-mikrotik" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <a href="../../Manual-de-MikroTik.pdf" title="Baixar PDF" class="quarto-navigation-tool px-1" aria-label="Baixar PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Apresentação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 1 — Primeiros passos</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/01-o-que-e-mikrotik.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">O que é MikroTik e RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/02-hardware-linhas-produto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Linhas de hardware MikroTik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/03-licencas-routerboot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Licenças RouterOS e RouterBOOT</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/04-formas-de-acesso.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Formas de acesso ao RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/05-laboratorio-chr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Montando o laboratório com CHR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/06-primeiro-acesso-seguranca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Primeiro acesso, usuários e segurança inicial</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/07-backup-export-reset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Backup, export e reset</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v01-primeiros-passos/08-netinstall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Netinstall</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 2 — CLI e configuração essencial</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/01-anatomia-terminal.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Anatomia do terminal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/02-enderecamento-ip-rota-padrao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Endereçamento IP e rota padrão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/03-dhcp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">DHCP client e server</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/04-dns.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">DNS no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/05-nat-masquerade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">NAT masquerade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v02-cli-configuracao/06-projeto-roteador-de-borda.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Projeto: roteador de borda</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 3 — Firewall</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/01-connection-tracking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Connection tracking</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/02-chains-logica-firewall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Chains e a lógica do firewall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/03-protegendo-o-roteador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Protegendo o roteador</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/04-forward-address-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Forward e address-lists</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/05-dstnat-port-forwarding.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">dstnat e port forwarding</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/06-mangle-raw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mangle e RAW</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v03-firewall/07-hardening-completo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Hardening completo</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 4 — Bridge, switching e VLANs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Bridge e hardware offload</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v04-bridge-vlans/05-segmentacao-rede-provedor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Segmentação da rede do provedor</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 5 — Wireless e enlaces de rádio</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/01-fundamentos-radio-regulamentacao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Fundamentos de rádio e regulamentação</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/02-wireless-routeros.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Wireless no RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/03-ptp-nstreme-nv2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Enlaces PtP: Nstreme e NV2</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/04-ptmp-rural.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">PtMP rural: a torre que atende dezenas de clientes</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/05-alinhamento-troubleshooting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Alinhamento e troubleshooting de enlaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v05-wireless/06-capsman-wifi-moderno.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">CAPsMAN e o WiFi moderno</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 6 — PPPoE e gestão de assinantes</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v06-pppoe/01-como-funciona-pppoe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">33</span>&nbsp; <span class="chapter-title">Como funciona o PPPoE</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v06-pppoe/02-pppoe-server-profiles-pools.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">34</span>&nbsp; <span class="chapter-title">PPPoE server: profiles, pools e secrets</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v06-pppoe/03-radius-user-manager-gestao.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">35</span>&nbsp; <span class="chapter-title">RADIUS, User Manager e gestão</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v06-pppoe/04-boas-praticas-concentrador.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">36</span>&nbsp; <span class="chapter-title">Boas práticas de concentrador (BNG)</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false">
+ <span class="menu-text">Volume 7 — QoS e controle de banda</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v07-qos/01-fundamentos-qos-simple-queues.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">37</span>&nbsp; <span class="chapter-title">Fundamentos de QoS e simple queues</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v07-qos/02-burst-planos-velocidade.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">38</span>&nbsp; <span class="chapter-title">Burst e planos de velocidade</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v07-qos/03-mangle-queue-tree.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">39</span>&nbsp; <span class="chapter-title">Mangle e queue tree: priorizando por tipo de tráfego</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v07-qos/04-pcq-em-escala.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">40</span>&nbsp; <span class="chapter-title">PCQ: controle de banda por assinante em escala</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true">
+ <span class="menu-text">Volume 8 — Roteamento</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/01-rotas-estaticas-distancia.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">41</span>&nbsp; <span class="chapter-title">Rotas estáticas, distância e failover</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/02-ospf-conceitos-configuracao.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">42</span>&nbsp; <span class="chapter-title">OSPF: conceitos e configuração</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/03-ospf-avancado.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">43</span>&nbsp; <span class="chapter-title">OSPF avançado: áreas, autenticação e filtros</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/04-bgp-conceitos-peering.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">44</span>&nbsp; <span class="chapter-title">BGP: conceitos e peering</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/05-bgp-filtros-communities.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">45</span>&nbsp; <span class="chapter-title">BGP: filtros, communities e segurança</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v08-roteamento/06-vrf-boas-praticas-v7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">46</span>&nbsp; <span class="chapter-title">VRF e boas práticas de roteamento no v7</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-9" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#link-state-cada-roteador-tem-o-mapa-inteiro" id="toc-link-state-cada-roteador-tem-o-mapa-inteiro" class="nav-link active" data-scroll-target="#link-state-cada-roteador-tem-o-mapa-inteiro"><span class="header-section-number">42.1</span> Link-state: cada roteador tem o mapa inteiro</a></li>
+  <li><a href="#vizinhança-custo-e-áreas" id="toc-vizinhança-custo-e-áreas" class="nav-link" data-scroll-target="#vizinhança-custo-e-áreas"><span class="header-section-number">42.2</span> Vizinhança, custo e áreas</a></li>
+  <li><a href="#configurando-ospfv2-no-routeros-v7" id="toc-configurando-ospfv2-no-routeros-v7" class="nav-link" data-scroll-target="#configurando-ospfv2-no-routeros-v7"><span class="header-section-number">42.3</span> Configurando OSPFv2 no RouterOS v7</a></li>
+  <li><a href="#lendo-o-ospf" id="toc-lendo-o-ospf" class="nav-link" data-scroll-target="#lendo-o-ospf"><span class="header-section-number">42.4</span> Lendo o OSPF</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">42.5</span> 🧪 Laboratório</a>
+  <ul class="collapse">
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">42.5.1</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">42.5.2</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">42.5.3</span> Desafios</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">42.6</span> Resumo</a></li>
+  <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v08-roteamento/02-ospf-conceitos-configuracao.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v08-roteamento/01-rotas-estaticas-distancia.html">Volume 8 — Roteamento</a></li><li class="breadcrumb-item"><a href="../../volumes/v08-roteamento/02-ospf-conceitos-configuracao.html"><span class="chapter-number">42</span>&nbsp; <span class="chapter-title">OSPF: conceitos e configuração</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-ospf-basico" class="quarto-section-identifier"><span class="chapter-number">42</span>&nbsp; <span class="chapter-title">OSPF: conceitos e configuração</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Objetivos de aprendizagem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ao final deste capítulo, você será capaz de:</p>
+<ul>
+<li>Explicar por que um protocolo de estado de enlace (<strong>link-state</strong>) substitui com vantagem as rotas estáticas quando a rede tem malha;</li>
+<li>Descrever o ciclo do OSPF: descoberta de vizinhos (Hello), sincronização do banco de dados (LSAs) e cálculo de menor caminho (Dijkstra) sobre o <strong>custo</strong>;</li>
+<li>Entender <strong>áreas</strong>, o papel da área 0 (backbone) e por que existem DR/BDR em redes multiacesso;</li>
+<li>Configurar OSPFv2 no RouterOS <strong>v7</strong> (a tríade <code>instance</code> → <code>area</code> → <code>interface-template</code>) e ler <code>neighbor</code>/<code>lsa</code>;</li>
+<li>Redistribuir rotas (conectadas, estáticas) e ajustar <strong>custo</strong> para moldar o caminho — sem criar caminhos assimétricos.</li>
+</ul>
+</div>
+</div>
+<p>O <a href="01-rotas-estaticas-distancia.html" class="quarto-xref"><span>Capítulo 41</span></a> terminou com um incômodo: cada enlace novo são várias tabelas para editar à mão, e um link que cai não avisa ninguém. Numa rede com <strong>malha</strong> — dois POPs, um anel de fibra, o rádio de contingência — isso não escala nem sobrevive a falhas. O <strong>OSPF</strong> (<em>Open Shortest Path First</em>) resolve os dois: os roteadores trocam a topologia entre si, cada um calcula sozinho o melhor caminho, e quando algo muda <strong>a rede reconverge sem intervenção</strong>. É o protocolo de roteamento interno padrão de qualquer provedor.</p>
+<section id="link-state-cada-roteador-tem-o-mapa-inteiro" class="level2" data-number="42.1">
+<h2 data-number="42.1" class="anchored" data-anchor-id="link-state-cada-roteador-tem-o-mapa-inteiro"><span class="header-section-number">42.1</span> Link-state: cada roteador tem o mapa inteiro</h2>
+<p>Há duas famílias de protocolos internos. Os <strong>distance-vector</strong> (RIP) dizem ao vizinho “sei chegar em X a N saltos” — cada um confia na palavra do outro, e mudanças se propagam de boca em boca (lento, sujeito a loops). Os <strong>link-state</strong> (OSPF) fazem o oposto: cada roteador anuncia <strong>apenas seus próprios enlaces</strong> (a quem está diretamente conectado e com que custo), e esses anúncios — <strong>LSAs</strong> (<em>Link-State Advertisements</em>) — são inundados intactos por toda a área. Resultado: <strong>todo roteador monta o mesmo mapa completo</strong> da rede e roda o algoritmo de Dijkstra sobre ele para achar o menor caminho até cada destino.</p>
+<p>A diferença prática: no link-state ninguém “acredita” em rota de terceiro — todos veem a topologia e calculam. Convergência rápida, sem loops de contagem ao infinito, ao custo de mais CPU/memória (o mapa) e de disciplina de projeto (áreas).</p>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="218.665933pt" height="144.965001pt" viewbox="-68.014948 -68.014947 218.665933 144.965001">
+<defs>
+<path id="tz_fig_ospf_topologia_g0-48" d="M4.128518-2.217684C4.128518-3.075467 4.037858-4.574844 2.252553-4.574844S.376588-3.068493 .376588-2.217684C.376588-1.338979 .488169 .083686 2.252553 .083686S4.128518-1.332005 4.128518-2.217684ZM2.252553-.237111C2.02939-.237111 1.820174-.313823 1.652802-.460274C1.464508-.620672 1.345953-.72528 1.345953-2.308344C1.345953-2.789539 1.345953-3.340473 1.422665-3.675218C1.534247-4.128518 1.966625-4.254047 2.252553-4.254047C2.517559-4.254047 2.970859-4.142466 3.082441-3.66127C3.159153-3.333499 3.159153-2.75467 3.159153-2.308344C3.159153-1.820174 3.159153-1.311083 3.089415-.920548C2.991781-.355666 2.510585-.237111 2.252553-.237111Z"></path>
+<path id="tz_fig_ospf_topologia_g0-50" d="M4.030884-1.590037H3.591532C3.577584-1.506351 3.514819-1.011208 3.38929-.983313C3.242839-.955417 2.824408-.955417 2.66401-.955417H1.708593C2.092154-1.241345 2.48269-1.527273 2.887173-1.785305C3.452055-2.147945 4.030884-2.517559 4.030884-3.214944C4.030884-4.051806 3.242839-4.574844 2.133998-4.574844C1.185554-4.574844 .474222-4.20523 .474222-3.542715C.474222-3.138232 .801993-2.991781 1.011208-2.991781C1.262267-2.991781 1.555168-3.166127 1.555168-3.535741C1.555168-3.870486 1.297136-4.009963 1.276214-4.016936C1.527273-4.177335 1.84807-4.184309 1.931756-4.184309C2.524533-4.184309 2.991781-3.807721 2.991781-3.20797C2.991781-2.670984 2.629141-2.224658 2.224658-1.868991L.564882-.397509C.481196-.313823 .474222-.306849 .474222-.167372V0H3.793773L4.030884-1.590037Z"></path>
+<path id="tz_fig_ospf_topologia_g0-99" d="M3.731009-.795019C3.731009-.920548 3.612453-.920548 3.507846-.920548C3.347447-.920548 3.333499-.913574 3.284682-.808966C3.180075-.578829 2.956912-.313823 2.419925-.313823C1.297136-.313823 1.297136-1.290162 1.297136-1.57609C1.297136-2.099128 1.380822-2.803487 2.315318-2.803487C2.357161-2.803487 2.75467-2.796513 2.75467-2.768618C2.75467-2.75467 2.747696-2.747696 2.740722-2.740722C2.726775-2.719801 2.66401-2.615193 2.66401-2.461768C2.66401-2.175841 2.873225-1.980573 3.145205-1.980573C3.431133-1.980573 3.633375-2.175841 3.633375-2.468742C3.633375-3.138232 2.698879-3.159153 2.294396-3.159153C.739228-3.159153 .327771-2.196762 .327771-1.548194C.327771-.732254 .934496 .041843 2.252553 .041843C2.594271 .041843 2.949938-.013948 3.228892-.174346C3.626401-.411457 3.731009-.753176 3.731009-.795019Z"></path>
+<path id="tz_fig_ospf_topologia_g0-101" d="M3.598506-1.45056C3.744956-1.45056 3.84259-1.45056 3.84259-1.659776C3.84259-1.862017 3.793773-2.385056 3.459029-2.726775C3.082441-3.103362 2.566376-3.159153 2.182814-3.159153C.892653-3.159153 .278954-2.39203 .278954-1.569116C.278954-.739228 .920548 .041843 2.30137 .041843C2.552428 .041843 2.956912 .013948 3.305604-.174346C3.717061-.390535 3.84259-.72528 3.84259-.795019C3.84259-.948443 3.689166-.948443 3.619427-.948443C3.493898-.948443 3.459029-.941469 3.403238-.829888C3.152179-.313823 2.517559-.313823 2.399004-.313823C1.297136-.313823 1.262267-1.129763 1.248319-1.45056H3.598506ZM1.248319-1.743462C1.255293-2.015442 1.290162-2.838356 2.189788-2.838356S3.138232-2.043337 3.152179-1.743462H1.248319Z"></path>
+<path id="tz_fig_ospf_topologia_g0-110" d="M4.267995-2.099128C4.267995-2.956912 3.717061-3.138232 3.075467-3.138232C2.231631-3.138232 1.841096-2.636115 1.708593-2.412951V-3.138232L.446326-3.082441V-2.691905C.857783-2.691905 .913574-2.691905 .913574-2.419925V-.390535H.446326V0C.4533 0 1.018182-.027895 1.352927-.027895C1.694645-.027895 2.259527 0 2.266501 0V-.390535H1.799253V-1.736488C1.799253-2.545455 2.524533-2.817435 2.942964-2.817435C3.249813-2.817435 3.382316-2.657036 3.382316-2.154919V-.390535H2.915068V0C2.922042 0 3.486924-.027895 3.821669-.027895C4.163387-.027895 4.728269 0 4.735243 0V-.390535H4.267995V-2.099128Z"></path>
+<path id="tz_fig_ospf_topologia_g0-111" d="M4.226152-1.520299C4.226152-2.350187 3.619427-3.159153 2.252553-3.159153C.871731-3.159153 .278954-2.343213 .278954-1.520299C.278954-.704359 .899626 .041843 2.252553 .041843C3.612453 .041843 4.226152-.711333 4.226152-1.520299ZM2.252553-.313823C1.248319-.313823 1.248319-1.004234 1.248319-1.603985C1.248319-2.161893 1.248319-2.838356 2.252553-2.838356S3.256787-2.161893 3.256787-1.603985C3.256787-1.004234 3.256787-.313823 2.252553-.313823Z"></path>
+<path id="tz_fig_ospf_topologia_g0-118" d="M3.996015-2.587298C4.044832-2.677958 4.051806-2.684932 4.198257-2.698879C4.281943-2.705853 4.456289-2.705853 4.505106-2.705853V-3.096389C4.288917-3.082441 4.142466-3.068493 3.919303-3.068493C3.710087-3.068493 3.438107-3.075467 3.228892-3.096389V-2.705853C3.410212-2.705853 3.452055-2.691905 3.535741-2.66401L2.601245-.829888L1.645828-2.705853H1.973599V-3.096389C1.673724-3.082441 1.366874-3.068493 1.066999-3.068493C.795019-3.068493 .523039-3.075467 .251059-3.096389V-2.705853H.704359L2.008468-.153425C2.099128 .027895 2.168867 .041843 2.378082 .041843S2.650062 .027895 2.747696-.153425L3.996015-2.587298Z"></path>
+<path id="tz_fig_ospf_topologia_g1-79" d="M6.644085-3.039601C6.644085-4.868742 5.254296-6.321295 3.577584-6.321295S.511083-4.859776 .511083-3.039601S1.909838 .19726 3.577584 .19726S6.644085-1.219427 6.644085-3.039601ZM3.577584-.071731C2.67198-.071731 1.425654-.860772 1.425654-3.174097C1.425654-5.361893 2.707846-6.070237 3.577584-6.070237S5.729514-5.361893 5.729514-3.174097C5.729514-.860772 4.483188-.071731 3.577584-.071731Z"></path>
+<path id="tz_fig_ospf_topologia_g1-80" d="M3.577584-2.815442C4.832877-2.815442 5.747447-3.595517 5.747447-4.456289C5.747447-5.34396 4.82391-6.124035 3.577584-6.124035H.358655V-5.846077H.564882C1.255293-5.846077 1.273225-5.747447 1.273225-5.415691V-.708344C1.273225-.376588 1.255293-.277958 .564882-.277958H.358655V0C.762142-.026899 1.264259-.026899 1.676712-.026899S2.591283-.026899 2.99477 0V-.277958H2.788543C2.098132-.277958 2.080199-.376588 2.080199-.708344V-2.815442H3.577584ZM2.0533-5.478456C2.0533-5.783313 2.071233-5.846077 2.492653-5.846077H3.353425C4.832877-5.846077 4.832877-4.859776 4.832877-4.456289S4.832877-3.066501 3.344458-3.066501H2.0533V-5.478456Z"></path>
+<path id="tz_fig_ospf_topologia_g1-97" d="M3.066501-.645579C3.111333-.268991 3.371357 .053798 3.756912 .053798C3.981071 .053798 4.545953-.080697 4.545953-.798007V-1.300125H4.294894V-.806974C4.294894-.708344 4.294894-.260025 3.972105-.260025S3.649315-.690411 3.649315-.833873V-2.402989C3.649315-2.914072 3.649315-3.218929 3.245828-3.58655C2.914072-3.882441 2.483686-4.016936 2.035367-4.016936C1.282192-4.016936 .654545-3.640349 .654545-3.066501C.654545-2.788543 .842839-2.636115 1.075965-2.636115C1.318057-2.636115 1.488418-2.815442 1.488418-3.048568C1.488418-3.434122 1.093898-3.478954 1.084932-3.478954C1.327024-3.71208 1.75741-3.792777 2.017435-3.792777C2.47472-3.792777 2.985803-3.452055 2.985803-2.663014V-2.367123C2.501619-2.349191 1.829141-2.304359 1.228394-2.017435C.582814-1.703611 .385554-1.23736 .385554-.878705C.385554-.143462 1.255293 .09863 1.85604 .09863C2.600249 .09863 2.940971-.394521 3.066501-.645579ZM2.985803-1.264259C2.985803-.394521 2.313325-.125529 1.918804-.125529C1.497385-.125529 1.102864-.430386 1.102864-.878705C1.102864-1.470486 1.613948-2.098132 2.985803-2.15193V-1.264259Z"></path>
+<path id="tz_fig_ospf_topologia_g1-98" d="M1.622914-2.860274C1.622914-3.030635 1.622914-3.039601 1.721544-3.183064C2.026401-3.595517 2.465753-3.738979 2.806476-3.738979C3.19203-3.738979 3.550685-3.523786 3.783811-3.147198C4.016936-2.761644 4.034869-2.232628 4.034869-1.945704C4.034869-1.524284 3.981071-1.049066 3.747945-.690411C3.550685-.403487 3.183064-.125529 2.707846-.125529C2.304359-.125529 1.963636-.340722 1.748443-.672478C1.622914-.860772 1.622914-.869738 1.622914-1.0401V-2.860274ZM1.542217-.546949C1.820174-.152428 2.268493 .09863 2.752677 .09863C3.819676 .09863 4.805978-.762142 4.805978-1.936737C4.805978-3.057534 3.918306-3.963138 2.842341-3.963138C2.232628-3.963138 1.811208-3.649315 1.596015-3.407223V-6.222665L.268991-6.124035V-5.846077C.878705-5.846077 .959402-5.783313 .959402-5.34396V0H1.210461L1.542217-.546949Z"></path>
+<path id="tz_fig_ospf_topologia_g1-99" d="M3.263761-3.523786C3.075467-3.48792 2.896139-3.362391 2.896139-3.102366C2.896139-2.86924 3.075467-2.689913 3.308593-2.689913S3.730012-2.842341 3.730012-3.120299C3.730012-3.676214 3.102366-4.016936 2.313325-4.016936C1.165629-4.016936 .304857-3.057534 .304857-1.936737C.304857-.780075 1.23736 .09863 2.295392 .09863C3.541719 .09863 3.828643-.986301 3.828643-1.066999C3.828643-1.174595 3.730012-1.174595 3.703113-1.174595C3.604483-1.174595 3.604483-1.156663 3.550685-1.004234C3.344458-.385554 2.842341-.152428 2.385056-.152428C1.811208-.152428 1.075965-.61868 1.075965-1.945704C1.075965-3.344458 1.793275-3.765878 2.331258-3.765878C2.447821-3.765878 2.932005-3.747945 3.263761-3.523786Z"></path>
+<path id="tz_fig_ospf_topologia_g1-100" d="M3.48792-1.075965C3.48792-.91457 3.48792-.887671 3.353425-.699377C3.075467-.29589 2.663014-.125529 2.304359-.125529C1.918804-.125529 1.560149-.340722 1.327024-.71731C1.093898-1.102864 1.075965-1.63188 1.075965-1.918804C1.075965-2.340224 1.129763-2.815442 1.362889-3.174097C1.560149-3.461021 1.927771-3.738979 2.402989-3.738979C2.779577-3.738979 3.138232-3.550685 3.380324-3.209963C3.48792-3.066501 3.48792-3.057534 3.48792-2.887173V-1.075965ZM3.514819-3.434122C3.469988-3.48792 3.066501-3.963138 2.367123-3.963138C1.264259-3.963138 .304857-3.084433 .304857-1.927771C.304857-.806974 1.201494 .09863 2.268493 .09863C2.923039 .09863 3.326526-.286924 3.48792-.475218V.09863L4.841843 0V-.277958C4.23213-.277958 4.151432-.340722 4.151432-.780075V-6.222665L2.824408-6.124035V-5.846077C3.434122-5.846077 3.514819-5.783313 3.514819-5.34396V-3.434122Z"></path>
+<path id="tz_fig_ospf_topologia_g1-101" d="M3.58655-2.0533C3.783811-2.0533 3.828643-2.0533 3.828643-2.241594C3.828643-3.165131 3.326526-4.016936 2.178829-4.016936C1.102864-4.016936 .260025-3.084433 .260025-1.972603C.260025-.798007 1.201494 .09863 2.295392 .09863S3.828643-.860772 3.828643-1.066999C3.828643-1.129763 3.783811-1.183562 3.703113-1.183562C3.61345-1.183562 3.58655-1.120797 3.577584-1.084932C3.272727-.170361 2.47472-.152428 2.340224-.152428C1.909838-.152428 1.542217-.394521 1.33599-.699377C1.0401-1.13873 1.031133-1.676712 1.031133-2.0533H3.58655ZM1.0401-2.268493C1.120797-3.649315 1.927771-3.792777 2.178829-3.792777C2.67198-3.792777 3.209963-3.416189 3.218929-2.268493H1.0401Z"></path>
+<path id="tz_fig_ospf_topologia_g1-108" d="M1.649813-6.222665L.32279-6.124035V-5.846077C.932503-5.846077 1.0132-5.783313 1.0132-5.34396V-.690411C1.0132-.277958 .91457-.277958 .32279-.277958V0C.744209-.017933 .91457-.026899 1.327024-.026899C1.748443-.026899 1.900872-.017933 2.340224 0V-.277958C1.748443-.277958 1.649813-.277958 1.649813-.690411V-6.222665Z"></path>
+<path id="tz_fig_ospf_topologia_g1-110" d="M1.667746-2.322291C1.667746-3.272727 2.340224-3.738979 2.905106-3.738979C3.434122-3.738979 3.550685-3.299626 3.550685-2.761644V-.690411C3.550685-.277958 3.452055-.277958 2.860274-.277958V0C3.281694-.017933 3.452055-.026899 3.882441-.026899S4.42939-.017933 4.904608 0V-.277958C4.447323-.277958 4.223163-.277958 4.214197-.555915V-2.27746C4.214197-3.021669 4.214197-3.281694 3.963138-3.595517C3.756912-3.846575 3.416189-3.963138 2.96787-3.963138C2.133998-3.963138 1.748443-3.344458 1.622914-3.0934H1.613948V-3.963138L.313823-3.864508V-3.58655C.923537-3.58655 1.004234-3.523786 1.004234-3.084433V-.690411C1.004234-.277958 .905604-.277958 .313823-.277958V0C.735243-.017933 .905604-.026899 1.33599-.026899S1.882939-.017933 2.358157 0V-.277958C1.766376-.277958 1.667746-.277958 1.667746-.690411V-2.322291Z"></path>
+<path id="tz_fig_ospf_topologia_g1-111" d="M4.339726-1.909838C4.339726-3.084433 3.407223-4.016936 2.304359-4.016936C1.165629-4.016936 .260025-3.057534 .260025-1.909838C.260025-.789041 1.192528 .09863 2.295392 .09863C3.434122 .09863 4.339726-.806974 4.339726-1.909838ZM2.304359-.152428C1.85604-.152428 1.479452-.376588 1.273225-.726276C1.0401-1.102864 1.031133-1.578082 1.031133-1.990535C1.031133-2.322291 1.031133-2.833375 1.255293-3.200996C1.524284-3.658281 1.972603-3.792777 2.295392-3.792777C2.806476-3.792777 3.174097-3.505853 3.353425-3.200996C3.559651-2.824408 3.568618-2.367123 3.568618-1.990535C3.568618-1.65878 3.568618-1.13873 3.344458-.744209C3.0934-.331756 2.680946-.152428 2.304359-.152428Z"></path>
+<path id="tz_fig_ospf_topologia_g1-114" d="M1.596015-2.0533C1.596015-2.420922 1.694645-3.738979 2.716812-3.738979V-3.730012C2.698879-3.721046 2.555417-3.61345 2.555417-3.398257C2.555417-3.156164 2.743711-3.003736 2.949938-3.003736C3.138232-3.003736 3.344458-3.138232 3.344458-3.407223C3.344458-3.694147 3.075467-3.963138 2.67198-3.963138C2.133998-3.963138 1.75741-3.58655 1.551183-3.030635H1.542217V-3.963138L.268991-3.864508V-3.58655C.878705-3.58655 .959402-3.523786 .959402-3.084433V-.690411C.959402-.277958 .860772-.277958 .268991-.277958V0C.744209-.017933 .860772-.026899 1.318057-.026899C1.676712-.026899 1.891905-.017933 2.456787 0V-.277958H2.27746C1.622914-.277958 1.596015-.376588 1.596015-.708344V-2.0533Z"></path>
+<path id="tz_fig_ospf_topologia_g1-116" d="M2.914072-3.58655V-3.864508H1.613948V-5.514321H1.362889C1.353923-4.761146 1.0401-3.837609 .170361-3.81071V-3.58655H.950436V-1.111831C.950436-.107597 1.676712 .09863 2.15193 .09863C2.752677 .09863 3.066501-.475218 3.066501-1.111831V-1.622914H2.815442V-1.13873C2.815442-.475218 2.537484-.152428 2.214695-.152428C1.613948-.152428 1.613948-.941469 1.613948-1.102864V-3.58655H2.914072Z"></path>
+<path id="tz_fig_ospf_topologia_g1-117" d="M3.550685-1.497385C3.550685-.699377 3.102366-.125529 2.456787-.125529C1.712578-.125529 1.667746-.511083 1.667746-.995268V-3.963138L.313823-3.864508V-3.58655C1.004234-3.58655 1.004234-3.559651 1.004234-2.761644V-1.416687C1.004234-.833873 1.004234-.457285 1.416687-.143462C1.676712 .035866 2.044334 .09863 2.402989 .09863C2.86924 .09863 3.308593-.107597 3.568618-.645579H3.577584V.09863L4.904608 0V-.277958C4.294894-.277958 4.214197-.340722 4.214197-.780075V-3.963138L2.860274-3.864508V-3.58655C3.469988-3.58655 3.550685-3.523786 3.550685-3.084433V-1.497385Z"></path>
+<path id="tz_fig_ospf_topologia_g2-33" d="M6.41594-1.57609C5.537235-.934496 5.41868-.020922 5.41868-.013948C5.41868 .09066 5.488418 .09066 5.586052 .09066C5.711582 .09066 5.732503 .09066 5.767372-.027895C5.809215-.202242 5.920797-.648568 6.283437-1.03213C6.68792-1.457534 7.036613-1.562142 7.329514-1.652802C7.371357-1.66675 7.399253-1.708593 7.399253-1.743462C7.399253-1.8132 7.35741-1.827148 7.26675-1.855044C6.262516-2.175841 5.906849-2.887173 5.760399-3.500872C5.732503-3.584558 5.683686-3.584558 5.586052-3.584558S5.41868-3.584558 5.41868-3.47995C5.41868-3.466002 5.488418-2.998755 5.830137-2.517559C5.990535-2.280448 6.185803-2.085181 6.41594-1.917808H.81594C.704359-1.917808 .536986-1.917808 .536986-1.750436C.536986-1.57609 .697385-1.57609 .81594-1.57609H6.41594Z"></path>
+<path id="tz_fig_ospf_topologia_g3-12" d="M2.719801-3.02665C2.643088-3.019676 2.608219-3.019676 2.594271-3.012702S2.566376-3.005729 2.468742-3.005729H1.3599V-3.765878C1.3599-4.456289 2.078207-4.714321 2.559402-4.714321C2.796513-4.714321 3.033624-4.665504 3.214944-4.519054C2.963885-4.463263 2.942964-4.267995 2.942964-4.184309C2.942964-3.96812 3.11731-3.84259 3.284682-3.84259C3.410212-3.84259 3.626401-3.926276 3.626401-4.198257C3.626401-4.581818 3.235866-4.909589 2.587298-4.909589C1.862017-4.909589 .864757-4.581818 .864757-3.772852V-3.005729H.265006V-2.75467H.864757V-.550934C.864757-.251059 .795019-.251059 .341719-.251059V0C.355666 0 .843836-.027895 1.12279-.027895C1.387796-.027895 1.645828-.020922 1.910834 0V-.251059C1.457534-.251059 1.387796-.251059 1.387796-.550934V-2.75467H2.775592C3.061519-2.75467 3.11731-2.684932 3.11731-2.378082V-.550934C3.11731-.251059 3.047572-.251059 2.594271-.251059V0C2.608219 0 3.096389-.027895 3.375342-.027895C3.640349-.027895 3.898381-.020922 4.163387 0V-.251059C3.710087-.251059 3.640349-.251059 3.640349-.550934V-3.089415L2.719801-3.02665Z"></path>
+<path id="tz_fig_ospf_topologia_g3-19" d="M1.799253-3.528767C2.343213-3.926276 2.768618-4.219178 2.901121-4.323786C3.012702-4.400498 3.075467-4.449315 3.075467-4.581818S2.956912-4.867746 2.789539-4.867746C2.677958-4.867746 2.622167-4.804981 2.552428-4.728269L1.638854-3.710087L1.799253-3.528767Z"></path>
+<path id="tz_fig_ospf_topologia_g3-40" d="M2.475716-5.230386C1.150685-4.29589 .801993-2.817435 .801993-1.750436C.801993-.767123 1.094894 .760149 2.475716 1.736488C2.531507 1.736488 2.615193 1.736488 2.615193 1.652802C2.615193 1.610959 2.594271 1.597011 2.545455 1.548194C1.617933 .711333 1.276214-.474222 1.276214-1.743462C1.276214-3.626401 1.994521-4.546949 2.566376-5.063014C2.594271-5.090909 2.615193-5.111831 2.615193-5.1467C2.615193-5.230386 2.531507-5.230386 2.475716-5.230386Z"></path>
+<path id="tz_fig_ospf_topologia_g3-41" d="M.627646-5.230386C.578829-5.230386 .495143-5.230386 .495143-5.1467C.495143-5.111831 .516065-5.090909 .557908-5.042092C1.157659-4.491158 1.827148-3.549689 1.827148-1.750436C1.827148-.292902 1.373848 .808966 .620672 1.492403C.502117 1.610959 .495143 1.617933 .495143 1.652802S.516065 1.736488 .585803 1.736488C.669489 1.736488 1.332005 1.276214 1.792279 .404483C2.099128-.174346 2.30137-.927522 2.30137-1.743462C2.30137-2.726775 2.008468-4.254047 .627646-5.230386Z"></path>
+<path id="tz_fig_ospf_topologia_g3-48" d="M3.598506-2.224658C3.598506-2.991781 3.507846-3.542715 3.187049-4.030884C2.970859-4.351681 2.538481-4.630635 1.980573-4.630635C.36264-4.630635 .36264-2.726775 .36264-2.224658S.36264 .139477 1.980573 .139477S3.598506-1.72254 3.598506-2.224658ZM1.980573-.055791C1.659776-.055791 1.234371-.244085 1.094894-.81594C.99726-1.227397 .99726-1.799253 .99726-2.315318C.99726-2.824408 .99726-3.354421 1.101868-3.737983C1.248319-4.288917 1.694645-4.435367 1.980573-4.435367C2.357161-4.435367 2.719801-4.20523 2.84533-3.800747C2.956912-3.424159 2.963885-2.922042 2.963885-2.315318C2.963885-1.799253 2.963885-1.283188 2.873225-.843836C2.733748-.209215 2.259527-.055791 1.980573-.055791Z"></path>
+<path id="tz_fig_ospf_topologia_g3-49" d="M2.336239-4.435367C2.336239-4.623661 2.322291-4.630635 2.127024-4.630635C1.680697-4.191283 1.046077-4.184309 .760149-4.184309V-3.93325C.927522-3.93325 1.387796-3.93325 1.771357-4.128518V-.571856C1.771357-.341719 1.771357-.251059 1.073973-.251059H.808966V0C.934496-.006974 1.792279-.027895 2.050311-.027895C2.266501-.027895 3.145205-.006974 3.29863 0V-.251059H3.033624C2.336239-.251059 2.336239-.341719 2.336239-.571856V-4.435367Z"></path>
+<path id="tz_fig_ospf_topologia_g3-50" d="M3.521793-1.26924H3.284682C3.263761-1.115816 3.194022-.704359 3.103362-.63462C3.047572-.592777 2.510585-.592777 2.412951-.592777H1.129763C1.862017-1.241345 2.106102-1.436613 2.524533-1.764384C3.040598-2.175841 3.521793-2.608219 3.521793-3.270735C3.521793-4.11457 2.782565-4.630635 1.889913-4.630635C1.025156-4.630635 .439352-4.02391 .439352-3.382316C.439352-3.02665 .739228-2.991781 .808966-2.991781C.976339-2.991781 1.17858-3.110336 1.17858-3.361395C1.17858-3.486924 1.129763-3.731009 .767123-3.731009C.983313-4.226152 1.457534-4.379577 1.785305-4.379577C2.48269-4.379577 2.84533-3.835616 2.84533-3.270735C2.84533-2.66401 2.412951-2.182814 2.189788-1.931756L.509091-.27198C.439352-.209215 .439352-.195268 .439352 0H3.312578L3.521793-1.26924Z"></path>
+<path id="tz_fig_ospf_topologia_g3-53" d="M1.080946-3.891407C1.436613-3.800747 1.645828-3.800747 1.75741-3.800747C2.677958-3.800747 3.221918-4.428394 3.221918-4.533001C3.221918-4.609714 3.173101-4.630635 3.138232-4.630635C3.124284-4.630635 3.110336-4.630635 3.082441-4.609714C2.915068-4.546949 2.545455-4.407472 2.02939-4.407472C1.834122-4.407472 1.464508-4.42142 1.011208-4.595766C.941469-4.630635 .927522-4.630635 .920548-4.630635C.829888-4.630635 .829888-4.553923 .829888-4.442341V-2.385056C.829888-2.266501 .829888-2.182814 .941469-2.182814C1.004234-2.182814 1.011208-2.196762 1.080946-2.280448C1.380822-2.66401 1.806227-2.719801 2.050311-2.719801C2.468742-2.719801 2.657036-2.385056 2.691905-2.329265C2.817435-2.099128 2.859278-1.834122 2.859278-1.429639C2.859278-1.220423 2.859278-.808966 2.650062-.502117C2.475716-.251059 2.175841-.083686 1.834122-.083686C1.380822-.083686 .913574-.334745 .739228-.795019C1.004234-.774097 1.136737-.948443 1.136737-1.136737C1.136737-1.436613 .878705-1.492403 .788045-1.492403C.774097-1.492403 .439352-1.492403 .439352-1.115816C.439352-.488169 1.011208 .139477 1.84807 .139477C2.740722 .139477 3.521793-.523039 3.521793-1.401743C3.521793-2.189788 2.922042-2.915068 2.057285-2.915068C1.750436-2.915068 1.387796-2.838356 1.080946-2.57335V-3.891407Z"></path>
+<path id="tz_fig_ospf_topologia_g3-58" d="M1.527273-2.601245C1.527273-2.84533 1.332005-3.005729 1.129763-3.005729C.885679-3.005729 .72528-2.810461 .72528-2.608219C.72528-2.364134 .920548-2.203736 1.12279-2.203736C1.366874-2.203736 1.527273-2.399004 1.527273-2.601245ZM1.527273-.397509C1.527273-.641594 1.332005-.801993 1.129763-.801993C.885679-.801993 .72528-.606725 .72528-.404483C.72528-.160399 .920548 0 1.12279 0C1.366874 0 1.527273-.195268 1.527273-.397509Z"></path>
+<path id="tz_fig_ospf_topologia_g3-61" d="M5.355915-2.343213C5.460523-2.343213 5.620922-2.343213 5.620922-2.517559C5.620922-2.684932 5.453549-2.684932 5.362889-2.684932H.746202C.655542-2.684932 .488169-2.684932 .488169-2.517559C.488169-2.343213 .648568-2.343213 .753176-2.343213H5.355915ZM5.362889-.808966C5.453549-.808966 5.620922-.808966 5.620922-.976339C5.620922-1.150685 5.460523-1.150685 5.355915-1.150685H.753176C.648568-1.150685 .488169-1.150685 .488169-.976339C.488169-.808966 .655542-.808966 .746202-.808966H5.362889Z"></path>
+<path id="tz_fig_ospf_topologia_g3-97" d="M3.110336-1.868991C3.110336-2.238605 3.110336-2.503611 2.789539-2.761644C2.503611-2.998755 2.168867-3.110336 1.75741-3.110336C1.094894-3.110336 .627646-2.859278 .627646-2.433873C.627646-2.21071 .781071-2.092154 .962391-2.092154C1.150685-2.092154 1.290162-2.231631 1.290162-2.419925C1.290162-2.538481 1.234371-2.684932 1.046077-2.740722C1.297136-2.915068 1.701619-2.915068 1.743462-2.915068C2.133998-2.915068 2.559402-2.657036 2.559402-2.071233V-1.855044C2.175841-1.841096 1.715567-1.820174 1.206476-1.63188C.578829-1.401743 .383562-1.018182 .383562-.704359C.383562-.104608 1.108842 .069738 1.603985 .069738C2.161893 .069738 2.489664-.244085 2.636115-.516065C2.66401-.230137 2.852304 .034869 3.173101 .034869C3.187049 .034869 3.863512 .034869 3.863512-.627646V-1.011208H3.626401V-.63462C3.626401-.564882 3.626401-.230137 3.368369-.230137S3.110336-.557908 3.110336-.648568V-1.868991ZM2.559402-.983313C2.559402-.313823 1.973599-.125529 1.659776-.125529C1.30411-.125529 .969365-.36264 .969365-.704359C.969365-1.08792 1.30411-1.624907 2.559402-1.673724V-.983313Z"></path>
+<path id="tz_fig_ospf_topologia_g3-98" d="M1.387796-4.839851L.341719-4.763138V-4.51208C.81594-4.51208 .864757-4.456289 .864757-4.107597V0H1.101868L1.345953-.425405C1.610959-.076712 1.994521 .069738 2.364134 .069738C3.284682 .069738 4.072727-.620672 4.072727-1.506351C4.072727-2.357161 3.354421-3.075467 2.440847-3.075467C2.022416-3.075467 1.638854-2.908095 1.387796-2.657036V-4.839851ZM1.415691-2.336239C1.610959-2.657036 1.987547-2.880199 2.405978-2.880199C2.796513-2.880199 3.075467-2.657036 3.214944-2.447821C3.354421-2.245579 3.438107-1.973599 3.438107-1.513325C3.438107-1.352927 3.438107-.829888 3.152179-.502117C2.873225-.188294 2.531507-.125529 2.329265-.125529C1.771357-.125529 1.492403-.564882 1.415691-.711333V-2.336239Z"></path>
+<path id="tz_fig_ospf_topologia_g3-99" d="M2.712827-2.782565C2.587298-2.726775 2.517559-2.615193 2.517559-2.475716C2.517559-2.287422 2.650062-2.147945 2.84533-2.147945C3.033624-2.147945 3.180075-2.266501 3.180075-2.489664C3.180075-3.110336 2.21071-3.110336 2.015442-3.110336C.969365-3.110336 .320797-2.308344 .320797-1.506351C.320797-.627646 1.066999 .069738 1.980573 .069738C3.019676 .069738 3.263761-.753176 3.263761-.836862S3.173101-.920548 3.145205-.920548C3.054545-.920548 3.047572-.899626 3.012702-.801993C2.859278-.369614 2.489664-.153425 2.064259-.153425C1.583064-.153425 .955417-.509091 .955417-1.513325C.955417-2.399004 1.387796-2.887173 2.036364-2.887173C2.127024-2.887173 2.461768-2.887173 2.712827-2.782565Z"></path>
+<path id="tz_fig_ospf_topologia_g3-100" d="M2.48269-4.763138V-4.51208C2.949938-4.51208 3.005729-4.463263 3.005729-4.121544V-2.677958C2.747696-2.929016 2.412951-3.075467 2.02939-3.075467C1.101868-3.075467 .320797-2.378082 .320797-1.499377C.320797-.627646 1.060025 .069738 1.945704 .069738C2.517559 .069738 2.859278-.237111 2.977833-.36264V.069738L4.051806 0V-.251059C3.584558-.251059 3.528767-.299875 3.528767-.641594V-4.839851L2.48269-4.763138ZM2.977833-.732254C2.796513-.404483 2.440847-.125529 1.987547-.125529C1.597011-.125529 1.318057-.355666 1.17858-.557908C1.039103-.767123 .955417-1.046077 .955417-1.492403C.955417-1.652802 .955417-2.175841 1.241345-2.503611C1.520299-2.817435 1.862017-2.880199 2.064259-2.880199C2.399004-2.880199 2.698879-2.726775 2.894147-2.475716C2.977833-2.364134 2.977833-2.357161 2.977833-2.224658V-.732254Z"></path>
+<path id="tz_fig_ospf_topologia_g3-101" d="M3.068493-1.590037C3.214944-1.590037 3.263761-1.590037 3.263761-1.743462C3.263761-2.357161 2.922042-3.110336 1.882939-3.110336C.969365-3.110336 .27198-2.385056 .27198-1.527273C.27198-.641594 1.046077 .069738 1.973599 .069738C2.915068 .069738 3.263761-.683437 3.263761-.836862C3.263761-.864757 3.249813-.934496 3.145205-.934496C3.054545-.934496 3.040598-.892653 3.019676-.822914C2.803487-.258032 2.273474-.153425 2.022416-.153425C1.694645-.153425 1.380822-.299875 1.171606-.564882C.913574-.892653 .9066-1.318057 .9066-1.590037H3.068493ZM.913574-1.771357C.990286-2.75467 1.617933-2.915068 1.882939-2.915068C2.740722-2.915068 2.768618-1.945704 2.775592-1.771357H.913574Z"></path>
+<path id="tz_fig_ospf_topologia_g3-105" d="M1.471482-4.302864C1.471482-4.505106 1.30411-4.700374 1.066999-4.700374C.857783-4.700374 .669489-4.533001 .669489-4.302864C.669489-4.051806 .871731-3.898381 1.066999-3.898381C1.290162-3.898381 1.471482-4.072727 1.471482-4.302864ZM.411457-2.998755V-2.747696C.850809-2.747696 .913574-2.705853 .913574-2.364134V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.415691-.027895 1.66675-.020922 1.910834 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.54396V-3.075467L.411457-2.998755Z"></path>
+<path id="tz_fig_ospf_topologia_g3-108" d="M1.436613-4.839851L.390535-4.763138V-4.51208C.857783-4.51208 .913574-4.463263 .913574-4.121544V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.436613-.027895 1.694645-.020922 1.959651 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.550934V-4.839851Z"></path>
+<path id="tz_fig_ospf_topologia_g3-110" d="M3.591532-2.113076C3.591532-2.719801 3.291656-3.075467 2.545455-3.075467C1.973599-3.075467 1.603985-2.761644 1.408717-2.399004H1.401743V-3.075467L.376588-2.998755V-2.747696C.843836-2.747696 .899626-2.698879 .899626-2.357161V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-2.113076Z"></path>
+<path id="tz_fig_ospf_topologia_g3-111" d="M3.689166-1.48543C3.689166-2.357161 2.942964-3.110336 1.980573-3.110336S.27198-2.357161 .27198-1.48543C.27198-.620672 1.039103 .069738 1.980573 .069738S3.689166-.620672 3.689166-1.48543ZM1.980573-.153425C1.72254-.153425 1.345953-.237111 1.115816-.578829C.927522-.864757 .9066-1.227397 .9066-1.548194C.9066-1.84807 .913574-2.259527 1.157659-2.559402C1.332005-2.761644 1.624907-2.915068 1.980573-2.915068C2.39203-2.915068 2.684932-2.719801 2.838356-2.503611C3.033624-2.231631 3.054545-1.882939 3.054545-1.548194S3.033624-.843836 2.831382-.557908C2.643088-.292902 2.322291-.153425 1.980573-.153425Z"></path>
+<path id="tz_fig_ospf_topologia_g3-114" d="M1.387796-1.590037C1.387796-2.175841 1.659776-2.880199 2.322291-2.880199C2.259527-2.831382 2.203736-2.740722 2.203736-2.629141C2.203736-2.399004 2.385056-2.308344 2.517559-2.308344C2.684932-2.308344 2.838356-2.419925 2.838356-2.629141C2.838356-2.866252 2.615193-3.075467 2.287422-3.075467C1.93873-3.075467 1.555168-2.859278 1.345953-2.329265H1.338979V-3.075467L.341719-2.998755V-2.747696C.808966-2.747696 .864757-2.698879 .864757-2.357161V-.550934C.864757-.251059 .795019-.251059 .341719-.251059V0C.376588 0 .850809-.027895 1.136737-.027895C1.436613-.027895 1.743462-.013948 2.043337 0V-.251059H1.903861C1.387796-.251059 1.387796-.327771 1.387796-.564882V-1.590037Z"></path>
+<path id="tz_fig_ospf_topologia_g3-115" d="M2.643088-2.929016C2.643088-3.047572 2.643088-3.110336 2.545455-3.110336C2.510585-3.110336 2.496638-3.110336 2.405978-3.02665C2.39203-3.019676 2.322291-2.956912 2.280448-2.922042C2.071233-3.068493 1.806227-3.110336 1.548194-3.110336C.550934-3.110336 .313823-2.587298 .313823-2.238605C.313823-2.015442 .411457-1.834122 .578829-1.694645C.843836-1.464508 1.108842-1.415691 1.54122-1.345953C1.889913-1.283188 2.454795-1.185554 2.454795-.718306C2.454795-.446326 2.266501-.125529 1.597011-.125529S.683437-.564882 .557908-1.039103C.536986-1.129763 .530012-1.157659 .432379-1.157659C.313823-1.157659 .313823-1.108842 .313823-.969365V-.111582C.313823 .006974 .313823 .069738 .411457 .069738C.474222 .069738 .606725-.076712 .746202-.230137C1.053051 .055791 1.429639 .069738 1.597011 .069738C2.503611 .069738 2.838356-.418431 2.838356-.913574C2.838356-1.17858 2.719801-1.387796 2.538481-1.555168C2.273474-1.799253 1.952677-1.855044 1.708593-1.896887C1.150685-1.994521 .697385-2.078207 .697385-2.447821C.697385-2.670984 .885679-2.942964 1.548194-2.942964C2.357161-2.942964 2.39203-2.378082 2.405978-2.175841C2.412951-2.099128 2.496638-2.099128 2.524533-2.099128C2.643088-2.099128 2.643088-2.147945 2.643088-2.280448V-2.929016Z"></path>
+<path id="tz_fig_ospf_topologia_g3-116" d="M1.401743-2.75467H2.489664V-3.005729H1.401743V-4.288917H1.164633C1.157659-3.66127 .871731-2.970859 .202242-2.949938V-2.75467H.850809V-.871731C.850809-.09066 1.436613 .069738 1.827148 .069738C2.294396 .069738 2.615193-.327771 2.615193-.878705V-1.262267H2.378082V-.885679C2.378082-.411457 2.154919-.153425 1.882939-.153425C1.401743-.153425 1.401743-.739228 1.401743-.864757V-2.75467Z"></path>
+<path id="tz_fig_ospf_topologia_g3-117" d="M2.517559-2.998755V-2.747696C2.984807-2.747696 3.040598-2.698879 3.040598-2.357161V-1.164633C3.040598-.550934 2.643088-.125529 2.113076-.125529C1.478456-.125529 1.45056-.425405 1.45056-.781071V-3.075467L.376588-2.998755V-2.747696C.899626-2.747696 .899626-2.726775 .899626-2.106102V-1.060025C.899626-.578829 .899626 .069738 2.064259 .069738C2.217684 .069738 2.726775 .069738 3.061519-.516065H3.068493V.069738L4.11457 0V-.251059C3.647323-.251059 3.591532-.299875 3.591532-.641594V-3.075467L2.517559-2.998755Z"></path>
+<path id="tz_fig_ospf_topologia_g3-118" d="M3.305604-2.322291C3.500872-2.747696 3.849564-2.75467 3.961146-2.75467V-3.005729C3.7868-2.991781 3.605479-2.977833 3.431133-2.977833C3.242839-2.977833 2.984807-2.984807 2.796513-3.005729V-2.75467C3.089415-2.740722 3.089415-2.510585 3.089415-2.489664C3.089415-2.454795 3.082441-2.385056 3.033624-2.287422L2.245579-.564882L1.380822-2.461768C1.380822-2.468742 1.338979-2.545455 1.338979-2.594271C1.338979-2.75467 1.57609-2.75467 1.694645-2.75467V-3.005729C1.680697-3.005729 1.185554-2.977833 .899626-2.977833C.690411-2.977833 .418431-2.984807 .216189-3.005729V-2.75467C.599751-2.75467 .683437-2.740722 .788045-2.503611L1.889913-.076712C1.924782 .006974 1.966625 .069738 2.085181 .069738C2.217684 .069738 2.245579 .006974 2.280448-.069738L3.305604-2.322291Z"></path>
+</defs>
+<g id="tz_fig_ospf_topologia_page1">
+<g stroke-miterlimit="10" transform="translate(41.318019,18.640775)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g fill="#d4e6fa">
+<g fill="#d4e6fa">
+<path d="M18.49428 68.2864C18.49428 78.50064 10.21423 86.78069 0 86.78069S-18.49428 78.50064-18.49428 68.2864C-18.49428 58.07217-10.21423 49.79213 0 49.79213S18.49428 58.07217 18.49428 68.2864ZM0 68.2864"></path>
+</g>
+<g transform="translate(-13.75858,59.71143)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(41.318019,18.640775)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="45.170576" y="7.681871" href="#tz_fig_ospf_topologia_g1-80"></use>
+<use x="51.441462" y="7.681871" href="#tz_fig_ospf_topologia_g1-79"></use>
+<use x="58.608981" y="7.681871" href="#tz_fig_ospf_topologia_g1-80"></use>
+<use x="41.318019" y="18.640775" href="#tz_fig_ospf_topologia_g1-99"></use>
+<use x="45.413744" y="18.640775" href="#tz_fig_ospf_topologia_g1-101"></use>
+<use x="49.512932" y="18.640775" href="#tz_fig_ospf_topologia_g1-110"></use>
+<use x="54.376605" y="18.640775" href="#tz_fig_ospf_topologia_g1-116"></use>
+<use x="57.960365" y="18.640775" href="#tz_fig_ospf_topologia_g1-114"></use>
+<use x="61.564886" y="18.640775" href="#tz_fig_ospf_topologia_g1-97"></use>
+<use x="66.172577" y="18.640775" href="#tz_fig_ospf_topologia_g1-108"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#d4e6fa">
+<g fill="#d4e6fa">
+<path d="M-72.55441-39.83366C-72.55441-29.61943-80.83446-21.33939-91.04869-21.33939S-109.54297-29.61943-109.54297-39.83366C-109.54297-50.0479-101.26292-58.32794-91.04869-58.32794S-72.55441-50.0479-72.55441-39.83366ZM-91.04869-39.83366"></path>
+</g>
+<g transform="translate(-100.94028,-48.40865)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(41.318019,18.640775)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="41.318019" y="7.681871" href="#tz_fig_ospf_topologia_g1-80"></use>
+<use x="47.588905" y="7.681871" href="#tz_fig_ospf_topologia_g1-79"></use>
+<use x="54.756424" y="7.681871" href="#tz_fig_ospf_topologia_g1-80"></use>
+<use x="41.424553" y="18.640775" href="#tz_fig_ospf_topologia_g1-114"></use>
+<use x="45.029074" y="18.640775" href="#tz_fig_ospf_topologia_g1-117"></use>
+<use x="50.14873" y="18.640775" href="#tz_fig_ospf_topologia_g1-114"></use>
+<use x="53.753252" y="18.640775" href="#tz_fig_ospf_topologia_g1-97"></use>
+<use x="58.360942" y="18.640775" href="#tz_fig_ospf_topologia_g1-108"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#d4e6fa">
+<g fill="#d4e6fa">
+<path d="M109.54297-39.83366C109.54297-29.61943 101.26292-21.33939 91.04869-21.33939S72.55441-29.61943 72.55441-39.83366C72.55441-50.0479 80.83446-58.32794 91.04869-58.32794S109.54297-50.0479 109.54297-39.83366ZM91.04869-39.83366"></path>
+</g>
+<g transform="translate(79.34738,-42.95866)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(41.318019,18.640775)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="41.318019" y="18.640775" href="#tz_fig_ospf_topologia_g1-98"></use>
+<use x="46.693658" y="18.640775" href="#tz_fig_ospf_topologia_g1-111"></use>
+<use x="51.301349" y="18.640775" href="#tz_fig_ospf_topologia_g1-114"></use>
+<use x="54.90587" y="18.640775" href="#tz_fig_ospf_topologia_g1-100"></use>
+<use x="60.025526" y="18.640775" href="#tz_fig_ospf_topologia_g1-97"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="0.8">
+<path d="M-12.04134 53.9873L-79.00735-25.53456" fill="none"></path>
+<g transform="translate(-103.17561,19.70935)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(41.318019,18.640775)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="41.318019" y="18.640775" href="#tz_fig_ospf_topologia_g3-99"></use>
+<use x="44.860311" y="18.640775" href="#tz_fig_ospf_topologia_g3-117"></use>
+<use x="49.2605" y="18.640775" href="#tz_fig_ospf_topologia_g3-115"></use>
+<use x="52.41674" y="18.640775" href="#tz_fig_ospf_topologia_g3-116"></use>
+<use x="55.530083" y="18.640775" href="#tz_fig_ospf_topologia_g3-111"></use>
+<use x="62.185716" y="18.640775" href="#tz_fig_ospf_topologia_g3-49"></use>
+<use x="66.156956" y="18.640775" href="#tz_fig_ospf_topologia_g3-48"></use>
+<use x="72.812588" y="18.640775" href="#tz_fig_ospf_topologia_g3-40"></use>
+<use x="75.925931" y="18.640775" href="#tz_fig_ospf_topologia_g3-12"></use>
+<use x="80.436816" y="18.640775" href="#tz_fig_ospf_topologia_g3-98"></use>
+<use x="84.837005" y="18.640775" href="#tz_fig_ospf_topologia_g3-114"></use>
+<use x="87.950348" y="18.640775" href="#tz_fig_ospf_topologia_g3-97"></use>
+<use x="91.921589" y="18.640775" href="#tz_fig_ospf_topologia_g3-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="0.8">
+<path d="M12.04134 53.9873L79.00735-25.53456" fill="none"></path>
+<g transform="translate(49.25731,19.70935)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(41.318019,18.640775)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="41.318019" y="18.640775" href="#tz_fig_ospf_topologia_g3-99"></use>
+<use x="44.860311" y="18.640775" href="#tz_fig_ospf_topologia_g3-117"></use>
+<use x="49.2605" y="18.640775" href="#tz_fig_ospf_topologia_g3-115"></use>
+<use x="52.41674" y="18.640775" href="#tz_fig_ospf_topologia_g3-116"></use>
+<use x="55.530083" y="18.640775" href="#tz_fig_ospf_topologia_g3-111"></use>
+<use x="62.185716" y="18.640775" href="#tz_fig_ospf_topologia_g3-49"></use>
+<use x="66.156956" y="18.640775" href="#tz_fig_ospf_topologia_g3-48"></use>
+<use x="72.812588" y="18.640775" href="#tz_fig_ospf_topologia_g3-40"></use>
+<use x="75.925931" y="18.640775" href="#tz_fig_ospf_topologia_g3-12"></use>
+<use x="80.436816" y="18.640775" href="#tz_fig_ospf_topologia_g3-98"></use>
+<use x="84.837005" y="18.640775" href="#tz_fig_ospf_topologia_g3-114"></use>
+<use x="87.950348" y="18.640775" href="#tz_fig_ospf_topologia_g3-97"></use>
+<use x="91.921589" y="18.640775" href="#tz_fig_ospf_topologia_g3-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="0.8">
+<g fill="#d7433b" stroke="#d7433b">
+<path d="M-72.35442-39.83366H72.35442" fill="none"></path>
+<g transform="translate(-27.82027,-48.81664)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(41.318019,18.640775)scale(-1,-1)">
+<g fill="#d7433b">
+<g stroke="none">
+<g fill="#d7433b">
+<use x="41.318019" y="18.640775" href="#tz_fig_ospf_topologia_g3-99"></use>
+<use x="44.860311" y="18.640775" href="#tz_fig_ospf_topologia_g3-117"></use>
+<use x="49.2605" y="18.640775" href="#tz_fig_ospf_topologia_g3-115"></use>
+<use x="52.41674" y="18.640775" href="#tz_fig_ospf_topologia_g3-116"></use>
+<use x="55.530083" y="18.640775" href="#tz_fig_ospf_topologia_g3-111"></use>
+<use x="62.185716" y="18.640775" href="#tz_fig_ospf_topologia_g3-53"></use>
+<use x="66.156956" y="18.640775" href="#tz_fig_ospf_topologia_g3-48"></use>
+<use x="72.812588" y="18.640775" href="#tz_fig_ospf_topologia_g3-40"></use>
+<use x="75.925931" y="18.640775" href="#tz_fig_ospf_topologia_g3-114"></use>
+<use x="79.039274" y="18.640775" href="#tz_fig_ospf_topologia_g3-19"></use>
+<use x="79.039277" y="18.640775" href="#tz_fig_ospf_topologia_g3-97"></use>
+<use x="83.010517" y="18.640775" href="#tz_fig_ospf_topologia_g3-100"></use>
+<use x="87.410707" y="18.640775" href="#tz_fig_ospf_topologia_g3-105"></use>
+<use x="89.666152" y="18.640775" href="#tz_fig_ospf_topologia_g3-111"></use>
+<use x="93.637393" y="18.640775" href="#tz_fig_ospf_topologia_g3-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#d7433b" stroke="#d7433b">
+<g stroke-width="0.8">
+<g fill="#256d0e" stroke="#256d0e">
+<path d="M-77.82983-26.6148C-59.75734 9.8819-44.57364 29.07713-16.39497 52.43478" fill="none"></path>
+<g transform="matrix(0.76984,0.63814,-0.63814,0.76984,-18.29977,50.85585)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M5.4608 0L1.29181 1.57648L2.67429 0L1.29181-1.57648Z"></path>
+ </g>
+ </g>
+</g>
+<g transform="matrix(0.62035,0.78426,-0.78426,0.62035,-53.43279,20.48193)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(41.318019,18.640775)scale(-1,-1)">
+<g fill="#256d0e">
+<g stroke="none"></g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#256d0e" stroke="#256d0e">
+<g fill="#256d0e" stroke="#256d0e">
+</g>
+<g transform="translate(-30.61023,-10.39464)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(41.318019,18.640775)scale(-1,-1)">
+<g fill="#256d0e">
+<g stroke="none">
+<g fill="#266d0e">
+<use x="45.880803" y="-14.235937" href="#tz_fig_ospf_topologia_g3-114"></use>
+<use x="48.994147" y="-14.235937" href="#tz_fig_ospf_topologia_g3-117"></use>
+<use x="53.394336" y="-14.235937" href="#tz_fig_ospf_topologia_g3-114"></use>
+<use x="56.507679" y="-14.235937" href="#tz_fig_ospf_topologia_g3-97"></use>
+<use x="60.478919" y="-14.235937" href="#tz_fig_ospf_topologia_g3-108"></use>
+<use x="62.734365" y="-14.235937" href="#tz_fig_ospf_topologia_g2-33"></use>
+<use x="70.676839" y="-14.235937" href="#tz_fig_ospf_topologia_g3-98"></use>
+<use x="75.291495" y="-14.235937" href="#tz_fig_ospf_topologia_g3-111"></use>
+<use x="79.262736" y="-14.235937" href="#tz_fig_ospf_topologia_g3-114"></use>
+<use x="82.376079" y="-14.235937" href="#tz_fig_ospf_topologia_g3-100"></use>
+<use x="86.776268" y="-14.235937" href="#tz_fig_ospf_topologia_g3-97"></use>
+<use x="90.747508" y="-14.235937" href="#tz_fig_ospf_topologia_g3-58"></use>
+<use x="41.318019" y="-3.277033" href="#tz_fig_ospf_topologia_g3-118"></use>
+<use x="45.50374" y="-3.277033" href="#tz_fig_ospf_topologia_g3-105"></use>
+<use x="47.759186" y="-3.277033" href="#tz_fig_ospf_topologia_g3-97"></use>
+<use x="54.414818" y="-3.277033" href="#tz_fig_ospf_topologia_g3-99"></use>
+<use x="57.95711" y="-3.277033" href="#tz_fig_ospf_topologia_g3-101"></use>
+<use x="61.499402" y="-3.277033" href="#tz_fig_ospf_topologia_g3-110"></use>
+<use x="65.685109" y="-3.277033" href="#tz_fig_ospf_topologia_g3-116"></use>
+<use x="68.798452" y="-3.277033" href="#tz_fig_ospf_topologia_g3-114"></use>
+<use x="71.911795" y="-3.277033" href="#tz_fig_ospf_topologia_g3-97"></use>
+<use x="75.883035" y="-3.277033" href="#tz_fig_ospf_topologia_g3-108"></use>
+<use x="80.822873" y="-3.277033" href="#tz_fig_ospf_topologia_g3-61"></use>
+<use x="89.623248" y="-3.277033" href="#tz_fig_ospf_topologia_g3-50"></use>
+<use x="93.594489" y="-3.277033" href="#tz_fig_ospf_topologia_g3-48"></use>
+<use x="49.530326" y="7.681871" href="#tz_fig_ospf_topologia_g3-100"></use>
+<use x="53.930515" y="7.681871" href="#tz_fig_ospf_topologia_g3-105"></use>
+<use x="56.185961" y="7.681871" href="#tz_fig_ospf_topologia_g3-114"></use>
+<use x="59.299304" y="7.681871" href="#tz_fig_ospf_topologia_g3-101"></use>
+<use x="62.841595" y="7.681871" href="#tz_fig_ospf_topologia_g3-116"></use>
+<use x="65.954939" y="7.681871" href="#tz_fig_ospf_topologia_g3-111"></use>
+<use x="72.610571" y="7.681871" href="#tz_fig_ospf_topologia_g3-61"></use>
+<use x="81.410946" y="7.681871" href="#tz_fig_ospf_topologia_g3-53"></use>
+<use x="85.382186" y="7.681871" href="#tz_fig_ospf_topologia_g3-48"></use>
+<use x="48.742433" y="18.640775" href="#tz_fig_ospf_topologia_g0-118"></use>
+<use x="53.256056" y="18.640775" href="#tz_fig_ospf_topologia_g0-101"></use>
+<use x="57.387095" y="18.640775" href="#tz_fig_ospf_topologia_g0-110"></use>
+<use x="62.396083" y="18.640775" href="#tz_fig_ospf_topologia_g0-99"></use>
+<use x="66.414338" y="18.640775" href="#tz_fig_ospf_topologia_g0-101"></use>
+<use x="73.572903" y="18.640775" href="#tz_fig_ospf_topologia_g0-111"></use>
+<use x="81.114054" y="18.640775" href="#tz_fig_ospf_topologia_g0-50"></use>
+<use x="85.627679" y="18.640775" href="#tz_fig_ospf_topologia_g0-48"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+<div id="fig-ospf-topologia" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ospf-topologia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<p>OSPF escolhe por <strong>custo somado</strong>, não por número de saltos: o caminho POP rural → borda via POP central (10+10=20) vence o enlace direto de rádio (50), embora tenha um salto a mais. Ajustar custos é como você molda o tráfego.</p>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-ospf-topologia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;42.1
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="vizinhança-custo-e-áreas" class="level2" data-number="42.2">
+<h2 data-number="42.2" class="anchored" data-anchor-id="vizinhança-custo-e-áreas"><span class="header-section-number">42.2</span> Vizinhança, custo e áreas</h2>
+<p><strong>Adjacências.</strong> OSPF só troca LSAs com vizinhos com quem formou <strong>adjacência</strong> — e para isso os pacotes Hello dos dois lados precisam concordar em: mesma área, mesmos temporizadores (hello/dead), mesma sub-rede, autenticação compatível. Hello divergente = vizinho que “aparece e some” — o bug de campo nº 1 do OSPF.</p>
+<p><strong>Custo.</strong> O peso de cada enlace. No RouterOS o custo padrão deriva da referência de banda; o que importa é a regra: <strong>caminho vence pela menor soma de custos</strong>. Você ajusta custo para preferir a fibra e deixar o rádio como reserva (como na figura) — mas com cuidado: mexer no custo de <strong>um lado</strong> cria caminho assimétrico (ida pela fibra, volta pelo rádio), fonte de dor de cabeça diagnóstica.</p>
+<p><strong>DR/BDR.</strong> Numa rede multiacesso (vários roteadores num mesmo segmento L2, ex.: um switch no POP), se todos formassem adjacência com todos seriam N² relações. OSPF elege um <strong>DR</strong> (<em>Designated Router</em>) e um <strong>BDR</strong> (backup): todos falam com o DR, que redistribui — reduz a N. Em enlaces ponto a ponto (a maioria no provedor: um PtP de rádio, um túnel) <strong>não há DR</strong> — são só dois, adjacência direta.</p>
+<p><strong>Áreas.</strong> OSPF divide a rede em <strong>áreas</strong> para não inundar LSAs pelo mundo todo. A <strong>área 0</strong> é o <em>backbone</em> — obrigatória, e toda outra área precisa tocá-la. Numa rede pequena (nossos poucos POPs), <strong>tudo na área 0</strong> é o certo; áreas adicionais são assunto do próximo capítulo (1), quando a rede cresce a ponto de o mapa único pesar.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Analogia para guardar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Rotas estáticas são cada motorista decorando um trajeto fixo: mudou uma rua, todos se perdem até você reensinar um a um. OSPF é o <strong>app de trânsito</strong> que todos usam: cada carro reporta as ruas que <strong>ele</strong> vê (os LSAs), o app monta o mapa completo da cidade e cada um calcula sua própria melhor rota (Dijkstra). Fechou uma via? Os relatos se espalham em segundos e todos recalculam sozinhos. O custo do enlace é o “tempo estimado” de cada rua — e é isso, não a distância em quarteirões, que o app minimiza.</p>
+</div>
+</div>
+</section>
+<section id="configurando-ospfv2-no-routeros-v7" class="level2" data-number="42.3">
+<h2 data-number="42.3" class="anchored" data-anchor-id="configurando-ospfv2-no-routeros-v7"><span class="header-section-number">42.3</span> Configurando OSPFv2 no RouterOS v7</h2>
+<p>O v7 reorganizou o OSPF (quem vem do v6 estranha). São três objetos:</p>
+<pre class="routeros"><code># 1) a instância: o "processo" OSPF e seu router-id (identidade única!)
+/routing ospf instance
+add name=isp-ospf router-id=10.255.0.1
+
+# 2) a área: aqui, só o backbone
+/routing ospf area
+add name=backbone area-id=0.0.0.0 instance=isp-ospf
+
+# 3) em quais interfaces falar OSPF (e como) — via template por rede
+/routing ospf interface-template
+add area=backbone networks=172.16.9.0/30 interfaces=ether2 \
+    comment="enlace PtP para o POP rural"
+add area=backbone networks=172.16.9.4/30 interfaces=ether3 \
+    comment="enlace PtP para a borda"</code></pre>
+<ul>
+<li><strong><code>router-id</code></strong>: a identidade do roteador no OSPF — único no domínio, convenção usar um IP de <em>loopback</em> (uma <code>/32</code> numa bridge sem portas, sempre no ar mesmo se uma interface física cair). Router-id duplicado = adjacências instáveis e LSAs em guerra;</li>
+<li><strong><code>interface-template</code></strong>: casa interfaces por <code>networks</code> (as sub-redes que participam) e/ou <code>interfaces</code>; é onde se define custo, tipo (<code>ptp</code> desliga a eleição de DR num enlace ponto a ponto), temporizadores e autenticação.</li>
+</ul>
+<p>Anunciar as redes conectadas dos clientes (LANs, pools) sem colocar OSPF <strong>nas interfaces dos clientes</strong> (não queremos vizinhança com assinante!): use um template passivo ou redistribuição:</p>
+<pre class="routeros"><code>/routing ospf instance
+set isp-ospf redistribute=connected out-filter-chain=ospf-out
+
+/routing filter rule
+add chain=ospf-out rule="if (dst==100.64.100.0/22) { accept }"
+add chain=ospf-out rule="reject"</code></pre>
+<p>Assim o backbone aprende o agregado dos pools (<a href="01-rotas-estaticas-distancia.html" class="quarto-xref"><span>Capítulo 41</span></a>) sem expor o OSPF ao lado do cliente. Filtros de redistribuição são o tema do <a href="05-bgp-filtros-communities.html" class="quarto-xref"><span>Capítulo 45</span></a> — aqui, o mínimo para não vazar tudo.</p>
+</section>
+<section id="lendo-o-ospf" class="level2" data-number="42.4">
+<h2 data-number="42.4" class="anchored" data-anchor-id="lendo-o-ospf"><span class="header-section-number">42.4</span> Lendo o OSPF</h2>
+<pre class="routeros"><code>/routing ospf neighbor print
+/routing ospf lsa print
+/ip route print where ospf</code></pre>
+<pre><code># neighbor print
+ 0 instance=isp-ospf router-id=10.255.0.2 address=172.16.9.2
+   state="Full" ...</code></pre>
+<p>O estado que você quer é <strong><code>Full</code></strong>: adjacência completa, bancos sincronizados. Estados travados contam a história: <strong><code>Init</code>/<code>2-Way</code></strong> (vê o Hello mas não fecha — cheque área/timers/autenticação); <strong><code>ExStart</code>/<code>Exchange</code></strong> preso (quase sempre <strong>MTU divergente</strong> entre os lados — OSPF exige MTU igual). Rota OSPF na tabela aparece com flag <code>Do</code> (dynamic/ospf) e <strong>distância 110</strong> (<a href="01-rotas-estaticas-distancia.html#tbl-distancias" class="quarto-xref">Tabela&nbsp;<span>41.1</span></a>) — daí a estática de distância 1 vencê-la, como você já sabia.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>O conceito mais importante do capítulo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>OSPF entrega <strong>um mapa idêntico a todos os roteadores</strong> e deixa cada um calcular o menor caminho por <strong>custo somado</strong> — é isso que dá convergência rápida e sem loops que a estática nunca terá. Mas o preço é disciplina: <code>router-id</code> único, temporizadores e MTU iguais entre vizinhos, custos ajustados nos <strong>dois</strong> sentidos e OSPF <strong>jamais</strong> na interface do cliente. A tríade v7 (instance → area → template) só funciona bem quando esses fundamentos estão de pé; o resto do volume constrói sobre eles.</p>
+</div>
+</div>
+</section>
+<section id="laboratório" class="level2" data-number="42.5">
+<h2 data-number="42.5" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">42.5</span> 🧪 Laboratório</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Ambiente
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O trio em triângulo (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>) — a topologia da <a href="#fig-ospf-topologia" class="quarto-xref">Figura&nbsp;<span>42.1</span></a>: lab-r1 = POP central, lab-r2 = POP rural, lab-r3 = borda. Enlaces PtP <code>/30</code>: r1–r2 em <code>172.16.9.0/30</code>, r1–r3 em <code>172.16.9.4/30</code>, r2–r3 em <code>172.16.9.8/30</code> (crie a terceira interface/ rede interna no VirtualBox fechando o triângulo). Cada roteador com um loopback <code>/32</code> para router-id: r1=10.255.0.1, r2=.2, r3=.3.</p>
+</div>
+</div>
+<section id="comandos-passo-a-passo" class="level3" data-number="42.5.1">
+<h3 data-number="42.5.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">42.5.1</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — loopback e router-id.</strong> Em cada roteador (exemplo r1):</p>
+<pre class="routeros"><code>/interface bridge add name=lo
+/ip address add address=10.255.0.1 interface=lo</code></pre>
+<p><strong>Passo 2 — a tríade OSPF em cada um.</strong> No lab-r1 (POP central, tocando os dois enlaces):</p>
+<pre class="routeros"><code>/routing ospf instance add name=isp router-id=10.255.0.1
+/routing ospf area add name=backbone area-id=0.0.0.0 instance=isp
+/routing ospf interface-template \
+    add area=backbone networks=172.16.9.0/30,172.16.9.4/30,10.255.0.1/32 \
+    type=ptp</code></pre>
+<p>Réplica análoga em r2 (redes <code>172.16.9.0/30</code>, <code>172.16.9.8/30</code>, <code>10.255.0.2/32</code>) e r3 (<code>172.16.9.4/30</code>, <code>172.16.9.8/30</code>, <code>10.255.0.3/32</code>), cada um com seu router-id.</p>
+<p><strong>Passo 3 — veja a vizinhança nascer.</strong> No lab-r1:</p>
+<pre class="routeros"><code>/routing ospf neighbor print</code></pre>
+<p>Espere <code>state=Full</code> com r2 <strong>e</strong> r3. Se travar em <code>ExStart</code>, é MTU — confira <code>/interface ethernet print</code> (iguale os MTUs). Se ficar em <code>Init</code>, revise área/timers.</p>
+<p><strong>Passo 4 — o mapa se formou.</strong> Em qualquer roteador:</p>
+<pre class="routeros"><code>/ip route print where ospf</code></pre>
+<p>O lab-r2 (rural) aprendeu sozinho a chegar na rede de r3 (borda) — <strong>sem uma linha de rota estática</strong>. Confirme o caminho:</p>
+<pre class="routeros"><code>/tool traceroute 10.255.0.3</code></pre>
+<p><strong>Passo 5 — molde o caminho pelo custo.</strong> Hoje r2→r3 pode ir direto (um enlace) ou via r1. Encareça o enlace direto r2–r3 nos <strong>dois</strong> lados (r2 e r3), simulando “rádio caro”:</p>
+<pre class="routeros"><code>/routing ospf interface-template set [find networks~"172.16.9.8"] cost=50</code></pre>
+<p>Refaça o traceroute de r2 para r3: agora passa por <strong>r1</strong> (custo 10+10=20 &lt; 50) — a <a href="#fig-ospf-topologia" class="quarto-xref">Figura&nbsp;<span>42.1</span></a> ao vivo. Mude o custo em <strong>um só lado</strong> e observe a assimetria (ida por um caminho, volta por outro) no traceroute dos dois sentidos.</p>
+<p><strong>Passo 6 — reconvergência.</strong> Com o tráfego indo r2→r1→r3, derrube o enlace r1–r3 (desconecte o cabo no VirtualBox). Em segundos, o traceroute de r2 para r3 passa a usar o enlace direto (custo 50, agora o único vivo) — a rede se curou sozinha. Religue e ela volta ao ótimo.</p>
+</section>
+<section id="verificação" class="level3" data-number="42.5.2">
+<h3 data-number="42.5.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">42.5.2</span> Verificação</h3>
+<ol type="1">
+<li><code>neighbor print</code> mostra <code>Full</code> em todas as adjacências esperadas;</li>
+<li>Cada roteador tem, sem rota estática, caminho para os loopbacks dos outros dois;</li>
+<li>Encarecer o enlace direto (dois lados) desviou o tráfego pelo POP central; um lado só criou assimetria visível no traceroute;</li>
+<li>A queda de um enlace reconvergeu automaticamente em segundos.</li>
+</ol>
+</section>
+<section id="desafios" class="level3" data-number="42.5.3">
+<h3 data-number="42.5.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">42.5.3</span> Desafios</h3>
+<ol type="1">
+<li>Dois roteadores veem o Hello um do outro (<code>neighbor</code> aparece) mas nunca passam de <code>2-Way</code> num enlace ponto a ponto. Liste as três causas mais prováveis e o comando que confirma cada uma.</li>
+<li>Você configurou tudo certo, mas as adjacências ficam <strong>presas em <code>Exchange</code></strong> e caem. <code>ping</code> entre os roteadores funciona com pacotes pequenos e falha com <code>size=1500 do-not-fragment</code>. Nomeie a causa e a correção — e por que o OSPF é tão sensível a isso quando o ping “normal” funcionava.</li>
+<li>Por que colocar OSPF na interface <strong>do cliente</strong> (LAN/PPPoE) é um erro de segurança <strong>e</strong> de estabilidade? Descreva o que um cliente mal-intencionado (ou um roteador doméstico “espancado”) poderia fazer, e a diretiva de template que anuncia a rede sem formar adjacência ali.</li>
+<li>Sua rede tem 40 roteadores numa única área 0. Tudo funciona, até que um enlace instável em um POP começa a “piscar” (flapping) e a CPU de <strong>todos</strong> os 40 sobe em ondas. Explique o mecanismo (LSA → SPF) e antecipe qual recurso do próximo capítulo
+<ol class="example" type="1">
+<li>contém o estrago.</li>
+</ol></li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Solução dos desafios
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><strong>1.</strong> Preso em <code>2-Way</code> num PtP indica que não avançou para adjacência plena. Causas: (a) <strong>áreas diferentes</strong> nos dois lados (<code>/routing ospf interface-template print</code> — o <code>area</code>); (b) <strong>temporizadores</strong> hello/dead divergentes (mesmo comando, campos de timer); (c) <strong>autenticação</strong> só de um lado ou com chave diferente. Em rede multiacesso, <code>2-Way</code> também é o estado <em>normal</em> entre dois não-DR — mas num PtP (<code>type=ptp</code>) deve ir a <code>Full</code>.</p>
+<p><strong>2.</strong> <strong>MTU divergente</strong> entre as interfaces. O OSPF, na fase <code>Exchange</code>, troca o Database Description e exige que o MTU anunciado bata; além disso os LSAs grandes precisam trafegar inteiros. O ping pequeno funciona porque cabe em qualquer MTU; o <code>size=1500 df</code> falha no enlace de MTU menor — o mesmo diagnóstico do PPPoE (<a href="../v06-pppoe/01-como-funciona-pppoe.html" class="quarto-xref"><span>Capítulo 33</span></a>). Correção: igualar o MTU dos dois lados (ou, em último caso, <code>mtu-ignore</code> no template — trata o sintoma, não a causa).</p>
+<p><strong>3.</strong> Segurança: OSPF sem autenticação aceita LSAs de qualquer vizinho — um cliente injeta uma rota <code>0.0.0.0/0</code> mais atraente e <strong>sequestra o tráfego</strong> do POP (ataque clássico). Estabilidade: cada roteador doméstico ruidoso vira uma adjacência que sobe e cai, disparando recálculos. A diretiva certa: template <strong>passivo</strong> (<code>passive</code> / sem formar adjacência) na interface do cliente, ou redistribuição <code>connected</code> filtrada — anuncia-se a <em>rede</em>, nunca se fala OSPF <em>com</em> o cliente. E autenticação obrigatória nos enlaces internos.</p>
+<p><strong>4.</strong> Cada flap gera novos LSAs, inundados por toda a área 0; cada LSA novo obriga <strong>todos</strong> os 40 roteadores a rodar Dijkstra (SPF) sobre o mapa inteiro — ondas de CPU sincronizadas. Numa área única, não há barreira: o ruído local é problema global. O 1 contém o estrago com <strong>áreas</strong> (o flap fica confinado à sua área; para o resto da rede, um ABR resume a área como um prefixo estável) e com temporizadores de SPF/LSA que amortecem o flapping.</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="resumo" class="level2" data-number="42.6">
+<h2 data-number="42.6" class="anchored" data-anchor-id="resumo"><span class="header-section-number">42.6</span> Resumo</h2>
+<ul>
+<li><strong>Link-state (OSPF)</strong>: cada roteador anuncia só seus enlaces (LSAs), todos montam o <strong>mesmo mapa</strong> e calculam o menor caminho por <strong>custo somado</strong> (Dijkstra) — convergência rápida, sem loops, ao custo de CPU/memória e disciplina;</li>
+<li>Fundamentos que fazem ou quebram: <strong><code>router-id</code> único</strong> (use loopback), Hello/timers/<strong>MTU</strong> iguais entre vizinhos, <code>type=ptp</code> em enlaces ponto a ponto (sem DR), <strong>tudo na área 0</strong> enquanto a rede é pequena;</li>
+<li>No <strong>v7</strong>: <code>instance</code> → <code>area</code> → <code>interface-template</code>; redes de cliente entram por <strong>redistribuição filtrada</strong> ou template passivo — <strong>nunca</strong> OSPF na interface do assinante;</li>
+<li>Diagnóstico: <code>neighbor print</code> (quer <code>Full</code>; <code>2-Way</code> = área/timers, <code>Exchange</code> preso = <strong>MTU</strong>), <code>lsa print</code>, <code>route where ospf</code> (distância 110);</li>
+<li>Custo molda o caminho — sempre nos <strong>dois</strong> sentidos, sob risco de assimetria.</li>
+</ul>
+<p>Uma área só não escala para dezenas de roteadores nem confina falhas. O próximo capítulo (1) parte a rede em áreas, autentica os enlaces e refina custos e filtros.</p>
+</section>
+<section id="bibliografia-do-capítulo" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
+<ul>
+<li>Documentação oficial: seção <em>OSPF</em> do RouterOS v7 <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
+<li>Roteamento link-state, Dijkstra e OSPF: <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
+<li>RouterOS v7 na prática: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
+<li>OSPF em provedores: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
+</ul>
+
+
+<div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-burgess-mikrotik" class="csl-entry" role="listitem">
+BURGESS, Dennis. <strong>Learn RouterOS</strong>. 2. ed. Raleigh: Lulu Press, 2011.
+</div>
+<div id="ref-discher-rosv7" class="csl-entry" role="listitem">
+DISCHER, Stephen R. W. <strong>RouterOS by Example</strong>. 2. ed. College Station: ISP Services, Inc., 2016.
+</div>
+<div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
+MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+<div id="ref-tanenbaum-redes" class="csl-entry" role="listitem">
+TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Computadores</strong>. 6. ed. Porto Alegre: Bookman, 2021.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../volumes/v08-roteamento/01-rotas-estaticas-distancia.html" class="pagination-link" aria-label="Rotas estáticas, distância e failover">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">41</span>&nbsp; <span class="chapter-title">Rotas estáticas, distância e failover</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../volumes/v08-roteamento/03-ospf-avancado.html" class="pagination-link" aria-label="OSPF avançado: áreas, autenticação e filtros">
+        <span class="nav-page-text"><span class="chapter-number">43</span>&nbsp; <span class="chapter-title">OSPF avançado: áreas, autenticação e filtros</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v08-roteamento/02-ospf-conceitos-configuracao.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
