@@ -1,7 +1,297 @@
-# Logging de CGNAT e requisitos legais
+# Logging de CGNAT e requisitos legais {#sec-cgnat-logging}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar **o que a lei brasileira exige** de um provedor quanto a
+  registros de conexão (Marco Civil da Internet, Lei 12.965/2014) —
+  em linguagem operacional, não jurídica;
+- Entender por que o CGNAT **cria** uma obrigação de registro que o NAT
+  1:1 não tinha, e o que precisa estar num registro **útil**;
+- Escolher entre **logar toda conexão** e o **CGNAT determinístico** —
+  e por que o segundo reduz o problema a uma **tabela de alocação**;
+- Configurar o registro no RouterOS e **exportá-lo** para um coletor
+  externo (a caixa não guarda meses de log);
+- Responder a uma **requisição judicial** ("quem era este IP:porta neste
+  instante?") de forma correta e auditável.
 :::
+
+O capítulo anterior (@sec-cgnat) montou o CGNAT que faz o provedor
+crescer. Mas ele criou um problema novo: quando **dezenas de assinantes
+compartilham um IP público**, o endereço deixou de identificar alguém.
+Se uma autoridade pede "quem usou `203.0.113.10` às 21h34?", a resposta
+"qualquer um dos 32 clientes daquele IP" não serve — nem para você, nem
+para a lei. **Registrar a tradução** deixou de ser opcional. Este
+capítulo trata dessa obrigação com a cabeça de engenheiro: cumprir a lei
+**sem** afogar a operação em terabytes de log.
+
+## O que a lei pede (em português de engenheiro)
+
+O **Marco Civil da Internet** (Lei 12.965/2014) e sua regulamentação
+obrigam o provedor de conexão a **guardar os registros de conexão** por
+um prazo mínimo (**1 ano**), sob sigilo, disponibilizando-os **mediante
+ordem judicial**. Na prática do CGNAT, o registro precisa permitir
+reconstruir, para um dado momento:
+
+> IP público + porta de origem (+ protocolo) + **timestamp** →
+> **assinante** (o IP `100.64.x.x`, e por ele o contrato/login).
+
+Sem isso, o IP público é anônimo. **Com** isso, você atende à
+requisição e se protege: o registro correto é o que diz "não fui eu, foi
+o cliente X" de forma auditável. Três propriedades importam:
+
+- **Precisão temporal**: hora sincronizada (NTP) — um log com relógio
+  errado é inútil ou pior;
+- **Completude**: cobrir **todas** as traduções que a lei alcança;
+- **Retenção e sigilo**: guardar pelo prazo, protegido, e entregar
+  **só** sob ordem.
+
+::: {.callout-warning}
+Nada aqui é aconselhamento jurídico. Prazos, escopo e forma de guarda
+mudam com regulamentação e com o tipo de serviço. **Consulte um
+advogado** para o desenho definitivo — este capítulo cobre a parte
+**técnica** de tornar o registro possível e barato.
+:::
+
+## Dois caminhos: logar tudo vs. determinístico
+
+Há duas formas de tornar a tradução rastreável, com custos muito
+diferentes:
+
+1. **Logar cada conexão**: o roteador emite um registro por fluxo
+   (quem→quem, IP:porta origem/traduzida, início/fim). É **completo**,
+   mas o **volume é brutal** — milhares de assinantes geram
+   **bilhões** de linhas/dia. Exige coletor robusto, muito disco e
+   processamento. É o preço do CGNAT **dinâmico** (`masquerade`/pool);
+2. **CGNAT determinístico** (@sec-cgnat): como a faixa de portas é
+   **fixa por assinante**, o mapeamento `IP:porta → assinante` é uma
+   **função estática**. Você guarda apenas a **tabela de alocação**
+   (qual bloco de portas de qual IP público pertence a qual `100.64.x.x`)
+   e a **associação `100.64.x.x` ↔ assinante** ao longo do tempo. Some
+   99% do volume de log.
+
+```{.tikz}
+%%| filename: fig-cgnat-log
+%%| alt: Comparação de dois modelos de registro. À esquerda, CGNAT dinâmico gerando um fluxo enorme de logs de conexão que vai para um coletor com grande volume. À direita, CGNAT determinístico gerando apenas uma tabela de alocação pequena e estável, mais o registro de qual assinante teve qual 100.64. Setas destacam a diferença de volume.
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=center, minimum height=10mm, inner sep=4pt},
+]
+% dinamico
+\node[box, fill=manualred!15] (d1) at (0,0.6) {CGNAT dinâmico};
+\node[box, fill=manualred!8, minimum width=34mm] (d2) at (0,-1) {log por conexão\\\scriptsize bilhões de linhas/dia};
+\draw[-{Stealth}, very thick, manualred] (d1) -- (d2);
+% deterministico
+\node[box, fill=manualgreen!15] (t1) at (6,0.6) {CGNAT determinístico};
+\node[box, fill=manualgreen!8, minimum width=34mm] (t2) at (6,-1) {tabela de alocação\\\scriptsize + quem teve qual 100.64};
+\draw[-{Stealth}, thick, manualgreen!60!black] (t1) -- (t2);
+\node[align=center] at (3,-2.4) {\scriptsize mesmo poder de resposta legal, \textbf{fração} do volume};
+\end{tikzpicture}
+```
+
+::: {#fig-cgnat-log}
+O CGNAT determinístico transforma "guardar bilhões de conexões" em
+"guardar uma tabela estática + quem usou cada `100.64.x.x`". A resposta
+à Justiça é a mesma; o custo de armazenamento e o risco operacional são
+uma fração.
+:::
+
+## O registro do lado do assinante: quem teve qual 100.64
+
+Mesmo determinístico, falta o elo final: o `100.64.x.x` sozinho não é
+uma pessoa. Quem amarra o endereço ao **contrato** é a autenticação —
+tipicamente o **PPPoE/RADIUS** (@sec-radius-userman): a cada login, o
+RADIUS registra **qual usuário** recebeu **qual IP** e **quando**
+(*accounting* — Start/Stop). Esse par de registros:
+
+- **Tabela de alocação CGNAT** (estática): `IP público:faixa-portas →
+  100.64.x.x`;
+- **Accounting RADIUS** (por sessão): `100.64.x.x → usuário`, com
+  timestamps.
+
+...fecha a cadeia `IP público:porta:tempo → 100.64 → assinante`. Guardar
+esses dois é bem mais leve do que logar todo fluxo — e é o desenho que a
+maioria dos provedores adota.
+
+## Configurando o registro no RouterOS
+
+O ponto de partida é **hora certa** e **envio para fora** (a caixa não
+é o cofre):
+
+```routeros
+# 1) NTP: sem relógio sincronizado, nenhum log vale
+/system ntp client set enabled=yes servers=a.ntp.br,b.ntp.br
+
+# 2) syslog remoto: log NÃO mora no roteador (memória volátil, espaço)
+/system logging action
+add name=coletor target=remote remote=10.99.0.20 remote-port=514
+/system logging
+add topics=info,account action=coletor
+```
+
+Se optar por **logar conexões** (CGNAT dinâmico), habilite o log da
+regra de NAT com parcimônia — e saiba que o destino **tem** de ser um
+coletor externo dimensionado (o Volume 13, @sec-logs, trata de syslog
+centralizado):
+
+```routeros
+/ip firewall nat set [find action=netmap] log=yes log-prefix="cgnat"
+```
+
+Para o desenho **determinístico**, você não liga log por conexão:
+guarda a **tabela de alocação** (um export das regras/NAT) e o
+**accounting do RADIUS** — versionados e retidos pelo prazo legal.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+CGNAT sem registro é **passivo legal**: você não consegue dizer quem fez
+o quê, e a lei cobra que consiga. A escolha inteligente não é "logar
+mais" — é **projetar para logar menos**: CGNAT **determinístico**
+(tabela estática) + **accounting RADIUS** (`100.64 → assinante`)
+reconstroem qualquer requisição com uma fração do volume de um log de
+conexões. Sobre isso, três não-negociáveis: **NTP** (hora certa),
+**coletor externo** (o log não mora na caixa) e **retenção com sigilo**
+pelo prazo. E o lembrete honesto: a parte técnica é esta; a jurídica,
+confirme com advogado.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Reaproveite o **lab-bng** do @sec-cgnat (CGNAT determinístico ativo) e
+adicione **lab-log** = um coletor syslog (pode ser outro CHR com o
+serviço de log, ou um host Linux com `rsyslog`) em `10.99.0.20`. Um
+**lab-cli** gera tráfego como assinante `100.64.0.10`.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — hora certa em tudo.** No lab-bng e no lab-log:
+
+```routeros
+/system ntp client set enabled=yes servers=a.ntp.br
+/system clock print
+```
+
+Confirme que o relógio está sincronizado antes de qualquer log.
+
+**Passo 2 — syslog remoto.** No lab-bng:
+
+```routeros
+/system logging action add name=coletor target=remote remote=10.99.0.20
+/system logging add topics=info action=coletor
+```
+
+No lab-log, verifique que as mensagens chegam (`/log print` se for CHR,
+ou o arquivo do rsyslog).
+
+**Passo 3 — a tabela de alocação como registro.** Exporte as regras de
+CGNAT — é o "documento" que amarra IP público:portas → `100.64`:
+
+```routeros
+/ip firewall nat export file=cgnat-alocacao
+```
+
+Guarde esse export (versionado, com data). Ele é a metade estática da
+resposta legal.
+
+**Passo 4 — accounting do assinante.** Se o lab tem PPPoE/RADIUS
+(@sec-radius-userman), confirme que o login do assinante gera um
+registro `usuário → 100.64.0.10` com timestamp. Sem RADIUS no lab,
+simule anotando manualmente a associação e a hora.
+
+**Passo 5 — simule uma requisição.** Escolha um `IP público:porta` de
+uma conexão real do lab-cli (visto no `connection print`) e **percorra a
+cadeia**: porta → faixa (tabela do Passo 3) → `100.64.0.10` →
+assinante (Passo 4). Cronometre: com o determinístico, são minutos, não
+horas.
+
+### Verificação
+
+1. Relógio sincronizado (NTP) em BNG e coletor;
+2. Mensagens de log chegam ao coletor externo;
+3. O export da tabela de alocação amarra IP público:portas → `100.64`;
+4. A cadeia `IP:porta:tempo → 100.64 → assinante` fecha a partir dos
+   dois registros (tabela + accounting).
+
+### Desafios
+
+1. Seu coletor de log encheu o disco em três dias com CGNAT
+   **dinâmico** logando toda conexão. Sem comprar mais disco, que
+   **mudança de projeto** derruba o volume mantendo a capacidade de
+   resposta legal? Explique por que funciona.
+2. Uma ordem judicial pede o responsável por `203.0.113.10:5000` às
+   `2026-03-01 21:34`. Liste, na ordem, **quais registros** você
+   consulta e **como** eles se encadeiam até o nome do assinante.
+3. Você descobre que o NTP do BNG estava errado em +7 minutos durante
+   uma semana. Qual é o impacto nos registros daquele período e o que
+   você faz? Por que hora errada é tão grave num registro legal?
+4. Um técnico sugere guardar os logs **apenas no próprio roteador**
+   "para simplificar". Aponte **dois** motivos técnicos pelos quais isso
+   falha o requisito de retenção — e o desenho correto.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Migrar para **CGNAT determinístico**: a tradução vira uma
+**função estática** (faixa de portas fixa por assinante), então você
+guarda só a **tabela de alocação** + o **accounting** (`100.64 →
+usuário`), não cada conexão. O volume cai ordens de grandeza porque você
+deixou de registrar **eventos** e passou a registrar **regras** — e a
+resposta legal continua completa porque a regra é suficiente para
+recalcular quem era quem.
+
+**2.** (a) **Tabela de alocação CGNAT** vigente naquela data: a porta
+`5000` no IP `203.0.113.10` cai numa **faixa** atribuída a um `100.64.x.x`.
+(b) **Accounting do RADIUS/PPPoE** no instante `21:34`: qual **usuário**
+estava com aquele `100.64.x.x` (sessão Start/Stop cobrindo o horário).
+(c) **Cadastro**: usuário → contrato/pessoa. Os três encadeados dão o
+responsável, com hora sincronizada validando o instante.
+
+**3.** Todos os registros daquele período têm o carimbo de tempo
+**deslocado em +7 min**, então uma requisição que aponta para um
+horário pode cair no assinante **errado** (se a alocação mudou nesse
+intervalo). Você **documenta o desvio** (o offset conhecido) para poder
+corrigir as consultas daquele período e **conserta o NTP**. Hora errada
+é grave porque o registro legal **é** uma afirmação temporal: sem hora
+confiável, ele não identifica ninguém com segurança.
+
+**4.** (a) **Volatilidade/espaço**: a memória do roteador é pequena e
+alguns logs se perdem no reboot; não há como reter **1 ano**. (b)
+**Risco e integridade**: se o roteador é comprometido ou substituído, o
+registro vai junto — e um log que o próprio operador pode alterar tem
+valor probatório frágil. Desenho correto: **syslog remoto** para um
+coletor dedicado, com retenção pelo prazo, backup e acesso controlado
+(@sec-logs).
+:::
+
+## Resumo
+
+- O **Marco Civil** obriga guardar **registros de conexão** (~1 ano,
+  sob sigilo, entregues por ordem judicial); com CGNAT, o registro tem
+  de reconstruir `IP público:porta:tempo → assinante`;
+- **Logar toda conexão** (CGNAT dinâmico) é completo mas de volume
+  brutal; **CGNAT determinístico** reduz tudo a uma **tabela de
+  alocação** estática + **accounting RADIUS** (`100.64 → usuário`);
+- Não-negociáveis: **NTP** (hora certa), **coletor externo** (o log não
+  mora na caixa) e **retenção com sigilo**;
+- A resposta a uma requisição encadeia **tabela de alocação** +
+  **accounting** + **cadastro** — minutos, se o projeto for
+  determinístico;
+- Isto é a camada técnica: **confirme o jurídico com advogado**.
+
+Resolvido o presente (CGNAT + registro), resta o **futuro**, que já é
+presente: o **IPv6**, onde cada casa tem endereço de sobra e o acesso
+fim a fim volta a existir. O @sec-ipv6-fundamentos abre essa parte.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Lei 12.965/2014 (Marco Civil da Internet) e sua regulamentação;
+- Documentação oficial: *Log* e *NAT* do RouterOS [@mikrotik-docs];
+- Registro e accounting em provedores: [@burgess-mikrotik];
+- RADIUS e accounting: [@discher-rosv7].
