@@ -3888,6 +3888,479 @@
     ]
   },
   {
+    "objectID": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html",
+    "href": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html",
+    "title": "47  CGNAT e netmap",
+    "section": "",
+    "text": "47.1 Por que CGNAT e onde ele fica\nO provedor cresceu e a conta não fecha: são milhares de assinantes e um punhado de IPv4 públicos. Comprar mais IPv4 é caro e escasso. A saída da indústria inteira foi compartilhar cada IP público entre dezenas de clientes com um NAT em escala de operadora — o CGNAT. Ele é a diferença entre “acabou o IP, não dá para vender” e “seguimos crescendo”. Este capítulo monta um CGNAT que funciona e que atende à lei (o próximo, 1, cuida do registro legal).\nNo Capítulo 13, a LAN privada do cliente saía para a internet via NAT no roteador de borda: um IP público servia uma casa. O CGNAT sobe esse conceito uma camada: agora um IP público serve muitas casas. Cada assinante recebe um endereço 100.64.x.x (nem privado “de casa”, nem público), e o BNG/roteador de CGNAT traduz o tráfego de todos eles para um punhado de IPv4 públicos na saída.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>47</span>  <span class='chapter-title'>CGNAT e netmap</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#por-que-cgnat-e-onde-ele-fica",
+    "href": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#por-que-cgnat-e-onde-ele-fica",
+    "title": "47  CGNAT e netmap",
+    "section": "",
+    "text": "O tráfego do assinante passa por dois NATs: o da própria casa (privado → 100.64.x.x) e o do provedor (100.64.x.x → IPv4 público compartilhado). O 100.64.0.0/10 é o “espaço de manobra” entre os dois.\n\n\nFigura 47.1",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>47</span>  <span class='chapter-title'>CGNAT e netmap</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#o-espaço-100.64.0.010-rfc-6598",
+    "href": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#o-espaço-100.64.0.010-rfc-6598",
+    "title": "47  CGNAT e netmap",
+    "section": "47.2 O espaço 100.64.0.0/10 (RFC 6598)",
+    "text": "47.2 O espaço 100.64.0.0/10 (RFC 6598)\nPor que não usar 10.0.0.0/8 para endereçar os assinantes? Porque a casa do cliente já usa RFC1918 (192.168.x.x, às vezes 10.x). Se o provedor também usasse 10.x entre o CPE/ONU e o BNG, haveria colisão com a LAN do cliente — o NAT ficaria ambíguo. A IANA reservou o 100.64.0.0/10 (Shared Address Space, RFC 6598) exatamente para CGNAT: é um espaço que não aparece na LAN doméstica nem na internet pública, dedicado ao trecho assinante↔︎operadora.\nRegras práticas: nunca roteie 100.64/10 para a internet; nunca aceite 100.64/10 num peering BGP (é bogon, Capítulo 45); e não o confunda com RFC1918 nas regras de firewall.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>47</span>  <span class='chapter-title'>CGNAT e netmap</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#masquerade-srcnat-e-netmap",
+    "href": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#masquerade-srcnat-e-netmap",
+    "title": "47  CGNAT e netmap",
+    "section": "47.3 masquerade, srcnat e netmap",
+    "text": "47.3 masquerade, srcnat e netmap\nO RouterOS oferece três ações de srcnat relevantes aqui:\n\nmasquerade: reescreve o source para o IP da interface de saída, escolhido dinamicamente. Simples, mas o mapeamento assinante→IP público muda e é difícil de rastrear;\nsrc-nat (to-addresses): fixa o IP público de saída, mas ainda distribui portas dinamicamente num pool;\nnetmap: mapeamento 1:1 de faixas — pega um bloco de origem e o mapeia, na mesma ordem, para um bloco de destino. É a base do CGNAT determinístico.\n\nPara a operação (e para a lei, 1), o que interessa é previsibilidade: dado um IP público, uma porta e um instante, saber qual assinante era. masquerade puro dificulta isso; o CGNAT determinístico resolve.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>47</span>  <span class='chapter-title'>CGNAT e netmap</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#cgnat-determinístico-com-netmap",
+    "href": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#cgnat-determinístico-com-netmap",
+    "title": "47  CGNAT e netmap",
+    "section": "47.4 CGNAT determinístico com netmap",
+    "text": "47.4 CGNAT determinístico com netmap\nA ideia: dividir cada IP público em N faixas de portas e atribuir cada faixa a um assinante fixo. Assim, o mapeamento (IP público, faixa de portas) → assinante é calculável, sem depender de consultar logs de conexão a cada evento. Menos log, resposta legal mais simples, diagnóstico direto.\n# mapear a faixa de assinantes 100.64.0.0/28 para 1 IP público,\n# fatiando as portas — netmap preserva a ordem do bloco\n/ip firewall nat\nadd chain=srcnat action=netmap \\\n    src-address=100.64.0.0/28 to-addresses=203.0.113.10 \\\n    protocol=tcp to-ports=1024-4095 comment=\"assinantes 0-15 -&gt; portas 1024-4095\"\nNa prática, provedores usam um script ou a funcionalidade de CGNAT determinístico para gerar as regras: cada bloco de assinantes recebe um IP público e uma janela de portas contígua. O 1 mostra como isso reduz o volume de log de “toda conexão” para “só a tabela de alocação”.\n\n\n\n\n\n\nAviso\n\n\n\nCGNAT é destrutivo de simplicidade: uma vez que o assinante está atrás de CGNAT, o port-forward que ele fazia em casa deixa de funcionar (o IP público não é dele). Câmeras, DVRs, servidores de jogo caseiros, alguns P2P — tudo que dependia de porta aberta de fora para dentro quebra. Deixe isso claro no contrato e ofereça IP público dedicado (ou IPv6, o resto deste volume) para quem precisar.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>47</span>  <span class='chapter-title'>CGNAT e netmap</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#portas-por-assinante-e-oversubscription",
+    "href": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#portas-por-assinante-e-oversubscription",
+    "title": "47  CGNAT e netmap",
+    "section": "47.5 Portas por assinante e oversubscription",
+    "text": "47.5 Portas por assinante e oversubscription\nCada IPv4 público tem ~64 mil portas por protocolo. Se você dá 2.048 portas a cada assinante, cabem ~32 assinantes por IP público (65536 / 2048). Menos portas por cliente = mais clientes por IP (mais economia), porém maior chance de esgotamento de portas — um cliente que abre muitas conexões (abas, apps, um torrent) fica sem porta e sente lentidão/falhas intermitentes.\nO ajuste é um trade-off:\n\nPoucas portas/assinante (ex.: 512–1024): máxima economia de IP, risco de esgotamento com usuários pesados;\nMuitas portas/assinante (ex.: 4096+): folga por cliente, menos clientes por IP;\nRegra de bolso: comece com ~1.000–2.000 portas/assinante e monitore o esgotamento (contadores/log) antes de apertar.\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nCGNAT é como você vende internet sem IPv4 suficiente: um IP público compartilhado por dezenas de assinantes endereçados em 100.64/10. Faça determinístico (netmap + faixas de portas fixas) — não por elegância, mas porque isso torna o mapeamento IP:porta:tempo → assinante calculável, o que simplifica a operação e a obrigação legal do próximo capítulo. E lembre do preço: CGNAT quebra o acesso de fora para dentro do cliente — planeje IP dedicado/IPv6 para quem precisa. A economia de IPv4 é real; a dívida de complexidade também.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>47</span>  <span class='chapter-title'>CGNAT e netmap</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#laboratório",
+    "href": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#laboratório",
+    "title": "47  CGNAT e netmap",
+    "section": "47.6 🧪 Laboratório",
+    "text": "47.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nTrês CHRs (Capítulo 5): lab-bng = roteador CGNAT do provedor; lab-cli = “casa do assinante” (com sua própria LAN 192.168.88.0/24 e NAT interno), recebendo um 100.64.0.10/24 do lado do provedor; lab-net = simulando a internet, com um IP “público” 203.0.113.1 e um serviço para pingar. O lab-bng faz o CGNAT entre 100.64.0.0/24 e o público 203.0.113.10.\n\n\n\n47.6.1 Comandos passo a passo\nPasso 1 — endereçar o trecho CGNAT. No lab-bng:\n/ip address add address=100.64.0.1/24 interface=ether2 comment=\"lado assinantes\"\n/ip address add address=203.0.113.10/32 interface=ether3 comment=\"IP publico CGNAT\"\nPasso 2 — o NAT determinístico (netmap). Mapeie um bloco pequeno de assinantes para o IP público, fatiando portas:\n/ip firewall nat\nadd chain=srcnat action=netmap src-address=100.64.0.0/28 \\\n    to-addresses=203.0.113.10 protocol=tcp to-ports=1024-8191 \\\n    comment=\"assinantes .0-.15\"\nadd chain=srcnat action=netmap src-address=100.64.0.0/28 \\\n    to-addresses=203.0.113.10 protocol=udp to-ports=1024-8191\nPasso 3 — prove a tradução. Do lab-cli (origem 100.64.0.10), gere tráfego para o lab-net e observe no lab-bng:\n/ip firewall connection print where src-address~\"100.64\"\nVocê verá a conexão com reply-src no 203.0.113.10 e a porta traduzida dentro da faixa definida — o assinante escondido atrás do IP público.\nPasso 4 — bogon no lugar certo. Garanta que o 100.64/10 não escapa: no firewall filter do lab-bng, confirme que nada roteia esse bloco para fora sem NAT (regra de higiene do Capítulo 45).\nPasso 5 — sinta o esgotamento. Reduza a faixa para pouquíssimas portas (to-ports=1024-1034) e gere muitas conexões simultâneas do lab-cli. Observe conexões falhando por falta de porta — a demonstração viva do trade-off de oversubscription. Restaure a faixa depois.\n\n\n47.6.2 Verificação\n\nConexões do assinante saem com source = IP público e porta na faixa determinística;\nO connection print casa 100.64.x.x ↔︎ 203.0.113.10:porta;\nEstreitar a faixa de portas provoca falhas de conexão sob carga;\n100.64/10 não é roteado/anunciado para fora.\n\n\n\n47.6.3 Desafios\n\nUm cliente reclama que a câmera dele “sumiu” da internet depois que você o migrou para CGNAT — o app não conecta de fora. Explique exatamente por que, e liste duas soluções (uma que envolve IPv4, outra que aponta para o resto deste volume).\nA autoridade pede: “quem usava o IP 203.0.113.10, porta de origem 5000, às 21h34?”. Com CGNAT determinístico, por que você responde sem vasculhar um log gigante de conexões? Descreva o raciocínio de cálculo faixa→assinante.\nVocê tem 4.000 assinantes e quer no máximo esgotamento raro. Com IPs públicos de 64k portas e a meta de ~2.000 portas/assinante, quantos IPv4 públicos você precisa? Mostre a conta e o que muda se apertar para 1.000 portas.\nPor que usar masquerade puro no CGNAT é uma má ideia do ponto de vista legal e operacional, mesmo que “funcione”? Relacione com o\n\n\n\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. A câmera dependia de port-forward no roteador de casa, que só funciona quando o IP público é do cliente. Atrás de CGNAT, o IP público é compartilhado e o provedor não redireciona portas de entrada para cada assinante — logo, conexões de fora para dentro não têm como chegar. Soluções: (a) vender/atribuir um IPv4 público dedicado ao cliente (sai do CGNAT); (b) usar IPv6 (resto do volume), em que cada casa tem endereços roteáveis próprios e o acesso de fora volta a ser possível (com firewall adequado, Capítulo 51).\n2. No CGNAT determinístico, cada IP público é fatiado em faixas de portas fixas por assinante. A porta de origem 5000 cai numa faixa específica, e essa faixa está pré-atribuída a um assinante conhecido (a tabela de alocação). Basta calcular a qual bloco a porta pertence — não é preciso ter registrado aquela conexão, só a regra de alocação (que é estática). É por isso que o determinístico reduz o log de “toda conexão” para “a tabela”.\n3. 65536 portas / 2000 portas por assinante ≈ 32 assinantes por IP. Para 4.000 assinantes: 4000 / 32 ≈ 125 IPv4 públicos. Apertando para 1.000 portas/assinante: 65536 / 1000 ≈ 65 assinantes por IP → 4000 / 65 ≈ 62 IPv4 — metade dos IPs, ao custo de dobrar o risco de esgotamento de portas para usuários pesados.\n4. masquerade escolhe IP/porta de saída dinamicamente, então o mesmo assinante aparece com mapeamentos que mudam o tempo todo. Para atender a lei (1) você precisaria logar cada conexão (volume enorme) para reconstruir “quem era quem”. Operacional: diagnosticar/atribuir tráfego a um cliente vira garimpo. O determinístico troca esse custo por uma tabela estática — mesma economia de IP, sem a dívida de log e rastreio.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>47</span>  <span class='chapter-title'>CGNAT e netmap</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#resumo",
+    "href": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#resumo",
+    "title": "47  CGNAT e netmap",
+    "section": "47.7 Resumo",
+    "text": "47.7 Resumo\n\nCGNAT compartilha um IPv4 público entre dezenas de assinantes, endereçados em 100.64.0.0/10 (RFC 6598) — nem RFC1918, nem público, dedicado ao trecho operadora↔︎assinante;\nPrefira netmap determinístico: faixas de portas fixas por assinante tornam o mapeamento IP:porta:tempo → cliente calculável (essencial para 1);\nPortas por assinante é um trade-off: menos portas = mais clientes por IP, mais risco de esgotamento; comece em ~1.000–2.000 e monitore;\nCGNAT quebra acesso de fora para dentro (port-forward do cliente); ofereça IPv4 dedicado ou IPv6 a quem precisa;\nHigiene: 100.64/10 nunca roteado/anunciado para fora.\n\nA economia de IPv4 tem prazo de validade — a solução definitiva é o IPv6, com endereço de sobra para cada casa. Mas antes, uma obrigação que não é opcional no Brasil: o registro legal do CGNAT. O 1 trata do que a lei exige e como cumpri-la sem afogar o provedor em logs.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>47</span>  <span class='chapter-title'>CGNAT e netmap</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#bibliografia-do-capítulo",
+    "href": "volumes/v09-cgnat-ipv6/01-cgnat-netmap.html#bibliografia-do-capítulo",
+    "title": "47  CGNAT e netmap",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nRFC 6598 — IANA-Reserved IPv4 Prefix for Shared Address Space;\nDocumentação oficial: NAT e CGNAT/netmap do RouterOS (MikroTik, 2026);\nNAT em escala e esgotamento de portas: (Tanenbaum; Feamster; Wetherall, 2021);\nCGNAT em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>47</span>  <span class='chapter-title'>CGNAT e netmap</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html",
+    "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html",
+    "title": "48  Logging de CGNAT e requisitos legais",
+    "section": "",
+    "text": "48.1 O que a lei pede (em português de engenheiro)\nO capítulo anterior (Capítulo 47) montou o CGNAT que faz o provedor crescer. Mas ele criou um problema novo: quando dezenas de assinantes compartilham um IP público, o endereço deixou de identificar alguém. Se uma autoridade pede “quem usou 203.0.113.10 às 21h34?”, a resposta “qualquer um dos 32 clientes daquele IP” não serve — nem para você, nem para a lei. Registrar a tradução deixou de ser opcional. Este capítulo trata dessa obrigação com a cabeça de engenheiro: cumprir a lei sem afogar a operação em terabytes de log.\nO Marco Civil da Internet (Lei 12.965/2014) e sua regulamentação obrigam o provedor de conexão a guardar os registros de conexão por um prazo mínimo (1 ano), sob sigilo, disponibilizando-os mediante ordem judicial. Na prática do CGNAT, o registro precisa permitir reconstruir, para um dado momento:\nSem isso, o IP público é anônimo. Com isso, você atende à requisição e se protege: o registro correto é o que diz “não fui eu, foi o cliente X” de forma auditável. Três propriedades importam:",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#o-que-a-lei-pede-em-português-de-engenheiro",
+    "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#o-que-a-lei-pede-em-português-de-engenheiro",
+    "title": "48  Logging de CGNAT e requisitos legais",
+    "section": "",
+    "text": "IP público + porta de origem (+ protocolo) + timestamp → assinante (o IP 100.64.x.x, e por ele o contrato/login).\n\n\n\nPrecisão temporal: hora sincronizada (NTP) — um log com relógio errado é inútil ou pior;\nCompletude: cobrir todas as traduções que a lei alcança;\nRetenção e sigilo: guardar pelo prazo, protegido, e entregar só sob ordem.\n\n\n\n\n\n\n\nAviso\n\n\n\nNada aqui é aconselhamento jurídico. Prazos, escopo e forma de guarda mudam com regulamentação e com o tipo de serviço. Consulte um advogado para o desenho definitivo — este capítulo cobre a parte técnica de tornar o registro possível e barato.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#dois-caminhos-logar-tudo-vs.-determinístico",
+    "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#dois-caminhos-logar-tudo-vs.-determinístico",
+    "title": "48  Logging de CGNAT e requisitos legais",
+    "section": "48.2 Dois caminhos: logar tudo vs. determinístico",
+    "text": "48.2 Dois caminhos: logar tudo vs. determinístico\nHá duas formas de tornar a tradução rastreável, com custos muito diferentes:\n\nLogar cada conexão: o roteador emite um registro por fluxo (quem→quem, IP:porta origem/traduzida, início/fim). É completo, mas o volume é brutal — milhares de assinantes geram bilhões de linhas/dia. Exige coletor robusto, muito disco e processamento. É o preço do CGNAT dinâmico (masquerade/pool);\nCGNAT determinístico (Capítulo 47): como a faixa de portas é fixa por assinante, o mapeamento IP:porta → assinante é uma função estática. Você guarda apenas a tabela de alocação (qual bloco de portas de qual IP público pertence a qual 100.64.x.x) e a associação 100.64.x.x ↔︎ assinante ao longo do tempo. Some 99% do volume de log.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nO CGNAT determinístico transforma “guardar bilhões de conexões” em “guardar uma tabela estática + quem usou cada 100.64.x.x”. A resposta à Justiça é a mesma; o custo de armazenamento e o risco operacional são uma fração.\n\n\nFigura 48.1",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#o-registro-do-lado-do-assinante-quem-teve-qual-100.64",
+    "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#o-registro-do-lado-do-assinante-quem-teve-qual-100.64",
+    "title": "48  Logging de CGNAT e requisitos legais",
+    "section": "48.3 O registro do lado do assinante: quem teve qual 100.64",
+    "text": "48.3 O registro do lado do assinante: quem teve qual 100.64\nMesmo determinístico, falta o elo final: o 100.64.x.x sozinho não é uma pessoa. Quem amarra o endereço ao contrato é a autenticação — tipicamente o PPPoE/RADIUS (Capítulo 35): a cada login, o RADIUS registra qual usuário recebeu qual IP e quando (accounting — Start/Stop). Esse par de registros:\n\nTabela de alocação CGNAT (estática): IP público:faixa-portas → 100.64.x.x;\nAccounting RADIUS (por sessão): 100.64.x.x → usuário, com timestamps.\n\n…fecha a cadeia IP público:porta:tempo → 100.64 → assinante. Guardar esses dois é bem mais leve do que logar todo fluxo — e é o desenho que a maioria dos provedores adota.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#configurando-o-registro-no-routeros",
+    "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#configurando-o-registro-no-routeros",
+    "title": "48  Logging de CGNAT e requisitos legais",
+    "section": "48.4 Configurando o registro no RouterOS",
+    "text": "48.4 Configurando o registro no RouterOS\nO ponto de partida é hora certa e envio para fora (a caixa não é o cofre):\n# 1) NTP: sem relógio sincronizado, nenhum log vale\n/system ntp client set enabled=yes servers=a.ntp.br,b.ntp.br\n\n# 2) syslog remoto: log NÃO mora no roteador (memória volátil, espaço)\n/system logging action\nadd name=coletor target=remote remote=10.99.0.20 remote-port=514\n/system logging\nadd topics=info,account action=coletor\nSe optar por logar conexões (CGNAT dinâmico), habilite o log da regra de NAT com parcimônia — e saiba que o destino tem de ser um coletor externo dimensionado (o Volume 13, ?sec-logs, trata de syslog centralizado):\n/ip firewall nat set [find action=netmap] log=yes log-prefix=\"cgnat\"\nPara o desenho determinístico, você não liga log por conexão: guarda a tabela de alocação (um export das regras/NAT) e o accounting do RADIUS — versionados e retidos pelo prazo legal.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nCGNAT sem registro é passivo legal: você não consegue dizer quem fez o quê, e a lei cobra que consiga. A escolha inteligente não é “logar mais” — é projetar para logar menos: CGNAT determinístico (tabela estática) + accounting RADIUS (100.64 → assinante) reconstroem qualquer requisição com uma fração do volume de um log de conexões. Sobre isso, três não-negociáveis: NTP (hora certa), coletor externo (o log não mora na caixa) e retenção com sigilo pelo prazo. E o lembrete honesto: a parte técnica é esta; a jurídica, confirme com advogado.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#laboratório",
+    "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#laboratório",
+    "title": "48  Logging de CGNAT e requisitos legais",
+    "section": "48.5 🧪 Laboratório",
+    "text": "48.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nReaproveite o lab-bng do Capítulo 47 (CGNAT determinístico ativo) e adicione lab-log = um coletor syslog (pode ser outro CHR com o serviço de log, ou um host Linux com rsyslog) em 10.99.0.20. Um lab-cli gera tráfego como assinante 100.64.0.10.\n\n\n\n48.5.1 Comandos passo a passo\nPasso 1 — hora certa em tudo. No lab-bng e no lab-log:\n/system ntp client set enabled=yes servers=a.ntp.br\n/system clock print\nConfirme que o relógio está sincronizado antes de qualquer log.\nPasso 2 — syslog remoto. No lab-bng:\n/system logging action add name=coletor target=remote remote=10.99.0.20\n/system logging add topics=info action=coletor\nNo lab-log, verifique que as mensagens chegam (/log print se for CHR, ou o arquivo do rsyslog).\nPasso 3 — a tabela de alocação como registro. Exporte as regras de CGNAT — é o “documento” que amarra IP público:portas → 100.64:\n/ip firewall nat export file=cgnat-alocacao\nGuarde esse export (versionado, com data). Ele é a metade estática da resposta legal.\nPasso 4 — accounting do assinante. Se o lab tem PPPoE/RADIUS (Capítulo 35), confirme que o login do assinante gera um registro usuário → 100.64.0.10 com timestamp. Sem RADIUS no lab, simule anotando manualmente a associação e a hora.\nPasso 5 — simule uma requisição. Escolha um IP público:porta de uma conexão real do lab-cli (visto no connection print) e percorra a cadeia: porta → faixa (tabela do Passo 3) → 100.64.0.10 → assinante (Passo 4). Cronometre: com o determinístico, são minutos, não horas.\n\n\n48.5.2 Verificação\n\nRelógio sincronizado (NTP) em BNG e coletor;\nMensagens de log chegam ao coletor externo;\nO export da tabela de alocação amarra IP público:portas → 100.64;\nA cadeia IP:porta:tempo → 100.64 → assinante fecha a partir dos dois registros (tabela + accounting).\n\n\n\n48.5.3 Desafios\n\nSeu coletor de log encheu o disco em três dias com CGNAT dinâmico logando toda conexão. Sem comprar mais disco, que mudança de projeto derruba o volume mantendo a capacidade de resposta legal? Explique por que funciona.\nUma ordem judicial pede o responsável por 203.0.113.10:5000 às 2026-03-01 21:34. Liste, na ordem, quais registros você consulta e como eles se encadeiam até o nome do assinante.\nVocê descobre que o NTP do BNG estava errado em +7 minutos durante uma semana. Qual é o impacto nos registros daquele período e o que você faz? Por que hora errada é tão grave num registro legal?\nUm técnico sugere guardar os logs apenas no próprio roteador “para simplificar”. Aponte dois motivos técnicos pelos quais isso falha o requisito de retenção — e o desenho correto.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Migrar para CGNAT determinístico: a tradução vira uma função estática (faixa de portas fixa por assinante), então você guarda só a tabela de alocação + o accounting (100.64 → usuário), não cada conexão. O volume cai ordens de grandeza porque você deixou de registrar eventos e passou a registrar regras — e a resposta legal continua completa porque a regra é suficiente para recalcular quem era quem.\n2. (a) Tabela de alocação CGNAT vigente naquela data: a porta 5000 no IP 203.0.113.10 cai numa faixa atribuída a um 100.64.x.x. (b) Accounting do RADIUS/PPPoE no instante 21:34: qual usuário estava com aquele 100.64.x.x (sessão Start/Stop cobrindo o horário). (c) Cadastro: usuário → contrato/pessoa. Os três encadeados dão o responsável, com hora sincronizada validando o instante.\n3. Todos os registros daquele período têm o carimbo de tempo deslocado em +7 min, então uma requisição que aponta para um horário pode cair no assinante errado (se a alocação mudou nesse intervalo). Você documenta o desvio (o offset conhecido) para poder corrigir as consultas daquele período e conserta o NTP. Hora errada é grave porque o registro legal é uma afirmação temporal: sem hora confiável, ele não identifica ninguém com segurança.\n4. (a) Volatilidade/espaço: a memória do roteador é pequena e alguns logs se perdem no reboot; não há como reter 1 ano. (b) Risco e integridade: se o roteador é comprometido ou substituído, o registro vai junto — e um log que o próprio operador pode alterar tem valor probatório frágil. Desenho correto: syslog remoto para um coletor dedicado, com retenção pelo prazo, backup e acesso controlado (?sec-logs).",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#resumo",
+    "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#resumo",
+    "title": "48  Logging de CGNAT e requisitos legais",
+    "section": "48.6 Resumo",
+    "text": "48.6 Resumo\n\nO Marco Civil obriga guardar registros de conexão (~1 ano, sob sigilo, entregues por ordem judicial); com CGNAT, o registro tem de reconstruir IP público:porta:tempo → assinante;\nLogar toda conexão (CGNAT dinâmico) é completo mas de volume brutal; CGNAT determinístico reduz tudo a uma tabela de alocação estática + accounting RADIUS (100.64 → usuário);\nNão-negociáveis: NTP (hora certa), coletor externo (o log não mora na caixa) e retenção com sigilo;\nA resposta a uma requisição encadeia tabela de alocação + accounting + cadastro — minutos, se o projeto for determinístico;\nIsto é a camada técnica: confirme o jurídico com advogado.\n\nResolvido o presente (CGNAT + registro), resta o futuro, que já é presente: o IPv6, onde cada casa tem endereço de sobra e o acesso fim a fim volta a existir. O Capítulo 49 abre essa parte.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#bibliografia-do-capítulo",
+    "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#bibliografia-do-capítulo",
+    "title": "48  Logging de CGNAT e requisitos legais",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nLei 12.965/2014 (Marco Civil da Internet) e sua regulamentação;\nDocumentação oficial: Log e NAT do RouterOS (MikroTik, 2026);\nRegistro e accounting em provedores: (Burgess, 2011);\nRADIUS e accounting: (Discher, 2016).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html",
+    "href": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html",
+    "title": "49  IPv6 no RouterOS: fundamentos",
+    "section": "",
+    "text": "49.1 Lendo um endereço IPv6\nO CGNAT (Capítulo 47) é um remendo genial para um problema real: não há IPv4 suficiente. O IPv6 é a solução que torna o remendo desnecessário — são 340 undecilhões de endereços, o bastante para dar a cada casa um bloco maior que a internet IPv4 inteira. Não é “IPv4 com mais dígitos”: muda o jeito de endereçar, de descobrir vizinhos e de configurar hosts. Este capítulo estabelece o fundamento; os próximos entregam IPv6 ao assinante (Capítulo 50) e o protegem (Capítulo 51).\nUm endereço IPv6 tem 128 bits, escritos em 8 grupos de 4 dígitos hexadecimais separados por ::\nDuas regras de abreviação tornam isso administrável:\nO prefixo é o análogo da máscara: 2001:db8:abcd::/48 significa “os primeiros 48 bits identificam a rede”. Um fato que organiza toda a cabeça em IPv6: a rede de um segmento é quase sempre um /64 — os 64 bits de rede + 64 bits de host são o padrão, e o SLAAC depende disso.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>49</span>  <span class='chapter-title'>IPv6 no RouterOS: fundamentos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#lendo-um-endereço-ipv6",
+    "href": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#lendo-um-endereço-ipv6",
+    "title": "49  IPv6 no RouterOS: fundamentos",
+    "section": "",
+    "text": "2001:0db8:0000:0000:0000:0000:0000:0001\n\n\nZeros à esquerda de cada grupo somem: 0db8 → db8, 0000 → 0;\nUma sequência de grupos zero vira :: (só uma vez por endereço):\n\n2001:db8::1",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>49</span>  <span class='chapter-title'>IPv6 no RouterOS: fundamentos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#os-tipos-de-endereço-que-importam",
+    "href": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#os-tipos-de-endereço-que-importam",
+    "title": "49  IPv6 no RouterOS: fundamentos",
+    "section": "49.2 Os tipos de endereço que importam",
+    "text": "49.2 Os tipos de endereço que importam\n\nGUA (Global Unicast, 2000::/3): o endereço público e roteável, o equivalente ao IP público do IPv4 — mas aqui cada host tem um. É o que o provedor delega ao cliente;\nLink-local (fe80::/10): existe em toda interface IPv6, automaticamente, e só vale naquele enlace (não roteia). É o que ND, RA e os protocolos de roteamento usam para conversar entre vizinhos — você vai vê-lo o tempo todo;\nULA (Unique Local, fc00::/7, na prática fd00::/8): o “privado” do IPv6, para comunicação interna que não deve sair. Útil, mas não substitui GUA (o objetivo do IPv6 é dar público a todos);\nMulticast (ff00::/8): substitui o broadcast do IPv4 (que não existe em IPv6). ND e RA são multicast.\n\n\n\n\n\n\n\nDicaPegadinha de quem pensa em IPv4\n\n\n\nNão existe broadcast nem NAT “de casa” no IPv6 bem-feito. O instinto de “esconder tudo atrás de um IP” não se aplica: cada dispositivo é roteável de ponta a ponta. Isso devolve funcionalidade (o que o CGNAT quebrava volta a funcionar), mas transfere a segurança para o firewall — sem o NAT servindo de “muro acidental”, o Capítulo 51 vira obrigatório, não opcional.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>49</span>  <span class='chapter-title'>IPv6 no RouterOS: fundamentos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#nd-ra-e-slaac-como-o-host-se-configura-sozinho",
+    "href": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#nd-ra-e-slaac-como-o-host-se-configura-sozinho",
+    "title": "49  IPv6 no RouterOS: fundamentos",
+    "section": "49.3 ND, RA e SLAAC: como o host se configura sozinho",
+    "text": "49.3 ND, RA e SLAAC: como o host se configura sozinho\nNo IPv4, um host precisava de ARP (achar o MAC do vizinho) e, em geral, de DHCP (pegar IP/gateway/DNS). O IPv6 reorganiza isso com o ND (Neighbor Discovery, sobre ICMPv6):\n\nNS/NA (Neighbor Solicitation/Advertisement): substitui o ARP — descobre o endereço de enlace do vizinho;\nRS/RA (Router Solicitation/Advertisement): o host pergunta “quem é o roteador?”; o roteador responde com um RA anunciando o prefixo do segmento, o gateway (ele mesmo) e flags de como o host deve se endereçar;\nSLAAC (Stateless Address Autoconfiguration): com o prefixo /64 do RA, o host monta seu próprio endereço (prefixo + identificador de interface) sem DHCP. É por isso que um /64 por segmento não é luxo — é requisito do SLAAC.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nSem DHCP: o host pede (RS), o roteador anuncia o prefixo /64 (RA) e o host forma o próprio endereço (SLAAC). O provedor controla o endereçamento da LAN do cliente pelo RA — o que ele anuncia é o que a casa usa.\n\n\nFigura 49.1",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>49</span>  <span class='chapter-title'>IPv6 no RouterOS: fundamentos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#habilitando-ipv6-no-routeros",
+    "href": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#habilitando-ipv6-no-routeros",
+    "title": "49  IPv6 no RouterOS: fundamentos",
+    "section": "49.4 Habilitando IPv6 no RouterOS",
+    "text": "49.4 Habilitando IPv6 no RouterOS\nO pacote ipv6 precisa estar ativo (no v7 costuma vir junto, mas confirme):\n/ipv6 settings set disable-ipv6=no forward=yes\nEndereçar uma interface e anunciar o prefixo para a LAN:\n# endereço na interface de upstream (recebido do trânsito/PPPoE)\n/ipv6 address add address=2001:db8:0:1::1/64 interface=ether1-wan advertise=no\n\n# LAN do cliente: endereço + RA com SLAAC\n/ipv6 address add address=2001:db8:abcd:10::1/64 interface=bridge-lan advertise=yes\nO advertise=yes faz o roteador emitir RA naquele segmento — é o que dispara o SLAAC nos hosts. Detalhes do RA (DNS via RA, lifetime, flags managed/other) moram em /ipv6 nd:\n/ipv6 nd set [find interface=bridge-lan] ra-interval=3s-10m",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>49</span>  <span class='chapter-title'>IPv6 no RouterOS: fundamentos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#planejando-o-endereçamento-do-provedor",
+    "href": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#planejando-o-endereçamento-do-provedor",
+    "title": "49  IPv6 no RouterOS: fundamentos",
+    "section": "49.5 Planejando o endereçamento do provedor",
+    "text": "49.5 Planejando o endereçamento do provedor\nIPv6 é abundante — mas abundância sem plano vira bagunça. A hierarquia consagrada:\n\nO provedor recebe um /32 (ou /29, /36…) do LACNIC/NIC.br;\nCada POP/região recebe um /48 (65 mil /64 — folga enorme);\nCada cliente recebe um /56 (256 redes /64 — sobra para a casa inteira) ou, no mínimo, um /64;\nCada segmento/LAN é um /64 (nunca menor — SLAAC exige).\n\nRepare: você delega prefixo, não um endereço. É a mudança mental do IPv6 — o assinante ganha uma rede, não um IP. O Capítulo 50 mostra como entregar esse /56 automaticamente pelo PPPoE.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nIPv6 não é “IPv4 grande” — é outro modelo: cada host é roteável, o link-local (fe80::) faz a plumbing entre vizinhos, e o host se autoconfigura por RA + SLAAC (o roteador anuncia o /64, o host forma o endereço). O provedor pensa em prefixos delegados (/32→/48→/56→/64), não em IPs avulsos. E a consequência de segurança é imediata: sem NAT fazendo de muro, o firewall (Capítulo 51) passa a ser a única proteção da LAN do cliente. Fim a fim de volta — com responsabilidade.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>49</span>  <span class='chapter-title'>IPv6 no RouterOS: fundamentos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#laboratório",
+    "href": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#laboratório",
+    "title": "49  IPv6 no RouterOS: fundamentos",
+    "section": "49.6 🧪 Laboratório",
+    "text": "49.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nDois CHRs (Capítulo 5): lab-rt = roteador do provedor, com um /48 fictício 2001:db8:abcd::/48; lab-host = “cliente” no mesmo segmento, sem endereço configurado (vai pegar por SLAAC). Uma rede interna liga os dois.\n\n\n\n49.6.1 Comandos passo a passo\nPasso 1 — ligar o IPv6 e ver o link-local. No lab-rt:\n/ipv6 settings set disable-ipv6=no forward=yes\n/ipv6 address print\nNote que já existe um endereço fe80::/10 automático na interface — o link-local, sem você configurar nada.\nPasso 2 — endereçar a LAN e anunciar RA. No lab-rt:\n/ipv6 address add address=2001:db8:abcd:10::1/64 interface=ether2 advertise=yes\nPasso 3 — SLAAC em ação. No lab-host, ligue o IPv6 e veja o endereço global aparecer sozinho:\n/ipv6 settings set disable-ipv6=no\n/ipv6 address print\nDeve surgir um 2001:db8:abcd:10:... formado por SLAAC — sem DHCP, só a partir do RA do lab-rt.\nPasso 4 — vizinhança e rota. No lab-rt:\n/ipv6 neighbor print\n/ipv6 route print\nO neighbor mostra o host (o “ARP do IPv6”); a rota do /64 da LAN está conectada.\nPasso 5 — ping fim a fim. Do lab-host, pingue o GUA do lab-rt e o link-local (note a sintaxe com a interface):\n/ping 2001:db8:abcd:10::1\n/ping fe80::1%ether2\nO ping ao link-local exige dizer a interface (%ether2) — porque fe80:: é ambíguo entre enlaces. Essa é a pegadinha nº 1 do IPv6 na prática.\n\n\n49.6.2 Verificação\n\nLink-local fe80:: aparece automaticamente ao ligar o IPv6;\nO host recebe um GUA por SLAAC a partir do RA (sem DHCP);\n/ipv6 neighbor lista o vizinho; a rota do /64 está conectada;\nPing fim a fim funciona; ping link-local exige %interface.\n\n\n\n49.6.3 Desafios\n\nVocê anunciou um /48 como prefixo de RA de um segmento e o SLAAC não configurou os hosts. Qual é o erro conceitual, e qual é o único tamanho de prefixo que faz SLAAC funcionar? Por quê?\nUm colega quer “esconder” a LAN IPv6 do cliente atrás de NAT, como fazia no IPv4. Explique por que isso desperdiça o IPv6 e cria problema em vez de resolver — e o que substitui o “muro” do NAT.\nDo roteador, o ping para 2001:db8:... de um vizinho funciona, mas o ping para o fe80::... dele dá “no route to host”. O que falta no comando, e por que o link-local é diferente?\nPlaneje o endereçamento de um provedor com 3 POPs, cada um com até 500 clientes residenciais. Partindo de um /32, que prefixo cada POP e cada cliente recebem, e por que sobra tanto espaço?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. SLAAC exige um /64 por segmento: o host forma o endereço combinando os 64 bits de prefixo anunciados com um identificador de interface de 64 bits. Se você anuncia um /48 (ou qualquer coisa diferente de /64), a conta não fecha e o host não se autoconfigura. Um segmento IPv6 é, por convenção e por requisito do SLAAC, sempre um /64 — o /48//56 é para delegar (dividir em muitos /64), não para um único enlace.\n2. No IPv6 há endereço público de sobra para cada dispositivo; usar NAT joga fora justamente o benefício (fim a fim) e reintroduz a complexidade que o IPv6 elimina. O NAT do IPv4 servia de “muro acidental” só por efeito colateral — no IPv6, essa função é explícita e correta no firewall (Capítulo 51): você bloqueia o que entra e libera o que sai, com regras, em vez de depender de tradução de endereço.\n3. Falta dizer a interface de saída: ping fe80::...%etherX. O link-local só é válido naquele enlace e o mesmo fe80:: pode existir em várias interfaces — sem o %interface, o roteador não sabe por onde mandar. GUA não precisa disso porque é globalmente único e roteável.\n4. Do /32, cada POP recebe um /48 (o /32 comporta 65.536 /48, então 3 é trivial). Dentro de um POP, cada cliente recebe um /56 (um /48 tem 256 /56… apertado para 500 clientes — na prática dá-se /56 de um /44//40 por POP, ou /60//64 por cliente residencial). Mesmo com /64 por cliente, um /48 acomoda 65.536 clientes. Sobra tanto porque o espaço é projetado para hierarquia folgada: agregação limpa (uma rota por POP) vale mais que economia de bits.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>49</span>  <span class='chapter-title'>IPv6 no RouterOS: fundamentos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#resumo",
+    "href": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#resumo",
+    "title": "49  IPv6 no RouterOS: fundamentos",
+    "section": "49.7 Resumo",
+    "text": "49.7 Resumo\n\nIPv6 tem 128 bits: abrevia zeros e usa :: uma vez; o segmento é quase sempre um /64 (requisito do SLAAC);\nTipos-chave: GUA (público roteável, um por host), link-local fe80:: (só no enlace, usado por ND/RA/roteamento), ULA (privado), multicast (substitui o broadcast);\nHost se configura por ND + RA + SLAAC: o roteador anuncia o /64 (advertise=yes), o host forma seu endereço sem DHCP;\nProvedor delega prefixos: /32 → /48 (POP) → /56 (cliente) → /64 (segmento) — rede, não IP avulso;\nSem NAT de muro, o firewall (Capítulo 51) é a única proteção — e o ping link-local exige %interface.\n\nO fundamento está de pé. Falta o que o cliente realmente recebe: um prefixo delegado automaticamente pelo PPPoE, em dual stack com o IPv4. É o Capítulo 50.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>49</span>  <span class='chapter-title'>IPv6 no RouterOS: fundamentos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#bibliografia-do-capítulo",
+    "href": "volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.html#bibliografia-do-capítulo",
+    "title": "49  IPv6 no RouterOS: fundamentos",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção IPv6 do RouterOS (MikroTik, 2026);\nEndereçamento IPv6, ND e SLAAC: (Tanenbaum; Feamster; Wetherall, 2021);\nIPv6 no v7 na prática: (Discher, 2016);\nPlanejamento IPv6 em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>49</span>  <span class='chapter-title'>IPv6 no RouterOS: fundamentos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html",
+    "href": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html",
+    "title": "50  DHCPv6-PD e dual stack no PPPoE",
+    "section": "",
+    "text": "50.1 Prefix Delegation: delegar uma rede\nO Capítulo 49 estabeleceu a mudança mental: no IPv6 o provedor delega uma rede, não um IP. Falta o como: entregar, de forma automática e por assinante, o /56 que a casa vai usar — e fazer isso junto com o IPv4 na mesma sessão PPPoE (Capítulo 34), o chamado dual stack. É assim que um provedor moderno liga IPv6 sem trocar nada da autenticação que já tem.\nNo IPv4, o PPPoE dava ao cliente um endereço /32. No IPv6 isso seria desperdício e limitação: a casa tem vários dispositivos e pode ter várias redes (LAN, WiFi de visitante, IoT). A solução é o DHCPv6-PD (Prefix Delegation): o concentrador delega um prefixo (tipicamente /56) ao roteador do cliente, que passa a ser dono dessa rede — subdivide em /64, anuncia cada um por RA na sua LAN, e roteia.\nRepare a divisão de papéis:",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>50</span>  <span class='chapter-title'>DHCPv6-PD e dual stack no PPPoE</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#prefix-delegation-delegar-uma-rede",
+    "href": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#prefix-delegation-delegar-uma-rede",
+    "title": "50  DHCPv6-PD e dual stack no PPPoE",
+    "section": "",
+    "text": "O provedor delega o /56 e roteia para ele (a rota do prefixo aponta para a sessão PPPoE do cliente);\nO CPE do cliente recebe o /56, corta em /64, e faz RA/SLAAC para os dispositivos da casa (Capítulo 49).\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nA delegação amarra tudo: o BNG delega o /56 na autenticação, instala a rota para ele pela sessão do cliente, e o CPE distribui /64 na casa. O IPv6 chega ao dispositivo final sem NAT e sem configuração manual.\n\n\nFigura 50.1",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>50</span>  <span class='chapter-title'>DHCPv6-PD e dual stack no PPPoE</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#o-servidor-dhcpv6-pd-no-concentrador",
+    "href": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#o-servidor-dhcpv6-pd-no-concentrador",
+    "title": "50  DHCPv6-PD e dual stack no PPPoE",
+    "section": "50.2 O servidor DHCPv6-PD no concentrador",
+    "text": "50.2 O servidor DHCPv6-PD no concentrador\nPrimeiro, o pool de prefixos a delegar (o /48 do POP, cortado em /56 por cliente) e o servidor DHCPv6 em modo PD:\n# pool: um /48 do POP entregue em pedaços /56 (256 clientes por /48... ajuste)\n/ipv6 pool\nadd name=pd-clientes prefix=2001:db8:abcd::/48 prefix-length=56\n\n# servidor DHCPv6 apenas para PD (não distribui endereço, distribui prefixo)\n/ipv6 dhcp-server\nadd name=pd interface=all pool=pd-clientes address-pool=none\nO ponto central: o prefix-length=56 diz “corte o /48 em /56”. Cada assinante que pedir PD recebe o próximo /56 livre do pool.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>50</span>  <span class='chapter-title'>DHCPv6-PD e dual stack no PPPoE</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#dual-stack-sobre-pppoe",
+    "href": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#dual-stack-sobre-pppoe",
+    "title": "50  DHCPv6-PD e dual stack no PPPoE",
+    "section": "50.3 Dual stack sobre PPPoE",
+    "text": "50.3 Dual stack sobre PPPoE\nO truque para ligar IPv6 sem refazer a operação: amarrar a delegação ao profile PPPoE (Capítulo 34). Quando a sessão sobe, além do IPv4 de sempre, o cliente recebe também o IPv6:\n# no profile PPPoE, habilitar o DHCPv6-PD para as sessões\n/ppp profile\nset default-pppoe dhcpv6-pd-pool=pd-clientes \\\n    # endereço IPv6 do lado do concentrador na sessão (link):\n    remote-ipv6-prefix-pool=pd-clientes\nAssim, a mesma autenticação (secret local ou RADIUS, Capítulo 35) que entrega o IPv4 passa a entregar o /56 IPv6. O RADIUS pode inclusive atribuir o prefixo por atributo, mantendo a gestão centralizada — e o accounting registra a delegação (útil para o 1, já que IPv6 não tem CGNAT, mas ainda precisa de rastreabilidade).\n\n\n\n\n\n\nAviso\n\n\n\nIPv6 dual stack não passa por CGNAT — cada casa é roteável. Isso é o objetivo, mas significa que a LAN do cliente fica exposta assim que o IPv6 sobe, se você não tiver firewall IPv6. Não ligue dual stack em produção sem o Capítulo 51 pronto: no IPv4 o CGNAT/NAT mascarava a ausência de regras; no IPv6 não há rede de segurança.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>50</span>  <span class='chapter-title'>DHCPv6-PD e dual stack no PPPoE</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#o-lado-do-cliente-pedindo-o-prefixo-client-pd",
+    "href": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#o-lado-do-cliente-pedindo-o-prefixo-client-pd",
+    "title": "50  DHCPv6-PD e dual stack no PPPoE",
+    "section": "50.4 O lado do cliente: pedindo o prefixo (client-PD)",
+    "text": "50.4 O lado do cliente: pedindo o prefixo (client-PD)\nNo CPE (que também pode ser um MikroTik), o cliente pede o prefixo e o usa. O cliente DHCPv6 em modo PD:\n# no CPE: pedir prefixo pela interface PPPoE\n/ipv6 dhcp-client\nadd interface=pppoe-out1 pool-name=casa pool-prefix-length=64 request=prefix\n\n# usar um /64 do pool recebido na LAN da casa, com RA/SLAAC\n/ipv6 address add from-pool=casa interface=bridge-lan advertise=yes\n\nrequest=prefix (não address): é PD, o cliente quer a rede;\nfrom-pool=casa corta um /64 do /56 recebido e o coloca na LAN, com advertise=yes para o SLAAC dos dispositivos.\n\nA casa inteira ganha IPv6 público automaticamente — o que o CGNAT tornava impossível volta a funcionar (câmeras, jogos, servidores), agora com firewall no lugar do NAT como controle.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>50</span>  <span class='chapter-title'>DHCPv6-PD e dual stack no PPPoE</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#diagnóstico-ponta-a-ponta",
+    "href": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#diagnóstico-ponta-a-ponta",
+    "title": "50  DHCPv6-PD e dual stack no PPPoE",
+    "section": "50.5 Diagnóstico ponta a ponta",
+    "text": "50.5 Diagnóstico ponta a ponta\n# no BNG: quem recebeu qual /56\n/ipv6 dhcp-server binding print\n# a rota do /56 aponta para a sessão do cliente?\n/ipv6 route print where dst-address~\"2001:db8:abcd\"\n# no CPE: recebeu o prefixo?\n/ipv6 dhcp-client print\n/ipv6 address print\nA cadeia sadia: binding no servidor → rota do /56 pela sessão → dhcp-client no CPE com prefixo → endereço /64 na LAN → SLAAC nos dispositivos. Quebra em qualquer elo, o IPv6 “não anda”.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nDual stack é evolução, não revolução: você mantém toda a autenticação PPPoE e acrescenta a delegação de um /56 por sessão (DHCPv6-PD amarrado ao profile). O cliente vira dono de uma rede, a distribui em casa por RA/SLAAC, e o IPv6 chega ao dispositivo sem NAT. Duas verdades andam juntas: isso conserta o que o CGNAT quebrou (fim a fim de volta) e exige o firewall IPv6 pronto antes de ligar — porque sem o muro do NAT, a única defesa da casa é a regra que você escreve. É o assunto que fecha o volume.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>50</span>  <span class='chapter-title'>DHCPv6-PD e dual stack no PPPoE</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#laboratório",
+    "href": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#laboratório",
+    "title": "50  DHCPv6-PD e dual stack no PPPoE",
+    "section": "50.6 🧪 Laboratório",
+    "text": "50.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nReaproveite o cenário PPPoE do Capítulo 34: lab-bng = concentrador PPPoE (com IPv4 já funcionando) e lab-cpe = roteador do cliente (PPPoE client). Adicione o IPv6: o BNG tem o /48 2001:db8:abcd::/48; o CPE tem uma LAN interna (ether3) com um lab-host para provar o SLAAC. Objetivo: /56 delegado e um dispositivo da casa com IPv6 público.\n\n\n\n50.6.1 Comandos passo a passo\nPasso 1 — pool e delegação no BNG.\n/ipv6 pool add name=pd-clientes prefix=2001:db8:abcd::/48 prefix-length=56\n/ppp profile set default-pppoe dhcpv6-pd-pool=pd-clientes\nPasso 2 — o CPE pede o prefixo. No lab-cpe, sobre a interface PPPoE:\n/ipv6 dhcp-client add interface=pppoe-out1 pool-name=casa \\\n    pool-prefix-length=64 request=prefix\nConfirme a recepção:\n/ipv6 dhcp-client print\nDeve mostrar status=bound e o prefixo /56 recebido.\nPasso 3 — distribuir na casa. Ainda no lab-cpe, corte um /64 para a LAN com RA:\n/ipv6 address add from-pool=casa interface=ether3 advertise=yes\nPasso 4 — o dispositivo ganha IPv6 público. No lab-host (na LAN da casa), ligue o IPv6 e veja o endereço global do /56 do cliente aparecer por SLAAC:\n/ipv6 address print\nPasso 5 — a rota fecha o ciclo. No lab-bng, confirme que existe rota para o /56 apontando para a sessão PPPoE do cliente:\n/ipv6 dhcp-server binding print\n/ipv6 route print where dst-address~\"2001:db8:abcd\"\nPingue, do lab-host, um endereço IPv6 do lab-bng — fim a fim, sem NAT.\n\n\n50.6.2 Verificação\n\ndhcp-client no CPE com status=bound e /56 recebido;\nbinding no BNG e rota do /56 pela sessão do cliente;\nDispositivo na LAN da casa com GUA por SLAAC;\nPing IPv6 fim a fim host↔︎BNG funciona (sem NAT).\n\n\n\n50.6.3 Desafios\n\nO CPE recebeu o /56 (dhcp-client bound), mas os dispositivos da casa não pegam IPv6. A delegação está certa. Que passo do lado do CPE falta, e qual comando o revela?\nO dispositivo da casa tem endereço IPv6 global, mas não navega: ping para IPv6 externo falha, embora o ping ao CPE funcione. No BNG, o que você checa primeiro (pense na rota do /56 e no upstream)?\nPor que entregar IPv6 dual stack é mais seguro para o provedor do que continuar só com CGNAT — e por que, ao mesmo tempo, ligá-lo sem firewall IPv6 é mais perigoso para o cliente? Concilie as duas afirmações.\nVocê quer que o mesmo cliente receba sempre o mesmo /56 (estável entre reconexões), para não confundir o cliente nem os registros. Descreva duas formas de conseguir isso (uma no pool/lease, outra via RADIUS) e por que a estabilidade importa para o\n\n\n\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Falta usar o prefixo na LAN: o dhcp-client só recebe o /56; é preciso /ipv6 address add from-pool=casa interface=&lt;lan&gt; advertise=yes para cortar um /64 e anunciá-lo por RA. Sem RA, não há SLAAC e os dispositivos não se endereçam. /ipv6 address print (sem endereço da LAN) e /ipv6 nd print (sem advertise na interface) revelam a falta.\n2. No BNG, cheque: (a) a rota do /56 aponta mesmo para a sessão PPPoE do cliente (/ipv6 route print) — se não, o retorno não acha a casa; (b) o upstream IPv6 do BNG funciona (o provedor tem rota default IPv6 e alcança a internet). O host tem endereço, mas endereço sem rota de ida e de volta não navega — é o análogo IPv6 do next-hop do BGP.\n3. Mais seguro para o provedor: dual stack tira carga do CGNAT (menos tradução, menos log, menos ponto único de falha) e reduz a superfície de problemas de porta esgotada. Mais perigoso para o cliente se ligado sem firewall: no IPv4 o CGNAT/NAT bloqueava, por efeito colateral, conexões de entrada; no IPv6 cada dispositivo é roteável, então sem regras o mundo alcança a IoT da casa. Conciliam- se assim: o IPv6 transfere a proteção do NAT para o firewall (Capítulo 51) — que passa a ser obrigatório, não opcional.\n4. (a) Binding estático/lease fixo: amarrar o /56 ao identificador do cliente (DUID) no servidor DHCPv6, para reentregar o mesmo prefixo. (b) RADIUS: atribuir o prefixo por atributo no perfil do assinante, de modo que a autenticação sempre devolva o mesmo /56. Estabilidade importa porque um prefixo que muda a cada reconexão espalha registros (o accounting vira um emaranhado) e dificulta atender requisições legais — o mesmo princípio de previsibilidade do 1, agora no IPv6.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>50</span>  <span class='chapter-title'>DHCPv6-PD e dual stack no PPPoE</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#resumo",
+    "href": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#resumo",
+    "title": "50  DHCPv6-PD e dual stack no PPPoE",
+    "section": "50.7 Resumo",
+    "text": "50.7 Resumo\n\nDHCPv6-PD delega um prefixo (/56) por assinante, não um endereço: o cliente vira dono de uma rede e a distribui em casa;\nNo BNG: pool (/48 cortado em /56) + DHCPv6 em modo PD amarrado ao profile PPPoE → dual stack na mesma autenticação (secret/RADIUS);\nNo CPE: dhcp-client ... request=prefix recebe o /56; address from-pool ... advertise=yes corta /64 e faz RA/SLAAC na LAN;\nCadeia sadia: binding → rota do /56 pela sessão → dhcp-client bound → /64 na LAN → SLAAC nos dispositivos;\nIPv6 não passa por CGNAT (fim a fim de volta) — por isso o firewall IPv6 tem de estar pronto antes de ligar dual stack.\n\nFalta a peça que o volume inteiro vem prometendo: sem o NAT fazendo de muro, quem protege a casa IPv6 é o firewall. O Capítulo 51 fecha o Volume 9 mostrando as diferenças em relação ao IPv4 — ICMPv6 que não se bloqueia, e a proteção da LAN do cliente.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>50</span>  <span class='chapter-title'>DHCPv6-PD e dual stack no PPPoE</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#bibliografia-do-capítulo",
+    "href": "volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.html#bibliografia-do-capítulo",
+    "title": "50  DHCPv6-PD e dual stack no PPPoE",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: DHCPv6 (server/client, PD) e PPP do RouterOS (MikroTik, 2026);\nPrefix delegation e dual stack: (Tanenbaum; Feamster; Wetherall, 2021);\nIPv6 sobre PPPoE no v7: (Discher, 2016);\nImplantação de IPv6 em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>50</span>  <span class='chapter-title'>DHCPv6-PD e dual stack no PPPoE</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html",
+    "href": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html",
+    "title": "51  Firewall IPv6",
+    "section": "",
+    "text": "51.1 Por que IPv6 sem firewall é um erro\nO Volume 9 devolveu ao cliente o que o CGNAT tirou: com IPv6 dual stack (Capítulo 50), cada dispositivo da casa é roteável de ponta a ponta. Isso é o objetivo — e é também o perigo. No IPv4, o NAT/CGNAT funcionava como um muro involuntário: o que não tinha port-forward não era alcançável de fora. No IPv6 esse muro não existe. A única coisa entre a IoT barata da casa do cliente e a internet inteira é o firewall. Este capítulo o constrói — e fecha o volume.\nRepita o conceito até virar reflexo: IPv6 não tem NAT protegendo por acidente. Um endereço GUA numa câmera, numa TV, num roteador doméstico mal atualizado está exposto à internet no instante em que o dual stack sobe. Botnets varrem o espaço IPv6 procurando exatamente isso.\nA boa notícia: você já sabe firewall. Chains (input/forward/output), connection tracking (new/established/related/invalid), address-lists — a lógica do Volume 3 vale igual em IPv6. Só muda o menu (/ipv6 firewall em vez de /ip firewall) e um detalhe crítico: o ICMPv6.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>51</span>  <span class='chapter-title'>Firewall IPv6</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#o-que-muda-icmpv6-não-é-o-icmp-do-ipv4",
+    "href": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#o-que-muda-icmpv6-não-é-o-icmp-do-ipv4",
+    "title": "51  Firewall IPv6",
+    "section": "51.2 O que muda: ICMPv6 não é o ICMP do IPv4",
+    "text": "51.2 O que muda: ICMPv6 não é o ICMP do IPv4\nNo IPv4, era comum (e quase inofensivo) bloquear ICMP “por segurança”. Em IPv6 isso é fatal: o ICMPv6 não é só “ping” — ele carrega o Neighbor Discovery (o ARP do IPv6), o Router Advertisement (o SLAAC, Capítulo 49) e o Packet Too Big (essencial para o Path MTU Discovery). Bloquear ICMPv6 indiscriminadamente quebra o IPv6: vizinhos não se descobrem, hosts não se autoconfiguram, e conexões “grandes” travam de forma misteriosa (o mesmo sintoma de MTU do OSPF e do PPPoE, agora por PMTUD).\nRegra de ouro: libere ICMPv6 (com sensatez de taxa), nunca o bloqueie por inteiro. Os tipos essenciais: NS/NA (135/136), RS/RA (133/134), Packet Too Big (2), Time Exceeded (3), Echo (128/129) e Parameter Problem (4).\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nA postura é a mesma do IPv4 sem NAT: aceite o que a casa iniciou (established/related), descarte o que vem de fora sem solicitação — mas deixe o ICMPv6 passar, porque ele é a plumbing do protocolo, não uma ameaça a bloquear.\n\n\nFigura 51.1",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>51</span>  <span class='chapter-title'>Firewall IPv6</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#protegendo-o-roteador-chain-input",
+    "href": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#protegendo-o-roteador-chain-input",
+    "title": "51  Firewall IPv6",
+    "section": "51.3 Protegendo o roteador (chain input)",
+    "text": "51.3 Protegendo o roteador (chain input)\nIgual ao Capítulo 17, mas no menu IPv6. A espinha dorsal: aceitar established/related, aceitar o ICMPv6 necessário, aceitar gerência só de fontes confiáveis, dropar o resto:\n/ipv6 firewall filter\nadd chain=input connection-state=established,related action=accept\nadd chain=input connection-state=invalid action=drop\n# ICMPv6 é OBRIGATÓRIO — libere (com limite de taxa saudável)\nadd chain=input protocol=icmpv6 action=accept\n# link-local: o ND/RA vive aqui, não bloqueie o fe80::/10 no input\nadd chain=input src-address=fe80::/10 action=accept\n# gerência só da rede de gestão\nadd chain=input src-address-list=gerencia action=accept\nadd chain=input action=drop\n\n\n\n\n\n\nAviso\n\n\n\nNão copie regras IPv4 trocando só o menu. Duas armadilhas: (1) não existe 100.64/10 nem RFC1918 “de casa” para tratar aqui, mas existe o fe80::/10 (link-local) que precisa passar no input, senão o ND morre; (2) o drop final do input tem de vir depois de aceitar o ICMPv6 e o link-local — invertido, você derruba o próprio IPv6 do roteador.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>51</span>  <span class='chapter-title'>Firewall IPv6</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#protegendo-a-lan-do-cliente-chain-forward",
+    "href": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#protegendo-a-lan-do-cliente-chain-forward",
+    "title": "51  Firewall IPv6",
+    "section": "51.4 Protegendo a LAN do cliente (chain forward)",
+    "text": "51.4 Protegendo a LAN do cliente (chain forward)\nAqui está o coração do capítulo: sem NAT, a chain forward é o único muro entre a internet e os dispositivos da casa. A política é “stateful”: deixe sair o que a casa inicia, deixe voltar as respostas, e bloqueie conexões novas vindas de fora:\n/ipv6 firewall filter\nadd chain=forward connection-state=established,related action=accept\nadd chain=forward connection-state=invalid action=drop\n# ICMPv6 fim a fim (PMTUD!) — libere\nadd chain=forward protocol=icmpv6 action=accept\n# tráfego iniciado pela LAN do cliente para a internet: ok\nadd chain=forward in-interface-list=lan-clientes action=accept\n# conexões NOVAS vindas da internet para a LAN: DROP (o \"muro\")\nadd chain=forward connection-state=new in-interface-list=wan action=drop\nEsse conjunto reproduz, explicitamente, a proteção que o NAT dava de graça no IPv4 — com a vantagem de que agora o cliente pode abrir uma porta específica (uma exceção accept para um serviço), coisa que o CGNAT impedia. Poder com controle.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>51</span>  <span class='chapter-title'>Firewall IPv6</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#o-cpe-dual-stack-firewall-dos-dois-lados",
+    "href": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#o-cpe-dual-stack-firewall-dos-dois-lados",
+    "title": "51  Firewall IPv6",
+    "section": "51.5 O CPE dual stack: firewall dos dois lados",
+    "text": "51.5 O CPE dual stack: firewall dos dois lados\nO CPE MikroTik do cliente (Capítulo 50) precisa do mesmo cuidado: por padrão, o RouterOS traz um firewall IPv6 razoável, mas em provisão em massa você empurra um conjunto mínimo (input protege o CPE, forward protege a LAN da casa). É o mesmo template acima, aplicado no CPE, e é o que separa “IPv6 ligado” de “IPv6 ligado com segurança”. Provisão de firewall em escala é assunto do Volume 12 (?sec-api-provisionamento).\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nNo IPv6, o firewall não é opcional — ele É a segurança. O NAT do IPv4 protegia por acidente; o IPv6 tira esse muro e o substitui por regras explícitas na chain forward: aceite o que a casa iniciou, dropе o new que vem de fora. E o erro que arruína tudo: bloquear ICMPv6 como se fosse o ICMP do IPv4 — ele carrega ND, RA e PMTUD; sem ele, o IPv6 não anda. Libere ICMPv6, libere link-local no input, drope conexões novas de fora no forward. Faça isso antes de ligar dual stack em produção — depois é tarde.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>51</span>  <span class='chapter-title'>Firewall IPv6</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#laboratório",
+    "href": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#laboratório",
+    "title": "51  Firewall IPv6",
+    "section": "51.6 🧪 Laboratório",
+    "text": "51.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nReaproveite o dual stack do Capítulo 50: lab-cpe (roteador do cliente, com /56 delegado e LAN IPv6 no ether3) e lab-host na casa. Adicione lab-attacker = um host no lado “internet” que tentará alcançar o lab-host diretamente pelo GUA — para provar que o firewall barra o acesso não solicitado.\n\n\n\n51.6.1 Comandos passo a passo\nPasso 1 — o estado inicial perigoso. Antes de qualquer regra, do lab-attacker, pingue o GUA do lab-host:\n/ping &lt;gua-do-lab-host&gt;\nSem firewall, responde — a casa está exposta. Esse é o problema.\nPasso 2 — proteger o roteador (input). No lab-cpe:\n/ipv6 firewall filter\nadd chain=input connection-state=established,related action=accept\nadd chain=input connection-state=invalid action=drop\nadd chain=input protocol=icmpv6 action=accept\nadd chain=input src-address=fe80::/10 action=accept\nadd chain=input action=drop\nConfirme que o IPv6 continua funcionando (SLAAC, ND) — se o ND quebrasse, você teria bloqueado o ICMPv6/link-local por engano.\nPasso 3 — o muro da LAN (forward). No lab-cpe:\n/interface list add name=wan ; /interface list add name=lan-clientes\n/interface list member add list=wan interface=pppoe-out1\n/interface list member add list=lan-clientes interface=ether3\n/ipv6 firewall filter\nadd chain=forward connection-state=established,related action=accept\nadd chain=forward protocol=icmpv6 action=accept\nadd chain=forward in-interface-list=lan-clientes action=accept\nadd chain=forward connection-state=new in-interface-list=wan action=drop\nPasso 4 — prove o muro. Do lab-attacker, pingue de novo o lab-host: agora não responde (conexão nova de fora, dropada). Do lab-host, pingue a internet: funciona (established volta). O muro está de pé.\nPasso 5 — abrir uma exceção controlada. Suponha que o cliente queira expor um serviço (porta 443) num dispositivo. Adicione antes do drop:\n/ipv6 firewall filter\nadd chain=forward protocol=tcp dst-port=443 \\\n    dst-address=&lt;gua-do-servidor&gt; connection-state=new action=accept \\\n    place-before=[find chain=forward connection-state=new action=drop]\nDo lab-attacker, a 443 daquele host agora conecta — e só ela. O que o CGNAT tornava impossível, o firewall IPv6 faz com precisão cirúrgica.\n\n\n51.6.2 Verificação\n\nAntes das regras, o “atacante” alcança a casa (exposição);\nApós o input, o roteador segue com IPv6 sadio (ND/SLAAC intactos — prova de que o ICMPv6 foi liberado);\nApós o forward, conexões novas de fora são dropadas; as iniciadas pela casa funcionam;\nA exceção accept abre exatamente um serviço, sem abrir o resto.\n\n\n\n51.6.3 Desafios\n\nDepois de aplicar o firewall IPv6, os dispositivos da casa pararam de receber endereço (SLAAC morreu) e vizinhos não se enxergam. Qual regra você errou, e por que o ICMPv6/link-local é diferente de “só ping”?\nO IPv6 “funciona”, mas downloads grandes e alguns sites travam no meio, enquanto páginas leves abrem normal. O ping simples passa. Qual tipo de ICMPv6 você bloqueou sem querer, e que mecanismo ele sustenta?\nUm colega diz: “no IPv6 não preciso de firewall porque ninguém sabe o endereço aleatório da minha câmera”. Refute com dois argumentos concretos (varredura e vazamento de endereço).\nEscreva a regra mínima que permite ao cliente um servidor web IPv6 acessível de fora, mantendo o resto da casa protegido. Onde ela entra na ordem das regras e por quê?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Você bloqueou o ICMPv6 e/ou o link-local fe80::/10. O ICMPv6 não é “só ping”: ele carrega o Neighbor Discovery (NS/NA — o ARP do IPv6) e o Router Advertisement (RS/RA — o SLAAC). Bloqueado, os vizinhos não se descobrem e os hosts não se autoconfiguram. Precisa haver accept para protocol=icmpv6 e para src-address=fe80::/10 antes do drop.\n2. Você bloqueou o Packet Too Big (ICMPv6 tipo 2), que sustenta o Path MTU Discovery. Sem ele, quando um caminho tem MTU menor, o emissor não é avisado para reduzir o pacote — conexões que mandam pacotes grandes (downloads) travam, enquanto tráfego pequeno (ping, páginas leves) passa. É o mesmo sintoma de MTU do OSPF/PPPoE, agora por PMTUD. Libere o ICMPv6 (que inclui o tipo 2).\n3. (a) Varredura: botnets varrem o espaço IPv6 ativo (usando DNS reverso, prefixos delegados conhecidos, padrões de EUI-64) — “endereço aleatório” não é segredo confiável. (b) Vazamento: o endereço aparece em cada conexão que o dispositivo faz (headers, logs de servidores, telemetria) e em anúncios/mDNS na rede — basta o dispositivo falar com o mundo uma vez. Segurança por obscuridade de endereço não é segurança; a proteção é o firewall stateful.\n4. add chain=forward protocol=tcp dst-port=80,443 dst-address=&lt;gua-do-servidor&gt; connection-state=new action=accept, posicionada antes da regra que dropa new vindo da WAN (é first-match: se o drop viesse primeiro, a exceção nunca seria avaliada). Assim, só aquele host e aquelas portas são alcançáveis de fora; todo o resto da casa continua barrado.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>51</span>  <span class='chapter-title'>Firewall IPv6</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#resumo",
+    "href": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#resumo",
+    "title": "51  Firewall IPv6",
+    "section": "51.7 Resumo",
+    "text": "51.7 Resumo\n\nNo IPv6 não há NAT de muro: cada dispositivo é roteável, então o firewall é a segurança — a chain forward é o único muro da casa;\nA lógica é a do Volume 3 (chains, conntrack, address-lists) no menu /ipv6 firewall — aceite established/related, drope new de fora;\nICMPv6 não é o ICMP do IPv4: carrega ND, RA e Packet Too Big (PMTUD) — libere-o; bloqueá-lo quebra descoberta, SLAAC e downloads grandes;\nNo input, libere link-local fe80::/10 (o ND vive lá) antes do drop; no CPE dual stack, empurre o mesmo conjunto mínimo;\nIPv6 devolve o fim a fim que o CGNAT tirou — o cliente pode abrir um serviço com uma exceção accept cirúrgica.\n\nFecha-se o Volume 9: o provedor sobrevive ao esgotamento do IPv4 (CGNAT com registro legal) e implanta IPv6 de verdade (dual stack com firewall). Rede endereçada e protegida ponta a ponta. O Volume 10 interliga os POPs e dá acesso remoto seguro — o mundo dos túneis e VPN.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>51</span>  <span class='chapter-title'>Firewall IPv6</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#bibliografia-do-capítulo",
+    "href": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#bibliografia-do-capítulo",
+    "title": "51  Firewall IPv6",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: IPv6 Firewall e ICMPv6 do RouterOS (MikroTik, 2026);\nICMPv6, ND e PMTUD: (Tanenbaum; Feamster; Wetherall, 2021);\nFirewall IPv6 no v7: (Discher, 2016);\nSegurança IPv6 em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 9 — CGNAT e IPv6",
+      "<span class='chapter-number'>51</span>  <span class='chapter-title'>Firewall IPv6</span>"
+    ]
+  },
+  {
     "objectID": "referencias.html",
     "href": "referencias.html",
     "title": "Referências",
