@@ -84,7 +84,7 @@ Pré-requisitos: Vol. 2 (Vol. 3 recomendado).*
 Pré-requisitos: Vols. 3 e 4.*
 
 - [x] `volumes/v05-wireless/01-fundamentos-radio-regulamentacao.qmd` — Bandas (2.4/5/60 GHz), regulamentação Anatel, potência, antenas e visada.
-- [ ] `volumes/v05-wireless/02-wireless-routeros.qmd` — Wireless no RouterOS: modos (ap-bridge, station, bridge), registration-table, segurança.
+- [x] `volumes/v05-wireless/02-wireless-routeros.qmd` — Wireless no RouterOS: modos (ap-bridge, station, bridge), registration-table, segurança.
 - [ ] `volumes/v05-wireless/03-ptp-nstreme-nv2.qmd` — Enlaces PtP com protocolos proprietários: Nstreme e NV2 (TDMA); quando usar cada um.
 - [ ] `volumes/v05-wireless/04-ptmp-rural.qmd` — PtMP rural: setorial + LHG/SXT nos clientes, access-list, planejamento de célula.
 - [ ] `volumes/v05-wireless/05-alinhamento-troubleshooting.qmd` — Alinhamento (signal, CCQ, SNR) e troubleshooting de enlace degradado.

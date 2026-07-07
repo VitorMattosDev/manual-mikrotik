@@ -1,7 +1,334 @@
-# Wireless no RouterOS
+# Wireless no RouterOS {#sec-wireless-routeros}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Distinguir as duas pilhas wireless do RouterOS v7 — o pacote clássico
+  (`/interface wireless`) e o novo (`/interface wifi`) — e saber qual
+  vive em cada equipamento;
+- Escolher o **modo** certo de interface (`ap-bridge`, `bridge`,
+  `station`, `station-bridge`) para cada papel: torre, cliente, PtP;
+- Configurar um enlace básico: banda, frequência, largura de canal, SSID
+  e **security profile** (WPA2);
+- Ler a **registration table** — a tabela que conta a saúde de cada
+  conexão de rádio;
+- Entender por que `station` puro quebra bridging — e como
+  `station-bridge` resolve.
 :::
+
+## Duas pilhas, um aviso
+
+Antes de qualquer comando, o mapa do território no RouterOS v7:
+
+- **`/interface wireless`** — o pacote clássico, dos rádios de
+  provedor: SXT, LHG, BaseBox, NetMetal e afins. É onde vivem os
+  protocolos proprietários de PtP/PtMP (Nstreme, NV2 —
+  @sec-ptp-nstreme-nv2) e é a pilha deste e dos próximos três capítulos;
+- **`/interface wifi`** — a pilha nova (*wave2/ax*), dos equipamentos
+  WiFi modernos (hAP ax, cAP ax): WPA3, roaming rápido, CAPsMAN novo. É
+  a pilha da casa do cliente — assunto do @sec-capsman.
+
+A separação faz sentido operacional: **enlace de provedor** (torre,
+backhaul) é um problema de física e disciplina de meio; **WiFi de
+cliente** é um problema de compatibilidade e gerência em massa. A
+MikroTik os resolve com pilhas diferentes, e este volume os trata em
+capítulos diferentes.
+
+## Os modos: quem fala, quem escuta, quem repassa
+
+O parâmetro `mode` define o papel do rádio — e escolhe errado quem não
+entende **camada 2 sobre o ar** (@fig-modos-wireless):
+
+::: {#fig-modos-wireless}
+
+```{.tikz}
+%%| filename: fig-modos-wireless
+%%| alt: Papéis dos modos wireless numa rede de provedor. À esquerda, a torre com um rádio em modo ap-bridge atende múltiplos clientes. À direita, três clientes: um rádio em modo station, que roteia atrás de si; um em modo station-bridge, que faz bridge transparente dos dispositivos atrás dele; e, abaixo, um enlace ponto a ponto dedicado com um rádio em modo bridge de um lado e station-bridge do outro. Setas indicam as conexões pelo ar.
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  ap/.style={draw=manualblue, very thick, fill=manualblue!8,
+             rounded corners=3pt, minimum height=10mm, text width=27mm,
+             align=center, font=\sffamily\small\bfseries},
+  sta/.style={draw=manualgreen, very thick, fill=manualgreen!8,
+              rounded corners=3pt, minimum height=10mm, text width=30mm,
+              align=center, font=\sffamily\scriptsize},
+  ar/.style={very thick, manualyellow!80!black, dashed},
+  rotulo/.style={font=\sffamily\scriptsize, text=manualgray}
+]
+  % PtMP
+  \node[ap] (torre) {Torre (PtMP)\\ \small mode=ap-bridge};
+  \node[sta, right=38mm of torre, yshift=10mm] (s1)
+    {\textbf{station}\\roteia atrás de si\\(CPE roteado)};
+  \node[sta, right=38mm of torre, yshift=-10mm] (s2)
+    {\textbf{station-bridge}\\bridge transparente\\(LAN do cliente no ar)};
+
+  \draw[ar] (torre.east) -- (s1.west);
+  \draw[ar] (torre.east) -- (s2.west);
+
+  % PtP
+  \node[ap, below=26mm of torre, text width=27mm] (ptpA)
+    {PtP lado A\\ \small mode=bridge};
+  \node[sta, right=38mm of ptpA] (ptpB)
+    {\textbf{station-bridge}\\PtP lado B};
+  \draw[ar] (ptpA.east) -- (ptpB.west)
+    node[midway, above, rotulo] {enlace dedicado};
+\end{tikzpicture}
+```
+
+Os modos por papel: `ap-bridge` na torre PtMP, `bridge` no PtP,
+`station`/`station-bridge` nos clientes.
+
+:::
+
+- **`ap-bridge`** — o ponto de acesso completo: aceita **vários**
+  clientes. É o modo da setorial na torre (exige licença nível 4+,
+  @sec-licencas-routerboot);
+- **`bridge`** — um AP que aceita **um** cliente só: o lado "mestre" de
+  um enlace PtP dedicado (e disponível já no nível 3);
+- **`station`** — o cliente ortodoxo do 802.11... com uma pegadinha
+  enorme: o padrão só prevê **um MAC** atrás de cada estação. Um rádio
+  em `station` não consegue fazer bridge da LAN do cliente — os quadros
+  dos dispositivos atrás dele têm MACs que o AP recusaria. `station`
+  serve quando o rádio **roteia** (a LAN do cliente atrás de NAT/rotas
+  do próprio rádio);
+- **`station-bridge`** — a solução proprietária MikroTik: AP e estação
+  combinam um encapsulamento que transporta múltiplos MACs, e a LAN do
+  cliente atravessa o ar como se fosse cabo. Exige MikroTik nas duas
+  pontas — na rede do provedor, é o normal. (Evite o
+  `station-pseudobridge`, uma gambiarra de tradução de MACs para APs de
+  terceiros: funciona "quase sempre", e "quase" gera chamados.)
+
+## O enlace mínimo: banda, canal, SSID, segurança
+
+Um AP de torre nasce com quatro decisões (os valores são exemplo — o
+projeto do canal é assunto do @sec-ptmp-rural):
+
+```routeros
+/interface wireless security-profiles add name=sp-torre mode=dynamic-keys authentication-types=wpa2-psk wpa2-pre-shared-key=ChaveForte!Torre1
+/interface wireless set wlan1 mode=ap-bridge band=5ghz-a/n/ac channel-width=20/40mhz-Ce frequency=5805 ssid=prov-torre-sul security-profile=sp-torre disabled=no
+```
+
+Linha a linha do `set`:
+
+- **`band`** — a banda e as gerações aceitas (`5ghz-a/n/ac`: clientes
+  802.11a, n e ac). Restringir gerações antigas melhora a eficiência do
+  setor — cliente lento ocupa o ar de todos;
+- **`channel-width`** — 20 MHz é o conservador de PtMP (mais setores
+  coexistindo, melhor sensibilidade); 40+ MHz para PtP com espectro
+  limpo. Largura dobrada = capacidade quase dobrada **e** o dobro de
+  exposição a interferência;
+- **`frequency`** — o canal, em MHz. No `ap-bridge` você **escolhe** (e
+  documenta!); nas estações, usa-se `scan-list` para procurar o AP;
+- **`ssid`** — o nome da rede. Convenção de provedor: nome que
+  identifica torre/setor (`prov-torre-sul-s2`), não "WiFi da firma";
+- **`security-profile`** — a segurança mora num perfil separado
+  (reutilizável entre interfaces): **WPA2-PSK no mínimo, sempre**. Rádio
+  aberto em torre é convite a vizinho pendurado e a captura de tráfego.
+  Nos rádios de provedor, some-se o `radio-name` e, adiante, a
+  access-list (@sec-ptmp-rural).
+
+Do lado do cliente, o espelho:
+
+```routeros
+/interface wireless set wlan1 mode=station-bridge band=5ghz-a/n/ac ssid=prov-torre-sul security-profile=sp-torre disabled=no
+```
+
+## A registration table: o estetoscópio
+
+Conectou? A resposta — e a **qualidade** da resposta — mora em:
+
+```routeros
+/interface wireless registration-table print stats
+```
+
+```routeros
+[admin@torre-sul] > /interface wireless registration-table print stats
+ 0 interface=wlan1 mac-address=08:00:27:AA:12:34 ap=no wds=no
+   rx-rate="390Mbps-40MHz/2S" tx-rate="390Mbps-40MHz/2S"
+   uptime=2d4h11m22s signal-strength=-61dBm@40MHz
+   tx-signal-strength=-63dBm tx-ccq=94% p-throughput=182000
+```
+
+Os campos que o @sec-alinhamento transformará em método; por ora, o
+vocabulário:
+
+- **`signal-strength`** / **`tx-signal-strength`** — o sinal **nos dois
+  sentidos** (o que eu ouço dele / o que ele ouve de mim). O link budget
+  do @sec-fundamentos-radio, medido: os −61 dBm daqui deveriam bater com
+  a conta do papel. Assimetria grande entre os dois = problema
+  (potências desiguais, antena desalinhada num lado);
+- **`tx/rx-rate`** — a modulação negociada (MCS): o rádio ajusta a
+  velocidade à qualidade do sinal. Taxa baixa com sinal bom = procurar
+  interferência;
+- **`tx-ccq`** — *Client Connection Quality*: percentual de eficiência
+  real das transmissões (quantas precisaram de retransmissão). **> 90%
+  saudável; < 70% doente**;
+- **`uptime`** — conexão estável ou reconectando toda hora? O contador
+  denuncia.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+A registration table é a **ficha médica** de cada cliente do setor:
+sinal é a pressão arterial (nos dois braços!), CCQ é a saturação de
+oxigênio, a taxa negociada é o pique na esteira, e o uptime é o
+histórico de desmaios. Antes de culpar "a internet", o médico de torre
+abre a ficha.
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Wireless de provedor no RouterOS é: **modo pelo papel** (`ap-bridge` na
+torre, `bridge` no PtP, `station-bridge` no cliente que faz ponte —
+nunca `station` puro para LAN), **quatro decisões** no enlace (banda,
+largura, canal, WPA2 em security profile) e a **registration table**
+como fonte da verdade sobre a saúde de cada conexão — sinal nos dois
+sentidos, CCQ e taxa negociada.
+:::
+
+## 🧪 Laboratório
+
+### Ambiente
+
+O CHR não tem rádio — este laboratório usa **hardware físico opcional**:
+qualquer par de RouterBOARDs com wireless (dois hAP usados, ou um hAP +
+um SXT) reproduz tudo. Sem hardware, faça o **laboratório de leitura**:
+os exports e saídas abaixo estão completos — percorra-os linha a linha
+como se fossem seus, e responda os desafios (todos independentes de
+equipamento).
+
+### Comandos passo a passo
+
+**Passo 1 — o AP.** No equipamento A (papel de torre/AP):
+
+```routeros
+/interface wireless security-profiles add name=sp-lab mode=dynamic-keys authentication-types=wpa2-psk wpa2-pre-shared-key=Lab!Wireless2026
+/interface wireless set wlan1 mode=ap-bridge band=5ghz-a/n/ac channel-width=20mhz frequency=5805 ssid=lab-ptmp security-profile=sp-lab disabled=no
+```
+
+**Passo 2 — a estação.** No equipamento B (papel de cliente):
+
+```routeros
+/interface wireless security-profiles add name=sp-lab mode=dynamic-keys authentication-types=wpa2-psk wpa2-pre-shared-key=Lab!Wireless2026
+/interface wireless set wlan1 mode=station-bridge band=5ghz-a/n/ac ssid=lab-ptmp security-profile=sp-lab disabled=no
+```
+
+**Passo 3 — ver a conexão nascer.** No AP:
+
+```routeros
+/interface wireless registration-table print stats
+```
+
+Identifique cada campo da seção anterior na sua saída real. Anote
+sinal, CCQ e taxa — este é o "exame de sangue" de referência do seu
+enlace de bancada.
+
+**Passo 4 — a ponte no ar.** Prove o `station-bridge`: no B, coloque a
+`wlan1` e a `ether2` numa bridge (@sec-bridge-offload) e pendure um
+notebook na ether2 — ele deve receber DHCP de quem estiver atrás do AP,
+atravessando o ar em camada 2. Depois, troque o modo para `station` puro
+e repita: o notebook fica mudo (os MACs dele não atravessam) — a
+pegadinha do modo, sentida na prática.
+
+**Passo 5 — brincar de qualidade.** Com o enlace vivo, degrade-o de
+propósito: afaste os equipamentos, interponha uma parede, desalinhe. A
+cada mudança, `registration-table print stats`: veja sinal cair, a taxa
+negociada despencar junto e o CCQ sofrer com retransmissões. Você está
+assistindo à física do @sec-fundamentos-radio em tempo real.
+
+### Verificação
+
+1. A estação aparece na registration table do AP com WPA2 (e não
+   conecta com a chave errada — teste!);
+2. Em `station-bridge`, dispositivos atrás da estação atravessam em
+   camada 2; em `station`, não — e você sabe explicar por quê;
+3. Você localizou sinal (nos **dois** sentidos), CCQ, taxa e uptime na
+   sua saída (ou na do texto) sem consultar a legenda;
+4. (Bancada) O Passo 5 mostrou a tríade sinal↓ → taxa↓ → CCQ↓ se
+   movendo junta.
+
+### Desafios
+
+1. Um provedor liga a setorial da torre em `mode=bridge` "porque
+   bridge é transparente". Vinte clientes tentam conectar. O que
+   acontece — e qual é o modo certo?
+2. Na registration table de um cliente rural:
+   `signal-strength=-58dBm`, `tx-signal-strength=-79dBm`. O download no
+   cliente está ótimo; o upload, péssimo. Explique a coerência entre os
+   três fatos e proponha duas causas prováveis.
+3. Por que `station-pseudobridge` "quase funciona"? Descreva o mecanismo
+   de tradução de MACs e invente um cenário concreto (um serviço comum
+   de LAN) em que ele quebra.
+4. O `security-profile` do laboratório usa WPA2-**PSK** — uma chave
+   única para o setor inteiro. Aponte dois problemas operacionais disso
+   num PtMP de 80 clientes e antecipe (sem detalhar) as alternativas que
+   os próximos capítulos e o Volume 6 trarão.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** `mode=bridge` aceita **uma** estação: o primeiro cliente conecta,
+os outros dezenove ficam de fora (tentando, enchendo o log). O modo da
+torre PtMP é **`ap-bridge`** — múltiplas estações. (`bridge` existe para
+o PtP dedicado, onde "só um" é justamente o contrato.)
+
+**2.** Coerência: `signal-strength` é o que **a torre ouve do cliente**…
+cuidado — na tabela *do cliente*, é o que o cliente ouve da torre
+(−58 dBm, forte → download bom); `tx-signal-strength` é o eco reportado
+do outro lado: a torre ouve o cliente a −79 dBm (fraco → upload ruim).
+Assimetria de 21 dB. Causas prováveis: (a) potência de transmissão do
+cliente muito menor que a da torre (comum: torre "no talo", cliente
+comedido — e o enlace é mão dupla); (b) desalinhamento/polarização — a
+antena do cliente aponta bem para receber o feixe largo do setor, mas o
+feixe estreito dela não volta certo (ou um conector/pigtail ruim no
+transmissor do cliente).
+
+**3.** O pseudobridge faz **NAT de MAC**: apresenta ao AP o MAC do
+próprio rádio para todos os quadros e mantém uma tabela interna
+IP↔MAC para devolver as respostas. Quebra onde a camada 2 importa de
+verdade: tráfego **não-IP** ou baseado em broadcast/MAC — exemplo
+concreto: um DHCP **server** atrás da estação (os OFFERs unicast ao MAC
+do cliente real nunca chegam), descoberta de vizinhos, ARP gratuito de
+failover (VRRP). Sintoma clássico: "uns aparelhos funcionam, outros
+não".
+
+**4.** Problemas: (a) **revogação impossível** — cancelou um cliente?
+A chave que ele conhece continua abrindo o setor; trocar a chave =
+reconfigurar 80 rádios; (b) **zero identidade** — todos são "a chave":
+não há como medir, limitar ou cortar **um** assinante na camada
+wireless. Alternativas vindouras: **access-list** por MAC com chaves
+individuais (@sec-ptmp-rural) e — a resposta definitiva do ISP —
+autenticação **por sessão PPPoE** em cima do rádio (Volume 6), onde
+identidade, plano e corte são por assinante.
+:::
+
+## Resumo
+
+- v7 tem **duas pilhas**: `/interface wireless` (rádios de provedor —
+  este capítulo) e `/interface wifi` (wave2/ax, casa do cliente —
+  @sec-capsman).
+- Modos pelo papel (@fig-modos-wireless): **`ap-bridge`** torre PtMP,
+  **`bridge`** PtP, **`station-bridge`** cliente com ponte (proprietário
+  MikroTik), `station` só quando o rádio roteia — e pseudobridge é
+  gambiarra.
+- Enlace mínimo = banda + largura de canal + frequência + SSID +
+  **WPA2 em security profile** — largura dobrada, capacidade e
+  vulnerabilidade dobradas.
+- **Registration table** é a ficha médica: sinal **nos dois sentidos**,
+  CCQ (> 90% saudável), taxa negociada (MCS) e uptime — a tríade
+  sinal→taxa→CCQ se move junta.
+
+No próximo capítulo, o ar deixa de ser padrão: **Nstreme e NV2** — os
+protocolos proprietários que fazem enlaces PtP de provedor renderem o
+que o 802.11 puro não entrega.
+
+## Bibliografia do capítulo {.unnumbered}
+
+A documentação oficial [@mikrotik-docs] cobre `/interface wireless`
+(modos, security profiles, registration table) e a pilha nova em
+*WiFi*. @discher-rosv7 traz capítulos extensos de wireless para WISPs.
+As referências completas, em ABNT, estão no apêndice
+[Referências](../../referencias.qmd).
