@@ -4845,6 +4845,281 @@
     ]
   },
   {
+    "objectID": "volumes/v11-mpls/01-conceitos-ldp.html",
+    "href": "volumes/v11-mpls/01-conceitos-ldp.html",
+    "title": "57  MPLS: conceitos e LDP",
+    "section": "",
+    "text": "57.1 Comutar por rótulo, não por IP\nOs volumes anteriores rotearam a rede por IP: cada roteador olha o destino e decide o próximo salto. O MPLS (Multiprotocol Label Switching) muda o jogo no núcleo do provedor: em vez de olhar o IP a cada salto, os roteadores comutam por um rótulo curto, colado na entrada e trocado salto a salto até a saída. Por que isso importa? Porque o rótulo permite carregar serviços (VPNs L2 e L3, Capítulo 58) por cima de um núcleo que não precisa conhecer as rotas dos clientes — a chave da escalabilidade de operadora. Este capítulo estabelece o fundamento e liga o LDP.\nNo roteamento IP tradicional, todo roteador no caminho faz a mesma consulta cara: “qual o próximo salto para este destino?”. No MPLS, essa decisão é tomada uma vez, na borda: o roteador de entrada classifica o pacote e empurra um rótulo; do núcleo em diante, cada roteador só olha o rótulo (um número), troca por outro e encaminha — rápido e uniforme. Na saída, o rótulo é removido e o pacote volta a ser IP (ou Ethernet).\nOs papéis:",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>57</span>  <span class='chapter-title'>MPLS: conceitos e LDP</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/01-conceitos-ldp.html#comutar-por-rótulo-não-por-ip",
+    "href": "volumes/v11-mpls/01-conceitos-ldp.html#comutar-por-rótulo-não-por-ip",
+    "title": "57  MPLS: conceitos e LDP",
+    "section": "",
+    "text": "LER (Label Edge Router) / PE (Provider Edge): a borda — empurra o rótulo na entrada e o remove na saída. É quem “entende” o serviço do cliente;\nLSR (Label Switch Router) / P (Provider): o núcleo — só troca rótulos (swap), sem olhar IP. Não precisa conhecer as rotas dos clientes, só como alcançar os outros roteadores MPLS.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nO caminho que o pacote rotulado segue é um LSP (Label Switched Path). A borda empurra (push) o rótulo; o núcleo troca (swap) a cada salto; a borda de saída remove (pop). O núcleo nunca consulta o IP do cliente — daí a escala.\n\n\nFigura 57.1",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>57</span>  <span class='chapter-title'>MPLS: conceitos e LDP</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/01-conceitos-ldp.html#a-pilha-de-rótulos-e-o-lsp",
+    "href": "volumes/v11-mpls/01-conceitos-ldp.html#a-pilha-de-rótulos-e-o-lsp",
+    "title": "57  MPLS: conceitos e LDP",
+    "section": "57.2 A pilha de rótulos e o LSP",
+    "text": "57.2 A pilha de rótulos e o LSP\nO MPLS permite empilhar rótulos (um “pacote de pacotes”): o rótulo de baixo identifica o serviço (uma VPN, um circuito L2) e o de cima leva o pacote pelo túnel de transporte (o LSP) até o PE de saída. É essa pilha que faz VPLS e L3VPN (Capítulo 58) funcionarem: o núcleo só olha o rótulo de transporte; o de serviço só é lido na borda de saída.\nUm detalhe de implementação comum é o PHP (Penultimate Hop Popping): o penúltimo roteador remove o rótulo de transporte antes de entregar ao PE final, poupando-o de uma consulta dupla. Você verá isso como um “rótulo implícito” nas tabelas.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>57</span>  <span class='chapter-title'>MPLS: conceitos e LDP</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/01-conceitos-ldp.html#ldp-distribuindo-rótulos-automaticamente",
+    "href": "volumes/v11-mpls/01-conceitos-ldp.html#ldp-distribuindo-rótulos-automaticamente",
+    "title": "57  MPLS: conceitos e LDP",
+    "section": "57.3 LDP: distribuindo rótulos automaticamente",
+    "text": "57.3 LDP: distribuindo rótulos automaticamente\nConfigurar rótulo à mão em cada roteador seria insustentável. O LDP (Label Distribution Protocol) automatiza: cada roteador MPLS anuncia aos vizinhos qual rótulo usar para alcançar cada destino da IGP. O ponto crucial — e a fonte de confusão de quem começa:\n\nMPLS/LDP não roteia. Ele apenas distribui rótulos para os destinos que a IGP (OSPF) já conhece. Sem OSPF de pé, o LDP não tem o que rotular.\n\nOu seja, a base é o Volume 8: OSPF carrega os loopbacks e enlaces do núcleo; o LDP cola um rótulo em cada um. É por isso que os loopbacks /32 (Capítulo 46) são tão importantes — eles são os “destinos” que os LSPs conectam, e as VPNs se ancoram neles.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>57</span>  <span class='chapter-title'>MPLS: conceitos e LDP</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/01-conceitos-ldp.html#habilitando-mpls-ldp-no-routeros-v7",
+    "href": "volumes/v11-mpls/01-conceitos-ldp.html#habilitando-mpls-ldp-no-routeros-v7",
+    "title": "57  MPLS: conceitos e LDP",
+    "section": "57.4 Habilitando MPLS + LDP no RouterOS v7",
+    "text": "57.4 Habilitando MPLS + LDP no RouterOS v7\nAssumindo OSPF já rodando entre os roteadores do núcleo (loopbacks alcançáveis):\n# 1) habilitar o LDP e dar a ele o transport-address (o loopback!)\n/mpls ldp\nadd transport-addresses=10.255.0.1 lsr-id=10.255.0.1 vrf=main\n\n# 2) em quais interfaces falar LDP (as do núcleo, entre roteadores MPLS)\n/mpls ldp interface\nadd interface=ether2\nadd interface=ether3\n\nlsr-id/transport-addresses = o loopback — a identidade do roteador no MPLS, estável (não use IP de interface física);\nLDP nas interfaces do núcleo (entre PEs e Ps), nunca nas interfaces de cliente.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>57</span>  <span class='chapter-title'>MPLS: conceitos e LDP</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/01-conceitos-ldp.html#lendo-e-diagnosticando",
+    "href": "volumes/v11-mpls/01-conceitos-ldp.html#lendo-e-diagnosticando",
+    "title": "57  MPLS: conceitos e LDP",
+    "section": "57.5 Lendo e diagnosticando",
+    "text": "57.5 Lendo e diagnosticando\n/mpls ldp neighbor print      # vizinhos LDP (devem casar os vizinhos OSPF do núcleo)\n/mpls forwarding-table print  # rótulos: in-label -&gt; out-label + next-hop\n/mpls local-bindings print    # que rótulo ESTE roteador atribuiu a cada prefixo\nA cadeia sadia: OSPF Full entre os roteadores → LDP neighbor estabelecido → forwarding-table com rótulos para os loopbacks. Se o LDP não sobe, quase sempre é: OSPF não alcança o loopback usado como transport-address, ou MTU.\n\n\n\n\n\n\nAviso\n\n\n\nMTU é pré-requisito do MPLS. Cada rótulo adiciona 4 bytes; uma pilha de 2 rótulos, 8 bytes. Se o MTU do núcleo não comportar o pacote + rótulos, o LSP sobe mas o tráfego grande é descartado (o fantasma de sempre). Ajuste o MPLS MTU das interfaces do núcleo para acomodar os rótulos (tipicamente MTU físico ≥ 1508–1520). Sem isso, VPLS/L3VPN “funcionam no ping e travam no uso”.\n\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nMPLS comuta por rótulo, não por IP: a borda (PE/LER) empurra e remove; o núcleo (P/LSR) só troca rótulos, sem conhecer as rotas dos clientes — é isso que dá escala e permite carregar VPNs (Capítulo 58). Mas a base é o Volume 8: MPLS/LDP não roteia — ele rotula o que a IGP (OSPF) já conhece. Loopbacks /32 como lsr-id, LDP só no núcleo, e MTU ajustado para os rótulos. Sem OSPF sólido e MTU certo, não há MPLS.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>57</span>  <span class='chapter-title'>MPLS: conceitos e LDP</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/01-conceitos-ldp.html#laboratório",
+    "href": "volumes/v11-mpls/01-conceitos-ldp.html#laboratório",
+    "title": "57  MPLS: conceitos e LDP",
+    "section": "57.6 🧪 Laboratório",
+    "text": "57.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nTrês CHRs (Capítulo 5) em linha, simulando o núcleo: lab-pe1 — lab-p — lab-pe2. Cada um com loopback /32 (10.255.0.1/.2/.3) e enlaces /30 entre vizinhos. OSPF rodando entre os três (Volume 8), com todos os loopbacks alcançáveis — é o pré-requisito.\n\n\n\n57.6.1 Comandos passo a passo\nPasso 1 — confirme a IGP. Antes do MPLS, garanta OSPF Full e loopbacks alcançáveis:\n/routing ospf neighbor print\n/ip route print where ospf\nCada roteador tem de alcançar os loopbacks dos outros dois. Sem isso, não siga — o MPLS não tem base.\nPasso 2 — ajuste o MTU para os rótulos. Nas interfaces do núcleo, garanta MTU suficiente:\n/interface ethernet set [find name=ether2] mtu=1520 l2mtu=1580\nPasso 3 — ligue LDP nos três. Exemplo lab-pe1:\n/mpls ldp add transport-addresses=10.255.0.1 lsr-id=10.255.0.1\n/mpls ldp interface add interface=ether2\nAnálogo em lab-p (interfaces para os dois lados) e lab-pe2.\nPasso 4 — veja os vizinhos e os rótulos.\n/mpls ldp neighbor print\n/mpls forwarding-table print\nOs vizinhos LDP devem casar os vizinhos OSPF do núcleo; a forwarding-table mostra rótulos (push/swap) para os loopbacks.\nPasso 5 — prove a comutação por rótulo. Gere tráfego entre os loopbacks de lab-pe1 e lab-pe2 e observe no lab-p que ele comuta por rótulo (a forwarding-table incrementa), sem consultar o IP do cliente.\nPasso 6 — quebre o MTU de propósito. Reduza o MTU de um enlace do núcleo abaixo do necessário e observe LSP de pé, mas tráfego grande falhando — o sintoma de MTU. Restaure.\n\n\n57.6.2 Verificação\n\nOSPF Full e loopbacks alcançáveis (pré-requisito);\nldp neighbor estabelecido nos enlaces do núcleo;\nforwarding-table com rótulos para os loopbacks (push/swap/pop);\nMTU insuficiente derruba o tráfego grande, mesmo com LSP de pé.\n\n\n\n57.6.3 Desafios\n\nO OSPF está Full, mas o LDP não forma vizinhança. ping entre os loopbacks funciona. Qual é a causa mais provável relacionada ao transport-address, e como confirma?\nLDP subiu, os rótulos aparecem, mas ao subir uma VPLS (próximo capítulo) o tráfego trava em pacotes grandes. Qual é o ajuste que faltou e por que o ping enganou?\nUm colega quer ligar LDP também na interface do cliente “para simplificar”. Explique por que isso é errado (segurança e arquitetura) — o que o núcleo MPLS deve e não deve conhecer.\nPor que MPLS depende da IGP e não a substitui? Descreva o que aconteceria com os LSPs se o OSPF do núcleo caísse, e o que isso diz sobre a ordem de projeto (o que montar primeiro).\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. O transport-address/lsr-id aponta para um endereço que a IGP não distribui, ou o LDP não está ligado nas interfaces certas. O ping entre loopbacks funciona (OSPF os conhece), mas o LDP usa o transport-address para estabelecer a sessão TCP — se ele não for um loopback alcançável e anunciado, a sessão não sobe. Confirme /mpls ldp print (transport correto = loopback) e /mpls ldp interface print (interfaces do núcleo listadas).\n2. Faltou ajustar o MTU do núcleo para acomodar os rótulos (cada um +4 bytes; VPLS/L3VPN empilham). O LSP sobe e o ping (pequeno) passa, mas o tráfego real com pilha de rótulos estoura o MTU e é descartado. Aumente o MTU/l2mtu das interfaces do núcleo (ex.: 1520/1580).\n3. LDP na interface do cliente exporia o núcleo a rótulos vindos de fora (risco de injeção/instabilidade) e quebraria a arquitetura: o núcleo (P/LSR) não deve conhecer nem o IP nem os rótulos do cliente, só como alcançar os outros roteadores MPLS. O cliente entra pela borda (PE), que empurra/remove rótulos — o LDP vive entre roteadores do provedor, nunca voltado ao cliente.\n4. LDP rotula o que a IGP conhece — ele não calcula caminhos, só cola rótulos nas rotas do OSPF. Se o OSPF cair, os destinos somem da tabela e os LSPs colapsam (sem rota, sem rótulo, sem caminho). Ordem de projeto: IGP primeiro (OSPF sólido, loopbacks alcançáveis), depois MPLS/LDP, depois os serviços (VPLS/L3VPN). MPLS é uma camada sobre o roteamento, não um substituto dele.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>57</span>  <span class='chapter-title'>MPLS: conceitos e LDP</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/01-conceitos-ldp.html#resumo",
+    "href": "volumes/v11-mpls/01-conceitos-ldp.html#resumo",
+    "title": "57  MPLS: conceitos e LDP",
+    "section": "57.7 Resumo",
+    "text": "57.7 Resumo\n\nMPLS comuta por rótulo, não por IP: a borda (PE/LER) empurra/remove; o núcleo (P/LSR) só troca rótulos, sem conhecer rotas de cliente — a chave da escala e das VPNs;\nPilha de rótulos: transporte (leva pelo LSP) + serviço (VPN/L2) — a base de VPLS/L3VPN (Capítulo 58);\nLDP distribui rótulos automaticamente, mas não roteia: rotula o que a IGP (OSPF) conhece — loopbacks /32 como lsr-id, LDP só no núcleo;\nDiagnóstico: OSPF Full → ldp neighbor → forwarding-table com rótulos; falhas comuns = transport-address não alcançável ou MTU;\nMTU é pré-requisito — rótulos adicionam bytes; sem folga, o LSP sobe e o tráfego grande trava.\n\nCom o transporte MPLS de pé, o provedor pode oferecer o que vende caro: circuitos de camada 2 fim a fim sobre o backbone. O Capítulo 58 monta o VPLS.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>57</span>  <span class='chapter-title'>MPLS: conceitos e LDP</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/01-conceitos-ldp.html#bibliografia-do-capítulo",
+    "href": "volumes/v11-mpls/01-conceitos-ldp.html#bibliografia-do-capítulo",
+    "title": "57  MPLS: conceitos e LDP",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção MPLS e LDP do RouterOS (MikroTik, 2026);\nComutação por rótulos e arquitetura MPLS: (Tanenbaum; Feamster; Wetherall, 2021);\nMPLS no v7 na prática: (Discher, 2016);\nMPLS em backbones de provedor: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>57</span>  <span class='chapter-title'>MPLS: conceitos e LDP</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/02-vpls.html",
+    "href": "volumes/v11-mpls/02-vpls.html",
+    "title": "58  VPLS: camada 2 sobre o backbone",
+    "section": "",
+    "text": "58.1 O que a VPLS entrega\nO Capítulo 57 montou o transporte por rótulos. Agora o provedor colhe o que o MPLS foi feito para dar: serviços. O primeiro e mais vendável é o VPLS (Virtual Private LAN Service) — entregar a um cliente corporativo dois (ou mais) sites que se comportam como se estivessem no mesmo switch, mesmo domínio de broadcast, através do backbone. É o “link L2 dedicado” que se cobra caro: a filial e a matriz na mesma LAN, sem o cliente saber que há uma operadora inteira no meio.\nDo ponto de vista do cliente, a VPLS é um switch: ele pluga a matriz numa ponta e a filial na outra, e elas ficam no mesmo segmento Ethernet — mesmo broadcast, mesmo ARP, endereços L2 visíveis entre si. Do ponto de vista do provedor, isso é feito encapsulando quadros Ethernet em MPLS (uma pilha de rótulos, Capítulo 57) e transportando- os pelo LSP entre os PEs.\nDois sabores:",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>58</span>  <span class='chapter-title'>VPLS: camada 2 sobre o backbone</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/02-vpls.html#o-que-a-vpls-entrega",
+    "href": "volumes/v11-mpls/02-vpls.html#o-que-a-vpls-entrega",
+    "title": "58  VPLS: camada 2 sobre o backbone",
+    "section": "",
+    "text": "Pseudowire / VLL / EoMPLS: ponto a ponto — um “fio virtual” entre dois sites. Simples, sem aprendizado de MAC (é um túnel L2 direto);\nVPLS: multiponto — uma bridge distribuída entre vários PEs; cada PE aprende MACs e replica broadcast para os outros, como um switch. Mais poderoso, mais cuidado.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTrês sites do cliente ligados por uma VPLS: os PEs formam uma bridge distribuída por pseudowires MPLS, e para o cliente os três sites estão no mesmo switch. O núcleo transporta quadros Ethernet rotulados sem conhecer os MACs do cliente.\n\n\nFigura 58.1",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>58</span>  <span class='chapter-title'>VPLS: camada 2 sobre o backbone</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/02-vpls.html#montando-vpls-no-routeros-v7",
+    "href": "volumes/v11-mpls/02-vpls.html#montando-vpls-no-routeros-v7",
+    "title": "58  VPLS: camada 2 sobre o backbone",
+    "section": "58.2 Montando VPLS no RouterOS v7",
+    "text": "58.2 Montando VPLS no RouterOS v7\nSobre o núcleo MPLS/LDP já pronto (Capítulo 57), a VPLS é uma interface que você adiciona a uma bridge junto com a porta do cliente. Entre dois PEs (pseudowire), em cada lado:\n# PE-1: interface VPLS apontando para o loopback do PE remoto\n/interface vpls\nadd name=vpls-clienteX remote-peer=10.255.0.3 vpls-id=100:100\n\n# juntar a VPLS e a porta do cliente na MESMA bridge (mesmo L2)\n/interface bridge add name=br-clienteX\n/interface bridge port add bridge=br-clienteX interface=vpls-clienteX\n/interface bridge port add bridge=br-clienteX interface=ether5\n\nremote-peer = o loopback do PE do outro site (alcançado pela IGP, rotulado pelo LDP);\nvpls-id casa os dois lados — o identificador do circuito;\na bridge é o que une o quadro do cliente (em ether5) ao pseudowire — é assim que o L2 “atravessa” o backbone.\n\nPara VPLS multiponto, repete-se o pseudowire para cada PE do cliente (malha) e todos entram na mesma bridge; o aprendizado de MAC e a replicação de broadcast fazem o resto.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>58</span>  <span class='chapter-title'>VPLS: camada 2 sobre o backbone</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/02-vpls.html#mtu-macs-e-os-perigos-da-l2-distribuída",
+    "href": "volumes/v11-mpls/02-vpls.html#mtu-macs-e-os-perigos-da-l2-distribuída",
+    "title": "58  VPLS: camada 2 sobre o backbone",
+    "section": "58.3 MTU, MACs e os perigos da L2 distribuída",
+    "text": "58.3 MTU, MACs e os perigos da L2 distribuída\nVPLS herda as duas grandes preocupações de camada 2 estendida — e adiciona a de MPLS:\n\nMTU: o quadro do cliente + rótulos MPLS precisa caber no núcleo. Como o cliente espera enviar 1500 bytes “limpos”, o núcleo tem de ter MTU maior (jumbo: 1520–1600), senão o tráfego grande trava (Capítulo 57). Configure o MTU do núcleo antes de prometer VPLS;\nAprendizado de MAC: cada PE aprende os MACs do cliente, como um switch. Uma explosão de MACs (cliente com rede grande/rogue) pode pressionar a tabela — limite quando possível;\nBroadcast/loop: é uma bridge distribuída — uma tempestade de broadcast ou um loop no site do cliente atravessa para os outros sites. STP e controle de broadcast são obrigatórios; o ideal é entregar a VPLS com isolamento por VLAN e limites.\n\n\n\n\n\n\n\nAviso\n\n\n\nVPLS é camada 2 fim a fim — os riscos do EoIP (Capítulo 55) valem amplificados por ser multiponto. Um loop no cliente vira problema de todos os sites dele (e, se mal isolado, um risco ao seu backbone). Entregue VPLS com STP ativo, controle de broadcast e, sempre que a necessidade real for “os sites se falarem” (e não “estarem no mesmo broadcast”), prefira roteamento/L3VPN — mais seguro e escalável.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>58</span>  <span class='chapter-title'>VPLS: camada 2 sobre o backbone</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/02-vpls.html#vpls-ou-roteamento-a-pergunta-certa",
+    "href": "volumes/v11-mpls/02-vpls.html#vpls-ou-roteamento-a-pergunta-certa",
+    "title": "58  VPLS: camada 2 sobre o backbone",
+    "section": "58.4 VPLS ou roteamento? A pergunta certa",
+    "text": "58.4 VPLS ou roteamento? A pergunta certa\nNem todo cliente que pede “meus sites conectados” precisa de L2. Pergunte o que ele realmente precisa:\n\nMesmo domínio de broadcast obrigatório (aplicação legada que depende de L2, cluster, protocolo não roteável): VPLS;\nSó precisa que os sites se alcancem (IP): roteamento — uma L3VPN (VRF por MPLS, Capítulo 46) ou até um túnel roteado (Capítulo 56). Mais seguro (falha não propaga broadcast), mais escalável, tabela de MAC não explode.\n\nA regra de ouro dos volumes anteriores se repete: roteie quando puder, estenda L2 só quando precisar. VPLS é uma ferramenta poderosa e lucrativa — e uma responsabilidade.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nVPLS entrega ao cliente um switch virtual sobre o backbone: quadros Ethernet encapsulados em MPLS (Capítulo 57), transportados entre PEs, unidos por bridge às portas do cliente. É o produto L2 que se vende caro — e a responsabilidade que vem junto: MTU do núcleo para os rótulos, aprendizado de MAC sob controle e os perigos de broadcast/loop de uma bridge distribuída (STP obrigatório). Antes de montar, faça a pergunta certa: o cliente precisa mesmo de L2, ou roteamento (L3VPN) resolveria com menos risco? Poder com julgamento.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>58</span>  <span class='chapter-title'>VPLS: camada 2 sobre o backbone</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/02-vpls.html#laboratório",
+    "href": "volumes/v11-mpls/02-vpls.html#laboratório",
+    "title": "58  VPLS: camada 2 sobre o backbone",
+    "section": "58.5 🧪 Laboratório",
+    "text": "58.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nReaproveite o núcleo MPLS do Capítulo 57: lab-pe1 — lab-p — lab-pe2 com OSPF + LDP de pé e MTU ajustado. Adicione um “site do cliente” em cada PE: lab-cliA (ligado ao ether5 do lab-pe1) e lab-cliB (ligado ao ether5 do lab-pe2), ambos na mesma sub-rede 192.168.50.0/24 — para provar que ficam no mesmo L2.\n\n\n\n58.5.1 Comandos passo a passo\nPasso 1 — confirme o transporte. OSPF Full, LDP com rótulos para os loopbacks, MTU do núcleo folgado (Capítulo 57). Sem isso, a VPLS não sobe.\nPasso 2 — pseudowire entre os PEs. No lab-pe1:\n/interface vpls add name=vpls-cli remote-peer=10.255.0.3 vpls-id=100:100\nNo lab-pe2, o espelho (remote-peer=10.255.0.1, mesmo vpls-id).\nPasso 3 — bridge unindo cliente + VPLS. Nos dois PEs:\n/interface bridge add name=br-cli protocol-mode=rstp\n/interface bridge port add bridge=br-cli interface=vpls-cli\n/interface bridge port add bridge=br-cli interface=ether5\nPasso 4 — prove o mesmo L2. Configure lab-cliA=192.168.50.10/24 e lab-cliB=192.168.50.20/24 (sem gateway, mesma sub-rede). Pingue um do outro:\n/ping 192.168.50.20\nFunciona sem roteamento — eles estão no mesmo broadcast, através do backbone. Confirme o aprendizado de MAC:\n/interface bridge host print where bridge=br-cli\nO MAC do lab-cliB aparece atrás da interface vpls no lab-pe1.\nPasso 5 — MTU ao vivo. Reduza o MTU do núcleo abaixo do necessário e tente transferir algo grande entre os sites: trava. Restaure e volta.\nPasso 6 — o perigo do loop. Com RSTP ativo, crie um loop proposital no site do cliente e observe o STP bloquear a porta — a prova de por que STP é obrigatório em VPLS.\n\n\n58.5.2 Verificação\n\nNúcleo MPLS de pé (OSPF+LDP+MTU) — pré-requisito;\nPseudowire VPLS estabelecido entre os PEs (mesmo vpls-id);\nSites do cliente se pingam no mesmo L2, sem roteamento;\nMAC do site remoto aprendido atrás da interface VPLS;\nSTP contém um loop no site do cliente.\n\n\n\n58.5.3 Desafios\n\nA VPLS “subiu” (interface up), mas os sites não se pingam e nenhum MAC remoto é aprendido. O núcleo está OK. Qual detalhe do vpls-id ou da bridge você provavelmente errou?\nOs sites se pingam, mas transferências de arquivos grandes entre eles travam. Você já viu esse sintoma antes (duas vezes neste manual). Qual é a causa no contexto MPLS e como resolve?\nUm cliente pede “conectar 5 filiais”. Ele descreve que só precisa que os sistemas se acessem por IP, nada de aplicação L2 legada. VPLS ou L3VPN? Justifique pelos riscos e pela escala.\nApós ligar a VPLS, um loop na filial do cliente começou a degradar todos os sites dele. Explique o mecanismo (bridge distribuída) e as duas proteções que o teriam contido.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Ou o vpls-id não casa entre os dois PEs (o circuito não “emparelha”), ou você esqueceu de colocar a porta do cliente (ether5) e a vpls na mesma bridge — sem a bridge unindo os dois, o quadro do cliente não entra no pseudowire. Confirme vpls-id idêntico e /interface bridge port print mostrando ambas as interfaces na mesma bridge.\n2. MTU: o quadro de 1500 bytes do cliente + rótulos MPLS estoura o MTU do núcleo. É o mesmo sintoma do PPPoE, do OSPF e do próprio Capítulo 57. Solução: aumentar o MTU/l2mtu das interfaces do núcleo para acomodar a pilha de rótulos (jumbo). O ping pequeno passa; a transferência grande, não — até corrigir o MTU.\n3. L3VPN (VRF sobre MPLS, Capítulo 46). Se o requisito é só alcançabilidade IP, roteamento é mais seguro (uma falha L2 num site não vira tempestade de broadcast nos outros), mais escalável (a tabela de MAC não cresce com o cliente) e mais simples de operar com 5 sites. VPLS só se justifica por necessidade real de mesmo domínio de broadcast.\n4. É uma bridge distribuída: um loop na filial gera tempestade de broadcast que os PEs replicam para todos os outros sites do cliente, saturando a VPLS inteira. Proteções: (a) STP/RSTP ativo (detecta e bloqueia o loop); (b) controle/limite de broadcast e isolamento por VLAN na entrega — e, no fundo, avaliar se L3VPN não seria mais adequado para aquele cliente.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>58</span>  <span class='chapter-title'>VPLS: camada 2 sobre o backbone</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/02-vpls.html#resumo",
+    "href": "volumes/v11-mpls/02-vpls.html#resumo",
+    "title": "58  VPLS: camada 2 sobre o backbone",
+    "section": "58.6 Resumo",
+    "text": "58.6 Resumo\n\nVPLS entrega ao cliente um switch virtual sobre o backbone: quadros Ethernet encapsulados em MPLS e unidos às portas do cliente por bridge;\nPseudowire/VLL é ponto a ponto; VPLS é multiponto (bridge distribuída, com aprendizado de MAC e replicação de broadcast);\nNo v7: interface vpls (remote-peer=loopback, vpls-id casando os lados) + bridge com a porta do cliente;\nCuidados: MTU do núcleo para os rótulos, MACs sob controle, STP/broadcast obrigatórios — os riscos de L2 distribuída, amplificados;\nPergunta certa: precisa mesmo de L2? Se é só alcançabilidade IP, L3VPN/roteamento (Capítulo 46) é mais seguro e escalável.\n\nVPLS transporta L2; falta a camada que decide por onde o tráfego corre no backbone com garantias — reservar banda, escolher caminhos explícitos. O Capítulo 59 fecha o volume com Traffic Engineering.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>58</span>  <span class='chapter-title'>VPLS: camada 2 sobre o backbone</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/02-vpls.html#bibliografia-do-capítulo",
+    "href": "volumes/v11-mpls/02-vpls.html#bibliografia-do-capítulo",
+    "title": "58  VPLS: camada 2 sobre o backbone",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção VPLS e MPLS do RouterOS (MikroTik, 2026);\nPseudowires, VPLS e L2VPN: (Tanenbaum; Feamster; Wetherall, 2021);\nVPLS no v7 na prática: (Discher, 2016);\nServiços L2 em backbones de provedor: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>58</span>  <span class='chapter-title'>VPLS: camada 2 sobre o backbone</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/03-traffic-engineering.html",
+    "href": "volumes/v11-mpls/03-traffic-engineering.html",
+    "title": "59  Traffic Engineering",
+    "section": "",
+    "text": "59.1 O problema: a IGP não pensa em capacidade\nO Capítulo 57 e o Capítulo 58 deram transporte e serviços. Mas ambos seguem o caminho que a IGP escolheu — o de menor custo. E aí mora um problema clássico de backbone: se a rota mais barata concentra todo o tráfego, ela congestiona enquanto um caminho alternativo, um pouco “mais caro”, fica ocioso. A IGP otimiza distância, não utilização. O Traffic Engineering resolve isso: escolher o caminho pelo que importa ao operador — banda disponível, latência, evitar um enlace — e não só pelo custo. É a engenharia fina do backbone.\nOSPF (Capítulo 42) escolhe por custo somado e manda tudo por ali. Imagine dois caminhos entre os POPs A e B: um direto de custo 10 (10 Gbps) e um alternativo de custo 30 (10 Gbps, via C). A IGP usa só o de custo 10 — mesmo quando ele satura e o de custo 30 está vazio. Você tem 20 Gbps de capacidade e usa 10.\nAjustar custo ajuda até certo ponto, mas é grosseiro: mexer no custo move todo o tráfego de uma vez, podendo só transferir o congestionamento. O que falta é colocar tráfego específico num caminho específico, com reserva — e é isso que o TE faz.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>59</span>  <span class='chapter-title'>Traffic Engineering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/03-traffic-engineering.html#o-problema-a-igp-não-pensa-em-capacidade",
+    "href": "volumes/v11-mpls/03-traffic-engineering.html#o-problema-a-igp-não-pensa-em-capacidade",
+    "title": "59  Traffic Engineering",
+    "section": "",
+    "text": "A IGP mandaria tudo pelo caminho direto (custo 10), congestionando-o. Um túnel TE roteia parte do tráfego explicitamente por POP-C, aproveitando a capacidade ociosa. TE otimiza utilização, não só distância.\n\n\nFigura 59.1",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>59</span>  <span class='chapter-title'>Traffic Engineering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/03-traffic-engineering.html#túneis-te-caminho-explícito-e-reserva",
+    "href": "volumes/v11-mpls/03-traffic-engineering.html#túneis-te-caminho-explícito-e-reserva",
+    "title": "59  Traffic Engineering",
+    "section": "59.2 Túneis TE, caminho explícito e reserva",
+    "text": "59.2 Túneis TE, caminho explícito e reserva\nO TE trabalha com túneis — LSPs (Capítulo 57) que não seguem a IGP, mas um caminho definido:\n\nCaminho explícito (explicit path): você lista os saltos por onde o LSP deve passar (ex.: A → C → B), forçando o desvio;\nReserva de banda: o LSP reserva X Gbps ao longo do caminho; os roteadores contabilizam a banda comprometida e rejeitam novos LSPs que não caibam — evitando sobrecarga por projeto;\nCSPF (Constrained SPF): em vez de você listar todos os saltos, o roteador calcula o melhor caminho que satisfaz as restrições (banda mínima, evitar tal enlace, latência) — Dijkstra com regras.\n\nPara o CSPF funcionar, a IGP precisa anunciar os atributos TE dos enlaces (banda disponível, cores/afinidades) — extensões TE do OSPF.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>59</span>  <span class='chapter-title'>Traffic Engineering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/03-traffic-engineering.html#rsvp-te-e-o-estado-no-routeros",
+    "href": "volumes/v11-mpls/03-traffic-engineering.html#rsvp-te-e-o-estado-no-routeros",
+    "title": "59  Traffic Engineering",
+    "section": "59.3 RSVP-TE e o estado no RouterOS",
+    "text": "59.3 RSVP-TE e o estado no RouterOS\nO protocolo que sinaliza e reserva os túneis TE é o RSVP-TE (Resource Reservation Protocol — Traffic Engineering): ele estabelece o LSP ao longo do caminho e mantém a reserva. No mundo MPLS-TE clássico, RSVP-TE é a peça central; LDP (Capítulo 57) faz o transporte “sem engenharia”, RSVP-TE faz o “com caminho e banda”.\n\n\n\n\n\n\nAviso\n\n\n\nO suporte a RSVP-TE/MPLS-TE completo no RouterOS é limitado e varia por versão — não assuma paridade com roteadores de core dedicados (Cisco/Juniper). Confirme, na documentação da sua versão v7 (MikroTik, 2026), o que está disponível antes de projetar um backbone dependente de TE. Muitas redes MikroTik obtêm 90% do benefício com engenharia de custo/métrica e múltiplos LSPs/ECMP, sem RSVP-TE formal. Este capítulo cobre o conceito e as alternativas práticas.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>59</span>  <span class='chapter-title'>Traffic Engineering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/03-traffic-engineering.html#te-na-prática-de-um-provedor-mikrotik",
+    "href": "volumes/v11-mpls/03-traffic-engineering.html#te-na-prática-de-um-provedor-mikrotik",
+    "title": "59  Traffic Engineering",
+    "section": "59.4 TE na prática de um provedor MikroTik",
+    "text": "59.4 TE na prática de um provedor MikroTik\nMesmo sem RSVP-TE pleno, você faz “engenharia de tráfego” com as ferramentas dos volumes anteriores:\n\nMétrica/custo por serviço: ajustar custo OSPF (Capítulo 42) para mover classes de tráfego a caminhos diferentes — grosseiro, mas eficaz para separar, por exemplo, tráfego de trânsito de tráfego interno;\nPolicy routing (Capítulo 46): marcar tráfego (mangle) e mandá-lo por uma tabela/next-hop específico — coloca tráfego selecionado num caminho, sem depender de RSVP;\nMúltiplos caminhos / ECMP: quando dois caminhos têm o mesmo custo, a IGP balanceia entre eles (o Volume 14 aprofunda,\n\n— capacidade somada sem TE;\n\nVPLS/pseudowire por caminho: ancorar um serviço L2 (Capítulo 58) a um LSP específico para isolá-lo do resto.\n\nA regra: comece pelo simples (custo, ECMP, policy routing) e só vá para TE formal quando o backbone for grande e complexo o bastante para justificar a operação de RSVP-TE — e depois de confirmar o suporte.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nTE existe porque a IGP otimiza distância, não utilização: ela lota o caminho barato e ignora o ocioso. A solução conceitual é o túnel TE — um LSP com caminho explícito e reserva de banda, calculado por CSPF e sinalizado por RSVP-TE. Mas o conselho honesto para um provedor MikroTik: confirme o suporte da sua versão e saiba que a maior parte do ganho vem de ferramentas que você já domina — custo, ECMP e policy routing. TE formal é para quando o backbone realmente exige; antes disso, engenharia de métrica resolve.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>59</span>  <span class='chapter-title'>Traffic Engineering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/03-traffic-engineering.html#laboratório",
+    "href": "volumes/v11-mpls/03-traffic-engineering.html#laboratório",
+    "title": "59  Traffic Engineering",
+    "section": "59.5 🧪 Laboratório",
+    "text": "59.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nQuatro CHRs (Capítulo 5) formando um losango: lab-a e lab-b nas pontas, com dois caminhos entre eles — um direto (lab-a–lab-b) e um via lab-c (lab-a–lab-c–lab-b). OSPF + MPLS/LDP de pé (Capítulo 57). O objetivo é desviar tráfego selecionado do caminho direto para o via-C, demonstrando o conceito de TE com as ferramentas disponíveis.\n\n\n\n59.5.1 Comandos passo a passo\nPasso 1 — o estado padrão da IGP. Com custos iguais ou o direto mais barato, confirme que todo o tráfego A→B vai pelo caminho direto:\n/tool traceroute 10.255.0.2\n/ip route print where dst-address~\"10.255.0.2\"\nPasso 2 — engenharia por custo. Suba o custo do enlace direto para que uma classe de tráfego prefira o via-C — ou, melhor, deixe os dois com mesmo custo e observe o ECMP balancear:\n/routing ospf interface-template set [find interfaces=ether-direto] cost=20\nRefaça o traceroute: o caminho mudou/balanceou.\nPasso 3 — policy routing (TE seletivo). Marque um tráfego específico (ex.: de uma origem) e force-o pelo via-C, deixando o resto no direto:\n/ip firewall mangle add chain=prerouting src-address=192.168.70.0/24 \\\n    action=mark-routing new-routing-mark=via-c\n/routing table add name=via-c fib\n/ip route add dst-address=10.255.0.2/32 gateway=&lt;nexthop-c&gt; routing-table=via-c\nProve com traceroute de dentro e fora do 192.168.70.0/24: caminhos diferentes — tráfego colocado explicitamente num caminho.\nPasso 4 — capacidade somada (ECMP). Com os dois caminhos em custo igual, gere tráfego e observe a distribuição pelos dois — capacidade agregada sem RSVP-TE.\nPasso 5 — confira o suporte TE da sua versão. Consulte /mpls e a documentação (MikroTik, 2026) para ver o que sua versão v7 oferece de RSVP-TE, antes de qualquer projeto dependente disso.\n\n\n59.5.2 Verificação\n\nPor padrão, o tráfego A→B usa o caminho de menor custo;\nAjuste de custo/ECMP redistribui ou balanceia o tráfego;\nPolicy routing coloca uma classe explicitamente no via-C;\nVocê verificou o suporte real de TE da sua versão.\n\n\n\n59.5.3 Desafios\n\nO enlace direto A–B vive congestionado enquanto o via-C está ocioso. Você sobe o custo do direto e… o congestionamento só migrou para o via-C. Por que o ajuste de custo “puro” falhou, e que abordagem coloca parte do tráfego em cada caminho?\nExplique, com suas palavras, a diferença entre o LDP (Capítulo 57) e o RSVP-TE quanto ao caminho que o LSP segue. Quando o LDP basta e quando o RSVP-TE agrega valor?\nUm projeto assume RSVP-TE com reserva de banda estrita num backbone MikroTik. Que verificação crítica você faz antes de prometer isso ao cliente/gestão, e qual é o plano B se o suporte for limitado?\nVocê quer somar a capacidade de dois caminhos de mesma banda entre A e B sem TE formal. Qual recurso usa, que condição os caminhos precisam satisfazer, e qual capítulo aprofunda o tema?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Ajustar custo move todo o tráfego de um caminho para o outro — você não dividiu a carga, só a transferiu, e o via-C agora congestiona. Para colocar parte em cada caminho: policy routing (marcar uma classe e mandá-la por um caminho, o resto por outro) ou ECMP (custos iguais, a IGP balanceia). O verdadeiro TE reservaria banda por LSP; as alternativas práticas dividem por classe ou por hash de fluxo.\n2. O LDP distribui rótulos seguindo o caminho da IGP (menor custo) — o LSP vai por onde o OSPF mandaria. O RSVP-TE estabelece o LSP por um caminho explícito/CSPF que pode divergir da IGP, respeitando restrições (banda, evitar enlace). LDP basta para transporte simples e VPNs sobre o caminho ótimo da IGP; RSVP-TE agrega quando você precisa forçar caminho e reservar banda.\n3. Verificação crítica: confirmar, na documentação da versão v7 específica, o nível de suporte a RSVP-TE/MPLS-TE do RouterOS — ele é limitado e varia. Plano B: obter o resultado com engenharia de custo/métrica, ECMP e policy routing (que cobrem a maior parte dos casos), reservando o RSVP-TE formal para quando o hardware/versão o suportarem plenamente — ou usar equipamento de core dedicado onde TE estrito for mandatório.\n4. ECMP (Equal-Cost Multi-Path): os dois caminhos precisam ter custo IGP idêntico para a IGP instalá-los juntos e balancear os fluxos entre eles. Aprofundado no Volume 14 (1), junto com PCC e failover multi-link.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>59</span>  <span class='chapter-title'>Traffic Engineering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/03-traffic-engineering.html#resumo",
+    "href": "volumes/v11-mpls/03-traffic-engineering.html#resumo",
+    "title": "59  Traffic Engineering",
+    "section": "59.6 Resumo",
+    "text": "59.6 Resumo\n\nTE resolve o que a IGP não vê: ela otimiza distância, lotando o caminho barato e deixando o alternativo ocioso;\nConceitos: túnel TE (LSP com caminho explícito), reserva de banda, CSPF (SPF com restrições) e RSVP-TE (sinaliza/reserva);\nNo RouterOS, o suporte a RSVP-TE é limitado/variável — confirme a versão (MikroTik, 2026) antes de projetar;\nNa prática MikroTik, a “engenharia de tráfego” vem de custo/métrica, policy routing (Capítulo 46) e ECMP (1) — comece pelo simples;\nRegra: TE formal só quando o backbone justificar; antes disso, engenharia de métrica entrega a maior parte do ganho.\n\nFecha-se o Volume 11: o backbone do provedor agora transporta por rótulos (MPLS/LDP), entrega serviços L2 (VPLS) e escolhe caminhos com intenção (TE). Da tecnologia de núcleo, o Volume 12 volta ao operador: scripts e automação para provisionar e manter tudo isso em escala.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>59</span>  <span class='chapter-title'>Traffic Engineering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v11-mpls/03-traffic-engineering.html#bibliografia-do-capítulo",
+    "href": "volumes/v11-mpls/03-traffic-engineering.html#bibliografia-do-capítulo",
+    "title": "59  Traffic Engineering",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: MPLS-TE / RSVP do RouterOS (verifique a versão) (MikroTik, 2026);\nTraffic engineering, CSPF e reserva de recursos: (Tanenbaum; Feamster; Wetherall, 2021);\nMPLS no v7 na prática: (Discher, 2016);\nEngenharia de backbone em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 11 — MPLS",
+      "<span class='chapter-number'>59</span>  <span class='chapter-title'>Traffic Engineering</span>"
+    ]
+  },
+  {
     "objectID": "referencias.html",
     "href": "referencias.html",
     "title": "Referências",
