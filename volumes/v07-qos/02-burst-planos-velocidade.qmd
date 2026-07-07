@@ -1,7 +1,347 @@
-# Burst e planos de velocidade
+# Burst e planos de velocidade {#sec-burst-planos}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar os quatro parâmetros do burst — `burst-limit`,
+  `burst-threshold`, `burst-time` e a **média móvel** que os liga — e
+  calcular quanto tempo uma rajada realmente dura;
+- Distinguir `limit-at` (garantia/CIR) de `max-limit` (teto/MIR) e
+  saber quando a garantia é honrada;
+- Usar filas **pai e filho** (parent) para vender mais banda do que o
+  enlace tem (*overbooking*) sem quebrar as garantias;
+- Desenhar um plano comercial completo (teto + rajada + garantia) e
+  escrevê-lo tanto numa simple queue quanto no `rate-limit` do profile
+  PPPoE;
+- Prever o comportamento do burst num speedtest — e explicar ao
+  cliente por que "os primeiros segundos voam".
 :::
+
+O @sec-simple-queues entregou o teto: `max-limit` e pronto. Mas o
+plano que o comercial vende raramente é só um teto — é "**até 80 Mega
+com turbo de início**", "garantido 20 no horário de pico". Esses
+adereços têm nome técnico e ficam na própria fila: **burst** (a
+rajada) e **limit-at** (a garantia). Este capítulo transforma a fila
+do capítulo anterior num produto comercial.
+
+## Burst: velocidade emprestada por tempo limitado
+
+A ideia: navegação típica é feita de **rajadas curtas** — abrir uma
+página, baixar um e-mail — separadas por silêncio. Se o cliente de
+50M pudesse ir a 80M *só nos primeiros segundos*, as páginas abririam
+visivelmente mais rápido sem custar capacidade no agregado (ninguém
+sustenta 80M por rajada de 3 s). O burst formaliza o empréstimo:
+
+```routeros
+/queue simple
+add name=cliente-r2 target=172.16.1.2/32 max-limit=50M/25M \
+    burst-limit=80M/40M burst-threshold=40M/20M burst-time=16s/16s
+```
+
+- **`burst-limit`** — o teto emprestado (80M): vale **enquanto o burst
+  está ativo**;
+- **`burst-threshold`** — o gatilho (40M): o burst fica disponível
+  enquanto o **uso médio recente** estiver *abaixo* dele;
+- **`burst-time`** — a janela da média (16 s): o RouterOS calcula a
+  taxa média dos últimos `burst-time` segundos; é essa média que se
+  compara ao threshold.
+
+O mecanismo, passo a passo: cliente ocioso → média recente ≈ 0 <
+threshold → burst **armado**. Começa um download → o cliente voa a
+80M → a média da janela sobe... ao cruzar 40M, o burst **desarma** e a
+fila cai para o `max-limit` de 50M. Parou de baixar → a média escorre
+para baixo do threshold → burst re-armado para a próxima página.
+
+Quanto dura a rajada? Não é `burst-time`! A 80M com janela de 16 s e
+gatilho de 40M, a média cruza o gatilho quando:
+
+$$
+t = \frac{\text{burst-threshold}}{\text{burst-limit}} \times \text{burst-time}
+  = \frac{40}{80} \times 16 = 8\ \text{segundos}
+$$
+
+```{.tikz}
+%%| filename: fig-burst-curva
+%%| alt: Gráfico da taxa de download ao longo do tempo com burst. Nos primeiros 8 segundos a taxa vale o burst-limit de 80 megabits. Quando a média móvel dos últimos 16 segundos cruza o burst-threshold de 40 megabits, a taxa cai para o max-limit de 50. Uma segunda curva pontilhada mostra a média móvel subindo até o gatilho.
+\begin{tikzpicture}[font=\small]
+  % eixos
+  \draw[eixo, -{Stealth}] (0,0) -- (9.6,0) node[right] {t (s)};
+  \draw[eixo, -{Stealth}] (0,0) -- (0,3.6) node[above] {taxa};
+  % réguas
+  \draw[auxiliar] (0,3.0) node[left] {80M} -- (9.2,3.0);
+  \draw[auxiliar] (0,1.9) node[left] {50M} -- (9.2,1.9);
+  \draw[auxiliar] (0,1.5) node[left] {40M} -- (9.2,1.5);
+  % taxa real: 80M até t=8, depois 50M
+  \draw[curva, manualblue] (0,3.0) -- (3.6,3.0);
+  \draw[curva, manualblue] (3.6,3.0) -- (3.6,1.9) -- (9.0,1.9);
+  \node[manualblue, above] at (1.8,3.02) {\scriptsize burst ativo (80M)};
+  \node[manualblue, above] at (6.6,1.92) {\scriptsize max-limit (50M)};
+  % média móvel
+  \draw[curva, dashed, manualred] (0,0) .. controls (2.2,0.7) and (3.0,1.35) .. (3.6,1.5)
+    .. controls (5.2,1.82) and (7.0,1.88) .. (9.0,1.9);
+  \node[manualred, below right] at (4.9,1.42) {\scriptsize média móvel (16 s)};
+  % marcação do gatilho
+  \node[ponto, fill=manualred] at (3.6,1.5) {};
+  \draw[-{Stealth}, destaque, manualred] (4.6,2.6) node[right, align=left]
+    {\scriptsize média cruza o\\ \scriptsize threshold: burst cai} -- (3.72,1.62);
+  % t=8s
+  \draw[auxiliar] (3.6,0) node[below] {$8$} -- (3.6,1.5);
+\end{tikzpicture}
+```
+
+::: {#fig-burst-curva}
+Burst em ação: a taxa real (azul) voa a 80M enquanto a **média móvel**
+dos últimos 16 s (vermelha tracejada) fica abaixo do gatilho de 40M —
+o cruzamento acontece em $t = (40/80)\times 16 = 8$ s, e a fila
+assenta no max-limit.
+:::
+
+Receita de projeto que funciona: `burst-limit` ≈ 1,5–2× o max-limit;
+`burst-threshold` ≈ 50–75% do **max-limit** (sempre abaixo dele, senão
+o burst re-arma no meio do uso contínuo!); `burst-time` de 8–32 s
+lembrando que a duração real é a fração do gatilho. E honestidade
+comercial: burst é "turbo de abertura de página", não banda vendável —
+anuncie o max-limit.
+
+## limit-at: a garantia (CIR)
+
+O `max-limit` é o **MIR** (*Maximum Information Rate*) — teto. O
+`limit-at` é o **CIR** (*Committed Information Rate*) — o piso
+**garantido**: a banda que a fila recebe *mesmo com o enlace
+disputado*. A pergunta imediata: garantido **contra quem**? Contra as
+outras filas — e isso só faz sentido quando todas disputam um teto
+comum. Entra o **parent**:
+
+```routeros
+/queue simple
+add name=agregado-pop target=172.16.1.0/24 max-limit=90M/90M \
+    comment="teto fisico do enlace do POP"
+add name=cliente-a parent=agregado-pop target=172.16.1.2/32 \
+    limit-at=20M/10M max-limit=50M/25M
+add name=cliente-b parent=agregado-pop target=172.16.1.3/32 \
+    limit-at=20M/10M max-limit=50M/25M
+```
+
+A fila-pai representa o **enlace real** (os 90M do rádio, do
+transporte); as filhas, os clientes. O algoritmo de partilha (HTB, o
+motor por trás de todas as filas do RouterOS) então promete:
+
+1. Cada filha recebe **até o `limit-at`** antes de qualquer filha
+   ganhar excedente — a garantia;
+2. O que sobrar do pai é distribuído entre as filhas que querem mais,
+   até seus `max-limit` (e nunca além do pai);
+3. Soma dos `limit-at` **≤ max-limit do pai**: garantia que não cabe
+   no enlace é promessa de político.
+
+É assim que se faz *overbooking* honesto: num enlace de 90M, dez
+clientes de `max-limit=50M` **cabem** — desde que a soma dos
+`limit-at` (10 × 5M = 50M, por exemplo) caiba no pai. Todos têm teto
+alto para rajadas e piso garantido para o pico.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O plano de velocidade é um **buffet de churrascaria**: o `max-limit` é
+"coma à vontade" (teto físico do prato), o `limit-at` é a reserva —
+seu lugar à mesa com um mínimo de picanha guardado mesmo no salão
+cheio; e o `burst` é o garçom liberando a primeira rodada em dobro
+para quem acabou de sentar — sabendo que ninguém janta no ritmo da
+primeira rodada. O salão (fila-pai) tem capacidade fixa: o dono pode
+vender mais "à vontade" do que picanha existe, mas as **reservas**
+somadas nunca podem passar do estoque.
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Um plano de velocidade completo é um contrato em três números:
+**`max-limit`** (o que anuncio), **`limit-at`** (o que garanto no
+pico) e **burst** (a cortesia de abertura). E o contrato só é honesto
+dentro de uma **hierarquia**: a fila-pai encarna o enlace físico, e a
+regra ∑`limit-at` ≤ pai é a diferença matemática entre *overbooking*
+sustentável e venda de banda fantasma. Quem projeta planos sem
+fila-pai está prometendo garantias que nenhum algoritmo consegue
+cumprir.
+:::
+
+## Levando para o PPPoE
+
+No concentrador (@sec-pppoe-server), tudo isso viaja **no
+`rate-limit` do profile**, cuja sintaxe completa é:
+
+```
+rate-limit="tx/rx burst-tx/burst-rx threshold-tx/threshold-rx time-tx/time-rx prioridade limit-at-tx/limit-at-rx"
+```
+
+(perspectiva do concentrador: tx = download do cliente). O plano
+50M com turbo e garantia de 20M:
+
+```routeros
+/ppp profile set plano-50m \
+    rate-limit="50M/25M 80M/40M 40M/20M 16s/16s 8 20M/10M"
+```
+
+Cada sessão nasce com a fila dinâmica completa — burst, garantia e
+tudo. Via RADIUS (@sec-radius-userman), a mesma string viaja no
+atributo `Mikrotik-Rate-Limit`: o sistema de gestão descreve o plano
+inteiro numa linha.
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+O mesmo do capítulo anterior (@sec-simple-queues): `lab-r1` + `lab-r2`
+na `lab-a`, `bandwidth-server` habilitado no lab-r1 e a fila
+`cliente-r2` (20M/10M) ainda de pé. Um terceiro CHR (`lab-r3`) na
+mesma rede (172.16.1.3) entra no Passo 4 para a disputa de garantias.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — adicione o burst à fila existente.** No lab-r1:
+
+```routeros
+/queue simple set cliente-r2 burst-limit=40M/20M \
+    burst-threshold=15M/7M burst-time=16s/16s
+```
+
+Conta antes de medir: gatilho 15M, rajada 40M, janela 16 s → duração
+esperada $\approx (15/40)\times 16 = 6$ s.
+
+**Passo 2 — veja a rajada.** No lab-r2, um teste de 30 s
+(`direction=receive`), acompanhando no lab-r1:
+
+```routeros
+/queue simple print stats interval=1
+```
+
+Os primeiros ~6 s marcam `rate` ≈ 40M; depois, queda seca para 20M —
+a @fig-burst-curva ao vivo. Espere ~20 s de silêncio (a média precisa
+escorrer) e repita: o burst re-armou.
+
+**Passo 3 — burst mal projetado.** Suba o gatilho para cima do
+max-limit (`burst-threshold=25M/12M`) e rode um teste **longo**: a
+taxa oscila — vai a 40M, cai, re-arma no meio do uso contínuo (a média
+em 20M fica abaixo do gatilho de 25M!), sobe de novo. Serrote. Por
+isso o gatilho fica **abaixo** do max-limit. Restaure 15M/7M.
+
+**Passo 4 — hierarquia e garantia.** Monte o pai e duas filhas com
+garantias distintas (lab-r3 já com IP 172.16.1.3 e testes prontos):
+
+```routeros
+/queue simple remove [find name=cliente-r2]
+/queue simple
+add name=enlace-pop target=172.16.1.0/24 max-limit=30M/30M
+add name=cliente-a parent=enlace-pop target=172.16.1.2/32 \
+    limit-at=20M/5M max-limit=30M/10M
+add name=cliente-b parent=enlace-pop target=172.16.1.3/32 \
+    limit-at=5M/5M max-limit=30M/10M
+```
+
+**Passo 5 — a disputa.** Rode `direction=receive` **simultaneamente**
+no lab-r2 e no lab-r3 (duas janelas). Com 30M no pai e demandas de 30M
+cada: `cliente-a` estabiliza ≈ 22–24M, `cliente-b` ≈ 6–8M — cada um
+recebeu seu `limit-at` primeiro (20M vs 5M) e a sobra (~5M) foi
+repartida. Pare o teste do lab-r2: o lab-r3 sobe na hora para os 30M
+do teto — a garantia limita a **disputa**, não a fartura.
+
+### Verificação
+
+1. A duração medida da rajada bate com a conta
+   `threshold/limit × time` (±1 s);
+2. Com gatilho acima do max-limit, você viu o "serrote" de re-arme em
+   uso contínuo;
+3. Na disputa, cada filha recebeu ≥ seu `limit-at`, a soma respeitou o
+   pai, e a folga foi realocada quando um parou;
+4. Você sabe escrever o plano completo do Passo 4 como string
+   `rate-limit` de profile PPPoE.
+
+### Desafios
+
+1. Plano "100M com turbo de 200M": o comercial quer que o turbo dure
+   **15 segundos**. O max-limit é 100M e você escolheu
+   threshold = 75M. Calcule o `burst-time` necessário — e aponte o
+   efeito colateral de janelas tão longas no re-arme (quanto tempo de
+   ocioso até o próximo turbo?).
+2. Num pai de 100M, o júnior configurou 8 filhas com
+   `limit-at=20M` cada (soma: 160M). Nada "deu erro". O que acontece
+   de fato no pico quando todas demandam 20M+ — e por que essa falha é
+   pior do que se o RouterOS recusasse a configuração?
+3. Speedtests do cliente do plano 50M (com o burst deste capítulo) dão
+   sempre ~77M nos servidores próximos e 50M nos distantes. O suporte
+   acha que "tem servidor mentindo". Explique com a mecânica do burst
+   (duração da rajada × duração do teste) qual medição reflete o
+   plano.
+4. O `rate-limit` de profile aceita um campo de **prioridade** (o `8`
+   do exemplo). Investigue na documentação/no lab: prioridade de HTB
+   compara **o quê** com **quem**, e por que ela só tem efeito entre
+   filas que disputam o mesmo pai?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** $t = (\text{thr}/\text{limit})\times\text{time} \Rightarrow
+15 = (75/200)\times\text{time} \Rightarrow \text{time} = 40$ s.
+Efeito colateral: a média móvel de 40 s também demora ~40 s de
+ociosidade (ou proporcionalmente mais de uso leve) para escorrer de
+volta abaixo de 75M — o cliente que encadeia downloads curtos verá o
+turbo "sumir" nas repetições. Janela longa = turbo raro e demorado
+para re-armar; é o preço do turbo longo.
+
+**2.** O HTB entrega os `limit-at` **na ordem/proporção possível**:
+com 160M prometidos num pai de 100M, as garantias viram rateio
+(~12,5M cada em vez de 20M) — nenhuma filha recebe o prometido no
+pico, exatamente quando a garantia importa. É pior que um erro de
+configuração porque **falha silenciosamente**: passa em todo teste
+fora do pico (onde sobra banda) e quebra o SLA no único momento em que
+ele vale. A validação ∑limit-at ≤ pai é responsabilidade do projetista.
+
+**3.** Rajada deste plano: $(40/80)\times16 = 8$ s a 80M. Speedtest
+curto (~10–15 s, típico com servidor próximo/rápido): a maior parte da
+medição acontece **dentro** da rajada → média ≈ 75–80M. Teste mais
+longo/lento (servidor distante): a rajada pesa pouco na média → ~50M.
+O plano vendido é o max-limit: a medição "distante" é a fiel. (E os
+speedtests conhecidos usam ~15 s — clientes com burst curto veem
+números acima do plano; explique antes que virem chamado.)
+
+**4.** A prioridade (1 = mais alta, 8 = padrão/mais baixa) desempata a
+distribuição do **excedente acima dos limit-at** entre filhas do
+**mesmo pai**: quem tem prioridade melhor enche seu max-limit
+primeiro. Entre filas sem pai comum não há recurso disputado a
+desempatar — cada uma corre contra seu próprio teto — e a prioridade é
+inócua. (É também por isso que priorizar *tipos de tráfego* exigirá a
+queue tree do @sec-queue-tree, onde a hierarquia é desenhada para
+isso.)
+:::
+
+## Resumo
+
+- **Burst** = velocidade emprestada controlada por média móvel:
+  `burst-limit` (teto emprestado), `burst-threshold` (gatilho,
+  **sempre abaixo do max-limit**), `burst-time` (janela da média);
+  duração real ≈ `threshold/limit × time`;
+- **`limit-at`** (CIR) é o piso garantido; **`max-limit`** (MIR) o
+  teto — e a garantia só existe dentro de uma hierarquia com
+  **fila-pai** encarnando o enlace físico;
+- Regra de ouro do overbooking: **∑ limit-at ≤ max-limit do pai** —
+  tetos podem somar mais que o enlace; garantias, jamais;
+- No PPPoE, o plano inteiro vira a string `rate-limit` do profile
+  (`"tx/rx burst threshold time prioridade limit-at"`) ou o atributo
+  `Mikrotik-Rate-Limit` via RADIUS;
+- Speedtest curto mede o burst; teste longo mede o plano — saiba qual
+  número o cliente vai ver antes dele ligar.
+
+Falta a terceira dimensão do QoS: **priorizar por tipo de tráfego**
+(VoIP antes de torrent) — mangle marcando e queue tree executando, no
+próximo capítulo (@sec-queue-tree).
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *Queues — Burst* e *HTB*
+  [@mikrotik-docs];
+- Traffic shaping, CIR/MIR e HTB: [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- Desenho de planos em provedores: [@burgess-mikrotik].
