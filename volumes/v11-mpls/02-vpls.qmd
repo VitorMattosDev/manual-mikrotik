@@ -1,7 +1,297 @@
-# VPLS: camada 2 sobre o backbone
+# VPLS: camada 2 sobre o backbone {#sec-vpls}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que é **VPLS** (uma "LAN virtual" fim a fim sobre o núcleo
+  MPLS) e o produto que ela vende: **transporte L2 dedicado** entre
+  sites do cliente;
+- Diferenciar **pseudowire** (ponto a ponto, VLL/EoMPLS) de **VPLS**
+  (multiponto, uma bridge distribuída);
+- Montar uma VPLS no RouterOS v7 sobre o LSP do @sec-mpls-ldp,
+  amarrando-a a uma **bridge** e às portas do cliente;
+- Entender **MTU**, **aprendizado de MAC** e os riscos de camada 2
+  distribuída (broadcast, loop) — e como contê-los;
+- Reconhecer quando **VPLS** é a resposta certa vs. quando **L3VPN/
+  roteamento** seria melhor.
 :::
+
+O @sec-mpls-ldp montou o transporte por rótulos. Agora o provedor colhe o
+que o MPLS foi feito para dar: **serviços**. O primeiro e mais vendável é
+o **VPLS** (*Virtual Private LAN Service*) — entregar a um cliente
+corporativo dois (ou mais) sites que se comportam como se estivessem no
+**mesmo switch**, mesmo domínio de broadcast, através do backbone. É o
+"link L2 dedicado" que se cobra caro: a filial e a matriz na mesma LAN,
+sem o cliente saber que há uma operadora inteira no meio.
+
+## O que a VPLS entrega
+
+Do ponto de vista do cliente, a VPLS é **um switch**: ele pluga a matriz
+numa ponta e a filial na outra, e elas ficam no **mesmo segmento
+Ethernet** — mesmo broadcast, mesmo ARP, endereços L2 visíveis entre si.
+Do ponto de vista do provedor, isso é feito **encapsulando quadros
+Ethernet em MPLS** (uma pilha de rótulos, @sec-mpls-ldp) e transportando-
+os pelo LSP entre os PEs.
+
+Dois sabores:
+
+- **Pseudowire / VLL / EoMPLS**: **ponto a ponto** — um "fio virtual"
+  entre **dois** sites. Simples, sem aprendizado de MAC (é um túnel L2
+  direto);
+- **VPLS**: **multiponto** — uma **bridge distribuída** entre **vários**
+  PEs; cada PE aprende MACs e replica broadcast para os outros, como um
+  switch. Mais poderoso, mais cuidado.
+
+```{.tikz}
+%%| filename: fig-vpls
+%%| alt: Uma VPLS conectando três sites de um cliente através do núcleo MPLS. Três PEs na borda, cada um com uma porta voltada ao site do cliente (matriz, filial 1, filial 2). No núcleo, pseudowires MPLS ligam os PEs formando uma bridge distribuída. Do lado do cliente, os três sites aparecem no mesmo domínio de broadcast, como se ligados a um único switch.
+\begin{tikzpicture}[
+  font=\small,
+  pe/.style={draw, rounded corners, fill=manualyellow!25, align=center, minimum height=9mm, font=\scriptsize},
+  site/.style={draw, fill=manualgreen!15, align=center, minimum height=8mm, font=\scriptsize},
+]
+\node[pe] (pe1) at (0,1.6) {PE-1};
+\node[pe] (pe2) at (-2.4,-1.4) {PE-2};
+\node[pe] (pe3) at (2.4,-1.4) {PE-3};
+% pseudowires (malha)
+\draw[thick, manualblue!60!black] (pe1) -- (pe2);
+\draw[thick, manualblue!60!black] (pe1) -- (pe3);
+\draw[thick, manualblue!60!black] (pe2) -- (pe3);
+\node[manualblue!60!black] at (0,-0.2) {\scriptsize pseudowires (MPLS)};
+% sites
+\node[site] (s1) at (0,3) {matriz};
+\node[site] (s2) at (-4.2,-2.3) {filial 1};
+\node[site] (s3) at (4.2,-2.3) {filial 2};
+\draw (pe1) -- (s1); \draw (pe2) -- (s2); \draw (pe3) -- (s3);
+\node[align=center, manualred] at (0,-2.9) {\scriptsize os 3 sites = mesmo domínio de broadcast};
+\end{tikzpicture}
+```
+
+::: {#fig-vpls}
+Três sites do cliente ligados por uma VPLS: os PEs formam uma **bridge
+distribuída** por pseudowires MPLS, e para o cliente os três sites estão
+no **mesmo switch**. O núcleo transporta quadros Ethernet rotulados sem
+conhecer os MACs do cliente.
+:::
+
+## Montando VPLS no RouterOS v7
+
+Sobre o núcleo MPLS/LDP já pronto (@sec-mpls-ldp), a VPLS é uma
+**interface** que você adiciona a uma **bridge** junto com a porta do
+cliente. Entre dois PEs (pseudowire), em cada lado:
+
+```routeros
+# PE-1: interface VPLS apontando para o loopback do PE remoto
+/interface vpls
+add name=vpls-clienteX remote-peer=10.255.0.3 vpls-id=100:100
+
+# juntar a VPLS e a porta do cliente na MESMA bridge (mesmo L2)
+/interface bridge add name=br-clienteX
+/interface bridge port add bridge=br-clienteX interface=vpls-clienteX
+/interface bridge port add bridge=br-clienteX interface=ether5
+```
+
+- `remote-peer` = o **loopback** do PE do outro site (alcançado pela
+  IGP, rotulado pelo LDP);
+- `vpls-id` **casa** os dois lados — o identificador do circuito;
+- a **bridge** é o que une o quadro do cliente (em `ether5`) ao
+  pseudowire — é assim que o L2 "atravessa" o backbone.
+
+Para VPLS **multiponto**, repete-se o pseudowire para cada PE do cliente
+(malha) e todos entram na mesma bridge; o aprendizado de MAC e a
+replicação de broadcast fazem o resto.
+
+## MTU, MACs e os perigos da L2 distribuída
+
+VPLS herda as duas grandes preocupações de camada 2 estendida — e
+adiciona a de MPLS:
+
+- **MTU**: o quadro do cliente + rótulos MPLS precisa **caber** no núcleo.
+  Como o cliente espera enviar 1500 bytes "limpos", o núcleo tem de ter
+  MTU **maior** (jumbo: 1520–1600), senão o tráfego grande trava
+  (@sec-mpls-ldp). **Configure o MTU do núcleo antes** de prometer VPLS;
+- **Aprendizado de MAC**: cada PE aprende os MACs do cliente, como um
+  switch. Uma explosão de MACs (cliente com rede grande/rogue) pode
+  pressionar a tabela — limite quando possível;
+- **Broadcast/loop**: é uma bridge distribuída — uma tempestade de
+  broadcast ou um loop no site do cliente **atravessa** para os outros
+  sites. **STP** e controle de broadcast são obrigatórios; o ideal é
+  entregar a VPLS com **isolamento** por VLAN e limites.
+
+::: {.callout-warning}
+VPLS é **camada 2 fim a fim** — os riscos do EoIP (@sec-gre-eoip) valem
+amplificados por ser multiponto. Um loop no cliente vira problema de
+**todos** os sites dele (e, se mal isolado, um risco ao seu backbone).
+Entregue VPLS com **STP ativo**, controle de broadcast e, sempre que a
+necessidade real for "os sites se falarem" (e não "estarem no mesmo
+broadcast"), prefira **roteamento/L3VPN** — mais seguro e escalável.
+:::
+
+## VPLS ou roteamento? A pergunta certa
+
+Nem todo cliente que pede "meus sites conectados" precisa de **L2**.
+Pergunte o que ele **realmente** precisa:
+
+- **Mesmo domínio de broadcast** obrigatório (aplicação legada que
+  depende de L2, cluster, protocolo não roteável): **VPLS**;
+- Só precisa que os sites **se alcancem** (IP): **roteamento** — uma
+  **L3VPN** (VRF por MPLS, @sec-vrf) ou até um túnel roteado
+  (@sec-interligacao-pops). Mais seguro (falha não propaga broadcast),
+  mais escalável, tabela de MAC não explode.
+
+A regra de ouro dos volumes anteriores se repete: **roteie quando puder,
+estenda L2 só quando precisar**. VPLS é uma ferramenta poderosa e
+lucrativa — e uma responsabilidade.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+VPLS entrega ao cliente **um switch virtual** sobre o backbone:
+quadros Ethernet encapsulados em MPLS (@sec-mpls-ldp), transportados
+entre PEs, unidos por **bridge** às portas do cliente. É o produto L2
+que se vende caro — e a responsabilidade que vem junto: **MTU** do núcleo
+para os rótulos, **aprendizado de MAC** sob controle e os perigos de
+**broadcast/loop** de uma bridge distribuída (STP obrigatório). Antes de
+montar, faça a pergunta certa: o cliente precisa mesmo de **L2**, ou
+**roteamento (L3VPN)** resolveria com menos risco? Poder com julgamento.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Reaproveite o núcleo MPLS do @sec-mpls-ldp: **lab-pe1** — **lab-p** —
+**lab-pe2** com OSPF + LDP de pé e MTU ajustado. Adicione um "site do
+cliente" em cada PE: **lab-cliA** (ligado ao ether5 do lab-pe1) e
+**lab-cliB** (ligado ao ether5 do lab-pe2), ambos na mesma sub-rede
+`192.168.50.0/24` — para provar que ficam no **mesmo L2**.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — confirme o transporte.** OSPF `Full`, LDP com rótulos para
+os loopbacks, MTU do núcleo folgado (@sec-mpls-ldp). Sem isso, a VPLS
+não sobe.
+
+**Passo 2 — pseudowire entre os PEs.** No lab-pe1:
+
+```routeros
+/interface vpls add name=vpls-cli remote-peer=10.255.0.3 vpls-id=100:100
+```
+
+No lab-pe2, o espelho (`remote-peer=10.255.0.1`, mesmo `vpls-id`).
+
+**Passo 3 — bridge unindo cliente + VPLS.** Nos dois PEs:
+
+```routeros
+/interface bridge add name=br-cli protocol-mode=rstp
+/interface bridge port add bridge=br-cli interface=vpls-cli
+/interface bridge port add bridge=br-cli interface=ether5
+```
+
+**Passo 4 — prove o mesmo L2.** Configure lab-cliA=`192.168.50.10/24` e
+lab-cliB=`192.168.50.20/24` (sem gateway, mesma sub-rede). Pingue um do
+outro:
+
+```routeros
+/ping 192.168.50.20
+```
+
+Funciona **sem roteamento** — eles estão no mesmo broadcast, através do
+backbone. Confirme o aprendizado de MAC:
+
+```routeros
+/interface bridge host print where bridge=br-cli
+```
+
+O MAC do lab-cliB aparece **atrás da interface vpls** no lab-pe1.
+
+**Passo 5 — MTU ao vivo.** Reduza o MTU do núcleo abaixo do necessário e
+tente transferir algo grande entre os sites: trava. Restaure e volta.
+
+**Passo 6 — o perigo do loop.** Com RSTP ativo, crie um loop proposital
+no site do cliente e observe o STP bloquear a porta — a prova de por que
+STP é obrigatório em VPLS.
+
+### Verificação
+
+1. Núcleo MPLS de pé (OSPF+LDP+MTU) — pré-requisito;
+2. Pseudowire VPLS estabelecido entre os PEs (mesmo `vpls-id`);
+3. Sites do cliente se pingam **no mesmo L2**, sem roteamento;
+4. MAC do site remoto aprendido atrás da interface VPLS;
+5. STP contém um loop no site do cliente.
+
+### Desafios
+
+1. A VPLS "subiu" (interface up), mas os sites não se pingam e nenhum
+   MAC remoto é aprendido. O núcleo está OK. Qual detalhe do `vpls-id`
+   ou da **bridge** você provavelmente errou?
+2. Os sites se pingam, mas transferências de arquivos grandes entre eles
+   travam. Você já viu esse sintoma antes (duas vezes neste manual).
+   Qual é a causa no contexto MPLS e como resolve?
+3. Um cliente pede "conectar 5 filiais". Ele descreve que só precisa que
+   os **sistemas se acessem por IP**, nada de aplicação L2 legada. VPLS
+   ou L3VPN? Justifique pelos riscos e pela escala.
+4. Após ligar a VPLS, um loop na filial do cliente começou a degradar
+   **todos** os sites dele. Explique o mecanismo (bridge distribuída) e
+   as duas proteções que o teriam contido.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Ou o **`vpls-id` não casa** entre os dois PEs (o circuito não
+"emparelha"), ou você **esqueceu de colocar a porta do cliente
+(`ether5`) e a `vpls` na mesma bridge** — sem a bridge unindo os dois, o
+quadro do cliente não entra no pseudowire. Confirme `vpls-id` idêntico e
+`/interface bridge port print` mostrando ambas as interfaces na mesma
+bridge.
+
+**2.** **MTU**: o quadro de 1500 bytes do cliente + rótulos MPLS estoura
+o MTU do núcleo. É o mesmo sintoma do PPPoE, do OSPF e do próprio
+@sec-mpls-ldp. Solução: **aumentar o MTU/l2mtu** das interfaces do núcleo
+para acomodar a pilha de rótulos (jumbo). O ping pequeno passa; a
+transferência grande, não — até corrigir o MTU.
+
+**3.** **L3VPN** (VRF sobre MPLS, @sec-vrf). Se o requisito é só
+**alcançabilidade IP**, roteamento é mais **seguro** (uma falha L2 num
+site não vira tempestade de broadcast nos outros), mais **escalável** (a
+tabela de MAC não cresce com o cliente) e mais simples de operar com 5
+sites. VPLS só se justifica por necessidade **real** de mesmo domínio de
+broadcast.
+
+**4.** É uma **bridge distribuída**: um loop na filial gera tempestade de
+broadcast que os PEs **replicam para todos os outros sites** do cliente,
+saturando a VPLS inteira. Proteções: (a) **STP/RSTP** ativo (detecta e
+bloqueia o loop); (b) **controle/limite de broadcast** e isolamento por
+VLAN na entrega — e, no fundo, avaliar se **L3VPN** não seria mais
+adequado para aquele cliente.
+:::
+
+## Resumo
+
+- **VPLS** entrega ao cliente um **switch virtual** sobre o backbone:
+  quadros Ethernet encapsulados em **MPLS** e unidos às portas do cliente
+  por **bridge**;
+- **Pseudowire/VLL** é ponto a ponto; **VPLS** é multiponto (bridge
+  distribuída, com aprendizado de MAC e replicação de broadcast);
+- No v7: interface `vpls` (`remote-peer`=loopback, `vpls-id` casando os
+  lados) + **bridge** com a porta do cliente;
+- Cuidados: **MTU** do núcleo para os rótulos, **MACs** sob controle,
+  **STP**/broadcast obrigatórios — os riscos de L2 distribuída,
+  amplificados;
+- **Pergunta certa**: precisa mesmo de **L2**? Se é só alcançabilidade
+  IP, **L3VPN/roteamento** (@sec-vrf) é mais seguro e escalável.
+
+VPLS transporta L2; falta a camada que decide **por onde** o tráfego
+corre no backbone com garantias — reservar banda, escolher caminhos
+explícitos. O @sec-mpls-te fecha o volume com **Traffic Engineering**.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *VPLS* e *MPLS* do RouterOS [@mikrotik-docs];
+- Pseudowires, VPLS e L2VPN: [@tanenbaum-redes];
+- VPLS no v7 na prática: [@discher-rosv7];
+- Serviços L2 em backbones de provedor: [@burgess-mikrotik].
