@@ -4361,6 +4361,490 @@
     ]
   },
   {
+    "objectID": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html",
+    "href": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html",
+    "title": "52  Panorama de túneis no RouterOS",
+    "section": "",
+    "text": "52.1 O que é um túnel, em uma frase\nO provedor tem POPs espalhados, técnicos em campo e a necessidade de alcançar equipamentos que estão atrás de CGNAT (Capítulo 47) ou sem IP público. A resposta é o túnel: uma forma de fazer dois pontos distantes se comportarem como se estivessem no mesmo cabo, atravessando a internet no meio. O RouterOS oferece muitos tipos de túnel — e a primeira habilidade é escolher, porque usar o errado custa segurança, desempenho ou noites de diagnóstico de MTU. Este capítulo é o mapa; os próximos são o território.\nUm túnel encapsula um pacote dentro de outro: o pacote “de dentro” (o que você quer transportar) vira carga de um pacote “de fora” que viaja pela internet até o outro extremo, onde é desencapsulado. É por isso que dois roteadores em cidades diferentes podem trocar tráfego como se um cabo os ligasse — o cabo é virtual, feito de encapsulamento.\nDuas perguntas classificam qualquer túnel:",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>52</span>  <span class='chapter-title'>Panorama de túneis no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#o-que-é-um-túnel-em-uma-frase",
+    "href": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#o-que-é-um-túnel-em-uma-frase",
+    "title": "52  Panorama de túneis no RouterOS",
+    "section": "",
+    "text": "Que camada ele transporta? Camada 3 (IP dentro de IP — a maioria) ou camada 2 (Ethernet dentro de IP — EoIP/VXLAN, para “esticar” uma LAN)?\nEle cifra? Alguns protegem o conteúdo (WireGuard, IPsec, SSTP); outros só encapsulam, sem segredo (GRE, EoIP, L2TP puro) e precisam de IPsec por baixo se o sigilo importa.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nEncapsular aumenta o pacote: os cabeçalhos externo e de túnel são overhead que “come” MTU. Guardar essa imagem evita o erro clássico — esquecer que o pacote encapsulado pode não caber no caminho.\n\n\nFigura 52.1",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>52</span>  <span class='chapter-title'>Panorama de túneis no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#o-menu-de-túneis-do-routeros",
+    "href": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#o-menu-de-túneis-do-routeros",
+    "title": "52  Panorama de túneis no RouterOS",
+    "section": "52.2 O menu de túneis do RouterOS",
+    "text": "52.2 O menu de túneis do RouterOS\n\n\n\n\n\n\n\n\n\nTúnel\nCamada\nCifra?\nCaso de uso típico\n\n\n\n\nWireGuard\nL3\nSim\nGerência remota, site-to-site moderno — simples e rápido\n\n\nIPsec\nL3\nSim\nSite-to-site padrão de mercado, interoperar com outros fabricantes\n\n\nGRE\nL3\nNão*\nTransportar roteamento (OSPF/BGP) entre POPs; *cifra com IPsec\n\n\nEoIP\nL2\nNão*\nEsticar uma LAN/bridge entre sites (camada 2); *cifra com IPsec\n\n\nL2TP\nL3/L2\nNão*\nAcesso remoto legado; *quase sempre com IPsec (L2TP/IPsec)\n\n\nSSTP\nL3\nSim\nAcesso remoto atravessando firewalls (roda em TCP/443)\n\n\nZeroTier\nL2\nSim\nMalha gerenciada na nuvem, atravessa NAT sem IP público\n\n\n\n* GRE, EoIP e L2TP puros não cifram — combine com IPsec quando o tráfego for sensível.\nA leitura da tabela: WireGuard é a escolha padrão moderna (simples, rápido, cifrado); IPsec quando precisa interoperar com equipamento de terceiros; GRE/EoIP quando o que importa é transportar roteamento ou camada 2 (com IPsec por baixo para sigilo); SSTP/L2TP para acesso remoto (SSTP fura firewall em 443); ZeroTier quando os dois lados estão atrás de CGNAT/NAT sem IP público.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>52</span>  <span class='chapter-title'>Panorama de túneis no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#o-overhead-e-o-problema-de-mtu-o-inimigo-comum",
+    "href": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#o-overhead-e-o-problema-de-mtu-o-inimigo-comum",
+    "title": "52  Panorama de túneis no RouterOS",
+    "section": "52.3 O overhead e o problema de MTU (o inimigo comum)",
+    "text": "52.3 O overhead e o problema de MTU (o inimigo comum)\nTodo túnel adiciona cabeçalhos, então o pacote encapsulado é maior que o original. Se o original já tinha 1500 bytes (o MTU típico da Ethernet), o encapsulado passa de 1500 e não cabe no caminho — ele precisa fragmentar (lento) ou, se marcado don’t fragment, é descartado. O sintoma é conhecido do OSPF, do PPPoE e do PMTUD (Capítulo 51): ping pequeno funciona, tráfego real trava.\nA defesa universal é o MSS clamp: o roteador reescreve o Maximum Segment Size anunciado nas conexões TCP que entram no túnel, forçando os dois lados a mandar segmentos que cabem mesmo com o overhead:\n# aplicar MSS clamp ao tráfego que entra num túnel (evita travamento TCP)\n/ip firewall mangle\nadd chain=forward tcp-flags=syn protocol=tcp \\\n    out-interface=&lt;interface-do-tunel&gt; action=change-mss \\\n    new-mss=clamp-to-pmtu comment=\"MSS clamp no tunel\"\n\n\n\n\n\n\nAviso\n\n\n\n80% dos “problemas de VPN” são MTU/MSS. O túnel sobe, o ping passa, e-mails pequenos vão — mas páginas grandes, transferências e HTTPS travam no meio. Antes de culpar o túnel, aplique o MSS clamp. É a primeira coisa a verificar, não a última.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>52</span>  <span class='chapter-title'>Panorama de túneis no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#escolhendo-por-cenário-de-provedor",
+    "href": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#escolhendo-por-cenário-de-provedor",
+    "title": "52  Panorama de túneis no RouterOS",
+    "section": "52.4 Escolhendo por cenário de provedor",
+    "text": "52.4 Escolhendo por cenário de provedor\n\nGerência remota de um roteador atrás de CGNAT: WireGuard (leve, sempre ativo, cifrado) ou ZeroTier (se nenhum lado tem IP público). Detalhe no Capítulo 53;\nSite-to-site entre dois POPs com roteamento dinâmico: GRE + IPsec (o GRE carrega o OSPF/BGP, o IPsec cifra) ou WireGuard (moderno, roteia direto). Fecha o volume no Capítulo 56;\nEstender uma VLAN/bridge entre sites (mesmo domínio L2): EoIP + IPsec ou VXLAN. Detalhe no Capítulo 55;\nInteroperar com um firewall de outro fabricante: IPsec IKEv2, o padrão universal (Capítulo 54).\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nEscolher túnel é responder duas perguntas — que camada (L3 ou L2) e cifra ou não — e casá-las com o caso de uso: WireGuard como padrão moderno cifrado, IPsec para interoperar, GRE/EoIP para transportar roteamento/camada 2 (com IPsec por baixo), SSTP/ZeroTier para atravessar firewall/NAT. E acima de qualquer escolha, uma verdade que vale para todos: o túnel adiciona overhead, o pacote cresce, e sem MSS clamp o TCP trava. Domine a tabela de decisão e o clamp, e os próximos capítulos viram só sintaxe.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>52</span>  <span class='chapter-title'>Panorama de túneis no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#laboratório",
+    "href": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#laboratório",
+    "title": "52  Panorama de túneis no RouterOS",
+    "section": "52.5 🧪 Laboratório",
+    "text": "52.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nDois CHRs (Capítulo 5) simulando dois POPs em cidades diferentes, ligados por uma “internet” (uma rede de trânsito no meio, ou ligação direta representando o público): lab-pop-a e lab-pop-b, cada um com um IP “público” e uma LAN interna. Este laboratório é conceitual: o objetivo é enxergar overhead e MSS antes de montar túneis reais nos próximos capítulos.\n\n\n\n52.5.1 Comandos passo a passo\nPasso 1 — meça o MTU do caminho. Do lab-pop-a para o “público” do lab-pop-b, ache o maior ping que passa sem fragmentar:\n/ping &lt;publico-pop-b&gt; size=1500 do-not-fragment\n/ping &lt;publico-pop-b&gt; size=1472 do-not-fragment\nAnote onde começa a passar — é o MTU útil do caminho, o teto que qualquer túnel terá de respeitar menos o overhead.\nPasso 2 — simule o overhead. Estime: um túnel WireGuard adiciona ~60 bytes; GRE, ~24; IPsec, ~50–70. Se o caminho aceita 1500, um TCP de 1500 dentro de WireGuard vira ~1560 — não cabe. Essa é a origem do travamento.\nPasso 3 — a regra de MSS clamp (padrão). Prepare a regra que os próximos capítulos vão aplicar em cada túnel:\n/ip firewall mangle\nadd chain=forward protocol=tcp tcp-flags=syn action=change-mss \\\n    new-mss=clamp-to-pmtu passthrough=yes comment=\"MSS clamp universal\"\nPasso 4 — planeje a escolha. Para cada cenário, escreva qual túnel usaria e por quê (confira depois com a tabela): (a) acessar um CPE atrás de CGNAT; (b) rodar OSPF entre os dois POPs de forma cifrada; (c) esticar a VLAN de gerência entre os POPs.\n\n\n52.5.2 Verificação\n\nVocê identificou o MTU útil do caminho com do-not-fragment;\nSabe estimar o overhead de cada túnel e por que ele estoura o MTU;\nA regra de MSS clamp está entendida e pronta para reuso;\nVocê consegue justificar a escolha de túnel para os três cenários.\n\n\n\n52.5.3 Desafios\n\nUm túnel site-to-site sobe, o ping entre as LANs passa, mas os sistemas internos (ERP, compartilhamento de arquivos) travam ao transferir arquivos grandes. Qual é a causa quase certa e a regra que resolve? Por que o ping “enganou” o diagnóstico?\nVocê precisa que o OSPF (Capítulo 42) rode entre dois POPs por um túnel, com o tráfego cifrado. Por que WireGuard sozinho ou GRE+IPsec servem, mas IPsec puro (policy-based) tradicional complica rodar um IGP? (dica: interface vs. política)\nUm técnico quer “esticar” a bridge de gerência (camada 2) de um POP para outro para que os equipamentos apareçam no mesmo domínio de broadcast. Que família de túnel ele precisa, e qual seria a escolha no RouterOS?\nDois roteadores estão ambos atrás de CGNAT, sem IP público em nenhum lado. Qual(is) túnel(is) da tabela ainda funciona(m), e por que os demais falham?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. MTU/overhead do túnel sem MSS clamp. O ping usa pacotes pequenos que cabem; a transferência real manda segmentos TCP de 1500 que, somados ao cabeçalho do túnel, estouram o MTU do caminho e são descartados (ou fragmentados com perda). A regra: change-mss new-mss=clamp-to-pmtu no forward para o tráfego do túnel. O ping enganou porque testou tamanho pequeno, não o tamanho real do tráfego.\n2. OSPF precisa de uma interface sobre a qual formar adjacência e trocar Hellos multicast. WireGuard e GRE criam uma interface de túnel (ponto a ponto) — o IGP roda sobre ela naturalmente, e o IPsec cifra por baixo. O IPsec policy-based clássico não cria interface: ele casa tráfego por política (seletores), sem um objeto de interface para o OSPF usar — daí a preferência por GRE+IPsec ou por IPsec em modo interface/VTI quando se quer roteamento dinâmico.\n3. Ele precisa de um túnel de camada 2 (Ethernet dentro de IP). No RouterOS, a escolha é EoIP (com IPsec por baixo para cifrar) ou VXLAN. Túneis L3 (WireGuard, GRE, IPsec puro) transportam IP, não quadros Ethernet, então não colocam os dois lados no mesmo domínio de broadcast.\n4. Túneis que dependem de um lado ter porta/IP público alcançável (WireGuard clássico com peer fixo, IPsec, GRE, EoIP, SSTP) falham quando ambos estão atrás de CGNAT — ninguém consegue iniciar para o outro. ZeroTier funciona porque usa servidores intermediários (na nuvem) para orquestrar a conexão e furar o NAT dos dois lados (hole punching). A alternativa é dar IP público (ou porta redirecionada) a um dos lados, aí os demais túneis voltam a ser possíveis.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>52</span>  <span class='chapter-title'>Panorama de túneis no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#resumo",
+    "href": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#resumo",
+    "title": "52  Panorama de túneis no RouterOS",
+    "section": "52.6 Resumo",
+    "text": "52.6 Resumo\n\nUm túnel encapsula um pacote dentro de outro; classifique qualquer um por camada transportada (L3/L2) e se cifra;\nMenu: WireGuard (padrão moderno cifrado), IPsec (interoperar), GRE/EoIP (transportar roteamento/L2, cifrar com IPsec), SSTP (fura firewall em 443), ZeroTier (malha atravessa NAT);\nTodo túnel adiciona overhead → o pacote cresce → sem MSS clamp o TCP trava (o ping engana): é a causa nº 1 de “problema de VPN”;\nEscolha por cenário: gerência atrás de CGNAT → WireGuard/ZeroTier; site-to-site com IGP → GRE+IPsec/WireGuard; esticar L2 → EoIP/VXLAN;\nOs próximos capítulos detalham cada um; a tabela de decisão é o mapa.\n\nComeçamos pela escolha padrão de hoje — simples, rápida e cifrada. O Capítulo 53 monta o WireGuard do zero, do acesso de gerência ao site-to-site.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>52</span>  <span class='chapter-title'>Panorama de túneis no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#bibliografia-do-capítulo",
+    "href": "volumes/v10-tuneis-vpn/01-panorama-tuneis.html#bibliografia-do-capítulo",
+    "title": "52  Panorama de túneis no RouterOS",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seções de Interfaces/Tunnels e VPN do RouterOS (MikroTik, 2026);\nEncapsulamento, overhead e PMTUD: (Tanenbaum; Feamster; Wetherall, 2021);\nTúneis no v7 na prática: (Discher, 2016);\nVPNs em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>52</span>  <span class='chapter-title'>Panorama de túneis no RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/02-wireguard.html",
+    "href": "volumes/v10-tuneis-vpn/02-wireguard.html",
+    "title": "53  WireGuard",
+    "section": "",
+    "text": "53.1 O modelo mental do WireGuard\nO Capítulo 52 elegeu o WireGuard como a escolha padrão moderna: cifrado por concepção, rápido (roda no kernel), e com uma configuração tão enxuta que cabe num cartão. Para o provedor, ele resolve dois problemas do dia a dia: alcançar equipamentos atrás de CGNAT (Capítulo 47) para gerência, e interligar POPs com criptografia sem o peso do IPsec. Este capítulo monta os dois, do zero.\nWireGuard é radicalmente simples comparado a IPsec. Só três ideias:",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>53</span>  <span class='chapter-title'>WireGuard</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/02-wireguard.html#o-modelo-mental-do-wireguard",
+    "href": "volumes/v10-tuneis-vpn/02-wireguard.html#o-modelo-mental-do-wireguard",
+    "title": "53  WireGuard",
+    "section": "",
+    "text": "Interface: você cria uma interface wg no roteador; ela tem um par de chaves (privada + pública). A privada nunca sai; a pública você entrega aos outros;\nPeer: para cada ponta remota, você adiciona um peer com a chave pública dela, o endereço/porta onde alcançá-la (o endpoint) e — o campo que tudo decide — o allowed-address;\nSem “fases”, sem propostas, sem negociação de algoritmos: as chaves definem tudo. Ou os dois lados têm a chave pública um do outro e conversam, ou não há túnel. Isso elimina 90% do que dá errado no IPsec.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCada lado guarda a chave pública do outro e um allowed-address que diz “as redes que alcanço por este peer”. A simetria é a chave: A conhece B e a rede de B; B conhece A e a rede de A. Sem terceiros, sem autoridade — só chaves.\n\n\nFigura 53.1",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>53</span>  <span class='chapter-title'>WireGuard</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/02-wireguard.html#allowed-address-o-conceito-que-tudo-decide",
+    "href": "volumes/v10-tuneis-vpn/02-wireguard.html#allowed-address-o-conceito-que-tudo-decide",
+    "title": "53  WireGuard",
+    "section": "53.2 allowed-address: o conceito que tudo decide",
+    "text": "53.2 allowed-address: o conceito que tudo decide\nallowed-address faz dois trabalhos, e confundi-los é o erro nº 1:\n\nNa saída (roteamento): “quais destinos devem ser enviados por este peer”. É como uma rota — WireGuard manda para o peer os pacotes cujo destino casa o allowed-address;\nNa entrada (filtro): “quais sources eu aceito vindos deste peer”. Um pacote que chega pelo túnel com origem fora do allowed-address é descartado.\n\nRegras práticas: para site-to-site, o allowed-address de cada peer é a rede do outro lado (10.0.2.0/24 no peer que aponta para o POP-B). Para acesso de gerência de um cliente roaming (seu notebook), o peer no roteador tem allowed-address = o /32 do notebook no túnel. Colocar 0.0.0.0/0 manda todo o tráfego pelo túnel (VPN “full tunnel”) — poderoso, mas raramente o que você quer num site-to-site.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>53</span>  <span class='chapter-title'>WireGuard</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/02-wireguard.html#montando-túnel-de-gerência",
+    "href": "volumes/v10-tuneis-vpn/02-wireguard.html#montando-túnel-de-gerência",
+    "title": "53  WireGuard",
+    "section": "53.3 Montando: túnel de gerência",
+    "text": "53.3 Montando: túnel de gerência\nCenário: alcançar um roteador de POP atrás de CGNAT a partir do seu notebook. O roteador do POP inicia para um concentrador WireGuard com IP público (porque ele, atrás de CGNAT, não pode receber conexão) — ou, mais simples aqui, o notebook alcança um roteador com IP público e por ele chega aos demais.\n# no roteador (lado servidor): interface + porta\n/interface wireguard\nadd name=wg-mgmt listen-port=13231\n# veja a chave pública gerada:\n/interface wireguard print\n\n# endereço do túnel\n/ip address add address=10.255.9.1/24 interface=wg-mgmt\n\n# o peer (seu notebook): chave pública dele + o /32 dele no túnel\n/interface wireguard peers\nadd interface=wg-mgmt public-key=\"&lt;pub-notebook&gt;\" \\\n    allowed-address=10.255.9.10/32\nNo notebook (app WireGuard), o espelho: chave pública do roteador, endpoint = IP público:13231, allowed-address = 10.255.9.1/32 (ou a rede de gerência que você quer alcançar por ele).",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>53</span>  <span class='chapter-title'>WireGuard</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/02-wireguard.html#montando-site-to-site-entre-pops",
+    "href": "volumes/v10-tuneis-vpn/02-wireguard.html#montando-site-to-site-entre-pops",
+    "title": "53  WireGuard",
+    "section": "53.4 Montando: site-to-site entre POPs",
+    "text": "53.4 Montando: site-to-site entre POPs\n# POP-A\n/interface wireguard add name=wg-ab listen-port=13231\n/ip address add address=10.255.0.1/30 interface=wg-ab\n/interface wireguard peers\nadd interface=wg-ab public-key=\"&lt;pub-B&gt;\" endpoint-address=&lt;publico-B&gt; \\\n    endpoint-port=13231 allowed-address=10.0.2.0/24,10.255.0.2/32 \\\n    persistent-keepalive=25s\n\n# POP-B (espelho)\n/interface wireguard add name=wg-ab listen-port=13231\n/ip address add address=10.255.0.2/30 interface=wg-ab\n/interface wireguard peers\nadd interface=wg-ab public-key=\"&lt;pub-A&gt;\" endpoint-address=&lt;publico-A&gt; \\\n    endpoint-port=13231 allowed-address=10.0.1.0/24,10.255.0.1/32 \\\n    persistent-keepalive=25s\nCom o túnel de pé, uma rota manda o tráfego da rede remota pela interface wg-ab (ou o próprio allowed-address já cuida do encaminhamento). E, como todo túnel, aplique o MSS clamp (Capítulo 52) para não travar o TCP.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>53</span>  <span class='chapter-title'>WireGuard</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/02-wireguard.html#persistent-keepalive-mantendo-vivo-através-do-nat",
+    "href": "volumes/v10-tuneis-vpn/02-wireguard.html#persistent-keepalive-mantendo-vivo-através-do-nat",
+    "title": "53  WireGuard",
+    "section": "53.5 persistent-keepalive: mantendo vivo através do NAT",
+    "text": "53.5 persistent-keepalive: mantendo vivo através do NAT\nWireGuard é silencioso — se ninguém fala, ele não manda nada, e o mapeamento NAT/CGNAT do caminho expira, “fechando” o túnel de fora para dentro. O persistent-keepalive=25s faz o peer mandar um pequeno pacote a cada 25 s, mantendo o furo do NAT aberto. Sempre use keepalive no lado que está atrás de CGNAT/NAT — sem ele, o túnel “funciona e depois some”.\nDiagnóstico: o campo de último handshake diz se o túnel está vivo:\n/interface wireguard peers print\n# procure \"last-handshake\" recente (segundos). \"never\" = chaves/endpoint/porta errados.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nWireGuard troca a complexidade do IPsec por chaves e allowed-address. Guarde três coisas: (1) cada lado tem a chave pública do outro — sem terceiros; (2) allowed-address é rota E filtro — é ele que decide “o que vai por este peer” e “o que aceito dele”, e é onde 90% dos erros moram; (3) atrás de CGNAT, use persistent-keepalive ou o túnel expira. Acerte esses três, aplique o MSS clamp, e o WireGuard é o túnel mais fácil e rápido do RouterOS.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>53</span>  <span class='chapter-title'>WireGuard</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/02-wireguard.html#laboratório",
+    "href": "volumes/v10-tuneis-vpn/02-wireguard.html#laboratório",
+    "title": "53  WireGuard",
+    "section": "53.6 🧪 Laboratório",
+    "text": "53.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nDois CHRs (Capítulo 5) como dois POPs: lab-a (LAN 10.0.1.0/24, “público” alcançável) e lab-b (LAN 10.0.2.0/24). Um host em cada LAN para testar tráfego fim a fim. Opcional: um terceiro CHR “notebook” para o cenário de gerência.\n\n\n\n53.6.1 Comandos passo a passo\nPasso 1 — interfaces e chaves. Em cada POP:\n/interface wireguard add name=wg-ab listen-port=13231\n/interface wireguard print\nAnote a chave pública de cada lado (você vai trocá-las).\nPasso 2 — endereços do túnel.\n# lab-a\n/ip address add address=10.255.0.1/30 interface=wg-ab\n# lab-b\n/ip address add address=10.255.0.2/30 interface=wg-ab\nPasso 3 — peers cruzados. No lab-a, adicione o peer com a pública do lab-b; no lab-b, com a pública do lab-a (veja os blocos de site-to-site acima), cada um com allowed-address = rede do outro + /32 do túnel remoto, e persistent-keepalive=25s.\nPasso 4 — handshake. Em qualquer lado:\n/interface wireguard peers print\nlast-handshake deve mostrar poucos segundos. Se never, revise: chave pública trocada certo? endpoint/porta corretos? firewall liberando o UDP 13231?\nPasso 5 — tráfego fim a fim + MSS clamp. Do host em 10.0.1.x, pingue o host em 10.0.2.x. Depois aplique o clamp e teste uma transferência maior:\n/ip firewall mangle\nadd chain=forward protocol=tcp tcp-flags=syn out-interface=wg-ab \\\n    action=change-mss new-mss=clamp-to-pmtu\nPasso 6 — prove o keepalive. Remova o persistent-keepalive do lado “atrás de NAT”, gere silêncio e observe o handshake envelhecer até o túnel parar de responder de fora; recoloque e veja reviver.\n\n\n53.6.2 Verificação\n\nlast-handshake recente nos dois lados;\nPing fim a fim entre as LANs 10.0.1.0/24 ↔︎ 10.0.2.0/24;\nallowed-address correto (a rede do outro lado) em cada peer;\nSem keepalive, o túnel atrás de NAT expira; com ele, permanece.\n\n\n\n53.6.3 Desafios\n\nO handshake acontece (last-handshake recente), mas os hosts das LANs não se pingam. As chaves estão certas. Qual campo do peer está errado, e por que ele afeta o encaminhamento e não o handshake?\nVocê quer que todo o tráfego de internet de um cliente roaming saia cifrado pelo túnel (full tunnel). Que allowed-address isso exige no lado do cliente, e que cuidado extra de NAT/rota no lado do servidor?\nO túnel de gerência para um roteador atrás de CGNAT sobe, funciona por uns minutos e “some” quando ninguém usa. Qual parâmetro faltou e por que o CGNAT causa exatamente esse sintoma?\nPor que o WireGuard dispensa a negociação de “fases” e propostas de algoritmo do IPsec (Capítulo 54), e o que isso implica para interoperar com um firewall de outro fabricante que só fala IPsec?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. O allowed-address está incompleto ou errado. O handshake só depende das chaves e do endpoint; o tráfego só é encaminhado para o peer se o destino casar o allowed-address — e só é aceito na volta se a origem casar. Se o allowed-address não inclui a rede da LAN remota (10.0.2.0/24), os pings são descartados apesar do túnel vivo. Corrija incluindo a rede do outro lado em cada peer.\n2. No cliente, allowed-address=0.0.0.0/0 (manda tudo pelo túnel). No servidor, é preciso: (a) uma rota/allowed-address que aceite o /32 do cliente e (b) NAT (masquerade) na saída para a internet, senão o tráfego do cliente sai com IP do túnel e não retorna. É essencialmente transformar o servidor WireGuard num gateway NAT para o cliente.\n3. Faltou persistent-keepalive. WireGuard não envia nada quando está ocioso; o CGNAT, sem tráfego, expira o mapeamento de porta e fecha o caminho de fora para dentro. O keepalive (25 s) mantém o mapeamento vivo. É o sintoma clássico “funciona e some” de túnel atrás de NAT.\n4. WireGuard usa um conjunto fixo e moderno de algoritmos e autentica só por chaves públicas — não há o que negociar, o que o torna simples e rápido. A contrapartida: ele não interopera com IPsec. Para conversar com um firewall de terceiro que só fala IPsec, você usa IPsec (Capítulo 54), justamente pela padronização/negociação que o WireGuard abre mão.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>53</span>  <span class='chapter-title'>WireGuard</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/02-wireguard.html#resumo",
+    "href": "volumes/v10-tuneis-vpn/02-wireguard.html#resumo",
+    "title": "53  WireGuard",
+    "section": "53.7 Resumo",
+    "text": "53.7 Resumo\n\nWireGuard = interface + par de chaves por ponta e peers com a chave pública do outro lado; sem fases nem negociação — as chaves definem tudo;\nallowed-address é rota e filtro: define o que vai por cada peer e o que se aceita dele — a fonte nº 1 de erro (inclua a rede do outro lado);\npersistent-keepalive=25s mantém o túnel vivo através de CGNAT/NAT — sem ele, “funciona e some”;\nDiagnóstico pelo last-handshake (recente = vivo; never = chave/endpoint/porta/firewall);\nComo todo túnel, aplique MSS clamp (Capítulo 52) para o TCP não travar.\n\nWireGuard cobre a maioria dos casos modernos — mas quando você precisa interoperar com equipamento de outro fabricante, o padrão universal é outro. O Capítulo 54 monta o IPsec IKEv2.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>53</span>  <span class='chapter-title'>WireGuard</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/02-wireguard.html#bibliografia-do-capítulo",
+    "href": "volumes/v10-tuneis-vpn/02-wireguard.html#bibliografia-do-capítulo",
+    "title": "53  WireGuard",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção WireGuard do RouterOS (MikroTik, 2026);\nCriptografia de túnel e troca de chaves: (Tanenbaum; Feamster; Wetherall, 2021);\nWireGuard no v7 na prática: (Discher, 2016);\nVPN de gerência em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>53</span>  <span class='chapter-title'>WireGuard</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/03-ipsec.html",
+    "href": "volumes/v10-tuneis-vpn/03-ipsec.html",
+    "title": "54  IPsec",
+    "section": "",
+    "text": "54.1 As peças do IPsec no RouterOS\nO Capítulo 53 entregou o túnel cifrado mais simples. Então por que aprender IPsec, mais complexo? Interoperabilidade: o IPsec é o padrão universal de VPN — todo firewall sério (Fortinet, Cisco, pfSense, Palo Alto) fala IPsec, e frequentemente o provedor precisa fechar túnel com um equipamento que não é MikroTik. Onde o WireGuard exige os dois lados falando WireGuard, o IPsec conversa com qualquer um. O preço é a configuração em peças — que este capítulo desmonta.\nIPsec no RouterOS é um quebra-cabeça de objetos que se referenciam. Entender o papel de cada peça é metade da batalha:",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>54</span>  <span class='chapter-title'>IPsec</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/03-ipsec.html#as-peças-do-ipsec-no-routeros",
+    "href": "volumes/v10-tuneis-vpn/03-ipsec.html#as-peças-do-ipsec-no-routeros",
+    "title": "54  IPsec",
+    "section": "",
+    "text": "profile: parâmetros da fase 1 (IKE) — algoritmos de hash/criptografia, grupo DH, tempo de vida. É “como negociar a chave”;\npeer: com quem falar (endereço do outro lado), qual profile usar e a versão do IKE (exchange-mode=ike2);\nproposal: parâmetros da fase 2 (ESP) — como cifrar os dados depois que a chave foi negociada;\nidentity: como se autenticar com aquele peer — chave pré-compartilhada (secret/PSK), certificado, etc.;\npolicy: qual tráfego proteger — os seletores (rede local ↔︎ rede remota) e o modo (tunnel).\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nO peer (com quem, fase 1) usa um profile; a identity diz como provar quem é; a policy (que tráfego) usa uma proposal (fase 2). Se os algoritmos de qualquer fase não coincidirem entre os lados, o túnel não fecha — a causa nº 1 de dor de cabeça no IPsec.\n\n\nFigura 54.1",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>54</span>  <span class='chapter-title'>IPsec</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/03-ipsec.html#duas-fases-ike-negocia-esp-cifra",
+    "href": "volumes/v10-tuneis-vpn/03-ipsec.html#duas-fases-ike-negocia-esp-cifra",
+    "title": "54  IPsec",
+    "section": "54.2 Duas fases: IKE negocia, ESP cifra",
+    "text": "54.2 Duas fases: IKE negocia, ESP cifra\nO IPsec trabalha em duas etapas:\n\nFase 1 (IKE): os dois lados se autenticam (PSK ou certificado) e negociam um canal seguro para conversar — a “chave da chave”. O IKEv2 é a versão atual: mais rápido, mais robusto, com melhor suporte a NAT e roaming. Use ike2 salvo quando o outro lado só suportar o antigo IKEv1;\nFase 2 (ESP): usando o canal da fase 1, negociam como cifrar o tráfego real (a proposal) e passam a proteger os pacotes que casam a policy.\n\nA divisão explica os sintomas: se a fase 1 não fecha, é peer/profile/autenticação; se a fase 1 fecha mas a fase 2 não, é proposal/seletores.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>54</span>  <span class='chapter-title'>IPsec</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/03-ipsec.html#policy-based-vs.-tunnelvti",
+    "href": "volumes/v10-tuneis-vpn/03-ipsec.html#policy-based-vs.-tunnelvti",
+    "title": "54  IPsec",
+    "section": "54.3 policy-based vs. tunnel/VTI",
+    "text": "54.3 policy-based vs. tunnel/VTI\nHá dois estilos de IPsec, e a escolha muda o que você consegue fazer:\n\nPolicy-based (clássico): a policy casa tráfego por seletores (ex.: src=10.0.1.0/24 dst=10.0.2.0/24) e o cifra. Não cria interface — logo, não dá para rodar OSPF/BGP por cima\n\nnem fazer roteamento dinâmico. Simples para site-to-site fixo;\n\nTunnel/VTI ou IPsec sobre outra interface: quando você precisa de roteamento dinâmico ou de uma interface roteável, o padrão é GRE/IP-in-IP + IPsec (Capítulo 55): o GRE dá a interface, o IPsec cifra. É o desenho recomendado para interligar POPs com IGP (Capítulo 56).\n\nRegra: site-to-site fixo e simples → policy-based direto; roteamento dinâmico entre POPs → GRE+IPsec.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>54</span>  <span class='chapter-title'>IPsec</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/03-ipsec.html#montando-um-site-to-site-ikev2-psk",
+    "href": "volumes/v10-tuneis-vpn/03-ipsec.html#montando-um-site-to-site-ikev2-psk",
+    "title": "54  IPsec",
+    "section": "54.4 Montando um site-to-site IKEv2 (PSK)",
+    "text": "54.4 Montando um site-to-site IKEv2 (PSK)\n# POP-A\n/ip ipsec profile\nadd name=ike2-prof hash-algorithm=sha256 enc-algorithm=aes-256 dh-group=modp2048\n/ip ipsec peer\nadd name=para-B address=&lt;publico-B&gt; profile=ike2-prof exchange-mode=ike2\n/ip ipsec identity\nadd peer=para-B auth-method=pre-shared-key secret=\"Ch@ve-Forte-2026\"\n/ip ipsec proposal\nadd name=esp-prop auth-algorithms=sha256 enc-algorithms=aes-256-cbc pfs-group=modp2048\n/ip ipsec policy\nadd peer=para-B tunnel=yes proposal=esp-prop \\\n    src-address=10.0.1.0/24 dst-address=10.0.2.0/24\nNo POP-B, o espelho: mesmo profile/proposal (algoritmos batendo), peer apontando para o público de A, mesmo secret, e a policy com src/dst invertidos (src=10.0.2.0/24 dst=10.0.1.0/24). Essa inversão simétrica dos seletores é obrigatória — se não baterem em espelho, a fase 2 não fecha.\n\n\n\n\n\n\nAviso\n\n\n\nQuando há NAT no caminho (comum: o POP atrás de CGNAT), habilite o NAT-Traversal (o IPsec encapsula o ESP em UDP/4500). Sem ele, o ESP “puro” (protocolo 50) é frequentemente bloqueado/quebrado pelo NAT e o túnel fecha a fase 1 mas não passa tráfego. No RouterOS o NAT-T é automático no IKEv2, mas confirme que o UDP 500 e 4500 estão liberados no firewall.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>54</span>  <span class='chapter-title'>IPsec</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/03-ipsec.html#diagnóstico-do-ipsec",
+    "href": "volumes/v10-tuneis-vpn/03-ipsec.html#diagnóstico-do-ipsec",
+    "title": "54  IPsec",
+    "section": "54.5 Diagnóstico do IPsec",
+    "text": "54.5 Diagnóstico do IPsec\n/ip ipsec active-peers print\n/ip ipsec policy print   # veja a coluna de flags/ph2-state\n/ip ipsec installed-sa print\n\nactive-peers vazio / fase 1 não estabelece → peer, profile (algoritmos), autenticação (PSK diferente), ou UDP 500 bloqueado;\nfase 1 ok mas policy sem SA (ph2) instalada → proposal não bate, ou seletores (src/dst) não estão em espelho;\nfase 2 ok mas sem tráfego → NAT-T ausente (libere 4500), rota, ou o tráfego não casa os seletores.\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nIPsec é a moeda de interoperabilidade: quando o outro lado não é MikroTik, é ele que fecha o túnel. O custo é montar peças que se referenciam — profile/peer (fase 1, IKE) e proposal/policy (fase 2, ESP) — e a regra que resolve a maioria dos problemas é uma só: os algoritmos precisam bater e os seletores precisam estar em espelho nos dois lados. Para roteamento dinâmico, não force o policy-based: use GRE+IPsec. E onde houver NAT, NAT-Traversal (UDP 4500) ou o túnel fecha e não anda.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>54</span>  <span class='chapter-title'>IPsec</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/03-ipsec.html#laboratório",
+    "href": "volumes/v10-tuneis-vpn/03-ipsec.html#laboratório",
+    "title": "54  IPsec",
+    "section": "54.6 🧪 Laboratório",
+    "text": "54.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nDois CHRs (Capítulo 5) como POPs: lab-a (LAN 10.0.1.0/24, público alcançável) e lab-b (LAN 10.0.2.0/24). Opcional: um NAT no meio para exercitar NAT-T. Objetivo: site-to-site IKEv2 com PSK protegendo o tráfego entre as duas LANs.\n\n\n\n54.6.1 Comandos passo a passo\nPasso 1 — profile e proposal (algoritmos idênticos). Em ambos:\n/ip ipsec profile add name=p1 hash-algorithm=sha256 enc-algorithm=aes-256 dh-group=modp2048\n/ip ipsec proposal add name=p2 auth-algorithms=sha256 enc-algorithms=aes-256-cbc pfs-group=modp2048\nPasso 2 — peer + identity. No lab-a (apontando para o público de B), e o espelho no lab-b, com o mesmo secret:\n/ip ipsec peer add name=peer address=&lt;publico-outro&gt; profile=p1 exchange-mode=ike2\n/ip ipsec identity add peer=peer auth-method=pre-shared-key secret=\"lab-psk-forte\"\nPasso 3 — policy com seletores em espelho. No lab-a:\n/ip ipsec policy add peer=peer tunnel=yes proposal=p2 \\\n    src-address=10.0.1.0/24 dst-address=10.0.2.0/24\nNo lab-b, invertido: src=10.0.2.0/24 dst=10.0.1.0/24.\nPasso 4 — evite NAT no tráfego do túnel. Garanta que o srcnat/ masquerade da WAN não capture o tráfego 10.0.1.0/24 → 10.0.2.0/24 (uma regra accept antes do masquerade, casando dst da rede remota) — senão o IPsec não reconhece os seletores.\nPasso 5 — suba e verifique.\n/ip ipsec active-peers print\n/ip ipsec policy print\nactive-peers com a fase 1, e a policy mostrando a SA da fase 2 instalada. Pingue host↔︎host entre as LANs e confirme, no installed-sa, os contadores subindo (tráfego cifrado).\n\n\n54.6.2 Verificação\n\nactive-peers mostra a fase 1 estabelecida;\nA policy tem SA de fase 2 instalada (seletores em espelho);\nPing host↔︎host passa e os contadores de SA sobem;\nO tráfego do túnel não é capturado pelo masquerade da WAN.\n\n\n\n54.6.3 Desafios\n\nA fase 1 fecha (active-peers ok), mas nenhum tráfego passa e a policy não instala SA de fase 2. Cite as duas causas mais comuns e como confirmar cada uma.\nTudo “certo”, mas os hosts não se pingam — e você descobre que o masquerade da WAN está reescrevendo o tráfego antes do IPsec. Explique por que isso quebra os seletores e qual regra corrige.\nO provedor precisa rodar OSPF entre os dois POPs sobre um enlace cifrado. Por que o IPsec policy-based deste capítulo não serve, e qual é o desenho recomendado (aponte o capítulo)?\nUm dos POPs está atrás de CGNAT. A fase 1 fecha às vezes, mas o tráfego é errático. Qual recurso do IPsec está em jogo, e que portas você confere no firewall?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. (a) proposal (fase 2) não bate: os algoritmos de ESP (enc/auth/PFS) diferem entre os lados — confira que proposal é idêntica nos dois. (b) Seletores não estão em espelho: o src/dst da policy de um lado tem de ser o inverso exato do outro; qualquer divergência (uma máscara diferente) impede a fase 2. Confirme com /ip ipsec policy print comparando os dois lados.\n2. O masquerade reescreve o source do pacote antes de o IPsec avaliar os seletores; o pacote deixa de casar src=10.0.1.0/24 e o IPsec o ignora (sai em claro pela WAN). Corrige-se com uma regra de NAT accept antes do masquerade: chain=srcnat dst-address=10.0.2.0/24 action=accept (não traduzir o tráfego destinado à rede remota do túnel).\n3. Policy-based não cria interface, e o OSPF precisa de uma interface para formar adjacência e trocar Hellos. O desenho recomendado é GRE + IPsec (Capítulo 55): o GRE fornece a interface roteável (onde o OSPF roda) e o IPsec cifra o transporte. Também interligação de POPs no Capítulo 56.\n4. NAT-Traversal. Atrás de CGNAT, o ESP puro (protocolo 50) não sobrevive à tradução; o IKEv2 encapsula o ESP em UDP/4500 (NAT-T) para atravessar. Se o tráfego é errático, confira que UDP 500 e 4500 estão liberados no firewall (input) e que o NAT-T está ativo — sem ele, a fase 1 até fecha, mas o ESP não passa de forma confiável.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>54</span>  <span class='chapter-title'>IPsec</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/03-ipsec.html#resumo",
+    "href": "volumes/v10-tuneis-vpn/03-ipsec.html#resumo",
+    "title": "54  IPsec",
+    "section": "54.7 Resumo",
+    "text": "54.7 Resumo\n\nIPsec é o padrão de interoperabilidade — use quando o outro lado não é MikroTik (ou exige IPsec);\nPeças: profile/peer (fase 1, IKE — negocia a chave, use ike2), proposal/policy (fase 2, ESP — cifra os dados), identity (PSK/cert);\nRegra de ouro: algoritmos batendo (profile e proposal) e seletores em espelho (src/dst invertidos) nos dois lados;\nPolicy-based para site-to-site fixo; GRE+IPsec quando precisa de interface/roteamento dinâmico;\nCom NAT no caminho, NAT-Traversal (UDP 4500) é obrigatório; e não deixe o masquerade capturar o tráfego do túnel.\n\nIPsec e WireGuard cifram camada 3. Falta o que transporta roteamento e camada 2 entre POPs — e os túneis de acesso legado. O Capítulo 55 cobre GRE, EoIP, L2TP/SSTP e ZeroTier.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>54</span>  <span class='chapter-title'>IPsec</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/03-ipsec.html#bibliografia-do-capítulo",
+    "href": "volumes/v10-tuneis-vpn/03-ipsec.html#bibliografia-do-capítulo",
+    "title": "54  IPsec",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção IPsec do RouterOS (MikroTik, 2026);\nIKE, ESP e arquitetura IPsec: (Tanenbaum; Feamster; Wetherall, 2021);\nIPsec no v7 e interoperabilidade: (Discher, 2016);\nTúneis site-to-site em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>54</span>  <span class='chapter-title'>IPsec</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html",
+    "href": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html",
+    "title": "55  GRE, EoIP, L2TP/SSTP e ZeroTier",
+    "section": "",
+    "text": "55.1 GRE: a interface para transportar roteamento\nWireGuard (Capítulo 53) e IPsec (Capítulo 54) cifram camada 3. Mas o provedor tem necessidades que eles não cobrem sozinhos: transportar um protocolo de roteamento por uma interface, estender uma LAN de um POP a outro (camada 2), dar acesso remoto a quem só tem um cliente VPN comum, ou conectar caixas que não têm IP público. Este capítulo reúne os túneis que resolvem esses casos — cada um com seu nicho.\nO GRE (Generic Routing Encapsulation) encapsula IP dentro de IP e, crucialmente, cria uma interface de túnel ponto a ponto. Isso é o que faltava no IPsec policy-based: com uma interface, você roda OSPF/BGP por cima (Capítulo 42). O GRE não cifra — então o par de produção é GRE + IPsec.\nO ipsec-secret faz o RouterOS montar automaticamente a policy IPsec que protege esse GRE — a forma mais limpa de ter “GRE cifrado”. Com a interface gre-ab de pé, o OSPF a trata como qualquer enlace PtP (type=ptp). É o alicerce do Capítulo 56.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>55</span>  <span class='chapter-title'>GRE, EoIP, L2TP/SSTP e ZeroTier</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#gre-a-interface-para-transportar-roteamento",
+    "href": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#gre-a-interface-para-transportar-roteamento",
+    "title": "55  GRE, EoIP, L2TP/SSTP e ZeroTier",
+    "section": "",
+    "text": "# POP-A: interface GRE ponto a ponto\n/interface gre\nadd name=gre-ab remote-address=&lt;publico-B&gt; local-address=&lt;publico-A&gt;\n/ip address add address=10.255.1.1/30 interface=gre-ab\n\n# cifrar o GRE com IPsec (o campo ipsec-secret liga os dois)\n/interface gre set gre-ab ipsec-secret=\"Ch@ve-GRE-2026\"",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>55</span>  <span class='chapter-title'>GRE, EoIP, L2TP/SSTP e ZeroTier</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#eoip-esticar-a-camada-2-entre-sites",
+    "href": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#eoip-esticar-a-camada-2-entre-sites",
+    "title": "55  GRE, EoIP, L2TP/SSTP e ZeroTier",
+    "section": "55.2 EoIP: esticar a camada 2 entre sites",
+    "text": "55.2 EoIP: esticar a camada 2 entre sites\nO EoIP (Ethernet over IP, proprietário MikroTik) transporta quadros Ethernet — camada 2 — dentro de IP. O resultado: dois sites distantes ficam no mesmo domínio de broadcast, como se um cabo ligasse as bridges. Útil para levar uma VLAN de gerência a um POP remoto, ou unir dois pontos que precisam de L2 comum.\n# EoIP e adição à bridge (os dois lados na mesma bridge = mesma L2)\n/interface eoip\nadd name=eoip-ab remote-address=&lt;publico-B&gt; tunnel-id=100 ipsec-secret=\"Ch@ve-EoIP\"\n/interface bridge port add bridge=br-gerencia interface=eoip-ab\n\n\n\n\n\n\nAviso\n\n\n\nEstender camada 2 é poderoso e perigoso. Você une domínios de broadcast: uma tempestade de broadcast, um loop de STP ou um DHCP rogue em um POP contamina o outro. Use EoIP com parcimônia, sempre com STP ativo, e prefira rotear (L3) a esticar (L2) sempre que possível. L2 estendido é a última opção, não a primeira.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>55</span>  <span class='chapter-title'>GRE, EoIP, L2TP/SSTP e ZeroTier</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#l2tp-e-sstp-acesso-remoto",
+    "href": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#l2tp-e-sstp-acesso-remoto",
+    "title": "55  GRE, EoIP, L2TP/SSTP e ZeroTier",
+    "section": "55.3 L2TP e SSTP: acesso remoto",
+    "text": "55.3 L2TP e SSTP: acesso remoto\nPara dar acesso remoto a um técnico ou a um cliente com cliente VPN padrão (Windows, celular), dois protocolos servem:\n\nL2TP/IPsec: L2TP puro não cifra; na prática usa-se sempre L2TP sobre IPsec. Amplamente suportado por sistemas operacionais, bom para “VPN de acesso” clássica;\nSSTP: roda sobre TLS em TCP/443 — logo, atravessa quase qualquer firewall/proxy (parece HTTPS). É a escolha quando o técnico está numa rede hostil que bloqueia UDP e portas de VPN. Precisa de certificado no servidor.\n\n# servidor L2TP com IPsec (use-ipsec) e pool para os clientes\n/interface l2tp-server server set enabled=yes use-ipsec=yes ipsec-secret=\"Ch@ve-L2TP\"\n/ppp secret add name=tecnico1 service=l2tp password=\"senha-forte\" profile=default\n\n# servidor SSTP (TCP/443) — exige certificado\n/interface sstp-server server set enabled=yes certificate=cert-sstp port=443\nNote o reuso do que você já sabe: L2TP e SSTP são serviços PPP (Capítulo 34) — usam ppp secret/profiles/pools exatamente como o PPPoE, e podem autenticar por RADIUS (Capítulo 35). Acesso remoto é PPPoE “pela internet”.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>55</span>  <span class='chapter-title'>GRE, EoIP, L2TP/SSTP e ZeroTier</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#zerotier-malha-que-atravessa-nat",
+    "href": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#zerotier-malha-que-atravessa-nat",
+    "title": "55  GRE, EoIP, L2TP/SSTP e ZeroTier",
+    "section": "55.4 ZeroTier: malha que atravessa NAT",
+    "text": "55.4 ZeroTier: malha que atravessa NAT\nE quando nenhum dos lados tem IP público — os dois atrás de CGNAT? Os túneis anteriores precisam de alguém “alcançável” para iniciar. O ZeroTier resolve com uma malha gerenciada na nuvem: os nós se registram num controlador (ZeroTier Central), que os ajuda a furar o NAT dos dois lados (hole punching) e a formar uma rede virtual L2/L3. Ideal para gerência de CPEs e roteadores sem IP público.\n# habilitar ZeroTier e juntar-se a uma rede (ID vem do painel ZeroTier)\n/zerotier set zt1 comment=\"malha de gerencia\"\n/zerotier interface add network=&lt;network-id&gt; instance=zt1\nO trade-off: você depende de um serviço externo (o controlador na nuvem) e de uma conta ZeroTier. Para gerência, costuma valer; para tráfego crítico de produção, prefira túneis que você controla ponta a ponta.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>55</span>  <span class='chapter-title'>GRE, EoIP, L2TP/SSTP e ZeroTier</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#escolhendo-entre-eles",
+    "href": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#escolhendo-entre-eles",
+    "title": "55  GRE, EoIP, L2TP/SSTP e ZeroTier",
+    "section": "55.5 Escolhendo entre eles",
+    "text": "55.5 Escolhendo entre eles\n\n\n\n\n\n\n\n\nNecessidade\nEscolha\nPor quê\n\n\n\n\nRodar OSPF/BGP cifrado entre POPs\nGRE + IPsec\nInterface + criptografia\n\n\nEsticar VLAN/L2 entre sites\nEoIP (+IPsec)\nTransporta Ethernet\n\n\nAcesso remoto de técnico/cliente\nL2TP/IPsec ou SSTP\nCliente VPN padrão; SSTP fura firewall\n\n\nAmbos os lados atrás de CGNAT\nZeroTier\nMalha na nuvem fura o NAT\n\n\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nEstes túneis preenchem os nichos que WireGuard/IPsec sozinhos não cobrem: GRE dá a interface para roteamento dinâmico (cifre com IPsec); EoIP estende camada 2 (com o risco de unir domínios de broadcast — use com cuidado); L2TP/SSTP dão acesso remoto com cliente padrão (SSTP fura firewall em 443); ZeroTier conecta quem não tem IP público. A regra de escolha é sempre a mesma do Capítulo 52: que camada e cifra ou não — e, em todos, respeite o MTU/MSS.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>55</span>  <span class='chapter-title'>GRE, EoIP, L2TP/SSTP e ZeroTier</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#laboratório",
+    "href": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#laboratório",
+    "title": "55  GRE, EoIP, L2TP/SSTP e ZeroTier",
+    "section": "55.6 🧪 Laboratório",
+    "text": "55.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nDois CHRs (Capítulo 5) como POPs (lab-a, lab-b) com IPs “públicos” alcançáveis e uma LAN interna cada. Um terceiro CHR lab-tec simula o “técnico remoto” para o acesso L2TP/SSTP. O foco é GRE+IPsec (transportar roteamento) e um serviço de acesso remoto.\n\n\n\n55.6.1 Comandos passo a passo\nPasso 1 — GRE cifrado entre os POPs. No lab-a (e espelho no lab-b):\n/interface gre add name=gre-ab remote-address=&lt;publico-b&gt; ipsec-secret=\"lab-gre\"\n/ip address add address=10.255.1.1/30 interface=gre-ab\nNo lab-b: 10.255.1.2/30 e remote-address=&lt;publico-a&gt;.\nPasso 2 — OSPF sobre o GRE. Rode OSPF (Capítulo 42) na interface gre-ab dos dois lados (type=ptp) e confirme a adjacência Full — o roteamento dinâmico viajando cifrado.\n/routing ospf interface-template add interfaces=gre-ab area=backbone type=ptp\n/routing ospf neighbor print\nPasso 3 — prove que está cifrado. Verifique que o IPsec subiu automaticamente com o GRE:\n/ip ipsec active-peers print\nPasso 4 — acesso remoto SSTP. No lab-a, habilite o SSTP-server (com um certificado autoassinado para o lab) e crie um usuário; no lab-tec, conecte como cliente SSTP e alcance a LAN do POP.\n/interface sstp-server server set enabled=yes certificate=cert-lab\n/ppp secret add name=tecnico service=sstp password=\"lab-forte\"\nPasso 5 — MSS clamp. Aplique o clamp (Capítulo 52) nas interfaces de túnel e teste uma transferência maior entre as LANs.\n\n\n55.6.2 Verificação\n\nGRE de pé, com IPsec ativo (cifrado) — active-peers mostra a SA;\nOSPF forma adjacência Full sobre o GRE (roteamento dinâmico cifrado);\nO técnico remoto conecta por SSTP e alcança a LAN do POP;\nCom MSS clamp, transferências grandes não travam.\n\n\n\n55.6.3 Desafios\n\nVocê montou o GRE e o OSPF formou adjacência, mas quer garantir que ninguém no caminho leia o tráfego. Como confirma que o GRE está realmente cifrado, e o que aconteceria sem o ipsec-secret?\nUm técnico esticou por EoIP a VLAN de gerência de dois POPs e, dias depois, um loop em um POP derrubou a gerência dos dois. Explique o mecanismo e duas medidas que teriam contido o estrago.\nUm cliente corporativo em viagem precisa de VPN, mas a rede do hotel bloqueia UDP e portas de VPN — só deixa passar navegação web. Qual protocolo deste capítulo funciona, e por quê?\nVocê precisa gerenciar 200 CPEs, todos atrás de CGNAT, sem IP público em nenhum. Qual solução do capítulo se aplica, qual é o trade-off que você aceita, e por que os túneis “clássicos” não servem aqui?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Confirme com /ip ipsec active-peers print e installed-sa — se há SA ativa para os endpoints do GRE e os contadores sobem, o tráfego vai cifrado. Sem o ipsec-secret, o GRE transporta tudo em claro: qualquer um no caminho (a operadora de trânsito, um atacante no meio) lê o conteúdo, incluindo os pacotes OSPF. GRE puro não protege nada.\n2. EoIP uniu os domínios de broadcast dos dois POPs; um loop de camada 2 num POP gera tempestade de broadcast que atravessa o túnel e satura a gerência do outro também. Contenção: (a) STP ativo na bridge (detecta e bloqueia o loop); (b) limitar/segmentar o que trafega no L2 estendido (ou, melhor, rotear em vez de esticar). L2 estendido propaga falhas — por isso é a última opção.\n3. SSTP: roda sobre TLS em TCP/443, indistinguível de HTTPS. Como o hotel libera navegação web (443), o SSTP passa onde L2TP/IPsec (UDP 500/4500) e WireGuard (UDP) são bloqueados. É a razão de existir do SSTP: atravessar firewalls restritivos.\n4. ZeroTier: forma uma malha gerenciada na nuvem que fura o NAT dos dois lados via hole punching, então funciona mesmo com todos os CPEs atrás de CGNAT sem IP público. Trade-off aceito: dependência de um serviço externo (o controlador ZeroTier) e de uma conta. Os túneis clássicos (WireGuard peer fixo, IPsec, GRE, SSTP) precisam que um lado seja alcançável de fora — o que não existe quando ambos estão atrás de CGNAT.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>55</span>  <span class='chapter-title'>GRE, EoIP, L2TP/SSTP e ZeroTier</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#resumo",
+    "href": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#resumo",
+    "title": "55  GRE, EoIP, L2TP/SSTP e ZeroTier",
+    "section": "55.7 Resumo",
+    "text": "55.7 Resumo\n\nGRE cria interface para roteamento dinâmico entre POPs; não cifra — use GRE + IPsec (ipsec-secret), o desenho recomendado;\nEoIP estende camada 2 (mesmo domínio de broadcast) — poderoso e perigoso: STP obrigatório, prefira rotear a esticar;\nL2TP/IPsec e SSTP dão acesso remoto com cliente VPN padrão (reusam PPP/RADIUS); SSTP em TCP/443 fura firewalls;\nZeroTier conecta caixas sem IP público (ambos atrás de CGNAT), ao custo de depender de um controlador na nuvem;\nEscolha por camada + criptografia, e respeite o MTU/MSS em todos.\n\nCom o arsenal completo de túneis, o volume fecha aplicando tudo ao problema real do provedor: interligar POPs de forma resiliente e cifrada, com roteamento dinâmico por cima. É o Capítulo 56.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>55</span>  <span class='chapter-title'>GRE, EoIP, L2TP/SSTP e ZeroTier</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#bibliografia-do-capítulo",
+    "href": "volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html#bibliografia-do-capítulo",
+    "title": "55  GRE, EoIP, L2TP/SSTP e ZeroTier",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: GRE, EoIP, L2TP, SSTP, ZeroTier do RouterOS (MikroTik, 2026);\nEncapsulamento L2/L3 e VPN de acesso: (Tanenbaum; Feamster; Wetherall, 2021);\nTúneis no v7 na prática: (Discher, 2016);\nInterligação e acesso remoto em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>55</span>  <span class='chapter-title'>GRE, EoIP, L2TP/SSTP e ZeroTier</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/05-interligacao-pops.html",
+    "href": "volumes/v10-tuneis-vpn/05-interligacao-pops.html",
+    "title": "56  Interligação de POPs por túnel",
+    "section": "",
+    "text": "56.1 O desenho: túnel + roteamento + criptografia\nO Volume 10 construiu o arsenal; este capítulo aplica. O cenário é o mais comum do provedor em crescimento: dois POPs em cidades diferentes, cada um com seus clientes, que precisam se comportar como uma rede só — trocar rotas, compartilhar trânsito, servir de contingência um ao outro. A cola é o túnel; a inteligência é o roteamento dinâmico por cima. Fechamos o volume transformando peças soltas em uma rede interligada e resiliente.\nA interligação de POPs de verdade tem três camadas, e confundi-las é a origem dos problemas:",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>56</span>  <span class='chapter-title'>Interligação de POPs por túnel</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#o-desenho-túnel-roteamento-criptografia",
+    "href": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#o-desenho-túnel-roteamento-criptografia",
+    "title": "56  Interligação de POPs por túnel",
+    "section": "",
+    "text": "Transporte cifrado: o túnel que atravessa a internet — GRE + IPsec (interface para roteamento, cifrado) ou WireGuard (moderno, cifra e roteia). É o “cabo virtual”;\nRoteamento dinâmico: OSPF (Capítulo 42) rodando sobre a interface do túnel, para que cada POP aprenda as redes do outro automaticamente e reconverja se algo cair;\nEndereçamento de controle: loopbacks (Capítulo 46) como router-id e âncora das sessões — sobrevivem à troca de caminho.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDois túneis por caminhos diferentes; o OSPF escolhe o de menor custo e cai para o outro se ele falhar — a mesma lógica de custo do Capítulo 42, agora sobre túneis. Loopbacks dão identidade estável a cada POP.\n\n\nFigura 56.1",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>56</span>  <span class='chapter-title'>Interligação de POPs por túnel</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#caso-1-os-dois-pops-têm-ip-público",
+    "href": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#caso-1-os-dois-pops-têm-ip-público",
+    "title": "56  Interligação de POPs por túnel",
+    "section": "56.2 Caso 1: os dois POPs têm IP público",
+    "text": "56.2 Caso 1: os dois POPs têm IP público\nO cenário limpo. Monte o túnel (GRE+IPsec do Capítulo 55, ou WireGuard do Capítulo 53) e rode OSPF por cima:\n# POP-A: GRE cifrado + endereço de controle\n/interface gre add name=gre-ab remote-address=&lt;publico-b&gt; ipsec-secret=\"Ch@ve-POP\"\n/ip address add address=10.255.1.1/30 interface=gre-ab\n/interface bridge add name=lo ; /ip address add address=10.255.0.1/32 interface=lo\n\n# OSPF sobre o túnel (ptp) — anuncia loopback e LAN\n/routing ospf instance add name=isp router-id=10.255.0.1\n/routing ospf area add name=backbone area-id=0.0.0.0 instance=isp\n/routing ospf interface-template \\\n    add area=backbone interfaces=gre-ab type=ptp \\\n    networks=10.255.1.0/30\n/routing ospf interface-template \\\n    add area=backbone networks=10.0.1.0/24,10.255.0.1/32 passive=yes\nO espelho no POP-B. Com isso, cada POP aprende sozinho a rede do outro, e uma queda do túnel some das rotas em segundos (reconvergência OSPF). Não esqueça o MSS clamp (Capítulo 52) na gre-ab.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>56</span>  <span class='chapter-title'>Interligação de POPs por túnel</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#caso-2-um-pop-atrás-de-cgnat",
+    "href": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#caso-2-um-pop-atrás-de-cgnat",
+    "title": "56  Interligação de POPs por túnel",
+    "section": "56.3 Caso 2: um POP atrás de CGNAT",
+    "text": "56.3 Caso 2: um POP atrás de CGNAT\nQuando o POP-B não tem IP público (atrás de CGNAT, Capítulo 47), ele não pode receber conexão — precisa iniciar para o A. O WireGuard resolve elegantemente: o B tem o endpoint do A e um persistent-keepalive (Capítulo 53) para manter o furo do CGNAT aberto; o A não precisa do endpoint de B (aprende quando B fala).\n# POP-A (IP público): peer B sem endpoint fixo (B inicia)\n/interface wireguard add name=wg-ab listen-port=13231\n/interface wireguard peers add interface=wg-ab public-key=\"&lt;pub-B&gt;\" \\\n    allowed-address=10.0.2.0/24,10.255.0.2/32\n\n# POP-B (atrás de CGNAT): peer A COM endpoint e keepalive\n/interface wireguard peers add interface=wg-ab public-key=\"&lt;pub-A&gt;\" \\\n    endpoint-address=&lt;publico-a&gt; endpoint-port=13231 \\\n    allowed-address=10.0.1.0/24,10.255.0.1/32 persistent-keepalive=25s\nOSPF roda por cima igual ao Caso 1. A regra de ouro: quem está atrás de CGNAT inicia e mantém keepalive; quem tem IP público espera.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>56</span>  <span class='chapter-title'>Interligação de POPs por túnel</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#redundância-dois-túneis-failover-por-ospf",
+    "href": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#redundância-dois-túneis-failover-por-ospf",
+    "title": "56  Interligação de POPs por túnel",
+    "section": "56.4 Redundância: dois túneis, failover por OSPF",
+    "text": "56.4 Redundância: dois túneis, failover por OSPF\nUm único túnel é um ponto único de falha. A resiliência vem de dois túneis por caminhos diferentes (ex.: um pela operadora A, outro pela B) e deixar o OSPF escolher por custo: primário com custo baixo, secundário com custo alto. Se o primário cai, o OSPF reconverge para o secundário sem intervenção — a mesma mecânica do Capítulo 42, agora aplicada a túneis.\n# custo baixo no túnel primário, alto no secundário (nos DOIS lados!)\n/routing ospf interface-template set [find interfaces=gre-ab] cost=10\n/routing ospf interface-template set [find interfaces=wg-ab] cost=50\nLembre da lição do OSPF: ajuste o custo nos dois sentidos, ou você cria caminho assimétrico (ida por um túnel, volta por outro) — chato de diagnosticar e ruim para o desempenho.\n\n\n\n\n\n\nAviso\n\n\n\nRecursão de rota é a armadilha traiçoeira da interligação: se a rota para o endpoint do túnel (o IP público do outro POP) for aprendida pelo próprio túnel, ele “se engole” — o túnel precisa da rota que só existe se o túnel estiver de pé. Garanta que o endpoint público seja alcançado pela rota da internet (default/trânsito), nunca pela rota interna que o OSPF do túnel anuncia. Na prática: não redistribua a default de forma que ela concorra com o caminho para o endpoint.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>56</span>  <span class='chapter-title'>Interligação de POPs por túnel</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#integração-com-o-roteamento-do-provedor",
+    "href": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#integração-com-o-roteamento-do-provedor",
+    "title": "56  Interligação de POPs por túnel",
+    "section": "56.5 Integração com o roteamento do provedor",
+    "text": "56.5 Integração com o roteamento do provedor\nFechando o ciclo com o Volume 8:\n\nLoopbacks como router-id e para sessões estáveis (Capítulo 46);\nÁreas OSPF se a interligação crescer (o backbone entre POPs na área 0; cada POP pode ter sua área, Capítulo 43);\nBGP por cima quando os POPs trocam rotas de internet (não só internas) ou têm trânsito próprio — iBGP entre loopbacks sobre o OSPF do túnel (Capítulo 44);\nFiltros para não vazar rota de gerência/loopbacks indevidamente.\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nInterligar POPs são três camadas que você não deve misturar: transporte cifrado (GRE+IPsec ou WireGuard), roteamento dinâmico (OSPF sobre a interface do túnel, para reconvergir sozinho) e endereçamento de controle (loopbacks). Redundância = dois túneis + custo OSPF, sempre simétrico. E a armadilha que derruba tudo: a recursão de rota — o endpoint do túnel tem de ser alcançado pela rota da internet, nunca pela rota que o próprio túnel carrega. Acerte isso e dois POPs viram uma rede só, que se cura sozinha.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>56</span>  <span class='chapter-title'>Interligação de POPs por túnel</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#laboratório",
+    "href": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#laboratório",
+    "title": "56  Interligação de POPs por túnel",
+    "section": "56.6 🧪 Laboratório",
+    "text": "56.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nTrês CHRs (Capítulo 5): lab-a e lab-b como POPs (cada um com LAN e loopback), e lab-net no meio simulando a internet/trânsito (dá o “público” a cada POP e roteia entre eles). Monte dois túneis A↔︎B por caminhos lógicos distintos para exercitar o failover.\n\n\n\n56.6.1 Comandos passo a passo\nPasso 1 — túnel primário GRE+IPsec. Monte o gre-ab cifrado (Capítulo 55) e endereços de controle 10.255.1.0/30 + loopbacks (10.255.0.1/32 em A, .2/32 em B).\nPasso 2 — OSPF sobre o túnel. Rode OSPF nos dois lados sobre gre-ab (type=ptp), anunciando LANs e loopbacks (passive nas LANs). Confirme neighbor print = Full e que cada POP aprendeu a LAN do outro em /ip route where ospf.\nPasso 3 — tráfego fim a fim + MSS clamp. Ping host↔︎host entre as LANs; aplique o clamp na gre-ab e teste transferência maior.\nPasso 4 — segundo túnel (WireGuard) como reserva. Monte um wg-ab (Capítulo 53) por um caminho lógico diferente, rode OSPF nele também, e ajuste custos: gre-ab=10, wg-ab=50 (nos dois lados).\nPasso 5 — prove o failover. Com o tráfego indo pelo primário (custo 10), derrube o gre-ab (desabilite a interface ou bloqueie o endpoint). Em segundos, o traceroute A→B passa pelo wg-ab. Religue e volta ao primário.\nPasso 6 — provoque a recursão de rota. Anuncie, de propósito, uma default pelo OSPF do túnel e observe o túnel instabilizar (o endpoint passa a ser “aprendido” pelo próprio túnel). Corrija garantindo rota específica/estática para o endpoint pela internet. Entenda o sintoma.\n\n\n56.6.2 Verificação\n\nOSPF Full sobre o túnel; cada POP aprende a LAN do outro sem rota estática;\nPing/transferência fim a fim funcionam (com MSS clamp);\nQueda do túnel primário reconverge para o secundário em segundos;\nCustos simétricos (sem assimetria no traceroute dos dois sentidos);\nVocê reproduziu e corrigiu a recursão de rota.\n\n\n\n56.6.3 Desafios\n\nOs dois túneis estão de pé, mas o tráfego A→B vai pelo primário e o B→A volta pelo secundário. Nada “quebrou”. Qual é a causa e como corrigir? Por que a assimetria é indesejável mesmo “funcionando”?\nApós um reboot do POP-B (atrás de CGNAT), o túnel WireGuard demora para voltar e às vezes não volta sozinho. Qual parâmetro garante o retorno automático, e por que o lado com IP público não precisa dele?\nO túnel primário cai e não há failover: o OSPF do secundário nunca formou adjacência porque o endpoint do secundário ficou inalcançável junto. Que erro de projeto (dica: caminhos independentes) causou isso?\nVocê quer que os POPs troquem, além das redes internas, as rotas de internet que cada um recebe de sua operadora. OSPF basta? Se não, o que você adiciona e sobre o quê ele roda?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. O custo OSPF foi ajustado em um só lado. A ida (A→B) vê o primário mais barato; a volta (B→A), por o custo não ter sido espelhado, prefere o secundário. Corrija igualando os custos nos dois lados. A assimetria é ruim porque dificulta diagnóstico (traceroute divergente), pode passar por caminhos de qualidade/latência diferentes e complica firewall/conntrack (tráfego de volta por interface inesperada).\n2. persistent-keepalive no lado atrás de CGNAT (o POP-B): ele reinicia o envio periódico que refura o NAT e restabelece o handshake sem depender de tráfego. O lado com IP público (POP-A) não precisa porque é alcançável — o B sempre pode iniciar para ele; o problema é manter o caminho de volta ao B vivo, e é isso que o keepalive de B garante.\n3. Os dois túneis usaram, na prática, o mesmo caminho físico (ou o mesmo endpoint/uplink): quando o primário caiu, o secundário caiu junto porque dependia do mesmo recurso. Redundância exige caminhos independentes — endpoints/uplinks distintos (operadora A vs. B). Túnel “redundante” sobre um único link é redundância de mentira.\n4. OSPF é para a infraestrutura interna (loopbacks, LANs, enlaces) — não para carregar a tabela de internet. Para trocar rotas de internet, adicione iBGP entre os loopbacks dos POPs (Capítulo 44), rodando sobre o OSPF do túnel (que resolve os next-hops). OSPF é o esqueleto; o BGP transporta os prefixos externos.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>56</span>  <span class='chapter-title'>Interligação de POPs por túnel</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#resumo",
+    "href": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#resumo",
+    "title": "56  Interligação de POPs por túnel",
+    "section": "56.7 Resumo",
+    "text": "56.7 Resumo\n\nInterligar POPs = três camadas: transporte cifrado (GRE+IPsec / WireGuard), roteamento dinâmico (OSPF sobre a interface do túnel) e loopbacks de controle;\nCom IP público dos dois lados: GRE+IPsec/WireGuard + OSPF direto; um lado atrás de CGNAT: WireGuard, com o lado NATeado iniciando e mantendo keepalive;\nRedundância = dois túneis por caminhos independentes + failover por custo OSPF (simétrico, sob pena de assimetria);\nArmadilha: recursão de rota — o endpoint do túnel deve ser alcançado pela rota da internet, nunca pelo próprio túnel;\nCresceu? Integre com áreas OSPF e iBGP (Capítulo 44) para trocar rotas de internet; sempre com MSS clamp.\n\nFecha-se o Volume 10: os POPs do provedor agora se interligam de forma cifrada, resiliente e com roteamento que se cura sozinho. O Volume 11 leva a rede a outro patamar de backbone — MPLS, os rótulos que transportam serviços de camada 2 e 3 em escala de operadora.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>56</span>  <span class='chapter-title'>Interligação de POPs por túnel</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#bibliografia-do-capítulo",
+    "href": "volumes/v10-tuneis-vpn/05-interligacao-pops.html#bibliografia-do-capítulo",
+    "title": "56  Interligação de POPs por túnel",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: Tunnels, OSPF, IPsec do RouterOS (MikroTik, 2026);\nProjeto de backbone e roteamento sobre túnel: (Tanenbaum; Feamster; Wetherall, 2021);\nInterligação de POPs no v7: (Discher, 2016);\nRedes de provedor multi-POP: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 10 — Túneis e VPN",
+      "<span class='chapter-number'>56</span>  <span class='chapter-title'>Interligação de POPs por túnel</span>"
+    ]
+  },
+  {
     "objectID": "referencias.html",
     "href": "referencias.html",
     "title": "Referências",

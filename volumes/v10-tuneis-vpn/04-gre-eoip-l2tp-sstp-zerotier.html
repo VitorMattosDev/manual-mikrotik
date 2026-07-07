@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>24&nbsp; Bridge VLAN filtering – Manual de MikroTik</title>
+<title>55&nbsp; GRE, EoIP, L2TP/SSTP e ZeroTier – Manual de MikroTik</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -53,8 +53,8 @@ div.csl-indent {
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<link href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html" rel="next">
-<link href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html" rel="prev">
+<link href="../../volumes/v10-tuneis-vpn/05-interligacao-pops.html" rel="next">
+<link href="../../volumes/v10-tuneis-vpn/03-ipsec.html" rel="prev">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/popper.min.js"></script>
@@ -105,7 +105,7 @@ div.csl-indent {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html">Volume 4 — Bridge, switching e VLANs</a></li><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/01-panorama-tuneis.html">Volume 10 — Túneis e VPN</a></li><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
@@ -301,13 +301,13 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
  <span class="menu-text">Volume 4 — Bridge, switching e VLANs</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html" class="sidebar-item-text sidebar-link">
@@ -322,7 +322,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="sidebar-item-text sidebar-link active">
+  <a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span></a>
   </div>
 </li>
@@ -547,13 +547,13 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="true">
  <span class="menu-text">Volume 10 — Túneis e VPN</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="true" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-10" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-10" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../volumes/v10-tuneis-vpn/01-panorama-tuneis.html" class="sidebar-item-text sidebar-link">
@@ -574,7 +574,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html" class="sidebar-item-text sidebar-link">
+  <a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></span></a>
   </div>
 </li>
@@ -613,31 +613,28 @@ div.csl-indent {
     <h2 id="toc-title">Índice</h2>
    
   <ul>
-  <li><a href="#do-consentimento-à-lei" id="toc-do-consentimento-à-lei" class="nav-link active" data-scroll-target="#do-consentimento-à-lei"><span class="header-section-number">24.1</span> Do consentimento à lei</a>
+  <li><a href="#gre-a-interface-para-transportar-roteamento" id="toc-gre-a-interface-para-transportar-roteamento" class="nav-link active" data-scroll-target="#gre-a-interface-para-transportar-roteamento"><span class="header-section-number">55.1</span> GRE: a interface para transportar roteamento</a></li>
+  <li><a href="#eoip-esticar-a-camada-2-entre-sites" id="toc-eoip-esticar-a-camada-2-entre-sites" class="nav-link" data-scroll-target="#eoip-esticar-a-camada-2-entre-sites"><span class="header-section-number">55.2</span> EoIP: esticar a camada 2 entre sites</a></li>
+  <li><a href="#l2tp-e-sstp-acesso-remoto" id="toc-l2tp-e-sstp-acesso-remoto" class="nav-link" data-scroll-target="#l2tp-e-sstp-acesso-remoto"><span class="header-section-number">55.3</span> L2TP e SSTP: acesso remoto</a></li>
+  <li><a href="#zerotier-malha-que-atravessa-nat" id="toc-zerotier-malha-que-atravessa-nat" class="nav-link" data-scroll-target="#zerotier-malha-que-atravessa-nat"><span class="header-section-number">55.4</span> ZeroTier: malha que atravessa NAT</a></li>
+  <li><a href="#escolhendo-entre-eles" id="toc-escolhendo-entre-eles" class="nav-link" data-scroll-target="#escolhendo-entre-eles"><span class="header-section-number">55.5</span> Escolhendo entre eles</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">55.6</span> 🧪 Laboratório</a>
   <ul class="collapse">
-  <li><a href="#peça-1-a-tabela-de-vlans-da-bridge" id="toc-peça-1-a-tabela-de-vlans-da-bridge" class="nav-link" data-scroll-target="#peça-1-a-tabela-de-vlans-da-bridge"><span class="header-section-number">24.1.1</span> Peça 1: a tabela de VLANs da bridge</a></li>
-  <li><a href="#peça-2-o-pvid-a-etiqueta-de-entrada" id="toc-peça-2-o-pvid-a-etiqueta-de-entrada" class="nav-link" data-scroll-target="#peça-2-o-pvid-a-etiqueta-de-entrada"><span class="header-section-number">24.1.2</span> Peça 2: o PVID — a etiqueta de entrada</a></li>
-  <li><a href="#peça-3-frame-types-o-que-a-porta-admite" id="toc-peça-3-frame-types-o-que-a-porta-admite" class="nav-link" data-scroll-target="#peça-3-frame-types-o-que-a-porta-admite"><span class="header-section-number">24.1.3</span> Peça 3: <code>frame-types</code> — o que a porta admite</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">55.6.1</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">55.6.2</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">55.6.3</span> Desafios</a></li>
   </ul></li>
-  <li><a href="#a-gerência-e-a-pegadinha-do-taggedbridge" id="toc-a-gerência-e-a-pegadinha-do-taggedbridge" class="nav-link" data-scroll-target="#a-gerência-e-a-pegadinha-do-taggedbridge"><span class="header-section-number">24.2</span> A gerência e a pegadinha do <code>tagged=bridge</code></a></li>
-  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">24.3</span> 🧪 Laboratório</a>
-  <ul class="collapse">
-  <li><a href="#ambiente" id="toc-ambiente" class="nav-link" data-scroll-target="#ambiente"><span class="header-section-number">24.3.1</span> Ambiente</a></li>
-  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">24.3.2</span> Comandos passo a passo</a></li>
-  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">24.3.3</span> Verificação</a></li>
-  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">24.3.4</span> Desafios</a></li>
-  </ul></li>
-  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">24.4</span> Resumo</a></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">55.7</span> Resumo</a></li>
   <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v04-bridge-vlans/03-bridge-vlan-filtering.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/01-bridge-hardware-offload.html">Volume 4 — Bridge, switching e VLANs</a></li><li class="breadcrumb-item"><a href="../../volumes/v04-bridge-vlans/03-bridge-vlan-filtering.html"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/01-panorama-tuneis.html">Volume 10 — Túneis e VPN</a></li><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span id="sec-vlan-filtering" class="quarto-section-identifier"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Bridge VLAN filtering</span></span></h1>
+<h1 class="title"><span id="sec-gre-eoip" class="quarto-section-identifier"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></span></h1>
 </div>
 
 
@@ -666,103 +663,34 @@ div.csl-indent {
 <div class="callout-body-container callout-body">
 <p>Ao final deste capítulo, você será capaz de:</p>
 <ul>
-<li>Ativar o <strong>VLAN filtering</strong> numa bridge e explicar o que muda: o switch passa a <strong>policiar</strong> etiquetas em vez de ignorá-las;</li>
-<li>Configurar portas <strong>trunk</strong> e <strong>access</strong> de verdade, com a tabela <code>/interface bridge vlan</code>, o <strong>PVID</strong> e os <code>frame-types</code>;</li>
-<li>Explicar o caminho de um quadro pelo switch filtrado: o que acontece na entrada (ingress) e na saída (egress) de cada porta;</li>
-<li>Manter o acesso de <strong>gerência</strong> ao próprio switch numa VLAN — incluindo o detalhe que derruba iniciantes: a bridge como membro tagged;</li>
-<li>Aplicar a ordem de configuração que <strong>não</strong> tranca você para fora.</li>
+<li>Montar <strong>GRE</strong> para transportar roteamento (OSPF/BGP) entre POPs e <strong>cifrá-lo</strong> com IPsec — o desenho recomendado do <a href="03-ipsec.html" class="quarto-xref"><span>Capítulo 54</span></a>;</li>
+<li>Usar <strong>EoIP</strong> para estender <strong>camada 2</strong> (uma bridge/VLAN) entre sites, e saber quando isso é bom (e quando é perigoso);</li>
+<li>Configurar <strong>L2TP/IPsec</strong> e <strong>SSTP</strong> para <strong>acesso remoto</strong> — incluindo o SSTP rodando em TCP/443 para furar firewalls;</li>
+<li>Entender <strong>ZeroTier</strong> como malha gerenciada que atravessa CGNAT/NAT sem IP público em nenhum lado;</li>
+<li>Escolher, entre todos, a ferramenta certa para “transportar roteamento”, “esticar L2” e “acesso remoto” — e respeitar o MTU.</li>
 </ul>
 </div>
 </div>
-<section id="do-consentimento-à-lei" class="level2" data-number="24.1">
-<h2 data-number="24.1" class="anchored" data-anchor-id="do-consentimento-à-lei"><span class="header-section-number">24.1</span> Do consentimento à lei</h2>
-<p>O laboratório do <a href="02-vlans-8021q.html" class="quarto-xref"><span>Capítulo 23</span></a> terminou com uma demonstração incômoda: o r3 entrou na VLAN 10 sozinho, bastando configurar a própria placa. Num cabo compartilhado, a tag 802.1Q é um <strong>acordo entre pontas</strong> — e acordos não protegem contra quem não os assina.</p>
-<p>O <strong>bridge VLAN filtering</strong> transforma o acordo em lei: com ele ativo, a bridge (o switch) passa a <strong>decidir, porta a porta</strong>, quais VIDs entram, quais saem, e com ou sem etiqueta. O cliente pode etiquetar o que quiser; se a porta dele só admite VLAN 10 untagged, é isso que ele terá.</p>
-<p>Liga-se com um parâmetro:</p>
-<pre class="routeros"><code>/interface bridge set bridge-sw vlan-filtering=yes</code></pre>
-<p>— mas <strong>não rode isso ainda</strong>. A ordem importa (é a pegadinha número 1 do capítulo, tratada adiante). Antes, entenda as três peças que passam a mandar.</p>
-<section id="peça-1-a-tabela-de-vlans-da-bridge" class="level3" data-number="24.1.1">
-<h3 data-number="24.1.1" class="anchored" data-anchor-id="peça-1-a-tabela-de-vlans-da-bridge"><span class="header-section-number">24.1.1</span> Peça 1: a tabela de VLANs da bridge</h3>
-<p><code>/interface bridge vlan</code> é o mapa: para cada VLAN, quem participa e como:</p>
-<pre class="routeros"><code>/interface bridge vlan add bridge=bridge-sw vlan-ids=10 tagged=bridge-sw,ether2 untagged=ether3</code></pre>
-<p>Traduzindo: “a VLAN 10 existe nesta bridge; sai <strong>tagged</strong> pelo trunk <code>ether2</code> (e para a própria bridge — já explico); sai <strong>untagged</strong> pela porta de acesso <code>ether3</code>”. Na <strong>saída</strong> (egress) de cada porta, essa tabela é lei: quadro da VLAN 10 saindo pela ether3 perde a etiqueta; pela ether2, mantém; por uma porta que não está na linha, <strong>não sai</strong>.</p>
+<p>WireGuard (<a href="02-wireguard.html" class="quarto-xref"><span>Capítulo 53</span></a>) e IPsec (<a href="03-ipsec.html" class="quarto-xref"><span>Capítulo 54</span></a>) cifram <strong>camada 3</strong>. Mas o provedor tem necessidades que eles não cobrem sozinhos: <strong>transportar um protocolo de roteamento</strong> por uma interface, <strong>estender uma LAN</strong> de um POP a outro (camada 2), dar <strong>acesso remoto</strong> a quem só tem um cliente VPN comum, ou conectar caixas que <strong>não têm IP público</strong>. Este capítulo reúne os túneis que resolvem esses casos — cada um com seu nicho.</p>
+<section id="gre-a-interface-para-transportar-roteamento" class="level2" data-number="55.1">
+<h2 data-number="55.1" class="anchored" data-anchor-id="gre-a-interface-para-transportar-roteamento"><span class="header-section-number">55.1</span> GRE: a interface para transportar roteamento</h2>
+<p>O <strong>GRE</strong> (<em>Generic Routing Encapsulation</em>) encapsula IP dentro de IP e, crucialmente, <strong>cria uma interface</strong> de túnel ponto a ponto. Isso é o que faltava no IPsec policy-based: com uma interface, você roda <strong>OSPF/BGP por cima</strong> (<a href="../v08-roteamento/02-ospf-conceitos-configuracao.html" class="quarto-xref"><span>Capítulo 42</span></a>). O GRE <strong>não cifra</strong> — então o par de produção é <strong>GRE + IPsec</strong>.</p>
+<pre class="routeros"><code># POP-A: interface GRE ponto a ponto
+/interface gre
+add name=gre-ab remote-address=&lt;publico-B&gt; local-address=&lt;publico-A&gt;
+/ip address add address=10.255.1.1/30 interface=gre-ab
+
+# cifrar o GRE com IPsec (o campo ipsec-secret liga os dois)
+/interface gre set gre-ab ipsec-secret="Ch@ve-GRE-2026"</code></pre>
+<p>O <code>ipsec-secret</code> faz o RouterOS montar <strong>automaticamente</strong> a policy IPsec que protege esse GRE — a forma mais limpa de ter “GRE cifrado”. Com a interface <code>gre-ab</code> de pé, o OSPF a trata como qualquer enlace PtP (<code>type=ptp</code>). É o alicerce do <a href="05-interligacao-pops.html" class="quarto-xref"><span>Capítulo 56</span></a>.</p>
 </section>
-<section id="peça-2-o-pvid-a-etiqueta-de-entrada" class="level3" data-number="24.1.2">
-<h3 data-number="24.1.2" class="anchored" data-anchor-id="peça-2-o-pvid-a-etiqueta-de-entrada"><span class="header-section-number">24.1.2</span> Peça 2: o PVID — a etiqueta de entrada</h3>
-<p>E o quadro <strong>untagged</strong> que <em>chega</em> a uma porta — de que VLAN ele é? A resposta é o <strong>PVID</strong> (<em>Port VLAN ID</em>) da porta:</p>
-<pre class="routeros"><code>/interface bridge port set [find interface=ether3] pvid=10</code></pre>
-<p>Todo quadro sem etiqueta que entrar pela <code>ether3</code> é internamente tratado como VLAN 10. PVID é o “carimbo de entrada” — e o par tabela-de-saída + PVID-de-entrada define os dois papéis clássicos:</p>
-<div id="tbl-port-roles" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-tbl figure">
-<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-port-roles-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabela&nbsp;24.1: As receitas de porta access e trunk
-</figcaption>
-<div aria-describedby="tbl-port-roles-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<table class="caption-top table">
-<colgroup>
-<col style="width: 16%">
-<col style="width: 38%">
-<col style="width: 14%">
-<col style="width: 30%">
-</colgroup>
-<thead>
-<tr class="header">
-<th style="text-align: left;">Papel</th>
-<th style="text-align: left;">Na tabela vlan</th>
-<th style="text-align: left;">PVID</th>
-<th style="text-align: left;">frame-types</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;"><strong>access</strong> (VLAN 10)</td>
-<td style="text-align: left;"><code>untagged=porta</code> na VLAN 10</td>
-<td style="text-align: left;">10</td>
-<td style="text-align: left;"><code>admit-only-untagged-and-priority-tagged</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;"><strong>trunk</strong></td>
-<td style="text-align: left;"><code>tagged=porta</code> em cada VLAN transportada</td>
-<td style="text-align: left;">(irrelevante se só aceita tagged)</td>
-<td style="text-align: left;"><code>admit-only-vlan-tagged</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-</figure>
-</div>
-</section>
-<section id="peça-3-frame-types-o-que-a-porta-admite" class="level3" data-number="24.1.3">
-<h3 data-number="24.1.3" class="anchored" data-anchor-id="peça-3-frame-types-o-que-a-porta-admite"><span class="header-section-number">24.1.3</span> Peça 3: <code>frame-types</code> — o que a porta admite</h3>
-<p>O terceiro controle é o filtro de <strong>entrada</strong> (ingress): que tipos de quadro a porta aceita?</p>
-<ul>
-<li><code>admit-all</code> (padrão): tagged e untagged;</li>
-<li><code>admit-only-untagged-and-priority-tagged</code>: só untagged — a porta access ortodoxa: se o cliente mandar quadro etiquetado (como o r3 “esperto” do capítulo passado), <strong>descarte</strong>;</li>
-<li><code>admit-only-vlan-tagged</code>: só tagged — o trunk ortodoxo: quadro sem etiqueta num tronco é acidente ou ataque à VLAN nativa; descarte.</li>
-</ul>
-<p>Com as três peças, o caminho do quadro fecha: <strong>ingress</strong> (frame-types admite? untagged ganha o PVID) → comutação <strong>dentro da VLAN</strong> (host table por VLAN) → <strong>egress</strong> (a tabela diz se sai e se sai tagged/untagged).</p>
-<div class="callout callout-style-default callout-tip callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Dica</span>Analogia para guardar
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>O switch filtrado é uma <strong>portaria de eventos com pulseiras</strong>: na entrada, o segurança da porta confere o traje (frame-types) e coloca a pulseira da casa em quem chega sem (PVID); lá dentro, cada salão é uma VLAN; na saída, a porta VIP mantém a pulseira (tagged, trunk) e a porta do salão único a corta (untagged, access). Pulseira trazida de casa não vale: quem manda é a portaria.</p>
-</div>
-</div>
-</section>
-</section>
-<section id="a-gerência-e-a-pegadinha-do-taggedbridge" class="level2" data-number="24.2">
-<h2 data-number="24.2" class="anchored" data-anchor-id="a-gerência-e-a-pegadinha-do-taggedbridge"><span class="header-section-number">24.2</span> A gerência e a pegadinha do <code>tagged=bridge</code></h2>
-<p>Releia a linha da tabela: <code>tagged=bridge-sw,ether2</code>. Por que a <strong>própria bridge</strong> aparece como membro tagged?</p>
-<p>Porque o switch também é um equipamento com IP de gerência — e se a gerência mora numa VLAN (como deve, <a href="05-segmentacao-rede-provedor.html" class="quarto-xref"><span>Capítulo 26</span></a>), os quadros dela precisam chegar <strong>à CPU do próprio switch</strong>. Na arquitetura do RouterOS, a CPU é alcançada “saindo” pela interface bridge: incluir a bridge como <code>tagged</code> na VLAN é abrir o cano entre aquela VLAN e o cérebro do equipamento — e é sobre esse cano que a <code>/interface vlan</code> de gerência (com o IP) se pendura:</p>
-<pre class="routeros"><code>/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-sw
-/ip address add address=10.99.0.2/24 interface=vlan99-ger</code></pre>
-<p>Esquecer o <code>bridge</code> na lista tagged da VLAN 99 = gerência morta no momento em que o filtering ligar. O que nos leva à pegadinha-mor:</p>
+<section id="eoip-esticar-a-camada-2-entre-sites" class="level2" data-number="55.2">
+<h2 data-number="55.2" class="anchored" data-anchor-id="eoip-esticar-a-camada-2-entre-sites"><span class="header-section-number">55.2</span> EoIP: esticar a camada 2 entre sites</h2>
+<p>O <strong>EoIP</strong> (<em>Ethernet over IP</em>, proprietário MikroTik) transporta <strong>quadros Ethernet</strong> — camada 2 — dentro de IP. O resultado: dois sites distantes ficam no <strong>mesmo domínio de broadcast</strong>, como se um cabo ligasse as bridges. Útil para levar uma VLAN de gerência a um POP remoto, ou unir dois pontos que precisam de L2 comum.</p>
+<pre class="routeros"><code># EoIP e adição à bridge (os dois lados na mesma bridge = mesma L2)
+/interface eoip
+add name=eoip-ab remote-address=&lt;publico-B&gt; tunnel-id=100 ipsec-secret="Ch@ve-EoIP"
+/interface bridge port add bridge=br-gerencia interface=eoip-ab</code></pre>
 <div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -773,10 +701,71 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><strong><code>vlan-filtering=yes</code> é a última linha, nunca a primeira.</strong> No momento em que o filtering liga, a tabela de VLANs vira lei — e tudo que não está nela <strong>para de passar</strong>, incluindo o seu acesso. A ordem segura: (1) montar a tabela <code>/interface bridge vlan</code> completa (com a bridge nos tagged das VLANs de gerência); (2) configurar PVIDs e frame-types das portas; (3) conferir tudo com <code>print</code>; (4) <strong>só então</strong> ligar o filtering — de preferência com acesso por um caminho fora da bridge (nossa <code>ether1</code> de gerência do laboratório, o console serial no CRS real) e Safe Mode.</p>
+<p>Estender camada 2 é <strong>poderoso e perigoso</strong>. Você une domínios de broadcast: uma tempestade de broadcast, um loop de STP ou um DHCP rogue em um POP <strong>contamina o outro</strong>. Use EoIP com parcimônia, sempre com <strong>STP</strong> ativo, e prefira <strong>rotear</strong> (L3) a <strong>esticar</strong> (L2) sempre que possível. L2 estendido é a última opção, não a primeira.</p>
 </div>
 </div>
-<p>Uma nota de desempenho para fechar a teoria: nos <strong>CRS3xx</strong>, tudo isso — tabela, PVID, frame-types — é programado <strong>no switch chip</strong>: filtering com flag <code>H</code> viva, em velocidade de fio (<a href="01-bridge-hardware-offload.html" class="quarto-xref"><span>Capítulo 22</span></a>). Nos CRS1xx/2xx antigos, ligar o filtering derruba o tráfego para a CPU — lá, usa-se o menu legado do chip (<a href="04-switch-chip-crs.html" class="quarto-xref"><span>Capítulo 25</span></a>). Saber <strong>qual</strong> dos dois mundos é o seu equipamento é o primeiro passo de qualquer projeto de POP.</p>
+</section>
+<section id="l2tp-e-sstp-acesso-remoto" class="level2" data-number="55.3">
+<h2 data-number="55.3" class="anchored" data-anchor-id="l2tp-e-sstp-acesso-remoto"><span class="header-section-number">55.3</span> L2TP e SSTP: acesso remoto</h2>
+<p>Para dar <strong>acesso remoto</strong> a um técnico ou a um cliente com cliente VPN padrão (Windows, celular), dois protocolos servem:</p>
+<ul>
+<li><strong>L2TP/IPsec</strong>: L2TP puro <strong>não cifra</strong>; na prática usa-se sempre <strong>L2TP sobre IPsec</strong>. Amplamente suportado por sistemas operacionais, bom para “VPN de acesso” clássica;</li>
+<li><strong>SSTP</strong>: roda sobre <strong>TLS em TCP/443</strong> — logo, <strong>atravessa quase qualquer firewall/proxy</strong> (parece HTTPS). É a escolha quando o técnico está numa rede hostil que bloqueia UDP e portas de VPN. Precisa de <strong>certificado</strong> no servidor.</li>
+</ul>
+<pre class="routeros"><code># servidor L2TP com IPsec (use-ipsec) e pool para os clientes
+/interface l2tp-server server set enabled=yes use-ipsec=yes ipsec-secret="Ch@ve-L2TP"
+/ppp secret add name=tecnico1 service=l2tp password="senha-forte" profile=default
+
+# servidor SSTP (TCP/443) — exige certificado
+/interface sstp-server server set enabled=yes certificate=cert-sstp port=443</code></pre>
+<p>Note o reuso do que você já sabe: L2TP e SSTP são <strong>serviços PPP</strong> (<a href="../v06-pppoe/02-pppoe-server-profiles-pools.html" class="quarto-xref"><span>Capítulo 34</span></a>) — usam <code>ppp secret</code>/profiles/pools exatamente como o PPPoE, e podem autenticar por <strong>RADIUS</strong> (<a href="../v06-pppoe/03-radius-user-manager-gestao.html" class="quarto-xref"><span>Capítulo 35</span></a>). Acesso remoto é PPPoE “pela internet”.</p>
+</section>
+<section id="zerotier-malha-que-atravessa-nat" class="level2" data-number="55.4">
+<h2 data-number="55.4" class="anchored" data-anchor-id="zerotier-malha-que-atravessa-nat"><span class="header-section-number">55.4</span> ZeroTier: malha que atravessa NAT</h2>
+<p>E quando <strong>nenhum</strong> dos lados tem IP público — os dois atrás de CGNAT? Os túneis anteriores precisam de alguém “alcançável” para iniciar. O <strong>ZeroTier</strong> resolve com uma <strong>malha gerenciada na nuvem</strong>: os nós se registram num controlador (ZeroTier Central), que os ajuda a <strong>furar o NAT</strong> dos dois lados (hole punching) e a formar uma rede virtual L2/L3. Ideal para gerência de CPEs e roteadores sem IP público.</p>
+<pre class="routeros"><code># habilitar ZeroTier e juntar-se a uma rede (ID vem do painel ZeroTier)
+/zerotier set zt1 comment="malha de gerencia"
+/zerotier interface add network=&lt;network-id&gt; instance=zt1</code></pre>
+<p>O trade-off: você depende de um <strong>serviço externo</strong> (o controlador na nuvem) e de uma conta ZeroTier. Para gerência, costuma valer; para tráfego crítico de produção, prefira túneis que você controla ponta a ponta.</p>
+</section>
+<section id="escolhendo-entre-eles" class="level2" data-number="55.5">
+<h2 data-number="55.5" class="anchored" data-anchor-id="escolhendo-entre-eles"><span class="header-section-number">55.5</span> Escolhendo entre eles</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Necessidade</th>
+<th>Escolha</th>
+<th>Por quê</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Rodar OSPF/BGP cifrado entre POPs</td>
+<td><strong>GRE + IPsec</strong></td>
+<td>Interface + criptografia</td>
+</tr>
+<tr class="even">
+<td>Esticar VLAN/L2 entre sites</td>
+<td><strong>EoIP (+IPsec)</strong></td>
+<td>Transporta Ethernet</td>
+</tr>
+<tr class="odd">
+<td>Acesso remoto de técnico/cliente</td>
+<td><strong>L2TP/IPsec</strong> ou <strong>SSTP</strong></td>
+<td>Cliente VPN padrão; SSTP fura firewall</td>
+</tr>
+<tr class="even">
+<td>Ambos os lados atrás de CGNAT</td>
+<td><strong>ZeroTier</strong></td>
+<td>Malha na nuvem fura o NAT</td>
+</tr>
+</tbody>
+</table>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -787,73 +776,57 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Com VLAN filtering, quem manda é o <strong>switch</strong>, não as pontas: ingress (frame-types + PVID) decide o que entra e com que VLAN; a tabela <code>/interface bridge vlan</code> decide por onde sai e se sai tagged. Porta access e trunk são só combinações dessas peças (<a href="#tbl-port-roles" class="quarto-xref">Tabela&nbsp;<span>24.1</span></a>). E a liturgia de ativação — tabela primeiro, bridge tagged para gerência, filtering por último — é o que separa a segmentação do POP de uma viagem até ele.</p>
+<p>Estes túneis preenchem os nichos que WireGuard/IPsec sozinhos não cobrem: <strong>GRE</strong> dá a <strong>interface</strong> para roteamento dinâmico (cifre com IPsec); <strong>EoIP</strong> estende <strong>camada 2</strong> (com o risco de unir domínios de broadcast — use com cuidado); <strong>L2TP/SSTP</strong> dão <strong>acesso remoto</strong> com cliente padrão (SSTP fura firewall em 443); <strong>ZeroTier</strong> conecta quem <strong>não tem IP público</strong>. A regra de escolha é sempre a mesma do <a href="01-panorama-tuneis.html" class="quarto-xref"><span>Capítulo 52</span></a>: <strong>que camada</strong> e <strong>cifra ou não</strong> — e, em todos, respeite o <strong>MTU/MSS</strong>.</p>
 </div>
 </div>
 </section>
-<section id="laboratório" class="level2" data-number="24.3">
-<h2 data-number="24.3" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">24.3</span> 🧪 Laboratório</h2>
-<section id="ambiente" class="level3" data-number="24.3.1">
-<h3 data-number="24.3.1" class="anchored" data-anchor-id="ambiente"><span class="header-section-number">24.3.1</span> Ambiente</h3>
-<p>Os três CHRs com papéis novos: <strong><code>lab-r2</code> será o switch</strong>. No VirtualBox, devolva o Adaptador 2 de <code>lab-r3</code> para a rede interna <strong><code>lab-b</code></strong> (desfazendo o ajuste do <a href="01-bridge-hardware-offload.html" class="quarto-xref"><span>Capítulo 22</span></a>). Topologia:</p>
-<ul>
-<li><code>lab-r1</code> (roteador): <code>ether2</code> → lab-a — já tem a <code>vlan10-svc</code> (<code>10.10.0.1/24</code>) sobre a <code>bridge-lan</code> (<a href="02-vlans-8021q.html" class="quarto-xref"><span>Capítulo 23</span></a>);</li>
-<li><code>lab-r2</code> (switch): <code>ether2</code> → lab-a (<strong>trunk</strong> para o r1), <code>ether3</code> → lab-b (<strong>access VLAN 10</strong> para o r3). Gerência intacta pela <code>ether1</code> (fora da bridge — nosso “console serial”);</li>
-<li><code>lab-r3</code> (dispositivo final): <code>ether2</code> → lab-b, <strong>sem nenhuma configuração de VLAN</strong> — o ponto do exercício.</li>
-</ul>
-<p>Limpe no r2 as interfaces vlan do capítulo anterior (<code>/interface vlan remove [find]</code> após remover os IPs correspondentes: <code>/ip address remove [find interface~"vlan"]</code>).</p>
+<section id="laboratório" class="level2" data-number="55.6">
+<h2 data-number="55.6" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">55.6</span> 🧪 Laboratório</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Ambiente
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Dois CHRs (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>) como POPs (<strong>lab-a</strong>, <strong>lab-b</strong>) com IPs “públicos” alcançáveis e uma LAN interna cada. Um terceiro CHR <strong>lab-tec</strong> simula o “técnico remoto” para o acesso L2TP/SSTP. O foco é GRE+IPsec (transportar roteamento) e um serviço de acesso remoto.</p>
+</div>
+</div>
+<section id="comandos-passo-a-passo" class="level3" data-number="55.6.1">
+<h3 data-number="55.6.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">55.6.1</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — GRE cifrado entre os POPs.</strong> No lab-a (e espelho no lab-b):</p>
+<pre class="routeros"><code>/interface gre add name=gre-ab remote-address=&lt;publico-b&gt; ipsec-secret="lab-gre"
+/ip address add address=10.255.1.1/30 interface=gre-ab</code></pre>
+<p>No lab-b: <code>10.255.1.2/30</code> e <code>remote-address=&lt;publico-a&gt;</code>.</p>
+<p><strong>Passo 2 — OSPF sobre o GRE.</strong> Rode OSPF (<a href="../v08-roteamento/02-ospf-conceitos-configuracao.html" class="quarto-xref"><span>Capítulo 42</span></a>) na interface <code>gre-ab</code> dos dois lados (<code>type=ptp</code>) e confirme a adjacência <code>Full</code> — o roteamento dinâmico viajando cifrado.</p>
+<pre class="routeros"><code>/routing ospf interface-template add interfaces=gre-ab area=backbone type=ptp
+/routing ospf neighbor print</code></pre>
+<p><strong>Passo 3 — prove que está cifrado.</strong> Verifique que o IPsec subiu automaticamente com o GRE:</p>
+<pre class="routeros"><code>/ip ipsec active-peers print</code></pre>
+<p><strong>Passo 4 — acesso remoto SSTP.</strong> No lab-a, habilite o SSTP-server (com um certificado autoassinado para o lab) e crie um usuário; no lab-tec, conecte como cliente SSTP e alcance a LAN do POP.</p>
+<pre class="routeros"><code>/interface sstp-server server set enabled=yes certificate=cert-lab
+/ppp secret add name=tecnico service=sstp password="lab-forte"</code></pre>
+<p><strong>Passo 5 — MSS clamp.</strong> Aplique o clamp (<a href="01-panorama-tuneis.html" class="quarto-xref"><span>Capítulo 52</span></a>) nas interfaces de túnel e teste uma transferência maior entre as LANs.</p>
 </section>
-<section id="comandos-passo-a-passo" class="level3" data-number="24.3.2">
-<h3 data-number="24.3.2" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">24.3.2</span> Comandos passo a passo</h3>
-<p><strong>Passo 1 — a bridge do switch.</strong> Em <code>lab-r2</code>:</p>
-<pre class="routeros"><code>/interface bridge add name=bridge-sw comment="switch do lab"
-/interface bridge port add bridge=bridge-sw interface=ether2
-/interface bridge port add bridge=bridge-sw interface=ether3</code></pre>
-<p><strong>Passo 2 — a tabela ANTES do filtering.</strong> A VLAN 10 sai tagged pelo trunk e untagged pela porta do r3; e já deixamos a bridge como membro tagged (gerência futura na VLAN — desafio 3 usa):</p>
-<pre class="routeros"><code>/interface bridge vlan add bridge=bridge-sw vlan-ids=10 tagged=bridge-sw,ether2 untagged=ether3</code></pre>
-<p><strong>Passo 3 — os papéis das portas.</strong> Trunk ortodoxo na ether2, access ortodoxo na ether3:</p>
-<pre class="routeros"><code>/interface bridge port set [find interface=ether2] frame-types=admit-only-vlan-tagged
-/interface bridge port set [find interface=ether3] pvid=10 frame-types=admit-only-untagged-and-priority-tagged</code></pre>
-<p><strong>Passo 4 — conferir, e só então ligar.</strong> A liturgia:</p>
-<pre class="routeros"><code>/interface bridge vlan print
-/interface bridge port print
-/interface bridge set bridge-sw vlan-filtering=yes</code></pre>
-<p>(Seu SSH ao r2 chega pela <code>ether1</code>, fora da bridge — o filtering não o toca. Num CRS real, este seria o momento do Safe Mode.)</p>
-<p><strong>Passo 5 — o milagre do access.</strong> Em <code>lab-r3</code> — que não sabe o que é VLAN — apenas um endereço na rede da VLAN 10:</p>
-<pre class="routeros"><code>/ip address add address=10.10.0.30/24 interface=ether2
-/ping 10.10.0.1 count=3</code></pre>
-<p><strong>Funciona.</strong> Acompanhe o quadro: sai do r3 untagged → entra na ether3 do switch (frame-types admite; PVID carimba VLAN 10) → comutado na VLAN 10 → sai pelo trunk ether2 <strong>tagged</strong> → chega ao r1, cuja <code>vlan10-svc</code> sobre a bridge o reconhece. O r3 nunca soube da etiqueta — o switch cuidou de tudo. É exatamente assim que a ONU do cliente recebe “a VLAN de PPPoE” sem saber.</p>
-<p><strong>Passo 6 — a lei nas portas.</strong> Duas tentativas de violação:</p>
-<ol type="a">
-<li>Em <code>lab-r3</code>, banque o esperto do capítulo passado — tente entrar tagged pela porta access:</li>
-</ol>
-<pre class="routeros"><code>/interface vlan add name=vlan10 vlan-id=10 interface=ether2
-/ip address add address=10.10.0.31/24 interface=vlan10
-/ping 10.10.0.1 count=3</code></pre>
-<p><strong>Silêncio total</strong> — o <code>frame-types</code> da access descarta quadros etiquetados na entrada. A tranca que faltava no <a href="02-vlans-8021q.html" class="quarto-xref"><span>Capítulo 23</span></a> existe. Desfaça (<code>/ip address remove [find interface=vlan10]</code>, <code>/interface vlan remove vlan10</code>).</p>
-<ol start="2" type="a">
-<li>Em <code>lab-r1</code>, tente uma VLAN que <strong>não está na tabela</strong> do switch:</li>
-</ol>
-<pre class="routeros"><code>/interface vlan add name=vlan30-teste vlan-id=30 interface=bridge-lan
-/ip address add address=10.30.0.1/24 interface=vlan30-teste</code></pre>
-<p>De <code>lab-r3</code>… nada a testar: a VLAN 30 morre no trunk do r2 (egress: não está na tabela, não sai por porta nenhuma). Confirme no r2 que só a 10 (e a 1 padrão) existem: <code>/interface bridge vlan print</code>. Limpe o teste no r1.</p>
-</section>
-<section id="verificação" class="level3" data-number="24.3.3">
-<h3 data-number="24.3.3" class="anchored" data-anchor-id="verificação"><span class="header-section-number">24.3.3</span> Verificação</h3>
+<section id="verificação" class="level3" data-number="55.6.2">
+<h3 data-number="55.6.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">55.6.2</span> Verificação</h3>
 <ol type="1">
-<li><code>/interface bridge vlan print</code> no r2 mostra a VLAN 10 com <code>tagged=bridge-sw,ether2</code> e <code>untagged=ether3</code> (a flag <code>D</code> da VLAN 1 padrão é normal);</li>
-<li>O r3, <strong>sem configuração de VLAN</strong>, pinga <code>10.10.0.1</code> através do switch — access + PVID funcionando;</li>
-<li>As duas violações do Passo 6 falharam em silêncio (tagged na access; VID fora da tabela no trunk);</li>
-<li>Sua gerência ao r2 continuou viva o tempo todo (ela está fora da bridge — e você sabe por que isso importou).</li>
+<li>GRE de pé, com <strong>IPsec ativo</strong> (cifrado) — <code>active-peers</code> mostra a SA;</li>
+<li>OSPF forma adjacência <code>Full</code> <strong>sobre</strong> o GRE (roteamento dinâmico cifrado);</li>
+<li>O técnico remoto conecta por SSTP e alcança a LAN do POP;</li>
+<li>Com MSS clamp, transferências grandes não travam.</li>
 </ol>
 </section>
-<section id="desafios" class="level3" data-number="24.3.4">
-<h3 data-number="24.3.4" class="anchored" data-anchor-id="desafios"><span class="header-section-number">24.3.4</span> Desafios</h3>
+<section id="desafios" class="level3" data-number="55.6.3">
+<h3 data-number="55.6.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">55.6.3</span> Desafios</h3>
 <ol type="1">
-<li>No Passo 6a, o quadro do r3 morreu na <strong>entrada</strong> da porta access. Se o <code>frame-types</code> fosse o padrão <code>admit-all</code>, o ataque funcionaria? Percorra ingress → comutação → egress e responda com precisão.</li>
-<li>Migre a gerência do <strong>r2</strong> para dentro da VLAN 99 pelo trunk: acrescente a VLAN 99 à tabela (quem é tagged?), crie a <code>/interface vlan</code> sobre a bridge com IP <code>10.99.0.2/24</code> e a contraparte no r1 (<code>10.99.0.1/24</code> sobre a bridge-lan). Liste os comandos nos dois lados e o teste. (Não desative a ether1 — rede de segurança do laboratório.)</li>
-<li>Um trunk com <code>pvid=1</code> e <code>frame-types=admit-all</code> transporta as VLANs 10 e 20. Explique o ataque clássico de <strong>VLAN hopping</strong> por dupla etiqueta (802.1Q-in-802.1Q) que essa configuração permite — e como as receitas da <a href="#tbl-port-roles" class="quarto-xref">Tabela&nbsp;<span>24.1</span></a> o previnem.</li>
-<li>No CRS326 do POP, você ligou <code>vlan-filtering=yes</code> e o tráfego continuou em velocidade de fio; no CRS125 antigo do armário, a CPU foi a 100%. Explique a diferença — e onde a configuração de VLAN do CRS125 deveria viver (dica: próximo capítulo).</li>
+<li>Você montou o GRE e o OSPF formou adjacência, mas quer garantir que ninguém no caminho leia o tráfego. Como confirma que o GRE está <strong>realmente</strong> cifrado, e o que aconteceria sem o <code>ipsec-secret</code>?</li>
+<li>Um técnico esticou por <strong>EoIP</strong> a VLAN de gerência de dois POPs e, dias depois, um loop em um POP derrubou a gerência <strong>dos dois</strong>. Explique o mecanismo e duas medidas que teriam contido o estrago.</li>
+<li>Um cliente corporativo em viagem precisa de VPN, mas a rede do hotel bloqueia UDP e portas de VPN — só deixa passar navegação web. Qual protocolo deste capítulo funciona, e por quê?</li>
+<li>Você precisa gerenciar 200 CPEs, <strong>todos</strong> atrás de CGNAT, sem IP público em nenhum. Qual solução do capítulo se aplica, qual é o trade-off que você aceita, e por que os túneis “clássicos” não servem aqui?</li>
 </ol>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
@@ -867,41 +840,48 @@ Aviso
 </div>
 <div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p><strong>1.</strong> Com <code>admit-all</code> no ingress, o quadro tagged VID 10 <strong>entraria</strong>. Comutação: ele pertence à VLAN 10, que existe na bridge — segue. Egress pelo trunk: a tabela permite a 10 tagged — <strong>sai</strong>. Ou seja: sim, o ataque voltaria a funcionar; a única defesa da porta access contra etiquetas trazidas de casa é o <code>frame-types</code> restritivo. (O PVID não ajuda aqui — ele só age sobre quadros <em>sem</em> etiqueta.)</p>
-<p><strong>2.</strong> No r2:</p>
-<pre class="routeros"><code>/interface bridge vlan add bridge=bridge-sw vlan-ids=99 tagged=bridge-sw,ether2
-/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-sw
-/ip address add address=10.99.0.2/24 interface=vlan99-ger</code></pre>
-<p>No r1:</p>
-<pre class="routeros"><code>/interface vlan add name=vlan99-ger vlan-id=99 interface=bridge-lan
-/ip address add address=10.99.0.1/24 interface=vlan99-ger</code></pre>
-<p>Teste: do r1, <code>/ping 10.99.0.2</code>. Os pontos didáticos: a VLAN 99 é tagged <strong>no trunk e na própria bridge</strong> (sem <code>bridge-sw</code> na lista, o IP de gerência nunca veria os quadros), e <strong>não</strong> aparece na ether3 — o r3 não tem como alcançá-la.</p>
-<p><strong>3.</strong> O atacante numa porta com PVID 1 envia quadro com <strong>duas</strong> tags: externa VID 1, interna VID 20. O switch remove a externa (casa com o PVID/nativa do trunk em alguns cenários de egress untagged) e reenvia — o quadro chega ao próximo switch <strong>com a tag interna exposta</strong> (VID 20): o atacante injetou tráfego na VLAN 20 sem pertencer a ela. As receitas previnem por três lados: trunk <code>admit-only-vlan-tagged</code> sem VLAN nativa untagged (nada sai untagged no trunk), PVID de access em VLAN sem privilégio, e a VLAN 1 fora do uso (nem na tabela).</p>
-<p><strong>4.</strong> O CRS326 (série 3xx) programa o filtering <strong>no switch chip</strong> — a CPU só vê o que é para ela (gerência); dados correm em hardware com a flag <code>H</code>. O CRS125 (série 1xx) não sabe fazer 802.1Q da bridge no chip: <code>vlan-filtering=yes</code> derruba a comutação para a CPU — 100% e vazão de roteadorzinho. No CRS125, a VLAN se configura no <strong>menu legado do switch chip</strong> (<code>/interface ethernet switch</code>), assunto do <a href="04-switch-chip-crs.html" class="quarto-xref"><span>Capítulo 25</span></a> — o mesmo resultado, programado na linguagem daquele hardware.</p>
+<p><strong>1.</strong> Confirme com <code>/ip ipsec active-peers print</code> e <code>installed-sa</code> — se há SA ativa para os endpoints do GRE e os contadores sobem, o tráfego vai cifrado. <strong>Sem</strong> o <code>ipsec-secret</code>, o GRE transporta tudo <strong>em claro</strong>: qualquer um no caminho (a operadora de trânsito, um atacante no meio) lê o conteúdo, incluindo os pacotes OSPF. GRE puro <strong>não</strong> protege nada.</p>
+<p><strong>2.</strong> EoIP uniu os <strong>domínios de broadcast</strong> dos dois POPs; um loop de camada 2 num POP gera tempestade de broadcast que atravessa o túnel e satura a gerência <strong>do outro</strong> também. Contenção: (a) <strong>STP</strong> ativo na bridge (detecta e bloqueia o loop); (b) limitar/segmentar o que trafega no L2 estendido (ou, melhor, <strong>rotear</strong> em vez de esticar). L2 estendido propaga falhas — por isso é a última opção.</p>
+<p><strong>3.</strong> <strong>SSTP</strong>: roda sobre <strong>TLS em TCP/443</strong>, indistinguível de HTTPS. Como o hotel libera navegação web (443), o SSTP passa onde L2TP/IPsec (UDP 500/4500) e WireGuard (UDP) são bloqueados. É a razão de existir do SSTP: atravessar firewalls restritivos.</p>
+<p><strong>4.</strong> <strong>ZeroTier</strong>: forma uma malha gerenciada na nuvem que <strong>fura o NAT</strong> dos dois lados via hole punching, então funciona mesmo com todos os CPEs atrás de CGNAT sem IP público. Trade-off aceito: <strong>dependência de um serviço externo</strong> (o controlador ZeroTier) e de uma conta. Os túneis clássicos (WireGuard peer fixo, IPsec, GRE, SSTP) precisam que <strong>um</strong> lado seja alcançável de fora — o que não existe quando ambos estão atrás de CGNAT.</p>
 </div>
 </div>
 </div>
 </section>
 </section>
-<section id="resumo" class="level2" data-number="24.4">
-<h2 data-number="24.4" class="anchored" data-anchor-id="resumo"><span class="header-section-number">24.4</span> Resumo</h2>
+<section id="resumo" class="level2" data-number="55.7">
+<h2 data-number="55.7" class="anchored" data-anchor-id="resumo"><span class="header-section-number">55.7</span> Resumo</h2>
 <ul>
-<li>VLAN filtering transforma a bridge em <strong>switch que policia</strong>: ingress (<code>frame-types</code> + <strong>PVID</strong> carimbando untagged), comutação por VLAN, egress pela tabela <strong><code>/interface bridge vlan</code></strong> (sai/não sai; tagged/untagged).</li>
-<li><strong>Access</strong> = untagged na tabela + PVID + só-untagged; <strong>trunk</strong> = tagged na tabela + só-tagged (<a href="#tbl-port-roles" class="quarto-xref">Tabela&nbsp;<span>24.1</span></a>) — e etiqueta trazida pelo cliente morre na porta.</li>
-<li>Gerência em VLAN exige a <strong>bridge como membro tagged</strong> e a <code>/interface vlan</code> sobre a bridge — esquecer é gerência morta.</li>
-<li>Liturgia de ativação: <strong>tabela → portas → conferir → filtering por último</strong>, com acesso alternativo garantido (console/ether fora da bridge) — <code>vlan-filtering=yes</code> prematuro é a viagem clássica ao POP.</li>
-<li>CRS3xx: filtering em hardware (<code>H</code> vivo); CRS1xx/2xx: filtering na CPU — lá, o caminho é o switch chip legado (próximo capítulo).</li>
+<li><strong>GRE</strong> cria <strong>interface</strong> para roteamento dinâmico entre POPs; <strong>não cifra</strong> — use <strong>GRE + IPsec</strong> (<code>ipsec-secret</code>), o desenho recomendado;</li>
+<li><strong>EoIP</strong> estende <strong>camada 2</strong> (mesmo domínio de broadcast) — poderoso e <strong>perigoso</strong>: STP obrigatório, prefira rotear a esticar;</li>
+<li><strong>L2TP/IPsec</strong> e <strong>SSTP</strong> dão <strong>acesso remoto</strong> com cliente VPN padrão (reusam PPP/RADIUS); <strong>SSTP</strong> em TCP/443 <strong>fura firewalls</strong>;</li>
+<li><strong>ZeroTier</strong> conecta caixas <strong>sem IP público</strong> (ambos atrás de CGNAT), ao custo de depender de um controlador na nuvem;</li>
+<li>Escolha por camada + criptografia, e <strong>respeite o MTU/MSS</strong> em todos.</li>
 </ul>
-<p>No próximo capítulo, descemos ao porão: o <strong>switch chip</strong> dos CRS — o menu legado, as diferenças entre gerações e como extrair velocidade de fio de cada uma.</p>
+<p>Com o arsenal completo de túneis, o volume fecha aplicando tudo ao problema real do provedor: <strong>interligar POPs</strong> de forma resiliente e cifrada, com roteamento dinâmico por cima. É o <a href="05-interligacao-pops.html" class="quarto-xref"><span>Capítulo 56</span></a>.</p>
 </section>
 <section id="bibliografia-do-capítulo" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
-<p>A página <em>Bridge VLAN Filtering</em> da documentação oficial <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span> é a referência canônica — inclusive a tabela de quais modelos fazem filtering em hardware. Os guias <em>Basic VLAN switching</em> da mesma documentação cobrem cenários por família de produto. As referências completas, em ABNT, estão no apêndice <a href="../../referencias.html">Referências</a>.</p>
+<ul>
+<li>Documentação oficial: <em>GRE, EoIP, L2TP, SSTP, ZeroTier</em> do RouterOS <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
+<li>Encapsulamento L2/L3 e VPN de acesso: <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
+<li>Túneis no v7 na prática: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
+<li>Interligação e acesso remoto em provedores: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
+</ul>
 
 
 <div id="refs" class="references csl-bib-body" data-entry-spacing="1" role="list" style="display: none">
+<div id="ref-burgess-mikrotik" class="csl-entry" role="listitem">
+BURGESS, Dennis. <strong>Learn RouterOS</strong>. 2. ed. Raleigh: Lulu Press, 2011.
+</div>
+<div id="ref-discher-rosv7" class="csl-entry" role="listitem">
+DISCHER, Stephen R. W. <strong>RouterOS by Example</strong>. 2. ed. College Station: ISP Services, Inc., 2016.
+</div>
 <div id="ref-mikrotik-docs" class="csl-entry" role="listitem">
 MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikrotik.com/docs/" class="uri">https://help.mikrotik.com/docs/</a>, 2026.
+</div>
+<div id="ref-tanenbaum-redes" class="csl-entry" role="listitem">
+TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Computadores</strong>. 6. ed. Porto Alegre: Bookman, 2021.
 </div>
 </div>
 </section>
@@ -1309,13 +1289,13 @@ MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikroti
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../../volumes/v04-bridge-vlans/02-vlans-8021q.html" class="pagination-link" aria-label="VLANs e 802.1Q">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">VLANs e 802.1Q</span></span>
+      <a href="../../volumes/v10-tuneis-vpn/03-ipsec.html" class="pagination-link" aria-label="IPsec">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">54</span>&nbsp; <span class="chapter-title">IPsec</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../../volumes/v04-bridge-vlans/04-switch-chip-crs.html" class="pagination-link" aria-label="Switch chip nos CRS">
-        <span class="nav-page-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Switch chip nos CRS</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../volumes/v10-tuneis-vpn/05-interligacao-pops.html" class="pagination-link" aria-label="Interligação de POPs por túnel">
+        <span class="nav-page-text"><span class="chapter-number">56</span>&nbsp; <span class="chapter-title">Interligação de POPs por túnel</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
@@ -1324,4 +1304,4 @@ MIKROTIK. <strong>RouterOS Documentation</strong>. <a href="https://help.mikroti
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v04-bridge-vlans/03-bridge-vlan-filtering.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
