@@ -1,7 +1,292 @@
-# ECMP e load balancing PCC
+# ECMP e load balancing PCC {#sec-ecmp-pcc}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Distinguir **agregar caminhos de camada 3** (ECMP/PCC) de agregar
+  portas L2 (bonding, @sec-bonding);
+- Usar **ECMP** (rotas de mesmo custo) para balancear tráfego entre dois
+  links de trânsito e entender por que ele "gruda" fluxos (per-connection);
+- Usar **PCC** (*Per Connection Classifier*) com mangle para distribuir
+  conexões entre múltiplos links de forma **estável** — sem quebrar
+  sessões;
+- Combinar load balancing com **failover** (netwatch/check-gateway) para
+  que a queda de um link **não** derrube as conexões dos outros;
+- Reconhecer as armadilhas: NAT por link, conexões que "trocam de IP no
+  meio", e quando **BGP** (@sec-bgp-peering) é a resposta melhor.
 :::
+
+O bonding (@sec-bonding) somou **portas** entre dois equipamentos. Mas o
+provedor com **dois links de trânsito** de operadoras diferentes tem um
+problema de outra natureza: como **usar os dois ao mesmo tempo** (somar a
+banda de saída) e **sobreviver** à queda de um, na **camada 3**? Não há
+cabo para agregar — são **caminhos** distintos, com gateways distintos.
+As respostas são **ECMP** e **PCC**. Este capítulo mostra as duas, seus
+limites e quando subir para o BGP.
+
+## Camada 3: agregar caminhos, não portas
+
+A diferença essencial com o bonding: aqui os "membros" são **rotas** para
+o mesmo destino (a internet) por **gateways diferentes** — o link da
+operadora A e o da B. Balancear significa mandar **parte** das conexões
+por A e parte por B. E o desafio central do balanceamento L3 é a
+**estabilidade da conexão**: uma sessão TCP (ou um login, um HTTPS) tem
+de sair **sempre pelo mesmo link** — se os pacotes de uma conexão se
+dividirem entre A e B, o NAT de cada lado usa IPs de origem diferentes e
+a conexão **quebra**.
+
+```{.tikz}
+%%| filename: fig-ecmp-pcc
+%%| alt: Um roteador com dois links de trânsito, operadora A e operadora B, balanceando a saída para a internet. Conexões de clientes são classificadas e cada conexão inteira é enviada por um link (uma cor por link), mantendo a sessão estável. Uma nota destaca que a conexão inteira vai por um único link (per-connection), não pacote a pacote.
+\begin{tikzpicture}[
+  font=\small,
+  b/.style={draw, rounded corners, align=center, minimum height=10mm, font=\scriptsize, inner sep=3pt},
+]
+\node[b, fill=manualblue!15, minimum height=18mm] (rt) at (0,0) {roteador\\\scriptsize ECMP / PCC};
+\node[b, fill=manualgreen!18] (opa) at (4,1.1) {operadora A};
+\node[b, fill=manualyellow!22] (opb) at (4,-1.1) {operadora B};
+\node[b, fill=manualgray!20] (net) at (7.5,0) {internet};
+\draw[-{Stealth}, thick, manualgreen!60!black] (rt) -- node[above, sloped]{\scriptsize conexões 1,3,5} (opa);
+\draw[-{Stealth}, thick, manualyellow!70!black] (rt) -- node[below, sloped]{\scriptsize conexões 2,4,6} (opb);
+\draw[-{Stealth}] (opa) -- (net); \draw[-{Stealth}] (opb) -- (net);
+\node[align=center, manualred] at (2.2,-2.3) {\scriptsize conexão inteira por 1 link (per-connection), não pacote a pacote};
+\end{tikzpicture}
+```
+
+::: {#fig-ecmp-pcc}
+Balanceamento L3 correto distribui **conexões inteiras** entre os links
+(per-connection), não pacotes soltos. Cada sessão sai sempre pelo mesmo
+link — senão o NAT a quebra. É a diferença entre "usar dois links" e
+"derrubar todas as conexões".
+:::
+
+## ECMP: rotas de mesmo custo
+
+O **ECMP** (*Equal-Cost Multi-Path*) é o jeito mais simples: instale
+**duas rotas default** com o **mesmo custo**, uma para cada gateway, e o
+RouterOS balanceia entre elas:
+
+```routeros
+# duas defaults de mesmo custo -> ECMP
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-opA> check-gateway=ping
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-opB> check-gateway=ping
+```
+
+O RouterOS moderno faz ECMP **per-connection** (cada conexão nova escolhe
+um gateway e **fica** nele) — o que mantém as sessões estáveis. O
+`check-gateway=ping` dá o **failover**: se um gateway para de responder,
+sua rota é desativada e todo o tráfego vai para o outro. Simples e eficaz
+para muitos casos.
+
+Limite do ECMP: o balanceamento é "cego" (não controla proporção nem
+critério) e, historicamente, versões antigas faziam per-packet (que
+quebrava conexões). Para **controle fino**, entra o PCC.
+
+## PCC: classificar por conexão com mangle
+
+O **PCC** (*Per Connection Classifier*) é a ferramenta de balanceamento
+**controlado**. Com mangle (@sec-mangle-raw), ele calcula um **hash** de
+cada conexão (por src/dst/porta) e a atribui a um "balde" — e você
+marca-a para sair por um link específico, **estável** por toda a sua
+duração:
+
+```routeros
+# classifica conexões em 2 baldes por src+dst address e marca rota
+/ip firewall mangle
+add chain=prerouting connection-mark=no-mark dst-address-type=!local \
+    per-connection-classifier=both-addresses:2/0 \
+    action=mark-connection new-connection-mark=via-A passthrough=yes
+add chain=prerouting connection-mark=no-mark dst-address-type=!local \
+    per-connection-classifier=both-addresses:2/1 \
+    action=mark-connection new-connection-mark=via-B passthrough=yes
+# marca a rota conforme o balde
+add chain=prerouting connection-mark=via-A action=mark-routing new-routing-mark=to-A
+add chain=prerouting connection-mark=via-B action=mark-routing new-routing-mark=to-B
+```
+
+```routeros
+# cada routing-mark tem sua default (via-A/via-B)
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-opA> routing-table=to-A check-gateway=ping
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-opB> routing-table=to-B check-gateway=ping
+# e uma default "normal" para o tráfego do próprio roteador / failover
+```
+
+- `per-connection-classifier=both-addresses:2/0` = "balde 0 de 2, por
+  origem+destino" — o `connection-mark` garante que a conexão **inteira**
+  fique no mesmo balde (estável);
+- cada balde vira uma **routing-mark** com sua default (@sec-vrf) —
+  policy routing puro;
+- **NAT por link**: cada saída precisa de **masquerade na sua
+  interface** (o tráfego que sai por A tem source de A, por B de B).
+
+## Load balancing + failover juntos
+
+Balancear sem failover é frágil: se um link cai, metade das conexões
+morre. Some **`check-gateway=ping`** (ou netwatch, @sec-scheduler) a cada
+rota, de modo que a queda de um link **redirecione** suas conexões novas
+para o outro. Com PCC + check-gateway, você tem **os dois**: uso dos dois
+links **e** sobrevivência à queda de um — o balanceamento resiliente que
+o provedor quer.
+
+::: {.callout-warning}
+**NAT é a armadilha do balanceamento multi-link.** Se uma conexão sai por
+A mas o NAT a marca com IP de B (ou o failover a move no meio), o destino
+vê a origem **mudar** e **derruba** a sessão. Garanta: (1) marcação
+**per-connection** (a conexão inteira num link só); (2) **masquerade por
+interface de saída**; (3) que o failover mova só conexões **novas**, não
+as estabelecidas. Errar isso dá o sintoma clássico "a internet cai toda
+hora por alguns segundos" — na verdade, conexões trocando de IP no meio.
+:::
+
+## Quando subir para o BGP
+
+ECMP/PCC balanceiam **saída** com dois links de trânsito comuns
+(sem ASN próprio). Mas eles não controlam o tráfego de **entrada** nem
+dão a resiliência real de rotas — para isso, a resposta é o **BGP**
+(@sec-bgp-peering): com ASN e bloco próprios, você anuncia seus prefixos
+às duas operadoras, controla entrada (prepend, @sec-bgp-filtros) e saída
+(local-pref), e o roteamento é **de verdade**, não um truque de NAT.
+Regra: **PCC/ECMP** para o provedor pequeno com IPs das operadoras;
+**BGP** quando você tem ASN próprio e precisa de controle real.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+ECMP e PCC balanceiam **caminhos de camada 3** (dois links de trânsito),
+diferente do bonding (portas L2). O princípio que não se viola:
+**per-connection** — a conexão **inteira** sai sempre pelo mesmo link,
+senão o NAT a quebra. **ECMP** (duas defaults de mesmo custo +
+`check-gateway`) é o simples; **PCC** (mangle classificando por hash +
+routing-marks) é o controlado. Sempre com **failover** (`check-gateway`)
+e **masquerade por interface**. E saiba o teto: para controlar
+**entrada** e ter resiliência real, a resposta é **BGP** com ASN próprio,
+não truque de NAT.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Três CHRs (@sec-lab-chr): **lab-rt** (o roteador com dois links) ligado a
+**lab-opA** e **lab-opB** (duas "operadoras", cada uma com um gateway e
+uma "internet" atrás), e **lab-cli** na LAN gerando conexões. Objetivo:
+usar os dois links e sobreviver à queda de um sem derrubar as conexões.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — ECMP simples.** No lab-rt, duas defaults de mesmo custo com
+check-gateway:
+
+```routeros
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-A> check-gateway=ping
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-B> check-gateway=ping
+```
+
+Gere várias conexões do lab-cli e observe (Torch, @sec-torch-sniffer) que
+umas saem por A e outras por B.
+
+**Passo 2 — failover ECMP.** Derrube o gateway A (desligue lab-opA) e
+confirme que as conexões novas vão todas por B; a rota de A some
+(`/ip route print`). Religue e volta a balancear.
+
+**Passo 3 — PCC controlado.** Substitua o ECMP pela marcação PCC (blocos
+de mangle + routing-marks acima) e o **masquerade por interface**:
+
+```routeros
+/ip firewall nat add chain=srcnat out-interface=<if-A> action=masquerade
+/ip firewall nat add chain=srcnat out-interface=<if-B> action=masquerade
+```
+
+**Passo 4 — prove a estabilidade.** Abra uma conexão longa (um download,
+um SSH) e confirme que ela **não** troca de link no meio (o
+`connection-mark` a segura). Veja em `/ip firewall connection` a marca da
+conexão.
+
+**Passo 5 — failover com PCC.** Derrube um link e confirme que as
+conexões **estabelecidas** no link vivo seguem, e as do link morto
+reconectam pelo outro — sem a "internet caindo toda hora".
+
+### Verificação
+
+1. ECMP distribui conexões entre A e B; check-gateway faz failover;
+2. PCC mantém cada conexão **estável** num link (não troca no meio);
+3. Masquerade por interface evita a quebra por mudança de IP de origem;
+4. A queda de um link não derruba as conexões do outro.
+
+### Desafios
+
+1. Com dois links balanceados, os clientes reclamam que "a internet cai
+   por alguns segundos toda hora" — sessões de banco/HTTPS caem e
+   reconectam. Qual é a causa (pense em NAT/IP de origem) e as duas
+   correções?
+2. Você configurou ECMP per-packet numa versão antiga e as conexões vivem
+   quebrando. Explique por que per-packet quebra sessões e qual é a
+   abordagem correta.
+3. Um link de trânsito cai; metade das conexões morre e não volta
+   sozinha. O que faltou na configuração de rotas, e qual parâmetro/
+   ferramenta garante o failover?
+4. Quando você recomendaria **BGP** (@sec-bgp-peering) em vez de PCC para
+   um provedor com dois links? Cite o que o PCC **não** consegue fazer.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Conexões estão **trocando de link no meio** (e, portanto, de IP de
+origem no NAT), o que o destino interpreta como sessão inválida e
+derruba. Correções: (a) marcação **per-connection** (PCC com
+`connection-mark`, para a conexão inteira ficar num link); (b)
+**masquerade por interface de saída** (cada link com seu source) e
+garantir que o failover mova apenas conexões **novas**, não as
+estabelecidas.
+
+**2.** ECMP **per-packet** manda pacotes da **mesma** conexão por links
+**diferentes**; como cada link faz NAT com um IP de origem distinto, o
+destino vê a origem "pular" e considera os pacotes de sessões diferentes
+— a conexão quebra. O correto é **per-connection** (o RouterOS moderno já
+faz, ou use PCC): a conexão inteira num link só, estável do início ao fim.
+
+**3.** Faltou o **`check-gateway=ping`** (ou netwatch) nas rotas: sem ele,
+a rota do link morto **permanece ativa**, e as conexões atribuídas a ela
+continuam sendo enviadas para o buraco. Com `check-gateway=ping`, a rota
+do gateway que não responde é **desativada**, e o tráfego (novo) vai para
+o link vivo — o failover que faltava.
+
+**4.** **BGP** quando o provedor tem **ASN e bloco próprios** e precisa
+de **controle real de roteamento**: influenciar o tráfego de **entrada**
+(prepend/communities, @sec-bgp-filtros), ter resiliência de rotas de
+verdade (não truque de NAT) e não depender de masquerade. O PCC **não**
+controla entrada (a decisão é do outro AS), não anuncia seus prefixos e
+depende de NAT — limites que o BGP remove. PCC é para o provedor pequeno
+com IPs das operadoras; BGP é o passo profissional.
+:::
+
+## Resumo
+
+- **ECMP/PCC** agregam e balanceiam **caminhos de camada 3** (links de
+  trânsito) — diferente do **bonding** (portas L2);
+- Princípio inviolável: **per-connection** — a conexão inteira sai sempre
+  pelo mesmo link, senão o **NAT a quebra**;
+- **ECMP**: duas defaults de **mesmo custo** + `check-gateway` — simples,
+  balanceia e faz failover; **PCC**: mangle classifica por hash em
+  routing-marks — controlado e estável;
+- Sempre com **masquerade por interface** e **failover** (check-gateway/
+  netwatch); mover só conexões **novas** no failover;
+- Teto do PCC/ECMP: não controla **entrada** nem dá roteamento real —
+  para isso, **BGP** com ASN próprio (@sec-bgp-peering).
+
+Vimos gateway redundante (VRRP), portas agregadas (bonding) e caminhos
+balanceados (ECMP/PCC). Falta juntar tudo num **failover multi-link de
+verdade** — com detecção real de queda e recuperação automática. O
+@sec-failover fecha o volume.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *ECMP*, *Mangle/PCC*, *Routing* do RouterOS
+  [@mikrotik-docs];
+- Balanceamento de carga e multipath: [@tanenbaum-redes];
+- Load balancing no v7 na prática: [@discher-rosv7];
+- Múltiplos trânsitos em provedores: [@burgess-mikrotik].
