@@ -1,7 +1,284 @@
-# Interligação de POPs por túnel
+# Interligação de POPs por túnel {#sec-interligacao-pops}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Projetar a **interligação de dois POPs** por túnel, com roteamento
+  dinâmico por cima e criptografia por baixo;
+- Montar o caso **com IP público dos dois lados** (GRE+IPsec ou
+  WireGuard) e o caso **sem IP público** (um lado atrás de CGNAT);
+- Adicionar **redundância**: dois túneis por caminhos diferentes e
+  failover automático via **OSPF/custo** (@sec-ospf-basico);
+- Integrar o túnel ao desenho de roteamento do provedor (loopbacks,
+  áreas, MSS clamp) sem criar caminhos assimétricos ou loops;
+- Reconhecer os erros que derrubam a interligação: MTU, next-hop,
+  recursão de rota (o túnel que "se engole").
 :::
+
+O Volume 10 construiu o arsenal; este capítulo **aplica**. O cenário é o
+mais comum do provedor em crescimento: **dois POPs em cidades
+diferentes**, cada um com seus clientes, que precisam se comportar como
+**uma rede só** — trocar rotas, compartilhar trânsito, servir de
+contingência um ao outro. A cola é o túnel; a inteligência é o
+roteamento dinâmico por cima. Fechamos o volume transformando peças
+soltas em uma **rede interligada e resiliente**.
+
+## O desenho: túnel + roteamento + criptografia
+
+A interligação de POPs de verdade tem **três camadas**, e confundi-las é
+a origem dos problemas:
+
+1. **Transporte cifrado**: o túnel que atravessa a internet — **GRE +
+   IPsec** (interface para roteamento, cifrado) ou **WireGuard**
+   (moderno, cifra e roteia). É o "cabo virtual";
+2. **Roteamento dinâmico**: **OSPF** (@sec-ospf-basico) rodando **sobre**
+   a interface do túnel, para que cada POP aprenda as redes do outro
+   **automaticamente** e reconverja se algo cair;
+3. **Endereçamento de controle**: **loopbacks** (@sec-vrf) como router-id
+   e âncora das sessões — sobrevivem à troca de caminho.
+
+```{.tikz}
+%%| filename: fig-interliga-pops
+%%| alt: Dois POPs interligados por dois túneis redundantes sobre a internet. POP-A e POP-B, cada um com sua LAN de clientes e um loopback. Um túnel primário (custo baixo, por exemplo fibra/trânsito A) e um túnel secundário (custo alto, por outro caminho) ligam os dois. O OSPF roda sobre ambos e escolhe o primário, caindo para o secundário se o primeiro falhar.
+\begin{tikzpicture}[
+  font=\small,
+  pop/.style={draw, rounded corners, fill=manualblue!12, align=center, minimum height=15mm, minimum width=28mm, inner sep=3pt},
+]
+\node[pop] (a) at (0,0) {POP-A\\\scriptsize lo 10.255.0.1\\\scriptsize LAN 10.0.1.0/24};
+\node[pop] (b) at (7.5,0) {POP-B\\\scriptsize lo 10.255.0.2\\\scriptsize LAN 10.0.2.0/24};
+\draw[{Stealth}-{Stealth}, very thick, manualgreen!60!black] (a) to[bend left=22] node[above]{\scriptsize túnel primário — OSPF custo 10} (b);
+\draw[{Stealth}-{Stealth}, thick, dashed, manualred] (a) to[bend right=22] node[below]{\scriptsize túnel secundário — custo 50 (reserva)} (b);
+\end{tikzpicture}
+```
+
+::: {#fig-interliga-pops}
+Dois túneis por caminhos diferentes; o OSPF escolhe o de **menor custo**
+e cai para o outro se ele falhar — a mesma lógica de custo do
+@sec-ospf-basico, agora sobre túneis. Loopbacks dão identidade estável a
+cada POP.
+:::
+
+## Caso 1: os dois POPs têm IP público
+
+O cenário limpo. Monte o túnel (GRE+IPsec do @sec-gre-eoip, ou
+WireGuard do @sec-wireguard) e rode OSPF por cima:
+
+```routeros
+# POP-A: GRE cifrado + endereço de controle
+/interface gre add name=gre-ab remote-address=<publico-b> ipsec-secret="Ch@ve-POP"
+/ip address add address=10.255.1.1/30 interface=gre-ab
+/interface bridge add name=lo ; /ip address add address=10.255.0.1/32 interface=lo
+
+# OSPF sobre o túnel (ptp) — anuncia loopback e LAN
+/routing ospf instance add name=isp router-id=10.255.0.1
+/routing ospf area add name=backbone area-id=0.0.0.0 instance=isp
+/routing ospf interface-template \
+    add area=backbone interfaces=gre-ab type=ptp \
+    networks=10.255.1.0/30
+/routing ospf interface-template \
+    add area=backbone networks=10.0.1.0/24,10.255.0.1/32 passive=yes
+```
+
+O espelho no POP-B. Com isso, cada POP **aprende sozinho** a rede do
+outro, e uma queda do túnel some das rotas em segundos (reconvergência
+OSPF). Não esqueça o **MSS clamp** (@sec-panorama-tuneis) na `gre-ab`.
+
+## Caso 2: um POP atrás de CGNAT
+
+Quando o POP-B não tem IP público (atrás de CGNAT, @sec-cgnat), ele
+**não pode receber** conexão — precisa **iniciar** para o A. O
+**WireGuard** resolve elegantemente: o B tem o `endpoint` do A e um
+**`persistent-keepalive`** (@sec-wireguard) para manter o furo do CGNAT
+aberto; o A **não** precisa do endpoint de B (aprende quando B fala).
+
+```routeros
+# POP-A (IP público): peer B sem endpoint fixo (B inicia)
+/interface wireguard add name=wg-ab listen-port=13231
+/interface wireguard peers add interface=wg-ab public-key="<pub-B>" \
+    allowed-address=10.0.2.0/24,10.255.0.2/32
+
+# POP-B (atrás de CGNAT): peer A COM endpoint e keepalive
+/interface wireguard peers add interface=wg-ab public-key="<pub-A>" \
+    endpoint-address=<publico-a> endpoint-port=13231 \
+    allowed-address=10.0.1.0/24,10.255.0.1/32 persistent-keepalive=25s
+```
+
+OSPF roda por cima igual ao Caso 1. A regra de ouro: **quem está atrás de
+CGNAT inicia e mantém keepalive**; quem tem IP público espera.
+
+## Redundância: dois túneis, failover por OSPF
+
+Um único túnel é um ponto único de falha. A resiliência vem de **dois
+túneis por caminhos diferentes** (ex.: um pela operadora A, outro pela
+B) e deixar o **OSPF escolher** por custo: primário com custo baixo,
+secundário com custo alto. Se o primário cai, o OSPF reconverge para o
+secundário **sem intervenção** — a mesma mecânica do @sec-ospf-basico,
+agora aplicada a túneis.
+
+```routeros
+# custo baixo no túnel primário, alto no secundário (nos DOIS lados!)
+/routing ospf interface-template set [find interfaces=gre-ab] cost=10
+/routing ospf interface-template set [find interfaces=wg-ab] cost=50
+```
+
+Lembre da lição do OSPF: ajuste o custo nos **dois** sentidos, ou você
+cria caminho **assimétrico** (ida por um túnel, volta por outro) — chato
+de diagnosticar e ruim para o desempenho.
+
+::: {.callout-warning}
+**Recursão de rota** é a armadilha traiçoeira da interligação: se a rota
+para o **endpoint do túnel** (o IP público do outro POP) for aprendida
+**pelo próprio túnel**, ele "se engole" — o túnel precisa da rota que só
+existe se o túnel estiver de pé. Garanta que o endpoint público seja
+alcançado pela **rota da internet** (default/trânsito), **nunca** pela
+rota interna que o OSPF do túnel anuncia. Na prática: não redistribua a
+default de forma que ela concorra com o caminho para o endpoint.
+:::
+
+## Integração com o roteamento do provedor
+
+Fechando o ciclo com o Volume 8:
+
+- **Loopbacks** como router-id e para sessões estáveis (@sec-vrf);
+- **Áreas OSPF** se a interligação crescer (o backbone entre POPs na
+  área 0; cada POP pode ter sua área, @sec-ospf-avancado);
+- **BGP** por cima quando os POPs trocam **rotas de internet** (não só
+  internas) ou têm trânsito próprio — iBGP entre loopbacks sobre o OSPF
+  do túnel (@sec-bgp-peering);
+- **Filtros** para não vazar rota de gerência/loopbacks indevidamente.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Interligar POPs são **três camadas** que você não deve misturar:
+**transporte cifrado** (GRE+IPsec ou WireGuard), **roteamento dinâmico**
+(OSPF sobre a interface do túnel, para reconvergir sozinho) e
+**endereçamento de controle** (loopbacks). Redundância = **dois túneis +
+custo OSPF**, sempre simétrico. E a armadilha que derruba tudo: a
+**recursão de rota** — o endpoint do túnel tem de ser alcançado pela rota
+da internet, nunca pela rota que o próprio túnel carrega. Acerte isso e
+dois POPs viram uma rede só, que se cura sozinha.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Três CHRs (@sec-lab-chr): **lab-a** e **lab-b** como POPs (cada um com
+LAN e loopback), e **lab-net** no meio simulando a internet/trânsito
+(dá o "público" a cada POP e roteia entre eles). Monte **dois** túneis
+A↔B por caminhos lógicos distintos para exercitar o failover.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — túnel primário GRE+IPsec.** Monte o `gre-ab` cifrado
+(@sec-gre-eoip) e endereços de controle `10.255.1.0/30` + loopbacks
+(`10.255.0.1/32` em A, `.2/32` em B).
+
+**Passo 2 — OSPF sobre o túnel.** Rode OSPF nos dois lados sobre
+`gre-ab` (`type=ptp`), anunciando LANs e loopbacks (passive nas LANs).
+Confirme `neighbor print` = `Full` e que cada POP aprendeu a LAN do
+outro em `/ip route where ospf`.
+
+**Passo 3 — tráfego fim a fim + MSS clamp.** Ping host↔host entre as
+LANs; aplique o clamp na `gre-ab` e teste transferência maior.
+
+**Passo 4 — segundo túnel (WireGuard) como reserva.** Monte um `wg-ab`
+(@sec-wireguard) por um caminho lógico diferente, rode OSPF nele também,
+e ajuste custos: `gre-ab`=10, `wg-ab`=50 (**nos dois lados**).
+
+**Passo 5 — prove o failover.** Com o tráfego indo pelo primário
+(custo 10), **derrube** o `gre-ab` (desabilite a interface ou bloqueie o
+endpoint). Em segundos, o traceroute A→B passa pelo `wg-ab`. Religue e
+volta ao primário.
+
+**Passo 6 — provoque a recursão de rota.** Anuncie, de propósito, uma
+default pelo OSPF do túnel e observe o túnel instabilizar (o endpoint
+passa a ser "aprendido" pelo próprio túnel). Corrija garantindo rota
+específica/estática para o endpoint pela internet. Entenda o sintoma.
+
+### Verificação
+
+1. OSPF `Full` sobre o túnel; cada POP aprende a LAN do outro sem rota
+   estática;
+2. Ping/transferência fim a fim funcionam (com MSS clamp);
+3. Queda do túnel primário reconverge para o secundário em segundos;
+4. Custos simétricos (sem assimetria no traceroute dos dois sentidos);
+5. Você reproduziu e corrigiu a recursão de rota.
+
+### Desafios
+
+1. Os dois túneis estão de pé, mas o tráfego A→B vai pelo primário e o
+   B→A volta pelo secundário. Nada "quebrou". Qual é a causa e como
+   corrigir? Por que a assimetria é indesejável mesmo "funcionando"?
+2. Após um reboot do POP-B (atrás de CGNAT), o túnel WireGuard demora
+   para voltar e às vezes não volta sozinho. Qual parâmetro garante o
+   retorno automático, e por que o lado com IP público não precisa dele?
+3. O túnel primário cai e **não** há failover: o OSPF do secundário nunca
+   formou adjacência porque o endpoint do secundário ficou inalcançável
+   junto. Que erro de projeto (dica: caminhos independentes) causou isso?
+4. Você quer que os POPs troquem, além das redes internas, as **rotas de
+   internet** que cada um recebe de sua operadora. OSPF basta? Se não, o
+   que você adiciona e sobre o quê ele roda?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O **custo OSPF foi ajustado em um só lado**. A ida (A→B) vê o
+primário mais barato; a volta (B→A), por o custo não ter sido espelhado,
+prefere o secundário. Corrija igualando os custos **nos dois lados**. A
+assimetria é ruim porque dificulta diagnóstico (traceroute divergente),
+pode passar por caminhos de qualidade/latência diferentes e complica
+firewall/conntrack (tráfego de volta por interface inesperada).
+
+**2.** **`persistent-keepalive`** no lado atrás de CGNAT (o POP-B): ele
+reinicia o envio periódico que refura o NAT e restabelece o handshake
+sem depender de tráfego. O lado com **IP público** (POP-A) não precisa
+porque é **alcançável** — o B sempre pode iniciar para ele; o problema é
+manter o caminho **de volta** ao B vivo, e é isso que o keepalive de B
+garante.
+
+**3.** Os dois túneis usaram, na prática, o **mesmo caminho físico** (ou
+o mesmo endpoint/uplink): quando o primário caiu, o secundário caiu
+junto porque dependia do mesmo recurso. Redundância exige **caminhos
+independentes** — endpoints/uplinks distintos (operadora A vs. B). Túnel
+"redundante" sobre um único link é redundância de mentira.
+
+**4.** OSPF é para a **infraestrutura interna** (loopbacks, LANs, enlaces)
+— não para carregar a tabela de internet. Para trocar **rotas de
+internet**, adicione **iBGP** entre os loopbacks dos POPs (@sec-bgp-peering),
+rodando **sobre** o OSPF do túnel (que resolve os next-hops). OSPF é o
+esqueleto; o BGP transporta os prefixos externos.
+:::
+
+## Resumo
+
+- Interligar POPs = **três camadas**: transporte cifrado (GRE+IPsec /
+  WireGuard), **roteamento dinâmico** (OSPF sobre a interface do túnel) e
+  **loopbacks** de controle;
+- **Com IP público** dos dois lados: GRE+IPsec/WireGuard + OSPF direto;
+  **um lado atrás de CGNAT**: WireGuard, com o lado NATeado **iniciando**
+  e mantendo **keepalive**;
+- **Redundância** = dois túneis por **caminhos independentes** + failover
+  por **custo OSPF** (simétrico, sob pena de assimetria);
+- Armadilha: **recursão de rota** — o endpoint do túnel deve ser
+  alcançado pela **rota da internet**, nunca pelo próprio túnel;
+- Cresceu? Integre com **áreas OSPF** e **iBGP** (@sec-bgp-peering) para
+  trocar rotas de internet; sempre com **MSS clamp**.
+
+Fecha-se o Volume 10: os POPs do provedor agora se interligam de forma
+cifrada, resiliente e com roteamento que se cura sozinho. O **Volume
+11** leva a rede a outro patamar de backbone — **MPLS**, os rótulos que
+transportam serviços de camada 2 e 3 em escala de operadora.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *Tunnels*, *OSPF*, *IPsec* do RouterOS
+  [@mikrotik-docs];
+- Projeto de backbone e roteamento sobre túnel: [@tanenbaum-redes];
+- Interligação de POPs no v7: [@discher-rosv7];
+- Redes de provedor multi-POP: [@burgess-mikrotik].

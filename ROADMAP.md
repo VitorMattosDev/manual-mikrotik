@@ -137,11 +137,11 @@ Pré-requisitos: Vols. 6 e 8.*
 *Objetivo: interligar POPs e dar acesso remoto seguro.
 Pré-requisitos: Vols. 3 e 8.*
 
-- [ ] `volumes/v10-tuneis-vpn/01-panorama-tuneis.qmd` — Panorama de túneis no RouterOS: quando usar cada um; overhead e MTU.
-- [ ] `volumes/v10-tuneis-vpn/02-wireguard.qmd` — WireGuard: chaves, peers, roteamento; acesso de gerência e site-to-site.
-- [ ] `volumes/v10-tuneis-vpn/03-ipsec.qmd` — IPsec: IKEv2, policies vs. tunnel mode, interoperabilidade.
-- [ ] `volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd` — GRE, EoIP, L2TP/SSTP e ZeroTier: camada 2 sobre camada 3 e acessos legados.
-- [ ] `volumes/v10-tuneis-vpn/05-interligacao-pops.qmd` — Casos de provedor: interligação de POPs por túnel (com e sem IP público).
+- [x] `volumes/v10-tuneis-vpn/01-panorama-tuneis.qmd` — Panorama de túneis no RouterOS: quando usar cada um; overhead e MTU.
+- [x] `volumes/v10-tuneis-vpn/02-wireguard.qmd` — WireGuard: chaves, peers, roteamento; acesso de gerência e site-to-site.
+- [x] `volumes/v10-tuneis-vpn/03-ipsec.qmd` — IPsec: IKEv2, policies vs. tunnel mode, interoperabilidade.
+- [x] `volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd` — GRE, EoIP, L2TP/SSTP e ZeroTier: camada 2 sobre camada 3 e acessos legados.
+- [x] `volumes/v10-tuneis-vpn/05-interligacao-pops.qmd` — Casos de provedor: interligação de POPs por túnel (com e sem IP público).
 
 ## Volume 11 — MPLS
 *Objetivo: backbone de provedor com MPLS.
