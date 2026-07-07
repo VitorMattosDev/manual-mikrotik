@@ -1,7 +1,401 @@
-# RADIUS, User Manager e gestão
+# RADIUS, User Manager e gestão {#sec-radius-userman}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o modelo **AAA** (autenticação, autorização,
+  contabilização) e o papel do RADIUS entre o concentrador e o sistema
+  de gestão;
+- Descrever o diálogo RADIUS: Access-Request → Access-Accept (com
+  **atributos** que carregam plano, IP e banda) e os pacotes de
+  Accounting;
+- Configurar o concentrador como **cliente RADIUS** e o **User
+  Manager** do RouterOS v7 como servidor, movendo os assinantes do
+  `/ppp secret` local para a base central;
+- Usar **CoA/Disconnect** (RFC 3576) para mudar plano e cortar cliente
+  **sem** derrubar/reconectar manualmente;
+- Situar os sistemas de gestão de provedor (ERP/billing): o que eles
+  fazem por baixo é exatamente isto.
 :::
+
+O @sec-pppoe-server deixou um concentrador exemplar — com um defeito
+invisível: o cadastro mora **dentro do roteador**. Funciona com um
+concentrador e um operador disciplinado. Mas e quando houver dois POPs?
+Sincronizar secrets na mão? E quando o financeiro precisar suspender o
+contrato 1042 sem saber o que é SSH? A resposta da indústria tem nome
+desde os anos 1990: **RADIUS** — o protocolo que separa quem *autentica*
+de quem *decide*.
+
+## AAA: o modelo por trás de tudo
+
+**AAA** é a sigla que organiza o problema:
+
+- **Autenticação** — *quem é você?* (a senha confere?);
+- **Autorização** — *o que você pode?* (qual plano, qual IP, quanta
+  banda?);
+- **Accounting** (contabilização) — *o que você usou?* (bytes, tempo,
+  quando conectou e desconectou).
+
+No modelo local do capítulo anterior, o concentrador fazia os três
+sozinho, consultando seus próprios secrets. Com RADIUS, ele **terceiriza
+as decisões**: vira um *cliente* que pergunta a um servidor central — e
+o servidor central é (ou conversa com) o sistema de gestão do provedor.
+
+O diálogo, na conexão de um assinante:
+
+1. O cliente PPPoE manda usuário/senha (CHAP, como sempre);
+2. O concentrador embala tudo num **Access-Request** UDP (porta 1812)
+   para o servidor RADIUS, assinado com um **segredo compartilhado**;
+3. O servidor consulta a base (o cadastro do provedor!) e responde:
+   - **Access-Accept** + **atributos**: "aceita; entregue o IP X, DNS
+     Y, banda Z" — a autorização viaja como pares atributo=valor
+     (`Framed-IP-Address`, `Mikrotik-Rate-Limit`, ...);
+   - ou **Access-Reject**: "recusa" (senha errada, contrato suspenso);
+4. Conectado, o concentrador manda **Accounting-Start** (porta 1813),
+   atualizações periódicas (*interim*) com contadores de bytes, e
+   **Accounting-Stop** na desconexão — o extrato da sessão.
+
+```{.tikz}
+%%| filename: fig-radius-fluxo
+%%| alt: Fluxo RADIUS. O cliente PPPoE conecta ao concentrador. O concentrador envia Access-Request ao servidor RADIUS, que consulta a base de gestão e devolve Access-Accept com atributos de plano, IP e banda. Depois fluem pacotes de accounting, e no sentido inverso o servidor pode enviar CoA ou Disconnect para alterar ou encerrar a sessão.
+\begin{tikzpicture}[
+  font=\small,
+  caixa/.style={draw, rounded corners, align=center, inner sep=4pt},
+]
+\node[caixa, fill=manualgreen!20]  (cli) at (0,0)   {cliente\\ PPPoE};
+\node[caixa, fill=manualblue!20]   (bng) at (3.6,0) {concentrador\\ (cliente RADIUS)};
+\node[caixa, fill=manualyellow!30] (rad) at (8.6,0) {servidor RADIUS\\ (User Manager /\\ sistema de gestão)};
+% enlace pppoe
+\draw[{Stealth}-{Stealth}] (cli) -- node[above]{\scriptsize PPPoE/CHAP} (bng);
+% radius
+\draw[-{Stealth}, manualblue, thick] ([yshift=5mm]bng.east) --
+  node[above]{\scriptsize Access-Request \textbf{(1812)}} ([yshift=5mm]rad.west);
+\draw[-{Stealth}, manualgreen!60!black, thick] ([yshift=1mm]rad.west) --
+  node[above]{\scriptsize Access-Accept + atributos} ([yshift=1mm]bng.east);
+\draw[-{Stealth}, manualgray, thick] ([yshift=-3mm]bng.east) --
+  node[above]{\scriptsize Accounting start/interim/stop \textbf{(1813)}} ([yshift=-3mm]rad.west);
+\draw[-{Stealth}, manualred, thick] ([yshift=-7mm]rad.west) --
+  node[below]{\scriptsize CoA / Disconnect \textbf{(3799)}} ([yshift=-7mm]bng.east);
+\end{tikzpicture}
+```
+
+::: {#fig-radius-fluxo}
+O concentrador terceiriza o AAA: autenticação e autorização via
+Access-Request/Accept (com os atributos do plano), extrato via
+Accounting — e, no sentido inverso, o servidor comanda a sessão viva
+com CoA/Disconnect.
+:::
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O concentrador com secrets locais é o **porteiro com caderninho**: ele
+mesmo decide quem entra, e cada portaria tem seu caderno — atualizar
+todos é um pesadelo. RADIUS é a portaria ligada à **central de
+segurança**: o porteiro (concentrador) coleta o crachá e liga para a
+central (Access-Request); a central consulta o cadastro único e
+responde "deixa entrar, sala 204, elevador B" (Accept + atributos).
+E a central pode ligar de volta — "aquele visitante: troque-o de sala"
+(CoA) ou "retire-o do prédio" (Disconnect) — sem trocar o porteiro.
+:::
+
+## Os atributos: onde mora a autorização
+
+O Access-Accept não diz só "sim" — carrega a configuração da sessão.
+Os atributos que importam num provedor MikroTik:
+
+| Atributo | O que define | Equivalente local |
+|---|---|---|
+| `Framed-IP-Address` | IP fixo do assinante | `remote-address` no secret |
+| `Framed-Pool` | pool de onde tirar o IP | `remote-address` no profile |
+| `Mikrotik-Rate-Limit` | banda (ex.: `"100M/50M"`) | `rate-limit` no profile |
+| `Mikrotik-Group` / profile | perfil PPP a aplicar | `profile` no secret |
+| `Mikrotik-Address-List` | address-list da sessão | `address-list` no profile |
+| `Session-Timeout` | duração máxima da sessão | — |
+
+: Atributos RADIUS úteis no acesso PPPoE {#tbl-atributos-radius}
+
+Os `Mikrotik-*` são **VSAs** (*vendor-specific attributes*): extensões
+da MikroTik ao dicionário RADIUS padrão. É por eles que o sistema de
+gestão controla banda e políticas por assinante — o profile local vira
+um **molde genérico**, e o RADIUS preenche as diferenças por cliente.
+
+Note a inversão arquitetural: no capítulo anterior, plano = profile e
+mudar o cliente de plano = editar secret. Com RADIUS, o cadastro (e o
+plano de cada um) mora na base central; o concentrador só precisa de
+um ou dois profiles genéricos. Os secrets locais podem — devem — sumir.
+
+## O lado concentrador: cliente RADIUS
+
+Dois comandos transformam o concentrador do capítulo anterior:
+
+```routeros
+/radius add service=ppp address=10.99.0.20 secret=SegredoRadius!2026 \
+    timeout=800ms comment="user manager no servidor de gestao"
+
+/ppp aaa set use-radius=yes accounting=yes interim-update=5m
+```
+
+- `service=ppp`: vale para PPPoE (e L2TP, PPTP...); o mesmo servidor
+  RADIUS pode atender `login`, `hotspot`, `dhcp`;
+- `address`: o servidor RADIUS — na VLAN de serviços do POP
+  (@sec-segmentacao-pop), nunca exposto à internet;
+- `secret`: o segredo compartilhado que assina os pacotes — trate como
+  senha de infraestrutura;
+- `use-radius=yes`: a chave-geral. A ordem de consulta do RouterOS é:
+  **secret local primeiro; se não existir, pergunta ao RADIUS**.
+  Ótimo para migrar aos poucos — e uma pegadinha clássica: um secret
+  local esquecido "rouba" o login antes do RADIUS ver;
+- `interim-update=5m`: contadores de consumo atualizados a cada 5 min
+  (é o que alimenta gráficos de consumo por assinante na gestão).
+
+E para aceitar comandos remotos sobre sessões vivas (CoA/Disconnect,
+porta UDP 3799):
+
+```routeros
+/radius incoming set accept=yes port=3799
+```
+
+::: {.callout-warning}
+`/radius incoming accept=yes` abre uma porta de **controle** no
+concentrador: quem falar RADIUS com o segredo certo derruba qualquer
+assinante. Restrinja no firewall de input (@sec-protegendo-roteador) à VLAN de
+serviços/IP do servidor de gestão — jamais alcançável da internet ou da
+rede de clientes.
+:::
+
+## O lado servidor: User Manager
+
+O **User Manager** é o servidor RADIUS da própria MikroTik — no
+RouterOS v7, um pacote opcional (`user-manager.npk`) que roda em
+qualquer roteador ou CHR. Para um provedor pequeno (ou para aprender),
+ele fecha o ciclo sem software externo:
+
+```routeros
+/user-manager set enabled=yes
+
+/user-manager router add name=bng-pop01 address=10.99.0.1 \
+    shared-secret=SegredoRadius!2026
+
+/user-manager profile add name=um-plano-50m name-for-users="Plano 50 Mega"
+/user-manager profile-limitation add profile=um-plano-50m \
+    limitation=lim-50m
+/user-manager limitation add name=lim-50m rate-limit-rx=25M rate-limit-tx=50M
+
+/user-manager user add name=maria.silva password=Ms!7201xk group=default
+/user-manager user-profile add user=maria.silva profile=um-plano-50m
+```
+
+A anatomia espelha o que você já sabe: `router` cadastra **quem pode
+perguntar** (cada concentrador, com seu segredo); `limitation` +
+`profile` são o plano (repare: `rate-limit-tx` é o download do cliente
+— tx do ponto de vista do concentrador); `user` é o assinante. O User
+Manager responde na porta 1812/1813 e envia CoA na 3799.
+
+E os sistemas de gestão comerciais (os ERPs de provedor do mercado
+brasileiro, integrados a boleto/PIX e estoque)? **Todos falam RADIUS**
+— por baixo, fazem exatamente o que o User Manager faz, com o
+financeiro apertando os botões. Aprendido o mecanismo aqui, qualquer
+um deles é interface nova sobre protocolo conhecido.
+
+## CoA: mudar a sessão sem derrubá-la
+
+No capítulo anterior, upgrade de plano exigia `active remove` +
+reconexão. O **CoA** (*Change of Authorization*, RFC 3576) elimina até
+isso: o servidor manda novos atributos para a sessão **viva** e o
+concentrador os aplica no ato — a fila dinâmica muda de teto sem o
+cliente perceber. No User Manager, editar o profile do usuário e
+aplicar dispara o CoA; o irmão dele, **Disconnect-Request**, derruba a
+sessão por comando remoto (é o "cortar inadimplente" apertado pelo
+financeiro no sistema de gestão — que nunca precisou de SSH no
+concentrador).
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+RADIUS inverte o fluxo de autoridade: **o concentrador deixa de ser
+dono do cadastro e vira executor de decisões centrais**. Autenticação,
+plano, IP, corte — tudo passa a nascer na base de gestão e viajar como
+atributos. É isso que permite N concentradores com um cadastro só,
+financeiro operando sem tocar em roteador, e o extrato (accounting)
+alimentando cobrança e gráficos. O `/ppp secret` local não morre à toa:
+ele vira o **fallback de emergência** — e a pegadinha de migração,
+porque é consultado *antes* do RADIUS.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Três CHRs (@sec-lab-chr): `lab-r1` segue como concentrador, `lab-r2`
+como cliente PPPoE — e o `lab-r3` estreia como **servidor de gestão**,
+rodando o User Manager, alcançável pelo lab-r1 (rede `lab-b` via
+lab-r2 em bridge, ou ligue lab-r3 direto na `lab-a` no VirtualBox —
+qualquer caminho IP serve). Instale o pacote `user-manager.npk` no
+lab-r3 (mesmo procedimento de pacotes do @sec-netinstall: upload do
+`.npk` da versão exata e reboot).
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — User Manager no lab-r3** (IP dele na rede: `172.16.0.3`,
+ajuste ao seu lab): aplique os blocos da seção "O lado servidor" —
+`enabled=yes`, o `router` apontando para o IP do lab-r1 com o segredo,
+o trio limitation/profile/profile-limitation do plano 50M e a usuária
+`maria.silva`.
+
+**Passo 2 — concentrador vira cliente RADIUS no lab-r1:**
+
+```routeros
+/radius add service=ppp address=172.16.0.3 secret=SegredoRadius!2026 \
+    timeout=800ms
+/ppp aaa set use-radius=yes accounting=yes interim-update=1m
+/radius incoming set accept=yes port=3799
+```
+
+**Passo 3 — a prova da inversão.** Apague (ou desabilite) o secret
+local da maria.silva no lab-r1:
+
+```routeros
+/ppp secret set [find name=maria.silva] disabled=yes
+```
+
+Reconecte o lab-r2. A sessão **sobe mesmo assim** — autenticada pelo
+lab-r3. Confira os dois lados:
+
+```routeros
+/ppp active print detail
+/radius monitor 0
+```
+
+```
+    requests: 4
+     accepts: 3
+     rejects: 1
+    timeouts: 0
+```
+
+No lab-r3, `/user-manager session print` mostra a sessão com
+contadores — o accounting chegando.
+
+**Passo 4 — Reject.** Mude a senha no lab-r2 para uma errada e
+reconecte: o log do lab-r1 mostra a recusa vinda do RADIUS
+(`radius reject`), e o contador `rejects` do `monitor` incrementa.
+Restaure a senha.
+
+**Passo 5 — corte remoto (Disconnect).** No lab-r3:
+
+```routeros
+/user-manager session print
+/user-manager session remove [find where user=maria.silva active=yes]
+```
+
+No lab-r1, a sessão morre **sem nenhum comando local** — o
+Disconnect-Request chegou pela porta 3799. O lab-r2 redisca e volta
+(o cadastro continua válido). Você acabou de apertar o botão que o
+sistema de gestão aperta.
+
+**Passo 6 — timeout do RADIUS.** Desligue o lab-r3 e reconecte o
+lab-r2: com o secret local desabilitado e o RADIUS mudo, a conexão
+falha após o `timeout`. Religue o lab-r3 (ou reative o secret local e
+observe-o atender como fallback).
+
+### Verificação
+
+1. Com o secret local desabilitado, a autenticação acontece via RADIUS
+   (`accepts` incrementando no `/radius monitor`);
+2. A fila dinâmica da sessão reflete o `rate-limit` vindo do User
+   Manager (50M/25M) — a banda viajou como atributo;
+3. O accounting aparece em `/user-manager session print` com bytes
+   subindo a cada `interim-update`;
+4. O `session remove` no lab-r3 derrubou a sessão no lab-r1 — CoA/
+   Disconnect funcionando na porta 3799.
+
+### Desafios
+
+1. Durante a migração de secrets locais para RADIUS, o assinante
+   `padaria.paoquente` "não pega o plano novo configurado no sistema"
+   — continua conectando com a banda antiga. Ninguém mexeu no
+   concentrador. Qual é a causa mais provável e o comando que a
+   confirma?
+2. O RADIUS caiu numa segunda-feira 9h. O que acontece com (a) as
+   sessões já conectadas e (b) as novas tentativas? Proponha duas
+   mitigações — uma no protocolo (dica: segundo servidor) e uma de
+   emergência local.
+3. Seu firewall de input do @sec-hardening bloqueia tudo que não é
+   explicitamente permitido. Liste as regras exatas (portas/origens) a
+   adicionar no **lab-r1** para o RADIUS + CoA funcionarem — e nada
+   além disso.
+4. O financeiro pede: "quando o cliente atrasar, não corta — reduz
+   para 1 Mbps até pagar". Descreva a implementação com CoA e
+   atributos (sem User Manager na frente, só o mecanismo): que
+   atributo muda, quem dispara, e por que isso é melhor que derrubar a
+   sessão para um profile de suspensão.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Sobrou um **secret local ativo** com esse login: a ordem de
+consulta é local → RADIUS, então o secret antigo (com o profile/banda
+velha) atende primeiro e o RADIUS nem é consultado.
+`/ppp secret print where name=padaria.paoquente` confirma;
+desabilitar/remover o secret resolve e a próxima conexão vem do RADIUS
+com o plano novo.
+
+**2.** (a) Sessões conectadas **continuam** — a autorização já foi
+dada; no máximo o accounting interim para de ser registrado. (b) Novas
+tentativas falham por timeout (nada de novo conecta — clientes que
+caírem não voltam!). Mitigações: um **segundo servidor RADIUS**
+(`/radius add` adicional; o RouterOS tenta na ordem) em outro
+hardware/POP; e o **fallback local de emergência** — manter secrets
+locais desabilitados dos clientes críticos + um script/procedimento
+que os reabilita em pane prolongada (lembrando de desabilitá-los
+depois, pela pegadinha do desafio 1).
+
+**3.** No input do lab-r1, além do estabelecido/relacionado que o
+@sec-hardening já aceita: liberar **UDP porta 3799** (CoA entrando)
+com `src-address=172.16.0.3` (só o servidor de gestão). E é só — os
+Access-Request/Accounting são **originados pelo** lab-r1 (portas de
+destino 1812/1813 no lab-r3), então as respostas voltam casando com
+`established,related`. Quem precisa liberar 1812/1813 no input é o
+**lab-r3**, restrito ao IP do lab-r1.
+
+**4.** O sistema de gestão (na função do nosso lab-r3) envia um
+**CoA-Request** para a sessão viva com `Mikrotik-Rate-Limit="1M/1M"`
+(e tipicamente `Mikrotik-Address-List=inadimplentes` para o
+redirecionamento de página do @sec-pppoe-server); o concentrador
+reescreve a fila dinâmica no ato. Melhor que derrubar porque: não gera
+evento de reconexão em massa no vencimento (pense em 500 inadimplentes
+rediscando juntos), o cliente percebe a degradação imediatamente (e a
+causa, na página de cobrança), e o restabelecimento pós-pagamento é
+outro CoA — instantâneo, sem queda.
+:::
+
+## Resumo
+
+- **AAA**: autenticação (quem é), autorização (o que pode — viaja como
+  **atributos**: `Framed-IP-Address`, `Mikrotik-Rate-Limit`...),
+  accounting (o que usou — start/interim/stop);
+- Concentrador = **cliente RADIUS**: `/radius add service=ppp` +
+  `/ppp aaa set use-radius=yes accounting=yes`; ordem de consulta:
+  **secret local antes do RADIUS** (a pegadinha de migração);
+- **User Manager** (pacote do v7) é um servidor RADIUS completo:
+  routers (quem pergunta), limitations/profiles (planos), users
+  (assinantes) — e os sistemas de gestão comerciais fazem o mesmo por
+  baixo;
+- **CoA/Disconnect** (UDP 3799, proteja no firewall!): mudar banda e
+  cortar/restabelecer sem derrubar sessão nem tocar no concentrador;
+- Com o cadastro central, o concentrador vira **executor substituível**
+  — o que abre caminho para múltiplos concentradores e dimensionamento,
+  assunto do próximo capítulo (@sec-concentrador-bng).
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *RADIUS*, *User Manager* e *PPP AAA*
+  [@mikrotik-docs];
+- AAA e protocolos de autenticação: [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- Gestão de assinantes em provedores: [@burgess-mikrotik].
