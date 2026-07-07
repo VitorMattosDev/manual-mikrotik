@@ -1,7 +1,388 @@
-# CAPsMAN e WiFi moderno
+# CAPsMAN e o WiFi moderno {#sec-capsman}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Distinguir os **dois stacks** de wireless do RouterOS v7 — o legado
+  `/interface wireless` e o moderno `/interface wifi` (wave2/ax) — e
+  saber qual hardware usa qual;
+- Explicar o modelo controlador/AP do **CAPsMAN**: o que fica no
+  controlador (configuração), o que fica no CAP (o rádio) e como o
+  tráfego pode fluir (local forwarding vs. datapath centralizado);
+- Configurar um CAPsMAN v2 (pacote `wifi`) completo: provisionamento
+  automático, configuration/datapath/security por perfil;
+- Provisionar um AP da casa do cliente de fábrica ao ar sem tocar nele
+  (*zero-touch*);
+- Decidir quando CAPsMAN vale a pena para um provedor — e quando um AP
+  avulso bem configurado basta.
 :::
+
+O volume até aqui viveu do lado de fora: torres, setoriais, CPEs. Este
+último capítulo entra na **casa do assinante** — o WiFi que ele de fato
+usa e pelo qual julga o provedor inteiro. E traz um problema novo, de
+**gestão**: 500 clientes = 500 APs. Mudar a senha de um SSID
+corporativo em 30 pontos de um cliente empresarial, ou padronizar o
+canal de 200 comodatos, um a um, não escala. A resposta da MikroTik é o
+**CAPsMAN** (*Controlled Access Point system Manager*): APs que buscam
+sua configuração num controlador central.
+
+## Os dois stacks de wireless do v7
+
+Antes do CAPsMAN, um esclarecimento que evita horas de confusão — no
+RouterOS v7 convivem **dois subsistemas wireless**:
+
+| | `/interface wireless` (legado) | `/interface wifi` (moderno) |
+|---|---|---|
+| Padrões | até 802.11n/ac (wave1) | 802.11ac wave2, **802.11ax (WiFi 6)** |
+| Hardware | rádios Atheros antigos (SXT, LHG, setoriais clássicas) | hAP ax², hAP ax³, cAP ax, Audience… |
+| Protocolos MikroTik | Nstreme, **NV2** | — (só 802.11) |
+| Segurança | WPA/WPA2 | WPA2, **WPA3** |
+| CAPsMAN | CAPsMAN "v1" (`/caps-man`) | CAPsMAN "v2" (`/interface wifi capsman`) |
+| Papel no provedor | enlaces externos (Vol. 5 até aqui) | WiFi indoor do cliente |
+
+: Os dois stacks wireless do RouterOS v7 {#tbl-dois-stacks}
+
+Os capítulos @sec-wireless-routeros a @sec-alinhamento usaram o stack
+legado — é ele que fala NV2 e vive nas torres. Dentro de casa a
+história inverte: ninguém precisa de TDMA na sala, e sim de WiFi 6,
+WPA3 e roaming decente. **Os dois CAPsMANs são incompatíveis entre
+si**: controlador `wifi` gerencia CAPs `wifi`; o `/caps-man` legado,
+apenas rádios legados. Este capítulo usa o moderno — é o presente dos
+APs indoor e o futuro da linha.
+
+## O modelo: controlador e CAPs
+
+No CAPsMAN há dois papéis:
+
+- **CAPsMAN (controlador)**: qualquer RouterOS com o pacote `wifi`
+  (nem precisa ter rádio — pode ser o roteador de borda do POP ou até
+  um CHR). Guarda **toda** a configuração: SSIDs, senhas, canais,
+  datapaths;
+- **CAP** (*Controlled Access Point*): o AP na casa do cliente. De
+  fábrica, só precisa saber **encontrar o controlador**; recebe dele a
+  configuração e passa a ser gerenciado remotamente.
+
+A descoberta é automática na L2 (broadcast na mesma rede/VLAN) ou por
+IP na L3 (`caps-man-addresses` apontando para o controlador — o caso
+típico do provedor, com o controlador no POP).
+
+```{.tikz}
+%%| filename: fig-capsman-arquitetura
+%%| alt: Arquitetura CAPsMAN. À esquerda, o controlador no POP do provedor guarda a configuração de SSID, segurança e canais. À direita, três casas de clientes, cada uma com um CAP. Setas de controle ligam o controlador a cada CAP; na casa, o tráfego do WiFi sai localmente pela conexão do cliente (local forwarding).
+\begin{tikzpicture}[
+  font=\small,
+  caixa/.style={draw, rounded corners, align=center, inner sep=5pt},
+]
+% controlador
+\node[caixa, fill=manualblue!20, minimum width=34mm] (ctrl) at (0,0)
+  {\textbf{CAPsMAN}\\ (controlador no POP)\\[2pt]
+   \scriptsize SSIDs \& senhas\\ \scriptsize canais \& potência\\ \scriptsize provisionamento};
+% CAPs
+\node[caixa, fill=manualgreen!20] (cap1) at (5.6,1.9)  {CAP\\ \scriptsize casa cliente A};
+\node[caixa, fill=manualgreen!20] (cap2) at (5.6,0)    {CAP\\ \scriptsize casa cliente B};
+\node[caixa, fill=manualgreen!20] (cap3) at (5.6,-1.9) {CAP\\ \scriptsize casa cliente C};
+% setas de controle
+\foreach \c in {cap1,cap2,cap3} {
+  \draw[-{Stealth}, manualblue, thick] (ctrl.east) -- (\c.west);
+}
+\node[manualblue, above, rotate=18] at (2.9,1.15) {\scriptsize só \textbf{controle}};
+% local forwarding
+\foreach \c/\y in {cap1/1.9, cap2/0, cap3/-1.9} {
+  \draw[-{Stealth}, manualgreen!70!black, thick] (\c.east) -- ++(1.5,0)
+    node[right, align=left] {\scriptsize tráfego local\\ \scriptsize (local forwarding)};
+}
+\end{tikzpicture}
+```
+
+::: {#fig-capsman-arquitetura}
+CAPsMAN com *local forwarding*: entre controlador e CAPs viaja apenas
+**controle** (configuração, estatísticas); os dados dos usuários saem
+direto na rede local de cada casa. O controlador pode gerenciar
+centenas de CAPs sem tocar num único pacote de dados deles.
+:::
+
+A decisão de arquitetura mais importante é **por onde fluem os dados**:
+
+- **Local forwarding** (padrão no stack `wifi`): o tráfego WiFi entra
+  direto na bridge do CAP, na casa do cliente. O controlador só
+  configura. Escala sem esforço — o caso do provedor;
+- **Datapath centralizado**: o tráfego é tunelado até o controlador,
+  que o injeta na rede dele. Útil quando as políticas (VLANs por SSID,
+  firewall central) precisam se aplicar num ponto único — comum em
+  ambiente corporativo, raro em casa de assinante.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+CAPsMAN é a **franquia de fast-food**: a matriz (controlador) define o
+cardápio, os preços e o padrão da loja (SSID, senha, canal); cada loja
+(CAP) atende os clientes localmente — a comida não passa pela matriz
+(*local forwarding*). Abrir loja nova é assinar o contrato e pendurar a
+placa: o padrão desce sozinho da matriz (*provisionamento*). E quando a
+matriz muda o cardápio, muda em todas as lojas no mesmo instante.
+:::
+
+## Configurando o controlador
+
+Cenário: o roteador de borda do POP (nosso `cli-paoquente-r1` de tantos
+capítulos) vira controlador dos APs em comodato. Três blocos: perfil de
+segurança, configuração e provisionamento.
+
+```routeros
+/interface wifi security
+add name=sec-clientes authentication-types=wpa2-psk,wpa3-psk \
+    passphrase=WiFiDoCliente!2026
+
+/interface wifi configuration
+add name=cfg-clientes-2g ssid=PaoQuente-WiFi security=sec-clientes \
+    country=brazil channel.band=2ghz-ax channel.width=20mhz
+add name=cfg-clientes-5g ssid=PaoQuente-WiFi security=sec-clientes \
+    country=brazil channel.band=5ghz-ax channel.width=20/40/80mhz
+
+/interface wifi capsman
+set enabled=yes interfaces=all upgrade-policy=suggest-same-version
+
+/interface wifi provisioning
+add action=create-dynamic-enabled supported-bands=2ghz-ax,2ghz-n \
+    master-configuration=cfg-clientes-2g
+add action=create-dynamic-enabled supported-bands=5ghz-ax,5ghz-ac \
+    master-configuration=cfg-clientes-5g
+```
+
+Lendo de cima para baixo:
+
+- `security`: WPA2+WPA3 misto (`wpa2-psk,wpa3-psk`) — dispositivos
+  novos sobem em WPA3, antigos caem para WPA2. `country=brazil` na
+  configuração aplica os limites da Anatel automaticamente
+  (@sec-fundamentos-radio);
+- `configuration`: um perfil por banda. Mesmo SSID nas duas — os
+  dispositivos escolhem (e o *band steering* dos clientes modernos
+  prefere 5 GHz);
+- `capsman set enabled=yes`: liga o controlador;
+  `upgrade-policy=suggest-same-version` mantém os CAPs na mesma versão
+  do RouterOS que o controlador, sem forçar;
+- `provisioning`: a regra de ouro — **quando um CAP aparecer**, case
+  suas bandas com um perfil e crie as interfaces automaticamente
+  (`create-dynamic-enabled`). É isso que torna o sistema *zero-touch*.
+
+## Ligando um CAP
+
+No AP da casa do cliente (ex.: um cAP ax em comodato), uma linha:
+
+```routeros
+/interface wifi cap
+set enabled=yes caps-man-addresses=10.99.0.1
+```
+
+`caps-man-addresses` aponta para o controlador (nosso plano de
+gerência da VLAN 99, definido no @sec-segmentacao-pop). Na mesma L2, o
+CAP acharia o controlador sozinho, sem endereço. Segundos depois, no
+controlador:
+
+```routeros
+/interface wifi remote-cap print
+```
+
+```
+ # ADDRESS          NAME          BOARD      VERSION  STATE
+ 0 10.99.0.57       cAP-casa-A    cAPGi-5HaxD2HaxD  7.15  provisioned
+```
+
+E as interfaces dinâmicas criadas pelo provisionamento:
+
+```routeros
+/interface wifi print where dynamic
+```
+
+```
+ # NAME              MASTER  SSID             STATE
+ 0 cap-wifi1         yes     PaoQuente-WiFi   running   (2ghz-ax)
+ 1 cap-wifi2         yes     PaoQuente-WiFi   running   (5ghz-ax)
+```
+
+O AP saiu da caixa, recebeu cabo e energia, e está no ar com o padrão
+da empresa — **ninguém configurou WiFi nele**. Trocar a senha dos 200
+comodatos amanhã é editar `sec-clientes` no controlador: os CAPs
+recebem a mudança sozinhos.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+CAPsMAN separa **configuração** de **equipamento**. A configuração
+mora no controlador, versionada e única; o AP é descartável — quebrou,
+troca-se a caixa e o provisionamento reveste o hardware novo com a
+mesma configuração em segundos. Depois de operar assim, configurar AP
+por AP parece o que é: artesanato que não escala. (É o mesmo princípio
+que você verá em provisionamento de clientes PPPoE no Volume 6 e em
+automação no Volume 12.)
+:::
+
+### Quando *não* usar CAPsMAN
+
+CAPsMAN compensa quando há **frota**: comodatos padronizados, clientes
+corporativos multi-AP, WiFi público em praças. Não compensa para o AP
+único da casa de um cliente avulso com configuração própria — ali, o
+hAP configurado à mão (ou pelo app) resolve sem criar dependência do
+controlador. E lembre: com *local forwarding*, se o controlador cair os
+CAPs **continuam operando** com a última configuração recebida — só o
+provisionamento de novos APs para; com datapath centralizado, o tráfego
+morre junto com o controlador. Mais um ponto para o local forwarding no
+provedor.
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Finalmente um laboratório de wireless que o CHR roda de verdade! O
+**controlador** CAPsMAN não precisa de rádio: suba-o no `lab-r1`. O
+CAP, sim, precisa — use um AP físico com pacote `wifi` (hAP ax, cAP
+ax) ligado na rede do laboratório, se tiver. Sem hardware: os Passos
+1–2 e 5 rodam integralmente no CHR; os Passos 3–4 ficam como leitura
+guiada. Topologia: @sec-lab-chr, snapshot `pop-segmentado`.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — controlador no lab-r1.** Aplique os quatro blocos da seção
+"Configurando o controlador" (security, duas configurations, capsman
+enabled, duas regras de provisioning).
+
+**Passo 2 — confira o que existe antes de qualquer CAP:**
+
+```routeros
+/interface wifi configuration print
+/interface wifi provisioning print
+/interface wifi capsman print
+```
+
+A saída deve mostrar os dois perfis, as duas regras e
+`enabled: yes` — o controlador está pronto, ainda sem nenhum CAP.
+
+**Passo 3 — (hardware) plugue o CAP.** No AP físico, de fábrica:
+reset sem configuração padrão (@sec-backup-export), IP via DHCP na rede
+do lab, e:
+
+```routeros
+/interface wifi cap
+set enabled=yes caps-man-addresses=192.168.56.11
+```
+
+**Passo 4 — (hardware) acompanhe o provisionamento no lab-r1:**
+
+```routeros
+/interface wifi remote-cap print
+/interface wifi print where dynamic
+/interface wifi registration-table print
+```
+
+Conecte um celular no SSID `PaoQuente-WiFi` e veja-o na
+registration table **do controlador** — a visão central de todos os
+clientes WiFi da frota.
+
+**Passo 5 — a mágica da gestão central.** Troque a senha da frota
+inteira com um comando:
+
+```routeros
+/interface wifi security
+set sec-clientes passphrase=NovaSenha!2026
+```
+
+Com hardware: o celular cai e só volta com a senha nova — sem ninguém
+tocar no CAP. Sem hardware: `/interface wifi security print` confirma
+a mudança que os CAPs receberiam.
+
+### Verificação
+
+1. `capsman print` mostra `enabled: yes` e as regras de provisioning
+   listam `create-dynamic-enabled` com as bandas corretas;
+2. (Hardware) o CAP aparece em `remote-cap print` como `provisioned`
+   sem nenhuma configuração de WiFi feita nele;
+3. (Hardware) as interfaces em `print where dynamic` são **dinâmicas**
+   — some o CAP, somem elas; volte o CAP, voltam provisionadas;
+4. Você sabe explicar o que acontece com o WiFi das casas se o lab-r1
+   (controlador) for desligado — e por quê.
+
+### Desafios
+
+1. Sua frota tem 150 cAP ax (stack `wifi`) e 40 wAP ac antigos (stack
+   legado). Um único CAPsMAN resolve? Desenhe a solução de gestão para
+   a frota mista.
+2. Um cliente empresarial quer dois SSIDs em cada um dos seus 12 APs:
+   `Escritorio` (rede interna) e `Visitantes` (isolada, só internet).
+   Esboce os objetos CAPsMAN necessários (configurations, securities,
+   e o papel do datapath/VLAN) — sem escrever os comandos completos.
+3. O controlador CAPsMAN do POP caiu numa sexta à noite e só será
+   restaurado na segunda. Liste o que **para** e o que **continua** na
+   frota (local forwarding), e o que muda nessa lista se você tivesse
+   escolhido datapath centralizado.
+4. Por que `authentication-types=wpa2-psk,wpa3-psk` em vez de só
+   `wpa3-psk`, se WPA3 é mais seguro? Que tipo de chamado de suporte a
+   escolha "só WPA3" geraria?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Não — os CAPsMANs são incompatíveis entre stacks. Solução: dois
+controladores (podem morar no **mesmo** roteador do POP):
+`/interface wifi capsman` para os 150 cAP ax e `/caps-man` legado para
+os 40 wAP ac, cada frota apontando para o seu. Padronize os perfis
+(mesmos SSIDs/senhas nos dois) e planeje a aposentadoria do stack
+legado junto com a troca do hardware.
+
+**2.** Duas `security` (uma por rede — senhas distintas), duas
+`configuration` por banda (`Escritorio`, `Visitantes`), e o isolamento
+via **datapath**: cada configuration com um datapath que etiqueta uma
+VLAN diferente (`vlan-id=10` interna, `vlan-id=20` visitantes) na
+bridge do CAP — as VLANs do Volume 4 fazendo o isolamento, e o firewall
+do escritório cuidando de "visitantes só internet". As regras de
+provisioning criam os SSIDs extras como *slave configurations* nos
+mesmos rádios.
+
+**3.** Com local forwarding **continua**: o WiFi de todas as casas no
+ar, com a última configuração válida — clientes autenticam, tráfego
+flui. **Para**: provisionar CAPs novos/trocados, mudanças de
+configuração da frota, e a visão central (registration table agregada,
+estatísticas). Com datapath centralizado, a lista muda dramaticamente:
+o **tráfego** dos usuários morre com o controlador — a frota inteira
+fica sem internet até segunda. É o argumento decisivo pró-local
+forwarding no provedor.
+
+**4.** Porque a base instalada manda: dispositivos anteriores a
+~2019/2020 (smart TVs, câmeras, celulares antigos) não falam WPA3. Com
+"só WPA3", eles simplesmente não encontram como conectar — e o suporte
+recebe uma enxurrada de "a TV não pega o WiFi novo" sem mensagem de
+erro útil. O modo misto sobe cada dispositivo no melhor que ele
+suporta e deixa a migração acontecer pela renovação natural dos
+aparelhos.
+:::
+
+## Resumo
+
+- O v7 tem **dois stacks**: `/interface wireless` (legado — NV2,
+  torres, Vol. 5 até aqui) e `/interface wifi` (wave2/ax — WPA3, WiFi
+  6, indoor); cada um com **seu** CAPsMAN, incompatíveis entre si;
+- CAPsMAN = **configuração no controlador, rádio no CAP**:
+  security + configuration + provisioning no controlador; no CAP, só
+  `cap set enabled=yes caps-man-addresses=...` — *zero-touch*;
+- **Local forwarding** (dados saem na casa do cliente) escala e
+  sobrevive à queda do controlador; datapath centralizado só quando
+  políticas centrais exigem;
+- Frota padronizada (comodatos, corporativo multi-AP) → CAPsMAN; AP
+  avulso personalizado → configuração local;
+- Fecha o Volume 5: física (@sec-fundamentos-radio) → enlace e leitura
+  (@sec-wireless-routeros) → PtP (@sec-ptp-nstreme-nv2) → PtMP
+  (@sec-ptmp-rural) → campo (@sec-alinhamento) → a casa do cliente. O
+  Volume 6 pega daqui: **PPPoE**, o contrato técnico entre o provedor e
+  cada assinante.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *WiFi* e *WiFi CAPsMAN* do RouterOS v7
+  [@mikrotik-docs];
+- WPA2/WPA3 e 802.11ax: [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- Gestão de frota em provedores: [@burgess-mikrotik];
+- Linha de APs (hAP ax, cAP ax, Audience): [@mikrotik-products].

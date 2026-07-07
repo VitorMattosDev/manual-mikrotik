@@ -88,7 +88,7 @@ Pré-requisitos: Vols. 3 e 4.*
 - [x] `volumes/v05-wireless/03-ptp-nstreme-nv2.qmd` — Enlaces PtP com protocolos proprietários: Nstreme e NV2 (TDMA); quando usar cada um.
 - [x] `volumes/v05-wireless/04-ptmp-rural.qmd` — PtMP rural: setorial + LHG/SXT nos clientes, access-list, planejamento de célula.
 - [x] `volumes/v05-wireless/05-alinhamento-troubleshooting.qmd` — Alinhamento (signal, CCQ, SNR) e troubleshooting de enlace degradado.
-- [ ] `volumes/v05-wireless/06-capsman-wifi-moderno.qmd` — CAPsMAN e WiFi wave2/ax (pacote wifi do v7) para a casa do cliente.
+- [x] `volumes/v05-wireless/06-capsman-wifi-moderno.qmd` — CAPsMAN e WiFi wave2/ax (pacote wifi do v7) para a casa do cliente.
 
 ## Volume 6 — PPPoE e autenticação de assinantes
 *Objetivo: autenticar, endereçar e gerenciar assinantes como um ISP real.
