@@ -1,7 +1,313 @@
-# DHCPv6-PD e dual stack no PPPoE
+# DHCPv6-PD e dual stack no PPPoE {#sec-dhcpv6-pd}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar **prefix delegation** (DHCPv6-PD): por que o cliente recebe
+  um **prefixo** (`/56`) e não um endereço, e o que ele faz com isso;
+- Montar um **servidor DHCPv6-PD** no concentrador que delega prefixos
+  de um pool a cada assinante que autentica;
+- Entregar IPv6 **sobre PPPoE** em **dual stack** (IPv4 + IPv6 na mesma
+  sessão), amarrando a delegação à autenticação;
+- Fazer o **CPE do cliente** pedir o prefixo (client-PD) e distribuí-lo
+  na LAN da casa por RA/SLAAC;
+- Diagnosticar a cadeia PD ponta a ponta e reconhecer as falhas comuns
+  (pool errado, RA ausente, rota do prefixo não instalada).
 :::
+
+O @sec-ipv6-fundamentos estabeleceu a mudança mental: no IPv6 o provedor
+**delega uma rede**, não um IP. Falta o **como**: entregar, de forma
+**automática e por assinante**, o `/56` que a casa vai usar — e fazer
+isso **junto** com o IPv4 na mesma sessão PPPoE (@sec-pppoe-server), o
+chamado **dual stack**. É assim que um provedor moderno liga IPv6 sem
+trocar nada da autenticação que já tem.
+
+## Prefix Delegation: delegar uma rede
+
+No IPv4, o PPPoE dava ao cliente **um** endereço `/32`. No IPv6 isso
+seria desperdício e limitação: a casa tem vários dispositivos e pode ter
+várias redes (LAN, WiFi de visitante, IoT). A solução é o
+**DHCPv6-PD** (*Prefix Delegation*): o concentrador **delega um
+prefixo** (tipicamente **`/56`**) ao roteador do cliente, que passa a
+ser **dono** dessa rede — subdivide em `/64`, anuncia cada um por RA na
+sua LAN, e roteia.
+
+Repare a divisão de papéis:
+
+- O **provedor** delega o `/56` e **roteia** para ele (a rota do
+  prefixo aponta para a sessão PPPoE do cliente);
+- O **CPE do cliente** recebe o `/56`, corta em `/64`, e faz **RA/SLAAC**
+  para os dispositivos da casa (@sec-ipv6-fundamentos).
+
+```{.tikz}
+%%| filename: fig-dhcpv6-pd
+%%| alt: Cadeia de delegação de prefixo sobre PPPoE. À esquerda, o concentrador BNG com um pool IPv6 delega um /56 ao cliente durante a sessão PPPoE dual stack. No centro, o CPE do cliente recebe o /56 e o subdivide em vários /64. À direita, os dispositivos da casa recebem endereços por SLAAC em cada /64. Uma rota do /56 aponta de volta para a sessão do cliente no BNG.
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=center, minimum height=12mm, inner sep=4pt},
+]
+\node[box, fill=manualblue!15] (bng) at (0,0) {BNG\\\scriptsize pool IPv6\\\scriptsize delega /56};
+\node[box, fill=manualyellow!18] (cpe) at (4.4,0) {CPE cliente\\\scriptsize recebe /56\\\scriptsize corta em /64};
+\node[box, fill=manualgreen!15] (lan) at (8.8,0) {dispositivos\\\scriptsize SLAAC nos /64};
+\draw[-{Stealth}, thick] (bng) -- node[above]{\scriptsize PPPoE dual stack} (cpe);
+\draw[-{Stealth}, thick] (cpe) -- node[above]{\scriptsize RA/SLAAC} (lan);
+\draw[-{Stealth}, dashed, manualred] (cpe.south) to[bend left=30] node[below]{\scriptsize rota do /56 $\to$ sessão} (bng.south);
+\end{tikzpicture}
+```
+
+::: {#fig-dhcpv6-pd}
+A delegação amarra tudo: o BNG delega o `/56` na autenticação, instala a
+**rota** para ele pela sessão do cliente, e o CPE distribui `/64` na
+casa. O IPv6 chega ao dispositivo final **sem NAT** e sem configuração
+manual.
+:::
+
+## O servidor DHCPv6-PD no concentrador
+
+Primeiro, o **pool** de prefixos a delegar (o `/48` do POP, cortado em
+`/56` por cliente) e o servidor DHCPv6 em modo PD:
+
+```routeros
+# pool: um /48 do POP entregue em pedaços /56 (256 clientes por /48... ajuste)
+/ipv6 pool
+add name=pd-clientes prefix=2001:db8:abcd::/48 prefix-length=56
+
+# servidor DHCPv6 apenas para PD (não distribui endereço, distribui prefixo)
+/ipv6 dhcp-server
+add name=pd interface=all pool=pd-clientes address-pool=none
+```
+
+O ponto central: o `prefix-length=56` diz "corte o `/48` em `/56`". Cada
+assinante que pedir PD recebe o **próximo `/56`** livre do pool.
+
+## Dual stack sobre PPPoE
+
+O truque para ligar IPv6 sem refazer a operação: amarrar a delegação ao
+**profile PPPoE** (@sec-pppoe-server). Quando a sessão sobe, além do IPv4
+de sempre, o cliente recebe também o IPv6:
+
+```routeros
+# no profile PPPoE, habilitar o DHCPv6-PD para as sessões
+/ppp profile
+set default-pppoe dhcpv6-pd-pool=pd-clientes \
+    # endereço IPv6 do lado do concentrador na sessão (link):
+    remote-ipv6-prefix-pool=pd-clientes
+```
+
+Assim, **a mesma autenticação** (secret local ou RADIUS,
+@sec-radius-userman) que entrega o IPv4 passa a entregar o `/56` IPv6.
+O RADIUS pode inclusive **atribuir o prefixo por atributo**, mantendo a
+gestão centralizada — e o accounting registra a delegação (útil para o
+@sec-cgnat-logging, já que IPv6 **não** tem CGNAT, mas ainda precisa de
+rastreabilidade).
+
+::: {.callout-warning}
+IPv6 dual stack **não** passa por CGNAT — cada casa é roteável. Isso é o
+objetivo, mas significa que a **LAN do cliente fica exposta** assim que o
+IPv6 sobe, se você não tiver firewall IPv6. **Não ligue dual stack em
+produção sem** o @sec-firewall-ipv6 pronto: no IPv4 o CGNAT/NAT mascarava
+a ausência de regras; no IPv6 não há rede de segurança.
+:::
+
+## O lado do cliente: pedindo o prefixo (client-PD)
+
+No CPE (que também pode ser um MikroTik), o cliente **pede** o prefixo e
+o usa. O cliente DHCPv6 em modo PD:
+
+```routeros
+# no CPE: pedir prefixo pela interface PPPoE
+/ipv6 dhcp-client
+add interface=pppoe-out1 pool-name=casa pool-prefix-length=64 request=prefix
+
+# usar um /64 do pool recebido na LAN da casa, com RA/SLAAC
+/ipv6 address add from-pool=casa interface=bridge-lan advertise=yes
+```
+
+- `request=prefix` (não `address`): é **PD**, o cliente quer a rede;
+- `from-pool=casa` corta um `/64` do `/56` recebido e o coloca na LAN,
+  com `advertise=yes` para o SLAAC dos dispositivos.
+
+A casa inteira ganha IPv6 público automaticamente — o que o CGNAT
+tornava impossível volta a funcionar (câmeras, jogos, servidores),
+agora com **firewall** no lugar do NAT como controle.
+
+## Diagnóstico ponta a ponta
+
+```routeros
+# no BNG: quem recebeu qual /56
+/ipv6 dhcp-server binding print
+# a rota do /56 aponta para a sessão do cliente?
+/ipv6 route print where dst-address~"2001:db8:abcd"
+# no CPE: recebeu o prefixo?
+/ipv6 dhcp-client print
+/ipv6 address print
+```
+
+A cadeia sadia: **binding** no servidor → **rota** do `/56` pela sessão
+→ **dhcp-client** no CPE com prefixo → **endereço `/64`** na LAN →
+**SLAAC** nos dispositivos. Quebra em qualquer elo, o IPv6 "não anda".
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Dual stack é **evolução, não revolução**: você mantém toda a
+autenticação PPPoE e **acrescenta** a delegação de um `/56` por sessão
+(DHCPv6-PD amarrado ao profile). O cliente vira **dono de uma rede**, a
+distribui em casa por RA/SLAAC, e o IPv6 chega ao dispositivo **sem NAT**.
+Duas verdades andam juntas: isso **conserta** o que o CGNAT quebrou (fim
+a fim de volta) **e** exige o firewall IPv6 pronto **antes** de ligar —
+porque sem o muro do NAT, a única defesa da casa é a regra que você
+escreve. É o assunto que fecha o volume.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Reaproveite o cenário PPPoE do @sec-pppoe-server: **lab-bng** =
+concentrador PPPoE (com IPv4 já funcionando) e **lab-cpe** = roteador do
+cliente (PPPoE client). Adicione o IPv6: o BNG tem o `/48`
+`2001:db8:abcd::/48`; o CPE tem uma LAN interna (`ether3`) com um
+**lab-host** para provar o SLAAC. Objetivo: `/56` delegado e um
+dispositivo da casa com IPv6 público.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — pool e delegação no BNG.**
+
+```routeros
+/ipv6 pool add name=pd-clientes prefix=2001:db8:abcd::/48 prefix-length=56
+/ppp profile set default-pppoe dhcpv6-pd-pool=pd-clientes
+```
+
+**Passo 2 — o CPE pede o prefixo.** No lab-cpe, sobre a interface PPPoE:
+
+```routeros
+/ipv6 dhcp-client add interface=pppoe-out1 pool-name=casa \
+    pool-prefix-length=64 request=prefix
+```
+
+Confirme a recepção:
+
+```routeros
+/ipv6 dhcp-client print
+```
+
+Deve mostrar `status=bound` e o prefixo `/56` recebido.
+
+**Passo 3 — distribuir na casa.** Ainda no lab-cpe, corte um `/64` para
+a LAN com RA:
+
+```routeros
+/ipv6 address add from-pool=casa interface=ether3 advertise=yes
+```
+
+**Passo 4 — o dispositivo ganha IPv6 público.** No lab-host (na LAN da
+casa), ligue o IPv6 e veja o endereço global do `/56` do cliente
+aparecer por SLAAC:
+
+```routeros
+/ipv6 address print
+```
+
+**Passo 5 — a rota fecha o ciclo.** No lab-bng, confirme que existe rota
+para o `/56` **apontando para a sessão PPPoE** do cliente:
+
+```routeros
+/ipv6 dhcp-server binding print
+/ipv6 route print where dst-address~"2001:db8:abcd"
+```
+
+Pingue, do lab-host, um endereço IPv6 do lab-bng — fim a fim, sem NAT.
+
+### Verificação
+
+1. `dhcp-client` no CPE com `status=bound` e `/56` recebido;
+2. `binding` no BNG e **rota** do `/56` pela sessão do cliente;
+3. Dispositivo na LAN da casa com **GUA** por SLAAC;
+4. Ping IPv6 fim a fim host↔BNG funciona (sem NAT).
+
+### Desafios
+
+1. O CPE recebeu o `/56` (`dhcp-client bound`), mas os dispositivos da
+   casa **não** pegam IPv6. A delegação está certa. Que passo do lado do
+   CPE falta, e qual comando o revela?
+2. O dispositivo da casa tem endereço IPv6 global, mas **não navega**:
+   ping para IPv6 externo falha, embora o ping ao CPE funcione. No BNG,
+   o que você checa primeiro (pense na **rota** do `/56` e no upstream)?
+3. Por que entregar IPv6 **dual stack** é mais seguro para o provedor do
+   que continuar só com CGNAT — **e** por que, ao mesmo tempo, ligá-lo
+   sem firewall IPv6 é mais **perigoso** para o cliente? Concilie as
+   duas afirmações.
+4. Você quer que o **mesmo** cliente receba **sempre** o mesmo `/56`
+   (estável entre reconexões), para não confundir o cliente nem os
+   registros. Descreva duas formas de conseguir isso (uma no pool/lease,
+   outra via RADIUS) e por que a estabilidade importa para o
+   @sec-cgnat-logging.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Falta **usar o prefixo na LAN**: o `dhcp-client` só **recebe** o
+`/56`; é preciso `/ipv6 address add from-pool=casa interface=<lan>
+advertise=yes` para cortar um `/64` e **anunciá-lo por RA**. Sem RA, não
+há SLAAC e os dispositivos não se endereçam. `/ipv6 address print` (sem
+endereço da LAN) e `/ipv6 nd print` (sem advertise na interface) revelam
+a falta.
+
+**2.** No BNG, cheque: (a) a **rota do `/56`** aponta mesmo para a sessão
+PPPoE do cliente (`/ipv6 route print`) — se não, o retorno não acha a
+casa; (b) o **upstream IPv6** do BNG funciona (o provedor tem rota
+default IPv6 e alcança a internet). O host tem endereço, mas endereço
+sem rota de ida **e** de volta não navega — é o análogo IPv6 do
+next-hop do BGP.
+
+**3.** Mais **seguro para o provedor**: dual stack tira carga do CGNAT
+(menos tradução, menos log, menos ponto único de falha) e reduz a
+superfície de problemas de porta esgotada. Mais **perigoso para o
+cliente** se ligado sem firewall: no IPv4 o CGNAT/NAT bloqueava, por
+efeito colateral, conexões de entrada; no IPv6 cada dispositivo é
+**roteável**, então sem regras o mundo alcança a IoT da casa. Conciliam-
+se assim: o IPv6 **transfere** a proteção do NAT para o **firewall**
+(@sec-firewall-ipv6) — que passa a ser obrigatório, não opcional.
+
+**4.** (a) **Binding estático/lease fixo**: amarrar o `/56` ao
+identificador do cliente (DUID) no servidor DHCPv6, para reentregar o
+mesmo prefixo. (b) **RADIUS**: atribuir o prefixo por **atributo** no
+perfil do assinante, de modo que a autenticação sempre devolva o mesmo
+`/56`. Estabilidade importa porque um prefixo que muda a cada reconexão
+espalha registros (o accounting vira um emaranhado) e dificulta atender
+requisições legais — o mesmo princípio de previsibilidade do
+@sec-cgnat-logging, agora no IPv6.
+:::
+
+## Resumo
+
+- **DHCPv6-PD** delega um **prefixo** (`/56`) por assinante, não um
+  endereço: o cliente vira **dono de uma rede** e a distribui em casa;
+- No BNG: **pool** (`/48` cortado em `/56`) + **DHCPv6 em modo PD**
+  amarrado ao **profile PPPoE** → **dual stack** na mesma autenticação
+  (secret/RADIUS);
+- No CPE: `dhcp-client ... request=prefix` recebe o `/56`; `address
+  from-pool ... advertise=yes` corta `/64` e faz RA/SLAAC na LAN;
+- Cadeia sadia: **binding** → **rota do `/56` pela sessão** →
+  **dhcp-client bound** → **`/64` na LAN** → **SLAAC** nos dispositivos;
+- IPv6 **não** passa por CGNAT (fim a fim de volta) — por isso o
+  **firewall IPv6** tem de estar pronto **antes** de ligar dual stack.
+
+Falta a peça que o volume inteiro vem prometendo: sem o NAT fazendo de
+muro, quem protege a casa IPv6 é o **firewall**. O @sec-firewall-ipv6
+fecha o Volume 9 mostrando as diferenças em relação ao IPv4 — ICMPv6 que
+**não** se bloqueia, e a proteção da LAN do cliente.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *DHCPv6 (server/client, PD)* e *PPP* do RouterOS
+  [@mikrotik-docs];
+- Prefix delegation e dual stack: [@tanenbaum-redes];
+- IPv6 sobre PPPoE no v7: [@discher-rosv7];
+- Implantação de IPv6 em provedores: [@burgess-mikrotik].
