@@ -111,7 +111,13 @@ book:
         - volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd
         - volumes/v10-tuneis-vpn/05-interligacao-pops.qmd
 
-    # (Volumes 11–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
+    - part: "Volume 11 — MPLS"
+      chapters:
+        - volumes/v11-mpls/01-conceitos-ldp.qmd
+        - volumes/v11-mpls/02-vpls.qmd
+        - volumes/v11-mpls/03-traffic-engineering.qmd
+
+    # (Volumes 12–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
 
   appendices:
     - referencias.qmd
