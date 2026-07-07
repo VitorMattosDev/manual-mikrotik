@@ -1,7 +1,372 @@
-# PtMP rural
+# PtMP rural: a torre que atende dezenas de clientes {#sec-ptmp-rural}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Projetar uma célula PtMP: setoriais no AP, LHG/SXT nos clientes,
+  reuso de frequência entre setores;
+- Configurar o AP setorial com NV2 e os CPEs dos assinantes;
+- Usar `access-list` para controlar **quem** conecta e **com que
+  qualidade mínima** (signal range) — e por que isso salva o setor;
+- Aplicar limites por cliente no rádio (`ap-tx-limit`/`client-tx-limit`)
+  e entender onde eles terminam e o QoS do Volume 7 começa;
+- Reconhecer o problema do *hidden node* e o do "cliente lento que
+  arrasta o setor" — e as defesas contra ambos.
 :::
+
+O PtP do @sec-ptp-nstreme-nv2 levou a internet da sede até a torre.
+Agora vem a parte que paga as contas do provedor rural: **distribuir**
+essa banda para as fazendas, sítios e vilas ao redor — dezenas de
+assinantes pendurados na mesma torre. Isso é **PtMP**
+(*ponto-multiponto*): um AP com antena **setorial** servindo muitas
+estações com antenas diretivas (LHG, SXT) apontadas de volta.
+
+A física é a mesma do @sec-fundamentos-radio e os modos são os do
+@sec-wireless-routeros. O que muda é a **escala** — e com ela aparecem
+problemas que não existiam no PtP: clientes que não se escutam,
+vizinhos que conectam sem contrato, e o assinante de sinal ruim que
+degrada o setor inteiro.
+
+## Anatomia de uma célula PtMP
+
+No lado da torre, **antenas setoriais**: cobrem um leque horizontal
+(60°, 90° ou 120°) com ganho moderado. Três setoriais de 120° fecham o
+círculo. No lado do cliente, o **CPE** (*Customer Premises Equipment*):
+um rádio integrado a uma antena diretiva — LHG (grade parabólica, mais
+ganho, enlaces longos) ou SXT (painel compacto, instalações mais
+simples).
+
+```{.tikz}
+%%| filename: fig-celula-ptmp
+%%| alt: Célula PtMP vista de cima. Uma torre central com três setores de 120 graus, cada um em uma frequência distinta (5500, 5580 e 5660 MHz), atende CPEs de clientes espalhados ao redor, cada CPE com antena diretiva apontada para a torre.
+\begin{tikzpicture}[font=\small]
+% setores de 120 graus
+\fill[manualblue!20]  (0,0) -- (90:3.4) arc (90:210:3.4) -- cycle;
+\fill[manualgreen!20] (0,0) -- (210:3.4) arc (210:330:3.4) -- cycle;
+\fill[manualyellow!25] (0,0) -- (330:3.4) arc (330:450:3.4) -- cycle;
+\draw[manualgray] (0,0) -- (90:3.4) (0,0) -- (210:3.4) (0,0) -- (330:3.4);
+% torre
+\node[draw, fill=white, circle, inner sep=2pt] (torre) at (0,0) {\textbf{T}};
+\node[below=1pt of torre, inner sep=1pt] {torre};
+% rótulos dos setores
+\node at (150:2.4) {\shortstack{setor A\\5500 MHz}};
+\node at (270:2.4) {\shortstack{setor B\\5580 MHz}};
+\node at (30:2.4)  {\shortstack{setor C\\5660 MHz}};
+% CPEs (pontos com seta para a torre)
+\foreach \ang/\dist in {110/2.9, 165/3.0, 195/2.6, 235/2.8, 300/3.1, 320/2.5, 355/2.9, 60/2.7} {
+  \node[ponto, fill=manualred] (cpe\ang) at (\ang:\dist) {};
+  \draw[-{Stealth}, manualred!70] (cpe\ang) -- (\ang:{\dist-0.55});
+}
+\node[anchor=west, manualred] at (3.8,-0.2) {\shortstack[l]{CPEs dos clientes\\(LHG/SXT apontados\\para a torre)}};
+\end{tikzpicture}
+```
+
+::: {#fig-celula-ptmp}
+Célula PtMP vista de cima: três setoriais de 120° na torre, cada uma em
+uma frequência diferente para não interferirem entre si, e os CPEs dos
+assinantes apontados de volta. Cada setor é um domínio TDMA
+independente.
+:::
+
+Regras de projeto que evitam dor de cabeça:
+
+- **Uma frequência por setor**, com separação suficiente para não haver
+  sobreposição (com canais de 20 MHz: ex.: 5500/5580/5660);
+- **NV2 obrigatório**: com dezenas de estações que não se escutam
+  (fazendas em lados opostos da torre — o *hidden node* clássico), o
+  CSMA/CA colapsa em colisões; o mapa TDMA do @sec-ptp-nstreme-nv2
+  simplesmente ignora o problema, pois ninguém disputa o ar;
+- **Canais de 20 MHz** no rural: metade do throughput de 40 MHz, mas o
+  dobro de opções de frequência e ~3 dB a mais de sensibilidade — num
+  setor, robustez vale mais que pico;
+- **`nv2-cell-radius` = distância do cliente mais distante** do setor
+  (arredondada para cima), como no capítulo anterior;
+- CPE sempre em **`mode=station`** (roteando ou com NAT) ou
+  `station-bridge` se o projeto exigir L2 — decisão que o Volume 6
+  revisita com PPPoE.
+
+## O AP setorial
+
+Configuração de um setor (ex.: setor A da figura), consolidando o que
+os capítulos anteriores ensinaram:
+
+```routeros
+/interface wireless security-profiles
+add name=setor-clientes authentication-types=wpa2-psk mode=dynamic-keys \
+    wpa2-pre-shared-key=SetorRural!2026
+
+/interface wireless
+set wlan1 disabled=no mode=ap-bridge band=5ghz-a/n \
+    channel-width=20mhz frequency=5500 ssid=isp-rural-setor-a \
+    wireless-protocol=nv2 security-profile=setor-clientes \
+    nv2-cell-radius=12 tdma-period-size=dynamic \
+    default-authentication=no
+```
+
+Duas escolhas pedem explicação:
+
+- `band=5ghz-a/n` (e não `a/n/ac`): CPEs rurais de entrada (SXT Lite,
+  LHG 5) são 802.11n; travar a banda evita negociações instáveis;
+- **`default-authentication=no`**: eis a novidade do capítulo. Com
+  `no`, o AP **recusa qualquer estação que não esteja na
+  `access-list`**. O setor deixa de ser "quem tem a senha entra" e vira
+  "entra quem está no contrato".
+
+## access-list: o porteiro do setor
+
+A `access-list` é avaliada **antes** da associação: quando uma estação
+tenta conectar, o AP procura a primeira entrada que case com o MAC (e
+opcionalmente com a interface e a faixa de sinal) e obedece ao
+`authentication=yes/no` dela. Com `default-authentication=no` no AP,
+quem não casa com nenhuma entrada fica de fora.
+
+```routeros
+/interface wireless access-list
+add interface=wlan1 mac-address=CC:2D:E0:AA:11:01 comment="cli-fazenda-boavista" \
+    signal-range=-80..120
+add interface=wlan1 mac-address=CC:2D:E0:AA:11:02 comment="cli-sitio-ipe" \
+    signal-range=-80..120
+```
+
+O parâmetro discreto que muda o jogo é **`signal-range=-80..120`**: a
+entrada só autoriza a associação se o sinal do cliente estiver **acima
+de -80 dBm**. Cliente com antena desalinhada (ou árvore que cresceu na
+zona de Fresnel, @sec-fundamentos-radio) não conecta a -87 dBm com
+taxa de 6 Mbps — ele **fica fora** até a instalação ser corrigida.
+
+Por que isso importa: no TDMA, tempo de ar é o recurso compartilhado.
+Um cliente a 6 Mbps ocupa **~24× mais tempo de ar** para transferir os
+mesmos bytes que um a 144 Mbps. Um único CPE ruim consome as fatias do
+setor inteiro — o "cliente lento que arrasta o setor". O `signal-range`
+transforma um problema técnico invisível em um chamado de instalação
+explícito.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Num setor PtMP, **o recurso escasso é o tempo de ar, e ele é de
+todos**. Cada decisão do capítulo — NV2, 20 MHz, `access-list` com
+`signal-range`, limites por cliente — existe para proteger o tempo de
+ar coletivo de um indivíduo mal instalado ou mal-intencionado. Setor
+bom não é o que aceita todo mundo; é o que **só aceita enlaces
+saudáveis** e reparte o ar de forma previsível.
+:::
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O setor é um ônibus rural com horário certo (TDMA): cada passageiro tem
+seu assento e a viagem rende. A `access-list` é o motorista conferindo
+a passagem na porta (`default-authentication=no`: sem lista, ninguém
+sobe) — e o `signal-range` é a regra de não deixar embarcar quem vai
+viajar pendurado na porta com o ônibus andando: atrasa a viagem de
+**todos**, não só a dele.
+:::
+
+### Limites de banda no rádio
+
+A `access-list` também aceita `ap-tx-limit` (download para o cliente) e
+`client-tx-limit` (upload dele, bits/s):
+
+```routeros
+/interface wireless access-list
+set [find comment="cli-fazenda-boavista"] ap-tx-limit=20M client-tx-limit=5M
+```
+
+Isso é um limitador **bruto, por rádio** — útil como cinto de segurança
+no setor. O controle de planos de verdade (fila por assinante, burst,
+prioridade) é assunto do Volume 7 (QoS), e a entrega comercial por
+cliente será via PPPoE no Volume 6. Regra prática: limite no rádio um
+pouco **acima** do plano vendido, e deixe a fila fazer o trabalho fino.
+
+## O CPE do cliente
+
+No telhado da fazenda, um LHG 5 em `mode=station`:
+
+```routeros
+/interface wireless security-profiles
+add name=setor-clientes authentication-types=wpa2-psk mode=dynamic-keys \
+    wpa2-pre-shared-key=SetorRural!2026
+
+/interface wireless
+set wlan1 disabled=no mode=station band=5ghz-a/n ssid=isp-rural-setor-a \
+    wireless-protocol=nv2 security-profile=setor-clientes
+```
+
+E o teste de aceitação da instalação — a leitura que o instalador deve
+mandar no grupo antes de descer do telhado:
+
+```routeros
+/interface wireless registration-table print detail
+```
+
+Critérios de aceite (nossa política de instalação):
+`signal-strength` e `tx-signal-strength` **melhores que -65 dBm** e
+equilibrados (|diferença| ≤ 5 dB), `signal-to-noise` ≥ 25 dB, CCQ ≥
+90%. Instalação que não bate isso volta para o alinhamento
+(@sec-alinhamento) — antes de o `signal-range` da torre fazer isso
+virar um chamado noturno.
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Laboratório de configuração e leitura (o CHR não tem rádio), como no
+@sec-ptp-nstreme-nv2: os blocos são os que você aplicaria numa torre
+real com uma setorial e dois CPEs. Com hardware físico (um AP wireless
+e dois clientes — até roteadores domésticos MikroTik servem), você
+reproduz tudo de verdade. Topologia de referência: @sec-lab-chr.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — o setor.** Aplique no AP o bloco do setor A (security
+profile + `set wlan1 ... default-authentication=no`) mostrado acima.
+
+**Passo 2 — tente conectar um CPE *sem* access-list.** Configure o CPE
+(bloco do LHG acima) e observe no AP:
+
+```routeros
+/log print where topics~"wireless"
+```
+
+```
+12:40:18 wireless,info CC:2D:E0:AA:11:01@wlan1: connected
+12:40:18 wireless,info CC:2D:E0:AA:11:01@wlan1: disconnected, banned by access-list
+```
+
+O CPE conecta e cai imediatamente: sem entrada na lista e com
+`default-authentication=no`, o porteiro barra — mesmo com a senha
+certa.
+
+**Passo 3 — autorize o cliente.** No AP:
+
+```routeros
+/interface wireless access-list
+add interface=wlan1 mac-address=CC:2D:E0:AA:11:01 \
+    comment="cli-fazenda-boavista" signal-range=-80..120 \
+    ap-tx-limit=20M client-tx-limit=5M
+```
+
+Agora o CPE associa e **permanece**:
+
+```routeros
+/interface wireless registration-table print
+```
+
+```
+ # INTERFACE  MAC-ADDRESS        AP  SIGNAL-STRENGTH  TX-RATE   UPTIME
+ 0 wlan1      CC:2D:E0:AA:11:01  no  -61dBm           130Mbps   4m12s
+```
+
+**Passo 4 — repita para o segundo CPE** (`...:02`, comment
+"cli-sitio-ipe") e confirme os dois na registration table.
+
+**Passo 5 — simule o cliente degradado.** Edite a entrada do cliente 1
+apertando o piso de sinal para um valor que ele não alcança:
+
+```routeros
+/interface wireless access-list
+set [find comment="cli-fazenda-boavista"] signal-range=-55..120
+/log print where topics~"wireless"
+```
+
+Com sinal real de -61 dBm (< -55), o CPE cai e o log registra o
+`banned by access-list`. Foi exatamente o que aconteceria com um
+cliente desalinhado num setor com política de sinal. Restaure
+`signal-range=-80..120` ao final.
+
+### Verificação
+
+1. Sem entrada na access-list, o CPE **não** fica associado
+   (`banned by access-list` no log) apesar da senha correta;
+2. Com a entrada, os dois CPEs aparecem na registration table com
+   uptime crescendo;
+3. O Passo 5 derrubou só o cliente com `signal-range` apertado — o
+   outro nem piscou (`uptime` preservado);
+4. Você sabe apontar, na configuração do setor, as **quatro** defesas
+   do tempo de ar coletivo (protocolo, largura de canal, porteiro,
+   limites).
+
+### Desafios
+
+1. Um setor com 40 clientes NV2 funciona bem até ~19h, quando a
+   latência de **todos** sobe para 300 ms. A registration table mostra
+   um único cliente com `tx-rate=13Mbps` e tráfego alto constante.
+   Explique o mecanismo e proponha duas correções (uma imediata, uma
+   definitiva).
+2. O vizinho do cliente descobriu a senha WPA2 do setor (ela é única,
+   @sec-wireless-routeros alertou). Com a configuração deste capítulo,
+   o que ele consegue? E se o AP estivesse com
+   `default-authentication=yes`?
+3. Projete as frequências de uma torre com **quatro** setores de 90°
+   em 5 GHz, canais de 20 MHz, sabendo que setores opostos (costas um
+   para o outro) podem reusar frequência. Quantas frequências você
+   precisa no mínimo? Desenhe a atribuição.
+4. Um cliente reclama de velocidade à noite, mas sua leitura é
+   impecável (-58 dBm, SNR 32 dB, CCQ 97%). O `ap-tx-limit` dele é 20M
+   e o plano vendido é 20M. Onde mais o gargalo pode estar? Liste três
+   suspeitos na ordem em que você investigaria.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** É o cliente lento arrastando o setor: a 13 Mbps, cada byte dele
+custa ~10× mais tempo de ar que o de um cliente saudável; no pico de
+tráfego, as fatias TDMA que sobram para os demais encolhem e a fila de
+espera (latência) explode para todos. Imediata: `signal-range` na
+entrada dele (ou `disabled=yes`) para tirá-lo do ar e proteger o
+coletivo. Definitiva: visita técnica — realinhar/trocar o CPE (ou
+elevar, se a Fresnel foi obstruída) até ele voltar a taxas altas.
+
+**2.** Quase nada: ele associa por ter a senha, mas o MAC dele não está
+na access-list e `default-authentication=no` o derruba
+(`banned by access-list`). Com `default-authentication=yes`, ele
+entraria como cliente pleno — consumindo tempo de ar e alcançando a
+rede do setor. (Clonar um MAC autorizado ainda seria possível — por
+isso a senha por assinante do PPPoE, no Volume 6, fecha o ciclo.)
+
+**3.** Duas frequências bastam. Setores opostos irradiam para lados
+contrários com antenas diretivas: o isolamento costas-com-costas
+permite reuso. Atribuição clássica em X: N=5500, L=5580, S=5500,
+O=5580 (padrão A-B-A-B). Na prática, confirme o isolamento real medindo
+o sinal do setor oposto num CPE de borda — reuso é projeto, não fé.
+
+**4.** (a) O **backhaul** da torre no pico — se o PtP do
+@sec-ptp-nstreme-nv2 satura às 19h, todos os setores sofrem juntos
+(verifique o gráfico da interface do PtP); (b) o **tempo de ar do
+setor** consumido pelos vizinhos (um cliente lento como no desafio 1
+prejudica até quem tem leitura perfeita); (c) o **lado LAN do
+cliente** — WiFi doméstico ruim atrás do CPE (teste cabeado no CPE
+isola). A leitura de rádio impecável só isenta o *enlace dele*, nada
+mais.
+:::
+
+## Resumo
+
+- PtMP rural: **setoriais** na torre (uma frequência por setor, TDMA
+  independente) e **CPEs diretivos** (LHG/SXT) nos clientes;
+- **NV2 é obrigatório** em PtMP: estações que não se escutam
+  inviabilizam o CSMA/CA (*hidden node*); o mapa TDMA elimina a disputa;
+- **Canais de 20 MHz** privilegiam robustez e reuso de espectro;
+  `nv2-cell-radius` cobre o cliente mais distante;
+- **`default-authentication=no` + `access-list`** = só entra quem está
+  no contrato; **`signal-range`** barra instalações ruins antes que
+  arrastem o setor; `ap-tx-limit`/`client-tx-limit` são o cinto de
+  segurança bruto (QoS fino no Volume 7, entrega por assinante no
+  Volume 6);
+- Política de aceite de instalação (sinal, simetria, SNR, CCQ) vale
+  mais que qualquer troubleshooting posterior — e o @sec-alinhamento
+  ensina a alcançá-la.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *Wireless — Access List* e *NV2*
+  [@mikrotik-docs];
+- Hidden node e acesso ao meio: [@tanenbaum-redes];
+- Wireless no RouterOS v7: [@discher-rosv7];
+- Operação de provedor com MikroTik: [@burgess-mikrotik];
+- Linhas de produto (setoriais, LHG, SXT): [@mikrotik-products].
