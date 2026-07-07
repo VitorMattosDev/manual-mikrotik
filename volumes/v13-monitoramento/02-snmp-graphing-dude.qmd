@@ -1,7 +1,287 @@
-# SNMP, graphing e The Dude
+# SNMP, graphing e The Dude {#sec-snmp-dude}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o **SNMP** (OIDs, MIBs, comunidades, polling) e por que ele é
+  a base de **todo** sistema de gráficos de rede;
+- Habilitar SNMP no RouterOS **com segurança** (SNMPv3, comunidade
+  restrita, `allowed-address`) e coletá-lo de um NMS externo
+  (Zabbix/LibreNMS/PRTG);
+- Diferenciar **graphing nativo** do RouterOS do monitoramento externo e
+  saber quando cada um basta;
+- Usar o **The Dude** para mapear o parque, monitorar disponibilidade e
+  disparar alertas;
+- Escolher **o que medir** (tráfego, CPU, memória, temperatura, sinal de
+  rádio) e reconhecer os limites do polling.
 :::
+
+O log (@sec-logs) conta **eventos** — o que aconteceu, em texto. Mas
+operar um provedor exige ver **tendências e estado ao longo do tempo**:
+o tráfego do enlace está crescendo? a CPU do concentrador vive em 90%? o
+sinal daquele rádio degradou na última semana? Isso são **métricas
+numéricas amostradas periodicamente** — e a fundação universal para
+coletá-las é o **SNMP**. Este capítulo liga o SNMP com segurança, mostra
+o graphing nativo e o The Dude, e ensina a pergunta que precede qualquer
+dashboard: **o que medir**.
+
+## SNMP: a base de todo gráfico
+
+O **SNMP** (*Simple Network Management Protocol*) é o jeito padrão de um
+sistema externo **perguntar** a um equipamento seus contadores. As peças:
+
+- **OID** (*Object Identifier*): o "endereço" de uma métrica (ex.: bytes
+  de entrada da interface 3). Uma árvore numérica padronizada;
+- **MIB**: o "dicionário" que traduz OIDs em nomes legíveis;
+- **Comunidade** (v1/v2c) ou **usuário** (v3): a credencial de acesso;
+- **Polling**: o NMS **pergunta** periodicamente (a cada 30 s, 5 min) e
+  guarda a série temporal — de onde saem os gráficos.
+
+O provedor **não** costuma coletar SNMP com o RouterOS; ele **expõe**
+SNMP para um **NMS** (*Network Management System*) externo —
+**Zabbix**, **LibreNMS**, **PRTG**, **Grafana+SNMP** — que faz o polling
+de todo o parque, guarda o histórico e desenha os gráficos.
+
+```{.tikz}
+%%| filename: fig-snmp
+%%| alt: Arquitetura de monitoramento por SNMP. À direita, um NMS externo (Zabbix/LibreNMS) faz polling periódico. À esquerda, vários roteadores MikroTik expondo SNMP. O NMS pergunta OIDs (tráfego, CPU, temperatura) a cada roteador e guarda as séries temporais, gerando gráficos e alertas. Setas de polling do NMS para cada equipamento e de volta com os valores.
+\begin{tikzpicture}[
+  font=\small,
+  b/.style={draw, rounded corners, align=center, minimum height=9mm, font=\scriptsize, inner sep=3pt},
+]
+\node[b, fill=manualgreen!15, minimum height=22mm] (nms) at (7,0) {NMS externo\\\scriptsize (Zabbix/LibreNMS)\\\scriptsize séries + gráficos\\\scriptsize + alertas};
+\node[b, fill=manualblue!15] (r1) at (0,1.4) {roteador 1};
+\node[b, fill=manualblue!15] (r2) at (0,0) {roteador 2};
+\node[b, fill=manualblue!15] (rn) at (0,-1.4) {roteador n};
+\draw[-{Stealth}] (nms) to[bend right=12] node[above]{\scriptsize poll OID} (r1);
+\draw[-{Stealth}] (nms) to[bend right=6] (r2);
+\draw[-{Stealth}] (nms) to[bend left=12] (rn);
+\draw[{Stealth}-, dashed] (nms.west) to[bend left=20] node[below]{\scriptsize valores} (r2.east);
+\end{tikzpicture}
+```
+
+::: {#fig-snmp}
+O NMS externo faz **polling** de SNMP em cada equipamento, guarda as
+séries temporais e gera gráficos e alertas. O RouterOS só **expõe** os
+contadores; a inteligência (histórico, correlação, alerta) mora no NMS.
+:::
+
+## Habilitando SNMP com segurança
+
+O erro clássico é deixar a comunidade `public` (v2c) exposta — qualquer
+um lê o estado do seu equipamento. Faça **SNMPv3** (autenticado e
+cifrado) ou, no mínimo, uma comunidade **restrita por `allowed-address`**:
+
+```routeros
+# SNMPv3: usuário com autenticação e criptografia
+/snmp community
+add name=nms-ro addresses=10.99.0.20 read-access=yes write-access=no \
+    security=private authentication-protocol=SHA1 \
+    encryption-protocol=AES authentication-password="Auth-Forte" \
+    encryption-password="Enc-Forte"
+/snmp set enabled=yes contact="noc@provedor.net" location="POP-1" \
+    trap-community=nms-ro
+```
+
+- **`addresses`/`allowed-address`**: só o NMS pode consultar;
+- **`write-access=no`**: SNMP de monitoramento é **somente leitura** —
+  nunca dê escrita;
+- **SNMPv3** com SHA/AES quando possível; `public`/v2c só em rede de
+  gerência isolada e restrita.
+
+::: {.callout-warning}
+SNMP aberto é uma **porta de reconhecimento** para atacantes: revela
+topologia, versões, interfaces, tráfego — um mapa da sua rede. **Nunca**
+exponha SNMP na internet, **nunca** deixe `public` sem restrição.
+Comunidade forte + `allowed-address` do NMS + rede de gerência isolada.
+:::
+
+## Graphing nativo vs. monitoramento externo
+
+O RouterOS tem um **graphing** embutido (`/tool graphing`) que desenha
+gráficos simples de tráfego/recursos, acessíveis pelo navegador. Ele
+serve para um **olhar rápido** num equipamento isolado, mas **não
+escala**: sem histórico longo, sem correlação entre equipamentos, sem
+alerta central.
+
+- **Graphing nativo**: bom para lab, um roteador, um diagnóstico
+  pontual;
+- **NMS externo (SNMP)**: obrigatório para **parque** — histórico,
+  dashboards, alertas, capacidade, tendências. É onde você responde "o
+  enlace vai saturar em quantas semanas?".
+
+## The Dude: mapa e disponibilidade
+
+O **The Dude** é a ferramenta de monitoramento da própria MikroTik: um
+servidor (roda como pacote no RouterOS ou em CHR dedicado) que
+**descobre** a rede, desenha um **mapa** com o estado (verde/vermelho),
+faz polling (SNMP, ping, serviços) e **alerta** quando algo cai. Para
+provedores menores, é um NMS completo e gratuito; para maiores, costuma
+conviver com Zabbix/LibreNMS.
+
+O Dude brilha em: **mapa visual** do parque (útil no NOC), **checagem de
+disponibilidade** (up/down com notificação) e integração natural com o
+RouterOS (RoMON, @sec-hardening-operacional, para alcançar equipamentos
+sem IP de gerência direto).
+
+## O que medir
+
+Um dashboard só é útil se mede o que **prevê problema**. O essencial num
+provedor:
+
+- **Tráfego por interface** (bps in/out): saturação, tendência de
+  crescimento, capacidade;
+- **CPU e memória**: concentrador PPPoE/BNG sob carga, roteador de borda
+  no limite;
+- **Temperatura e tensão** (onde houver): POP solar, equipamento em
+  campo;
+- **Sinal/CCQ/SNR de rádio** (@sec-alinhamento): degradação de enlace
+  antes da queda;
+- **Sessões PPPoE ativas**, **uso de CGNAT** (portas), **estado de BGP/
+  OSPF**: saúde dos serviços.
+
+A regra: meça o que você **agiria** a respeito. Métrica que ninguém olha
+nem aciona alerta é ruído no dashboard.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Log mostra **eventos**; SNMP mostra **tendências e estado no tempo** — e
+é a base de **todo** sistema de gráficos. O RouterOS **expõe** SNMP; a
+inteligência (histórico, correlação, alerta) mora num **NMS externo**
+(Zabbix/LibreNMS) ou no **The Dude**. Duas disciplinas: **segurança**
+(SNMPv3 ou comunidade restrita + `allowed-address`, somente leitura,
+nunca na internet — SNMP aberto é um mapa da sua rede para o atacante) e
+**foco** (meça o que você **agiria** a respeito: tráfego, CPU, sinal,
+saúde de serviço). Dashboard não é enfeite — é o que te avisa **antes** do
+cliente reclamar.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Um CHR (@sec-lab-chr) como equipamento monitorado (**lab-rt**) e uma
+máquina de monitoramento — um **CHR com The Dude** (**lab-dude**) ou um
+host com **LibreNMS/Zabbix**/`snmpwalk` na rede de gerência
+`10.99.0.0/24`. O foco é expor SNMP com segurança e coletá-lo de fora.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — habilite SNMP restrito.** No lab-rt:
+
+```routeros
+/snmp community add name=nms-ro addresses=10.99.0.20 read-access=yes write-access=no
+/snmp set enabled=yes location="LAB" contact="noc@lab"
+```
+
+**Passo 2 — colete de fora.** Da máquina de monitoramento (Linux):
+
+```bash
+snmpwalk -v2c -c nms-ro 10.99.0.1 | head
+# tráfego da interface (ifTable) — a base dos gráficos:
+snmpwalk -v2c -c nms-ro 10.99.0.1 IF-MIB::ifInOctets
+```
+
+Você vê os **contadores** que o NMS transformaria em gráfico.
+
+**Passo 3 — prove a restrição.** Tente consultar de um IP **fora** do
+`addresses` e confirme que é recusado — a segurança do SNMP.
+
+**Passo 4 — graphing nativo.** Ligue o graphing de uma interface e veja
+o gráfico local no navegador:
+
+```routeros
+/tool graphing interface add interface=ether1
+```
+
+**Passo 5 — The Dude (se disponível).** No lab-dude, adicione o lab-rt,
+deixe-o descobrir/monitorar, e veja o **mapa** com o estado. Derrube uma
+interface e observe o alerta/estado mudar.
+
+**Passo 6 — escolha as métricas.** Liste, para o lab-rt, as 5 métricas
+que você colocaria num dashboard de produção e o **limiar de alerta** de
+cada uma (ex.: CPU > 85%, tráfego > 80% da capacidade).
+
+### Verificação
+
+1. `snmpwalk` do NMS retorna contadores (ifInOctets etc.);
+2. Consulta de IP não autorizado é recusada; acesso é somente leitura;
+3. Graphing nativo desenha o tráfego de uma interface;
+4. (The Dude) o mapa reflete o estado e alerta na queda.
+
+### Desafios
+
+1. Um atacante fez reconhecimento da sua rede lendo SNMP `public` exposto
+   e mapeou topologia, versões e tráfego. Aponte os **três** erros de
+   configuração e a correção de cada um.
+2. Seu graphing nativo mostra o tráfego de hoje, mas o gestor pergunta
+   "quando este enlace vai saturar?" e você não sabe responder. Qual é a
+   limitação do graphing nativo e o que resolve?
+3. Você quer ser avisado **antes** de o cliente reclamar de um rádio
+   degradando. Qual métrica monitorar, com que tendência olhar, e por que
+   o SNMP/polling é adequado (e onde ele tem limite)?
+4. Diferencie **log** (@sec-logs) de **SNMP** quanto ao que cada um
+   responde. Dê um problema real que **só** o log explica e outro que
+   **só** a métrica SNMP revela.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) **Comunidade `public`** → troque por comunidade forte/SNMPv3.
+(b) **Sem `allowed-address`** → restrinja `addresses` ao IP do NMS. (c)
+**SNMP alcançável da internet/rede não isolada** → exponha SNMP só na
+**rede de gerência isolada**, nunca em interface pública. SNMP aberto
+entrega um mapa completo (topologia, versões, tráfego) ao atacante.
+
+**2.** O graphing nativo **não guarda histórico longo** nem faz projeção
+— mostra o presente/recente de **um** equipamento. Para responder
+"quando satura?" você precisa de um **NMS externo** (SNMP) que retém
+**séries temporais longas** e permite ver a **tendência** de crescimento
+e projetar a saturação. Histórico + correlação = capacidade de
+planejamento.
+
+**3.** Monitore **sinal/CCQ/SNR** do rádio (@sec-alinhamento) via SNMP,
+olhando a **tendência de degradação** ao longo de dias/semanas — uma
+queda gradual de SNR avisa antes da falha total. O polling é adequado
+porque essas métricas mudam devagar e a amostragem periódica captura a
+tendência. **Limite**: eventos **rápidos** (micro-quedas entre polls)
+podem escapar do intervalo de polling — para esses, log/trap complementam.
+
+**4.** **Log** responde "o que **aconteceu** e quando" (um evento
+discreto): uma adjacência OSPF que caiu às 21h58 — só o log conta.
+**SNMP** responde "qual o **valor/estado** ao longo do tempo": o tráfego
+do enlace subiu de 60% para 95% em três semanas — só a métrica revela.
+Log = eventos; SNMP = tendências. Operação madura usa os dois.
+:::
+
+## Resumo
+
+- **SNMP** (OIDs/MIBs, comunidade/v3, polling) é a base de **todo**
+  gráfico de rede; o RouterOS **expõe**, o **NMS externo**
+  (Zabbix/LibreNMS) coleta, guarda e alerta;
+- **Segurança**: SNMPv3 ou comunidade restrita + **`allowed-address`**,
+  **somente leitura**, **nunca** na internet — SNMP aberto é um mapa
+  para o atacante;
+- **Graphing nativo** serve para olhar um equipamento; **NMS externo** é
+  obrigatório para **parque** (histórico, tendência, alerta);
+- **The Dude**: mapa do parque, disponibilidade e alerta — NMS completo
+  para provedores menores;
+- Meça o que você **agiria** a respeito: tráfego, CPU/memória,
+  temperatura, **sinal de rádio** (@sec-alinhamento), saúde de serviços.
+
+Log e métricas dão a visão de **conjunto**. Falta a lupa — enxergar o
+**tráfego e a CPU em tempo real, pacote a pacote**, no momento do
+problema. O @sec-torch-sniffer cobre Torch, packet sniffer e profile.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *SNMP*, *Graphing* e *The Dude* do RouterOS
+  [@mikrotik-docs];
+- SNMP, MIBs e monitoramento de redes: [@tanenbaum-redes];
+- Monitoramento no v7 na prática: [@discher-rosv7];
+- NMS e observabilidade em provedores: [@burgess-mikrotik].
