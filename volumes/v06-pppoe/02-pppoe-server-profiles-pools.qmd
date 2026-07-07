@@ -1,7 +1,416 @@
-# PPPoE server: profiles, pools e secrets
+# PPPoE server: profiles, pools e secrets {#sec-pppoe-server}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Organizar o concentrador em três camadas: **pool** (estoque de IPs),
+  **profile** (o plano) e **secret** (o assinante);
+- Configurar profiles que carregam tudo do plano: endereços, DNS,
+  limite de banda (`rate-limit`), MSS clamping e isolamento entre
+  clientes;
+- Publicar o serviço com `/interface pppoe-server server` na interface
+  certa (a VLAN de clientes do POP) com MTU pleno e CHAP;
+- Aplicar as operações do dia a dia: mudar cliente de plano, suspender
+  por inadimplência (sem apagar o cadastro!), enxergar e derrubar
+  sessões;
+- Explicar como o `rate-limit` do profile vira fila dinâmica — a ponte
+  para o QoS do Volume 7.
 :::
+
+O @sec-pppoe-fundamentos montou um servidor de teste com um usuário.
+Um provedor real tem centenas — distribuídos em planos diferentes, com
+inadimplentes para suspender, upgrades para aplicar e IPs para não
+deixar acabar. A diferença entre o teste e a produção não é quantidade
+de comandos: é **arquitetura**. Este capítulo organiza o concentrador
+do jeito que escala.
+
+## As três camadas do concentrador
+
+O RouterOS separa a configuração PPP em três objetos, e a disciplina de
+usar cada um para o que serve é o que mantém 500 assinantes
+administráveis:
+
+| Camada | Objeto | Responde por | Quantos existem |
+|---|---|---|---|
+| Estoque | `/ip pool` | de onde saem os IPs | 1 por classe de serviço |
+| Plano | `/ppp profile` | banda, DNS, endereços, políticas | 1 por **plano comercial** |
+| Assinante | `/ppp secret` | login, senha, qual plano | 1 por **contrato** |
+
+: As três camadas da configuração PPP {#tbl-camadas-ppp}
+
+A regra de ouro: **tudo que é do plano fica no profile; no secret, só o
+que é daquele cliente** (login, senha, profile e — exceções — um IP
+fixo contratado). Quando o plano de 50 Mbps virar 60 Mbps na promoção,
+você muda **uma linha** no profile e os 300 assinantes dele herdam a
+mudança na próxima conexão. Se a banda estivesse espalhada pelos
+secrets, seriam 300 edições.
+
+```{.tikz}
+%%| filename: fig-camadas-pppoe
+%%| alt: Diagrama em três camadas do concentrador PPPoE. No topo, o pool de endereços 100.64.100.0/22. No meio, três profiles representando os planos de 50, 100 e 200 megabits, todos apontando para o pool. Na base, secrets de assinantes, cada um apontando para o profile do seu plano.
+\begin{tikzpicture}[
+  font=\small,
+  caixa/.style={draw, rounded corners, align=center, inner sep=4pt},
+]
+% pool
+\node[caixa, fill=manualyellow!30, minimum width=52mm] (pool) at (0,2.6)
+  {\texttt{/ip pool}\\ \textbf{pool-clientes} — 100.64.100.0/22};
+% profiles
+\node[caixa, fill=manualblue!20]  (p50)  at (-3.4,0.9) {\texttt{profile}\\ \textbf{plano-50m}\\ \scriptsize 50M/25M};
+\node[caixa, fill=manualblue!20]  (p100) at (0,0.9)    {\texttt{profile}\\ \textbf{plano-100m}\\ \scriptsize 100M/50M};
+\node[caixa, fill=manualblue!20]  (p200) at (3.4,0.9)  {\texttt{profile}\\ \textbf{plano-200m}\\ \scriptsize 200M/100M};
+\foreach \p in {p50,p100,p200} \draw[-{Stealth}, manualgray] (\p) -- (pool);
+% secrets
+\node[caixa, fill=manualgreen!20] (s1) at (-4.6,-1.1) {\scriptsize secret\\ \scriptsize maria.silva};
+\node[caixa, fill=manualgreen!20] (s2) at (-2.3,-1.1) {\scriptsize secret\\ \scriptsize joao.souza};
+\node[caixa, fill=manualgreen!20] (s3) at (0,-1.1)    {\scriptsize secret\\ \scriptsize padaria.pq};
+\node[caixa, fill=manualgreen!20] (s4) at (2.3,-1.1)  {\scriptsize secret\\ \scriptsize ana.lima};
+\node[caixa, fill=manualgreen!20] (s5) at (4.6,-1.1)  {\scriptsize secret\\ \scriptsize sitio.ipe};
+\draw[-{Stealth}, manualgray] (s1) -- (p50);
+\draw[-{Stealth}, manualgray] (s2) -- (p50);
+\draw[-{Stealth}, manualgray] (s3) -- (p100);
+\draw[-{Stealth}, manualgray] (s4) -- (p200);
+\draw[-{Stealth}, manualgray] (s5) -- (p200);
+% rótulos laterais
+\node[manualgray, anchor=west] at (5.6,2.6)  {\scriptsize estoque de IPs};
+\node[manualgray, anchor=west] at (5.6,0.9)  {\scriptsize um por plano};
+\node[manualgray, anchor=west] at (5.6,-1.1) {\scriptsize um por contrato};
+\end{tikzpicture}
+```
+
+::: {#fig-camadas-pppoe}
+As três camadas: secrets (contratos) apontam para profiles (planos),
+que consomem IPs de um pool (estoque). Mudança de plano comercial =
+editar um profile; mudança de um cliente = editar um secret.
+:::
+
+## Camada 1 — o pool
+
+Para os IPs dos assinantes usaremos `100.64.0.0/10` — a faixa
+reservada para redes de provedor (*shared address space*, RFC 6598),
+que o Volume 9 destrinchará com o CGNAT. Um `/22` dá ~1000 endereços:
+
+```routeros
+/ip pool add name=pool-clientes ranges=100.64.100.2-100.64.103.254
+```
+
+Dimensione pelo **pico de sessões simultâneas** + 20% de folga: pool
+esgotado significa cliente novo que não conecta — e o alerta de pool
+cheio é um dos primeiros que você vai automatizar no Volume 13.
+
+## Camada 2 — profiles (os planos)
+
+Um profile por plano comercial, com tudo que o plano implica:
+
+```routeros
+/ppp profile
+add name=plano-50m local-address=100.64.100.1 remote-address=pool-clientes \
+    dns-server=100.64.100.1 rate-limit=50M/25M change-tcp-mss=yes \
+    only-one=yes use-encryption=no
+add name=plano-100m local-address=100.64.100.1 remote-address=pool-clientes \
+    dns-server=100.64.100.1 rate-limit=100M/50M change-tcp-mss=yes \
+    only-one=yes use-encryption=no
+add name=plano-200m local-address=100.64.100.1 remote-address=pool-clientes \
+    dns-server=100.64.100.1 rate-limit=200M/100M change-tcp-mss=yes \
+    only-one=yes use-encryption=no
+```
+
+Linha a linha do que importa:
+
+- `local-address`: o "lado de cá" de todos os túneis — pode ser o
+  mesmo IP para todos os profiles (cada sessão é ponto a ponto,
+  não há conflito);
+- `remote-address=pool-clientes`: de onde sai o IP do assinante.
+  Vários profiles compartilhando um pool é normal;
+- `dns-server`: o DNS que o IPCP entrega — o resolver do provedor
+  (@sec-dns), não um público, para manter o cache perto do cliente;
+- **`rate-limit=50M/25M`**: a entrega do plano.
+  Formato `download/upload` **do ponto de vista do cliente** (o
+  RouterOS lê como `rx/tx` do concentrador: o que ele recebe do
+  cliente/o que envia a ele — atenção à ordem: `tx/rx` na
+  documentação é enviado-ao-cliente/recebido-do-cliente, ou seja,
+  download/upload). Ao conectar, o concentrador cria uma **fila
+  dinâmica** com esses tetos para a sessão;
+- `change-tcp-mss=yes`: o MSS clamping do @sec-pppoe-fundamentos,
+  automático por sessão — sem regra de mangle manual;
+- **`only-one=yes`**: um login = uma sessão simultânea. Sem isso, a
+  senha compartilhada com o vizinho vira duas casas no preço de uma;
+- `use-encryption=no`: MPPE não protege nada que TLS já não proteja e
+  custa CPU no concentrador — desnecessário em acesso de provedor.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+Pense numa **academia**: o pool é o estoque de armários, o profile é o
+tipo de plano (musculação, completo, premium — cada um define a que
+horas pode entrar e quais áreas usa), e o secret é a matrícula de cada
+aluno com sua digital. Mudar o horário do plano completo se faz **no
+contrato do plano**, não aluno por aluno; suspender um aluno
+inadimplente é bloquear **a matrícula dele**, não demolir o armário
+nem mudar o plano dos outros.
+:::
+
+## Camada 3 — secrets (os assinantes)
+
+Um secret por contrato, apontando para o profile do plano:
+
+```routeros
+/ppp secret
+add name=maria.silva password=Ms!7201xk service=pppoe profile=plano-50m \
+    comment="contrato 1042 - Rua das Flores 12"
+add name=padaria.paoquente password=Pq!9034mz service=pppoe profile=plano-100m \
+    comment="contrato 0007 - cliente ancora"
+add name=sitio.ipe password=Si!5518ab service=pppoe profile=plano-200m \
+    remote-address=100.64.100.250 comment="contrato 0831 - IP fixo contratado"
+```
+
+Repare no `sitio.ipe`: `remote-address` **no secret** sobrepõe o pool
+do profile — é assim que se entrega IP fixo a quem contratou, sem criar
+um profile só para isso. E o `comment` amarra o login ao contrato no
+sistema de gestão: seu futuro eu às 3h da manhã agradece.
+
+::: {.callout-warning}
+Senhas de assinante são **credenciais em produção**: gere-as aleatórias
+(nunca `nome123`), guarde-as no sistema de gestão e lembre que
+`/ppp secret print` as exibe em claro para quem tem acesso `full` ao
+roteador — mais um motivo para as contas restritas do
+@sec-primeiro-acesso.
+:::
+
+## Publicando o serviço
+
+Falta o servidor escutar onde os clientes estão. No POP segmentado do
+@sec-segmentacao-pop, os assinantes chegam pela VLAN 101
+(`vlan101-clientes`):
+
+```routeros
+/interface pppoe-server server
+add interface=vlan101-clientes service-name=isp-paoquente \
+    default-profile=plano-50m authentication=chap \
+    max-mtu=1492 max-mru=1492 keepalive-timeout=10 disabled=no
+```
+
+- `interface=vlan101-clientes`: o serviço existe **só** onde deve — um
+  PPPoE server em `ether1` (WAN) seria um convite à internet;
+- `max-mtu/max-mru=1492`: MTU pleno (o desafio 2 do capítulo anterior
+  explicou o 1480 conservador de fábrica);
+- `authentication=chap`: PAP proibido fora da bancada;
+- `keepalive-timeout=10`: sessões de clientes desligados somem em ~10 s
+  (o @sec-concentrador-bng ajusta fino);
+- `default-profile`: usado se o secret não indicar profile — deixe
+  apontando para o **menor** plano, nunca para o maior (falha
+  conservadora).
+
+Um detalhe de arquitetura que economiza dores: com PPPoE, o firewall
+de forward do concentrador (@sec-forward-lists) enxerga cada assinante
+como uma interface própria — e como o tráfego cliente↔cliente passa
+**pelo concentrador** (cada sessão é um túnel), o isolamento entre
+vizinhos deixa de depender de truques de L2.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+**O profile é o plano comercial em forma de configuração.** Toda
+decisão de negócio — quanto custa, quanto entrega, DNS de quem, uma ou
+duas sessões — mora num objeto só, versionável com `/export` e
+auditável. O secret carrega apenas a identidade. Provedor que mistura
+as camadas (banda no secret, IP fixo num profile clonado às pressas)
+acumula uma dívida técnica que explode exatamente no pior dia: o da
+migração de concentrador. Disciplina nas três camadas **é** o sistema
+de gestão embrionário — e é o que o RADIUS do próximo capítulo vai
+substituir sem dor.
+:::
+
+## Operações do dia a dia
+
+**Mudar de plano** (upgrade da maria.silva):
+
+```routeros
+/ppp secret set [find name=maria.silva] profile=plano-100m
+/ppp active remove [find name=maria.silva]
+```
+
+O profile novo vale para a **próxima** sessão — o `active remove`
+derruba a atual e o cliente reconecta já no plano novo (segundos de
+queda; combine com o cliente ou deixe para a madrugada).
+
+**Suspender por inadimplência** — a operação mais frequente do
+provedor. Nunca apague o secret (perde-se o cadastro, o histórico e o
+IP fixo); **desabilite**:
+
+```routeros
+/ppp secret set [find name=maria.silva] disabled=yes
+/ppp active remove [find name=maria.silva]
+```
+
+Reativar é `disabled=no`. (Provedores maduros preferem mover o cliente
+para um profile `plano-suspenso` que redireciona para a página de
+cobrança — dá para fazer com address-list + NAT do @sec-dstnat; o
+RADIUS do próximo capítulo automatiza isso.)
+
+**Enxergar a operação**:
+
+```routeros
+/ppp active print stats
+/ppp secret print count-only where disabled=yes
+/ip pool used print
+```
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+`lab-r1` (concentrador) e `lab-r2` (cliente), rede `lab-a`, a partir do
+estado do laboratório anterior (@sec-pppoe-fundamentos). Vamos
+**substituir** o servidor de teste pela estrutura de produção — começe
+removendo os objetos `*-teste` se ainda existirem:
+`/interface pppoe-server server remove [find]`,
+`/ppp secret remove [find name=cliente-teste]`,
+`/ppp profile remove [find name=perfil-teste]`,
+`/ip pool remove [find name=pool-pppoe-teste]`.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — as três camadas no lab-r1.** Aplique, na ordem: o pool, os
+três profiles e os três secrets das seções acima. Depois o servidor —
+no laboratório, em `ether2` (não temos a VLAN 101 do POP real aqui;
+se você guardou o snapshot `pop-segmentado` com as VLANs, use
+`vlan101-clientes` e ganhe fidelidade):
+
+```routeros
+/interface pppoe-server server
+add interface=ether2 service-name=isp-paoquente default-profile=plano-50m \
+    authentication=chap max-mtu=1492 max-mru=1492 keepalive-timeout=10 \
+    disabled=no
+```
+
+**Passo 2 — conecte como maria.silva no lab-r2:**
+
+```routeros
+/interface pppoe-client set pppoe-wan user=maria.silva password=Ms!7201xk
+```
+
+**Passo 3 — confira o que o profile entregou.** No lab-r1:
+
+```routeros
+/ppp active print detail
+/queue simple print
+```
+
+```
+ 0 name="<pppoe-maria.silva>" target=100.64.100.2/32
+   max-limit=25M/50M dynamic=yes
+```
+
+Eis o `rate-limit` materializado: uma **fila simples dinâmica** criada
+com a sessão (e destruída com ela). O Volume 7 começa exatamente
+desta linha.
+
+**Passo 4 — teste o `only-one`.** Configure um segundo cliente PPPoE
+no lab-r3 (ou uma segunda interface pppoe-client no próprio lab-r2)
+com as MESMAS credenciais de maria.silva e observe o log do lab-r1:
+a segunda tentativa é rejeitada enquanto a primeira sessão vive.
+
+**Passo 5 — o ciclo comercial completo.** Upgrade, suspensão e
+reativação da maria.silva (blocos da seção "Operações do dia a dia"),
+observando após cada passo o `/ppp active print` e, no lab-r2, o log
+reconectando (ou falhando com `user disabled` durante a suspensão).
+
+**Passo 6 — IP fixo.** Conecte o lab-r3 como `sitio.ipe` e confirme
+que o IP é **sempre** `100.64.100.250`, mesmo reconectando — enquanto
+maria.silva pega o próximo livre do pool.
+
+### Verificação
+
+1. `/queue simple print` mostra a fila dinâmica com o `max-limit`
+   correspondente ao profile do cliente conectado — e ela **some**
+   quando a sessão cai;
+2. A segunda sessão com o mesmo login foi rejeitada (`only-one`);
+3. Durante a suspensão, o lab-r2 não conecta e o log do concentrador
+   registra a recusa; após `disabled=no`, reconecta sozinho;
+4. `sitio.ipe` recebe sempre o IP fixo; `/ip pool used print` mostra os
+   dinâmicos saindo de `pool-clientes`.
+
+### Desafios
+
+1. O comercial lançou o "plano 100M turbo de fim de semana". Sem tocar
+   em nenhum secret, o que você edita para que TODOS os clientes do
+   plano-100m passem o sábado a 150M — e qual é a pegadinha sobre
+   **quando** a mudança vale para cada cliente?
+2. Um cliente com IP fixo (`sitio.ipe`) pediu downgrade para o
+   plano-50m mantendo o IP. Escreva o comando único que resolve, e
+   explique por que o IP fixo sobrevive à mudança de profile.
+3. Você encontrou num concentrador herdado 40 secrets com
+   `rate-limit` configurado **no secret** (via RADIUS antigo), cada um
+   diferente do profile. Qual valor vence quando os dois existem? Monte
+   um experimento de bancada para provar.
+4. Projete o "profile de inadimplente" citado no texto: que parâmetros
+   ele teria (`rate-limit`? `address-list`?) e que regras dos volumes
+   3 (@sec-dstnat) fariam o redirecionamento para a página de
+   cobrança? Esboce, sem precisar testar.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** `/ppp profile set plano-100m rate-limit=150M/75M` na sexta e o
+inverso no domingo. A pegadinha: o profile é lido **na conexão** — quem
+já está conectado continua na fila antiga até reconectar. Para valer
+imediatamente: derrubar as sessões do plano
+(`/ppp active remove [find where ...]`) e deixar a rediscagem aplicar
+o novo — ou, mais elegante, editar as filas dinâmicas ativas via
+script (Volume 12) / esperar o ciclo natural de reconexões.
+
+**2.** `/ppp secret set [find name=sitio.ipe] profile=plano-50m` (e um
+`active remove` para aplicar já). O IP sobrevive porque
+`remote-address` está **no secret**, e atributos do secret **sobrepõem**
+os do profile — a mudança de profile troca só o que o secret não
+define (a banda, o DNS...).
+
+**3.** O **secret vence** — a regra geral do PPP no RouterOS é que o
+atributo mais específico (secret > profile) prevalece. Experimento:
+profile com `rate-limit=50M/25M`, secret com `rate-limit=10M/5M`,
+conectar e ler o `max-limit` da fila dinâmica em
+`/queue simple print`: virá 5M/10M (upload/download do ponto de vista
+da fila). Depois inverta (remova do secret) e confirme 25M/50M.
+
+**4.** Profile `plano-suspenso`: `rate-limit=512k/512k` (suficiente
+para a página de cobrança carregar), `address-list=inadimplentes`
+(todo IP de sessão desse profile entra na lista automaticamente — o
+PPP faz isso via profile!), mesmo pool. Regras: no NAT,
+`chain=dstnat src-address-list=inadimplentes protocol=tcp dst-port=80
+action=dst-nat to-addresses=<servidor-da-pagina>` (@sec-dstnat); no
+filter, `chain=forward src-address-list=inadimplentes` liberando só o
+servidor de cobrança/DNS e dropando o resto (@sec-forward-lists).
+HTTPS não se redireciona (certificado não bate — @sec-dns explicou por
+quê); o drop + página em HTTP é o padrão da indústria.
+:::
+
+## Resumo
+
+- Concentrador em **três camadas**: `pool` (estoque de IPs, dimensione
+  pelo pico + folga), `profile` (o **plano**: `rate-limit`,
+  `change-tcp-mss=yes`, `only-one=yes`, DNS) e `secret` (o
+  **contrato**: login, senha, profile; IP fixo como exceção via
+  `remote-address` no secret, que sobrepõe o profile);
+- Servidor na **interface certa** (VLAN de clientes, jamais na WAN),
+  `authentication=chap`, `max-mtu/max-mru=1492`;
+- `rate-limit` vira **fila simples dinâmica** por sessão — a entrega
+  técnica do plano comercial (e o gancho para o Volume 7);
+- Dia a dia: upgrade = editar secret + derrubar sessão; inadimplência =
+  `disabled=yes` (nunca `remove`) ou profile de suspensão com
+  redirecionamento;
+- Tudo isso ainda é **local** do concentrador. Quando houver dois
+  concentradores — ou um sistema de gestão — o cadastro precisa sair do
+  roteador: **RADIUS**, no próximo capítulo (@sec-radius-userman).
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *PPP*, *PPPoE* e *IP Pools*
+  [@mikrotik-docs];
+- Shared address space RFC 6598 e endereçamento: [@rfc1918];
+- RouterOS v7 na prática: [@discher-rosv7];
+- Operação comercial de provedor: [@burgess-mikrotik].

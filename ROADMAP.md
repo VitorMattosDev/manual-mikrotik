@@ -95,7 +95,7 @@ Pré-requisitos: Vols. 3 e 4.*
 Pré-requisitos: Vols. 3 e 4.*
 
 - [x] `volumes/v06-pppoe/01-como-funciona-pppoe.qmd` — Como funciona o PPPoE: descoberta, sessão, MTU/MRU e por que ISPs o usam.
-- [ ] `volumes/v06-pppoe/02-pppoe-server-profiles-pools.qmd` — PPPoE server: interface, profiles, pools, secrets locais; PPPoE client para teste.
+- [x] `volumes/v06-pppoe/02-pppoe-server-profiles-pools.qmd` — PPPoE server: interface, profiles, pools, secrets locais; PPPoE client para teste.
 - [ ] `volumes/v06-pppoe/03-radius-user-manager-gestao.qmd` — RADIUS e User Manager; integração com sistemas de gestão de provedor (atributos, CoA/desconexão).
 - [ ] `volumes/v06-pppoe/04-boas-praticas-concentrador.qmd` — Boas práticas de concentrador (BNG): dimensionamento, keepalive, segurança, múltiplos concentradores.
 
