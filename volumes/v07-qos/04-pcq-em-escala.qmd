@@ -1,7 +1,332 @@
-# PCQ em escala
+# PCQ: controle de banda por assinante em escala {#sec-pcq-escala}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Situar os **tipos de fila** (`/queue type`): fifo, sfq, red — e onde
+  o PCQ se encaixa;
+- Explicar o mecanismo do **PCQ**: sub-filas dinâmicas por
+  classificador (`pcq-classifier`) com o mesmo `pcq-rate` para cada
+  uma;
+- Distinguir os dois usos do PCQ: **repartir igualmente** um enlace
+  (`pcq-rate=0`) e **plano único em massa** (`pcq-rate=NM`);
+- Montar o par clássico download/upload (classificador `dst-address` /
+  `src-address`) em queue tree ou simple queue;
+- Decidir com critério: **PPPoE + filas dinâmicas ou PCQ?** — e onde
+  cada modelo vence no provedor real.
 :::
+
+O @sec-queue-tree fechou com uma promessa: uma fila por cliente, para
+milhares de clientes, sem criar milhares de filas. O problema é real —
+no hotspot da praça, na rede do condomínio atendido por IP fixo, no
+setor PtMP legado sem PPPoE, você tem *uma sub-rede inteira* de
+usuários e nenhuma sessão individual para pendurar fila dinâmica. A
+resposta do RouterOS é um **tipo de fila** especial: o **PCQ**
+(*Per Connection Queue* — nome historicamente infeliz: ele enfileira
+por *classificador*, quase sempre por endereço, não por conexão).
+
+## Tipos de fila: o algoritmo dentro da fila
+
+Toda fila deste volume tem um campo que ignoramos até agora: o
+**tipo** (`queue=default` nas simple queues, `queue=default` nas
+classes da tree). O tipo é o algoritmo que decide **a ordem interna**
+dos pacotes que esperam:
+
+| Tipo | Mecanismo | Uso típico |
+|---|---|---|
+| `pfifo`/`bfifo` | primeiro a chegar, primeiro a sair (por pacotes/bytes) | o default; simples e previsível |
+| `sfq` | embaralha fluxos para nenhum monopolizar | mitigar um "porco" dentro da fila |
+| `red` | descarta probabilisticamente antes de encher | domar TCP sem estourar buffer (anti-bufferbloat) |
+| **`pcq`** | **uma sub-fila por valor do classificador** | banda por assinante em escala |
+
+: Tipos de fila no RouterOS {#tbl-tipos-fila}
+
+O PCQ é o único que multiplica: enquanto os demais organizam *uma*
+fila, ele cria **uma sub-fila FIFO por valor distinto do
+classificador** — e aplica a *cada* sub-fila o mesmo teto.
+
+## O mecanismo
+
+```routeros
+/queue type
+add name=pcq-down-10m kind=pcq pcq-classifier=dst-address pcq-rate=10M \
+    pcq-limit=50KiB pcq-total-limit=2000KiB
+add name=pcq-up-5m kind=pcq pcq-classifier=src-address pcq-rate=5M \
+    pcq-limit=50KiB pcq-total-limit=2000KiB
+```
+
+- **`pcq-classifier`** — o que define "um usuário". No sentido
+  download, cada **destino** é um cliente (`dst-address`); no upload,
+  cada **origem** (`src-address`). Errar esse par é o bug nº 1 do PCQ;
+- **`pcq-rate`** — o teto **de cada sub-fila**: 10M *por cliente*, não
+  no total;
+- **`pcq-limit`** — o buffer de cada sub-fila (50 KiB ≈ latência
+  controlada; lembre do *bufferbloat* do @sec-simple-queues);
+- **`pcq-total-limit`** — a memória de todas as sub-filas somadas.
+
+```{.tikz}
+%%| filename: fig-pcq-subfilas
+%%| alt: Mecanismo do PCQ no sentido download. O tráfego agregado entra numa fila com tipo PCQ e classificador dst-address. Dentro dela, cada endereço de destino ganha uma sub-fila própria, todas com o mesmo teto pcq-rate de 10 megabits. As sub-filas nascem e morrem conforme os clientes aparecem e somem.
+\begin{tikzpicture}[
+  font=\small,
+  sub/.style={draw, rounded corners, minimum width=30mm, minimum height=6mm, align=center},
+]
+% fila externa
+\draw[rounded corners, fill=manualblue!8] (-1.1,-2.5) rectangle (4.4,2.3);
+\node[anchor=north west] at (-1.05,2.28)
+  {\scriptsize fila (tree ou simple) com \texttt{queue=pcq-down-10m}};
+% entrada
+\draw[-{Stealth}, thick] (-3.4,0) node[above, align=center]
+  {\scriptsize tráfego\\ \scriptsize agregado} -- (-1.1,0);
+% sub-filas
+\node[sub, fill=manualgreen!20]  (s1) at (1.6,1.4)  {\scriptsize .101.7 $\to$ 10M};
+\node[sub, fill=manualgreen!20]  (s2) at (1.6,0.5)  {\scriptsize .101.23 $\to$ 10M};
+\node[sub, fill=manualgreen!20]  (s3) at (1.6,-0.4) {\scriptsize .101.58 $\to$ 10M};
+\node[sub, fill=manualgray!20, dashed] (s4) at (1.6,-1.3) {\scriptsize (nasce ao 1º pacote)};
+\node[anchor=west] at (-0.9,-2.0)
+  {\scriptsize \texttt{pcq-classifier=dst-address}: uma sub-fila por destino};
+% saídas
+\foreach \s in {s1,s2,s3} \draw[-{Stealth}, manualgreen!60!black] (\s.east) -- ++(1.35,0);
+\node[right, align=left] at (5.6,0.5) {\scriptsize cada cliente\\ \scriptsize com seu teto};
+\end{tikzpicture}
+```
+
+::: {#fig-pcq-subfilas}
+Uma fila PCQ por dentro: o classificador reparte o agregado em
+sub-filas dinâmicas — uma por endereço — e aplica o `pcq-rate` a cada
+uma. Milhares de "filas por cliente" pelo preço de configurar uma.
+:::
+
+O tipo sozinho não faz nada: ele precisa ser **o algoritmo de uma
+fila** que capture o agregado. Em queue tree (com marcas do
+@sec-queue-tree ou marcando tudo):
+
+```routeros
+/queue tree
+add name=down-clientes parent=vlan101-clientes packet-mark=pkt-clientes \
+    queue=pcq-down-10m max-limit=90M
+add name=up-clientes parent=ether1 packet-mark=pkt-clientes \
+    queue=pcq-up-5m max-limit=90M
+```
+
+Ou, sem mangle, numa simple queue da sub-rede inteira:
+
+```routeros
+/queue simple
+add name=bairro-fibra target=100.64.101.0/24 max-limit=90M/90M \
+    queue=pcq-down-10m/pcq-up-5m
+```
+
+Uma regra. Cada morador do `/24` com 10M de download e 5M de upload,
+sub-filas nascendo e morrendo sozinhas, e o teto do enlace respeitado
+pelo `max-limit` externo.
+
+### Os dois modos do PCQ
+
+**`pcq-rate=10M`** — *plano único em massa*: todo cliente do agregado
+tem o mesmo teto. Perfeito para hotspot, condomínio, "plano social" de
+uma faixa;
+
+**`pcq-rate=0`** — *repartição justa*: sem teto individual; as
+sub-filas ativas **dividem igualmente** o que o `max-limit` externo
+der. 90M com 3 ativos = 30M cada; chegou o 4º, 22,5M cada. É o
+"ninguém monopoliza" instantâneo para enlaces compartilhados — o
+backhaul de rádio do Volume 5 agradece.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O PCQ é o **rodízio da churrascaria** (de novo ela — mas agora o
+salão): em vez de contratar um garçom por mesa (uma fila por cliente,
+o modelo PPPoE), um garçom só percorre todas as mesas servindo **a
+mesma cota** a cada uma (`pcq-rate`) — e mesas novas entram no rodízio
+automaticamente, sem contratar ninguém. Com `pcq-rate=0`, o rodízio
+vira "divide o que tiver": a picanha que há é repartida por igual
+entre as mesas ocupadas, sejam 3 ou 30.
+:::
+
+## PCQ ou PPPoE? O critério
+
+Os dois resolvem "banda por assinante". A escolha é arquitetural:
+
+| Critério | PPPoE + fila dinâmica | PCQ |
+|---|---|---|
+| Planos diferentes por cliente | natural (profile/RADIUS) | 1 fila PCQ **por plano** + marcação por address-list |
+| Identidade/corte/accounting | nativo (Volume 6) | não é papel dele (só banda) |
+| Burst/garantia por cliente | string `rate-limit` completa | `pcq-burst-*` (global à fila) |
+| Custo por assinante | sessão + fila (CPU/RAM) | sub-fila (leve) |
+| Sem sessão possível (hotspot, IP fixo, trânsito) | inviável | **é o caso dele** |
+
+: PPPoE × PCQ para banda por assinante {#tbl-pppoe-vs-pcq}
+
+No provedor da nossa narrativa: assinantes de fibra e rádio conectam
+por PPPoE (identidade + plano + corte — o pacote completo do Volume
+6); o PCQ entra nas beiradas — o WiFi da praça, o condomínio B2B com
+faixa fixa, a repartição justa de um backhaul — e como **cinto de
+segurança agregado** por cima das filas individuais.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+PCQ transforma *uma* fila em *milhares*, pelo preço de um
+classificador — mas repare no que ele **não** faz: não autentica, não
+contabiliza, não corta, não diferencia planos dentro da mesma fila.
+PCQ é **fila em escala**; PPPoE é **assinante em escala**. O provedor
+maduro usa os dois no lugar certo — e desconfia de qualquer projeto
+que use um só para tudo.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+O trio completo (@sec-lab-chr): lab-r1 no meio (172.16.1.1 na `lab-a`,
+172.16.2.1 na `lab-b`), lab-r2 (172.16.1.2) e lab-r3 (172.16.2.3) como
+"clientes" em redes opostas — e o próprio host (VirtualBox host-only,
+192.168.56.1) pode ser o terceiro cliente se você quiser mais disputa.
+`bandwidth-server` habilitado em r2 e r3. Limpe filas e mangles dos
+capítulos anteriores no lab-r1 (`/queue tree remove [find]`,
+`/queue simple remove [find]`, `/ip firewall mangle remove [find]`).
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — o tipo e a fila.** No lab-r1, plano único de 8M/4M por
+cliente, agregado de 20M (apertado de propósito), tudo numa simple
+queue da "rede de clientes" (as duas sub-redes do lab):
+
+```routeros
+/queue type
+add name=pcq-down-8m kind=pcq pcq-classifier=dst-address pcq-rate=8M
+add name=pcq-up-4m kind=pcq pcq-classifier=src-address pcq-rate=4M
+/queue simple
+add name=clientes-pcq target=172.16.1.0/24,172.16.2.0/24 \
+    max-limit=20M/20M queue=pcq-down-8m/pcq-up-4m
+```
+
+**Passo 2 — um cliente sozinho.** Teste `receive` do lab-r2: ~8M — o
+`pcq-rate` limitou, não o `max-limit` (sobrava agregado). O
+`print stats` da simple queue mostra `rate=8M`: a fila externa enxerga
+a soma.
+
+**Passo 3 — dois clientes.** Testes simultâneos em lab-r2 e lab-r3:
+~8M **cada** (16M no agregado — ainda coube). Cada um na sua sub-fila,
+tetos independentes. Um terceiro cliente (o host) levaria o agregado a
+20M — e aí o `max-limit` externo passa a repartir: ~6,6M cada.
+
+**Passo 4 — repartição justa.** Troque para o modo `pcq-rate=0`:
+
+```routeros
+/queue type set pcq-down-8m pcq-rate=0
+```
+
+Um cliente sozinho: **20M** (o agregado inteiro!). Dois: ~10M cada.
+O PCQ virou divisor igualitário do `max-limit` — nenhum número de
+plano envolvido.
+
+**Passo 5 — o clássico bug do classificador.** Inverta de propósito o
+classificador do download (`set pcq-down-8m pcq-classifier=src-address
+pcq-rate=8M`) e rode os dois clientes: agora o download de **todos**
+divide UMA sub-fila de 8M (a "origem" é o mesmo servidor de teste!) —
+4M cada, caindo com cada cliente novo. É exatamente o que acontece em
+produção quando se copia o tipo do upload para o download. Restaure
+`dst-address`.
+
+### Verificação
+
+1. Um cliente: teto = `pcq-rate`; agregado com folga;
+2. Vários clientes: cada um com seu teto até o agregado apertar — e
+   então divisão do `max-limit`;
+3. Com `pcq-rate=0`, a banda de cada um depende só de **quantos**
+   estão ativos;
+4. Com o classificador errado, todos os downloads dividiram uma única
+   sub-fila — e você sabe explicar por quê.
+
+### Desafios
+
+1. O provedor tem três planos (10M, 50M, 100M) numa rede de IP fixo
+   sem PPPoE. Projete a solução PCQ completa: quantos queue types,
+   como separar os clientes de cada plano (dica: address-list +
+   mangle do @sec-queue-tree), e onde ficam os `max-limit`.
+2. Num hotspot com PCQ `pcq-rate=0` sobre `max-limit=50M`, um usuário
+   abre 30 conexões de download e outro navega com 2. O PCQ garante
+   divisão justa entre os **dois**? Justifique pelo classificador — e
+   diga o que aconteceria se o classificador fosse `dst-port`.
+3. Calcule a latência máxima que o `pcq-limit=50KiB` impõe a um
+   cliente cuja sub-fila está cheia com `pcq-rate=10M` — e compare com
+   o mesmo buffer a `pcq-rate=1M`. O que isso diz sobre PCQ para
+   planos muito lentos?
+4. Arquiteto A propõe: "migre tudo para PCQ e desligue o PPPoE — menos
+   CPU, menos complexidade". Escreva o contra-argumento em três
+   pontos concretos (o que se perde), e o cenário em que A estaria
+   certo.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Três pares de queue types (down/up por plano:
+`pcq-down-10m/50m/100m` com os rates respectivos, idem up). Separação:
+uma **address-list por plano** (`clientes-10m`, ...) mantida pelo
+cadastro; mangle marcando pacote por
+`dst-address-list`/`src-address-list` → três packet-marks por sentido;
+queue tree com três classes por sentido, cada uma com seu
+`queue=pcq-*` e `max-limit` = teto do agregado (ou sub-tetos por
+plano, se o negócio pedir), todas sob um pai com o teto físico do
+enlace. É o padrão de mercado para redes IP-fixo sem BNG.
+
+**2.** Garante: o classificador é `src-address`/`dst-address` — as 30
+conexões do usuário A caem **na mesma sub-fila** dele (o endereço é
+um só), que disputa de igual para igual com a sub-fila do usuário B:
+~25M cada, independentemente do número de conexões. Com
+`dst-port` como classificador, cada porta viraria "um usuário": as 30
+conexões de A virariam dezenas de sub-filas contra as 2 de B — A
+levaria ~94% do enlace. Classificador define o que é "justo".
+
+**3.** Fila cheia = 50 KiB = 409,6 kbit esperando. A 10M:
+$409{,}6/10\,000 \approx 41$ ms — aceitável. A 1M: **410 ms** —
+inutilizável para qualquer coisa interativa. Moral: `pcq-limit` deve
+escalar com o `pcq-rate` (planos lentos pedem buffers menores), senão
+o plano social vira fábrica de bufferbloat; é a mesma aritmética do
+desafio 3 do @sec-simple-queues.
+
+**4.** Perde-se: (1) **identidade e corte** — sem sessão, suspender
+inadimplente volta a ser caça ao MAC/IP na mão (o Volume 6 inteiro);
+(2) **accounting** por assinante (consumo, uptime — dados de cobrança
+e suporte); (3) **planos e exceções por cliente** viram malabarismo de
+address-lists (IP fixo contratado, burst individual, CoA). A ganha em:
+rede **sem contrato individual** — hotspot público, evento, cortesia
+de condomínio — onde identidade não existe mesmo e PCQ entrega tudo
+que se precisa com uma fração da complexidade. Contexto decide.
+:::
+
+## Resumo
+
+- O **tipo de fila** é o algoritmo interno (fifo, sfq, red, pcq); o
+  **PCQ** multiplica: uma sub-fila FIFO **por valor do classificador**,
+  cada uma com o mesmo `pcq-rate`;
+- Par clássico: download classifica por `dst-address`, upload por
+  `src-address` — inverter é o bug nº 1 (todos numa sub-fila só);
+- **`pcq-rate=N`** = plano único em massa; **`pcq-rate=0`** =
+  repartição igualitária do `max-limit` externo entre os ativos;
+- `pcq-limit` controla a latência por sub-fila (buffer × rate =
+  milissegundos — planos lentos pedem buffers menores);
+- **PCQ é fila em escala; PPPoE é assinante em escala**: identidade,
+  plano individual e corte continuam sendo papel do Volume 6 — PCQ
+  brilha onde não há contrato individual (hotspot, faixas fixas,
+  repartição de backhaul).
+
+Fecha o Volume 7 — o tráfego do assinante agora tem plano, turbo,
+garantia, prioridade e escala. O Volume 8 sai da fila e entra no mapa:
+**roteamento**, estático e dinâmico, para a rede que cresceu além de
+um roteador.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *Queue Types — PCQ* e *Queues*
+  [@mikrotik-docs];
+- Disciplinas de fila e fairness: [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- QoS em escala de provedor: [@burgess-mikrotik].
