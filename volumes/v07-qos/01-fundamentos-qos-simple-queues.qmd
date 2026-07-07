@@ -1,0 +1,354 @@
+# Fundamentos de QoS e simple queues {#sec-simple-queues}
+
+::: {.callout-note}
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que uma **fila** faz com pacotes — atrasar, reordenar,
+  descartar — e por que limitar banda é *administrar descarte*;
+- Entender por que QoS só funciona **antes** do gargalo (e no sentido
+  de saída);
+- Criar **simple queues** com `target` e `max-limit` corretos, e
+  prever a que tráfego cada fila se aplica;
+- Explicar por que a **ordem** das simple queues importa e como uma
+  fila "pega-tudo" mal posicionada anula as demais;
+- Ler as estatísticas de fila (`rate`, `queued-bytes`, `dropped`) e o
+  gráfico do WinBox como instrumentos de diagnóstico.
+:::
+
+O Volume 6 terminou com cada assinante dentro de uma fila dinâmica
+criada pelo profile PPPoE — e prometeu explicar o que essa fila
+realmente faz. Este volume paga a promessa. QoS (*Quality of Service*)
+é o conjunto de técnicas para decidir, quando não há banda para todos,
+**quem espera e quem passa** — e no provedor isso aparece em dois
+papéis: entregar o plano vendido (limitar) e proteger o que é sensível
+(priorizar). Começamos pelo instrumento fundamental: a fila.
+
+## O que uma fila realmente faz
+
+Todo enlace tem uma capacidade. Quando chegam mais pacotes do que o
+enlace escoa, só existem três destinos possíveis para o excedente:
+
+1. **Esperar** numa fila (ganha latência);
+2. Ser **descartado** (o TCP do remetente percebe e desacelera —
+   é assim que a internet se autorregula);
+3. Não existe terceira opção. "Guardar para sempre" é só a espera com
+   outro nome — e memória finita.
+
+Limitar banda a 50 Mbps é, portanto, **criar um gargalo artificial
+administrado**: uma fila que escoa a 50 Mbps, segura rajadas curtas no
+buffer e descarta o excesso persistente para o TCP do cliente
+entender o recado. QoS não cria banda — organiza a escassez.
+
+Duas consequências práticas que valem o capítulo:
+
+**QoS só funciona no sentido de saída.** Uma interface controla o que
+**transmite**; o que chega já atravessou o enlace — descartar depois
+de receber não desafoga nada. Por isso a fila do plano atua no
+tráfego *saindo* em direção ao cliente (download dele) e *saindo* pela
+WAN (upload dele).
+
+**QoS só funciona antes do gargalo real.** Se o seu limite é 100 Mbps
+mas o enlace de rádio à frente entrega 40, quem decide quem espera é a
+fila **do rádio** (que você não controla), não a sua. A fila
+administrada precisa ser o gargalo mais estreito do caminho — nem que
+seja por 1 Mbps.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+A fila de QoS é a **eclusa de um canal**: o rio inteiro não passa de
+uma vez, e o eclusceiro decide quanto passa por hora (max-limit),
+quantos barcos aguardam no reservatório (buffer) e o que fazer quando
+o reservatório enche — recusar barcos (descarte), sinalizando rio
+acima que parem de mandar (o TCP desacelerando). Construir a eclusa
+**depois** da corredeira não organiza nada: quem ordenou a passagem
+foi a corredeira. A eclusa tem que ser o ponto mais estreito.
+:::
+
+## Simple queue: o canivete suíço
+
+A **simple queue** é a forma mais direta de QoS no RouterOS: uma regra
+que casa tráfego por endereço e impõe limites nos dois sentidos:
+
+```routeros
+/queue simple
+add name=cliente-padaria target=192.168.10.0/24 max-limit=100M/100M \
+    comment="LAN da padaria: 100M down / 100M up"
+```
+
+Os campos que definem tudo:
+
+- **`target`** — *quem*: o IP, sub-rede ou **interface** cujo tráfego
+  a fila governa. É o referencial da fila: com `target`, o RouterOS
+  sabe qual sentido é "download" (indo *para* o target) e qual é
+  "upload" (vindo *do* target);
+- **`max-limit=down/up`** — o teto de cada sentido, **na perspectiva
+  do target** (primeiro valor = o que o target baixa). Compare com o
+  `rate-limit` do profile PPPoE (@sec-pppoe-server) — é o mesmo padrão;
+- `queue=default/default` — o **tipo** de fila de cada sentido (o
+  algoritmo interno: fifo, sfq, pcq... — os tipos são assunto do
+  @sec-pcq-escala).
+
+A fila dinâmica que o PPPoE cria é exatamente isto: uma simple queue
+com `target` = IP da sessão e `max-limit` = `rate-limit` do profile.
+Você já operava simple queues sem saber.
+
+## A ordem importa (muito)
+
+Simple queues são avaliadas **em ordem, de cima para baixo, e o pacote
+entra na primeira fila cujo target o abranja** — as demais nem o veem.
+O erro clássico:
+
+```routeros
+/queue simple
+add name=toda-a-lan target=192.168.88.0/24 max-limit=50M/50M
+add name=servidor-vip target=192.168.88.10/32 max-limit=100M/100M
+```
+
+O `servidor-vip` **nunca funciona**: `192.168.88.10` está contido em
+`192.168.88.0/24`, a fila de cima captura o pacote primeiro e o
+servidor navega a 50M. A regra de projeto é a mesma do firewall
+(@sec-chains-firewall): **específico em cima, genérico embaixo** — e
+`print` + `move` para auditar:
+
+```routeros
+/queue simple print
+/queue simple move [find name=servidor-vip] destination=0
+```
+
+```{.tikz}
+%%| filename: fig-ordem-queues
+%%| alt: Fluxo de um pacote pela lista de simple queues. No exemplo errado, a fila genérica da sub-rede inteira está acima da fila específica do servidor, que fica inalcançável. No exemplo correto, a fila específica vem primeiro e o pacote do servidor entra nela.
+\begin{tikzpicture}[
+  font=\small,
+  fila/.style={draw, rounded corners, minimum width=42mm, minimum height=7mm, align=center},
+]
+% errado
+\node at (-0.2,2.9) {\textbf{errado}};
+\node[fila, fill=manualyellow!30] (e1) at (0,2.1) {\scriptsize 0: toda-a-lan /24 — 50M};
+\node[fila, fill=manualred!20]    (e2) at (0,1.1) {\scriptsize 1: servidor-vip /32 — 100M};
+\node[manualred, align=center] at (0,0.45) {\scriptsize inalcançável};
+\draw[-{Stealth}, thick] (-3.2,2.9) node[left, align=center]{\scriptsize pacote p/\\ \scriptsize .88.10} -| (e1.north);
+\draw[-{Stealth}, manualyellow!60!black, thick] (e1.east) -- ++(0.9,0)
+  node[right] {\scriptsize entra aqui (50M)};
+% certo
+\node at (7.2,2.9) {\textbf{certo}};
+\node[fila, fill=manualgreen!20]  (c1) at (7.4,2.1) {\scriptsize 0: servidor-vip /32 — 100M};
+\node[fila, fill=manualyellow!30] (c2) at (7.4,1.1) {\scriptsize 1: toda-a-lan /24 — 50M};
+\draw[-{Stealth}, thick] (4.2,2.9) -| (c1.north);
+\draw[-{Stealth}, manualgreen!60!black, thick] (c1.east) -- ++(0.9,0)
+  node[right] {\scriptsize 100M};
+\end{tikzpicture}
+```
+
+::: {#fig-ordem-queues}
+O pacote entra na **primeira** simple queue cujo target o abrange. Fila
+genérica acima da específica torna a específica letra morta — a mesma
+lógica de ordem do firewall.
+:::
+
+## Lendo uma fila como um instrumento
+
+Uma fila conta a história do enlace em três números
+(`/queue simple print stats`):
+
+| Indicador | O que significa | Leitura operacional |
+|---|---|---|
+| `rate` | vazão instantânea (down/up) | encostado no `max-limit` = fila **saturada** |
+| `queued-bytes/packets` | quanto espera no buffer agora | cronicamente alto = latência alta para o cliente |
+| `dropped` | descartes acumulados | crescendo sob saturação = TCP sendo domado (esperado) |
+
+: Os três instrumentos de uma fila {#tbl-instrumentos-fila}
+
+A tríade diagnóstica: `rate` colado no teto + `queued-bytes` alto +
+`dropped` subindo = **o cliente usa tudo que comprou** (e talvez seja
+hora de lhe oferecer upgrade — dado comercial saído de `/queue`). Já
+`rate` baixo com reclamação de lentidão = o problema **não é a fila**:
+volte ao troubleshooting de enlace (@sec-alinhamento) ou ao
+concentrador (@sec-concentrador-bng).
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+**Limitar banda é administrar filas e descartes — e só funciona no
+gargalo, no sentido de saída.** Toda técnica deste volume (burst,
+priorização, PCQ) é variação sobre esse tema: decidir quais pacotes
+esperam, quais passam e quais morrem, num ponto onde essa decisão
+ainda importa. Quem entende a fila como instrumento — `rate`,
+`queued-bytes`, `dropped` — para de "achar" que o cliente usa o plano
+e passa a **saber**.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Dois CHRs bastam: `lab-r1` e `lab-r2` pela rede `lab-a`
+(@sec-lab-chr), com conectividade IP simples (ex.: 172.16.1.1 e
+172.16.1.2/24 — sem PPPoE desta vez: queremos as filas em primeiro
+plano). O gerador de tráfego é o `bandwidth-test` do
+@sec-ptp-nstreme-nv2 — no lab-r1, habilite o servidor:
+`/tool bandwidth-server set enabled=yes`.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — meça o "sem QoS".** Do lab-r2 contra o lab-r1:
+
+```routeros
+/tool bandwidth-test address=172.16.1.1 protocol=udp direction=receive \
+    user=vitor password=Lab!Segura2026 duration=15s
+```
+
+Anote a taxa — é a capacidade bruta da rede virtual (centenas de Mbps
+num host razoável). Sem gargalo administrado não há QoS: só a
+abundância.
+
+**Passo 2 — crie o gargalo.** No lab-r1, uma simple queue governando o
+lab-r2:
+
+```routeros
+/queue simple add name=cliente-r2 target=172.16.1.2/32 max-limit=20M/10M
+```
+
+Repita o teste do Passo 1: a taxa despenca para ~20M
+(`direction=receive` = download do ponto de vista do lab-r2). Rode com
+`direction=transmit` e confirme os 10M do upload. A ordem down/up do
+`max-limit`, sempre na perspectiva do **target**.
+
+**Passo 3 — assista à fila trabalhar.** Durante um teste de 60 s, no
+lab-r1:
+
+```routeros
+/queue simple print stats interval=1
+```
+
+```
+ 0 name="cliente-r2" target=172.16.1.2/32 rate=19.8Mbps/56kbps
+   queued-bytes=48.1KiB/0 dropped=1284/0
+```
+
+A tríade completa: `rate` no teto, bytes esperando, descartes
+crescendo — a fila **é** o gargalo, exatamente como projetado.
+
+**Passo 4 — prove que a ordem importa.** Adicione uma fila genérica
+**acima** da específica:
+
+```routeros
+/queue simple add name=rede-toda target=172.16.1.0/24 max-limit=5M/5M \
+    place-before=0
+```
+
+Teste de novo: 5M — a fila `cliente-r2` de 20M virou letra morta
+(confira: `rate=0` nela, tudo contando na `rede-toda`). Agora corrija
+sem apagar nada:
+
+```routeros
+/queue simple move [find name=cliente-r2] destination=0
+```
+
+Teste: 20M de volta. `print stats` mostra a específica trabalhando e a
+genérica pegando só o que sobrar (outros IPs da sub-rede).
+
+**Passo 5 — limpeza consciente.** Remova a `rede-toda` e deixe só a
+`cliente-r2` — o próximo capítulo constrói sobre ela:
+
+```routeros
+/queue simple remove [find name=rede-toda]
+```
+
+### Verificação
+
+1. Sem fila: taxa livre; com fila: `rate` cravado no `max-limit` — nos
+   **dois** sentidos, cada um com seu teto;
+2. Durante saturação, `queued-bytes` > 0 e `dropped` crescendo — e
+   ambos esvaziam quando o teste para;
+3. Com a genérica acima, a específica marcou `rate=0` (inalcançável);
+   após o `move`, voltou a trabalhar;
+4. Você sabe dizer, sem testar, em qual fila cairia um segundo IP
+   (172.16.1.3) em cada um dos dois arranjos do Passo 4.
+
+### Desafios
+
+1. Um colega criou `target=172.16.1.0/24 max-limit=100M/100M` "para a
+   rede toda" e reclama que "o QoS não funciona: um cliente sozinho
+   ocupa 95M e os outros ficam sem". A fila faz exatamente o que foi
+   pedido. Explique a diferença entre **limitar o agregado** e
+   **repartir por cliente** — e qual capítulo deste volume resolve.
+2. O download de um assinante obedece ao plano, mas o upload fica
+   **acima** do contratado. A fila dele foi criada num roteador
+   **atrás** do concentrador, por onde só o tráfego de download passa.
+   Por que o upload não obedece, e onde a fila deveria morar?
+3. Um cliente de 300 Mbps reclama de "internet travando" em jogos, mas
+   os speedtests dão 300 cravados. `print stats` na fila:
+   `rate=298M`, `queued-bytes=2.1MiB` constante, `dropped` alto.
+   Converta os 2.1 MiB parados em **milissegundos** de espera a
+   300 Mbps e explique por que o speedtest não vê o problema.
+   (Palavra-chave: *bufferbloat*.)
+4. No lab, com a `cliente-r2` em 20M e um teste partindo do próprio
+   lab-r2, a fila funcionou. Se o teste partisse de um **terceiro**
+   roteador (172.16.1.3) contra o lab-r1, o que a `cliente-r2`
+   registraria — e por quê?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** `max-limit` num target de sub-rede cria **um** balde de 100M
+que todos dividem por disputa — o TCP mais agressivo (mais conexões
+paralelas) leva mais. Limitar agregado protege o enlace, não os
+vizinhos entre si. Repartir por cliente exigiria uma fila por IP —
+inviável à mão para centenas — ou o **PCQ** (@sec-pcq-escala), que
+cria sub-filas dinâmicas por endereço dentro de uma única fila.
+
+**2.** Um roteador só enfileira o que **passa por ele**. No caminho do
+download ele é o gargalo administrado; o upload do cliente sobe pelo
+concentrador direto à WAN sem atravessá-lo — a fila nunca vê esses
+pacotes. Filas de plano moram onde os **dois** sentidos passam: no
+concentrador (por isso a fila dinâmica do PPPoE vive lá,
+@sec-pppoe-server).
+
+**3.** 2,1 MiB ≈ 17,6 Mbit; a 300 Mbps, ~**59 ms** de espera
+permanente — cada pacote do jogo atravessa essa fila cheia:
+*bufferbloat*. O speedtest mede **vazão** (perfeita: a fila escoa
+300M), não **latência sob carga**. O buffer generoso segura bytes em
+vez de descartar cedo; o TCP não desacelera e a latência mora alta.
+Caminhos: buffer menor ou tipos de fila que gerenciam atraso — a
+conversa de tipos do @sec-pcq-escala.
+
+**4.** `rate=0`: o target `172.16.1.2/32` não abrange `172.16.1.3` —
+o tráfego do terceiro roteador não casa com a fila e passa **sem
+limite algum** (não existe mais a genérica). A lição operacional: fila
+específica sem uma genérica embaixo = todo IP fora da lista navega
+livre. No concentrador PPPoE isso não ocorre porque **cada sessão**
+ganha sua fila dinâmica — mais um ponto para o modelo do Volume 6.
+:::
+
+## Resumo
+
+- Fila = espera + descarte administrados; limitar banda é criar um
+  **gargalo proposital** onde o TCP sente o teto. QoS não cria banda —
+  organiza a escassez;
+- Só funciona **no sentido de saída** e **antes do gargalo real** — e
+  precisa morar onde os dois sentidos do tráfego passam;
+- **Simple queue**: `target` (quem, e o referencial down/up),
+  `max-limit=down/up`, avaliação **em ordem** (primeira-que-casa) —
+  específico acima do genérico, como no firewall;
+- A fila dinâmica do PPPoE (@sec-pppoe-server) é uma simple queue
+  criada pelo profile — você já as opera em produção;
+- Instrumentação: `rate` (uso real), `queued-bytes` (latência
+  embutida), `dropped` (TCP sendo regulado) — leitura antes de
+  opinião.
+
+O plano de velocidade de verdade tem mais que um teto: tem rajada
+inicial, garantia mínima e desenho comercial. É o próximo capítulo
+(@sec-burst-planos).
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *Queues* [@mikrotik-docs];
+- Filas, TCP e controle de congestionamento: [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- QoS em provedores MikroTik: [@burgess-mikrotik].
