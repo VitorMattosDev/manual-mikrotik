@@ -147,9 +147,9 @@ Pré-requisitos: Vols. 3 e 8.*
 *Objetivo: backbone de provedor com MPLS.
 Pré-requisitos: Vols. 8 e 10.*
 
-- [ ] `volumes/v11-mpls/01-conceitos-ldp.qmd` — MPLS: labels, LSP, por que provedores usam; LDP no RouterOS.
-- [ ] `volumes/v11-mpls/02-vpls.qmd` — VPLS: camada 2 fim a fim sobre o backbone (transporte de clientes dedicados).
-- [ ] `volumes/v11-mpls/03-traffic-engineering.qmd` — Traffic Engineering: túneis TE, reserva de banda, caminhos explícitos.
+- [x] `volumes/v11-mpls/01-conceitos-ldp.qmd` — MPLS: labels, LSP, por que provedores usam; LDP no RouterOS.
+- [x] `volumes/v11-mpls/02-vpls.qmd` — VPLS: camada 2 fim a fim sobre o backbone (transporte de clientes dedicados).
+- [x] `volumes/v11-mpls/03-traffic-engineering.qmd` — Traffic Engineering: túneis TE, reserva de banda, caminhos explícitos.
 
 ## Volume 12 — Scripts e automação
 *Objetivo: automatizar operação e provisionamento.

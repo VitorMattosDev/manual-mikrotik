@@ -1,7 +1,273 @@
-# Traffic Engineering
+# Traffic Engineering {#sec-mpls-te}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o problema que o **Traffic Engineering (TE)** resolve: a IGP
+  manda tudo pelo "menor custo", deixando caminhos ociosos e enlaces
+  congestionados;
+- Entender **túneis TE** (LSPs com caminho **explícito**), **reserva de
+  banda** e como o **CSPF** calcula um caminho que respeita restrições;
+- Reconhecer os papéis do **RSVP-TE** e o estado do suporte no RouterOS
+  (o que dá para fazer hoje, e as alternativas práticas);
+- Aplicar TE a casos de provedor: **desviar de um enlace caro**,
+  **separar tráfego** por caminho e **balancear** o backbone;
+- Fechar o Volume 11 sabendo **quando** TE compensa e quando ajustar
+  **custo/métrica** já basta.
 :::
+
+O @sec-mpls-ldp e o @sec-vpls deram transporte e serviços. Mas ambos
+seguem o caminho que a **IGP** escolheu — o de **menor custo**. E aí mora
+um problema clássico de backbone: se a rota mais barata concentra
+**todo** o tráfego, ela congestiona enquanto um caminho alternativo, um
+pouco "mais caro", fica **ocioso**. A IGP otimiza distância, não
+**utilização**. O **Traffic Engineering** resolve isso: escolher o
+caminho pelo que **importa ao operador** — banda disponível, latência,
+evitar um enlace — e não só pelo custo. É a engenharia fina do backbone.
+
+## O problema: a IGP não pensa em capacidade
+
+OSPF (@sec-ospf-basico) escolhe por **custo somado** e manda **tudo** por
+ali. Imagine dois caminhos entre os POPs A e B: um direto de custo 10
+(10 Gbps) e um alternativo de custo 30 (10 Gbps, via C). A IGP usa **só**
+o de custo 10 — mesmo quando ele satura e o de custo 30 está vazio. Você
+tem 20 Gbps de capacidade e usa 10.
+
+Ajustar custo ajuda até certo ponto, mas é grosseiro: mexer no custo
+**move todo** o tráfego de uma vez, podendo só transferir o
+congestionamento. O que falta é **colocar tráfego específico num caminho
+específico**, com **reserva** — e é isso que o TE faz.
+
+```{.tikz}
+%%| filename: fig-mpls-te
+%%| alt: Traffic Engineering no backbone. Entre POP-A e POP-B há dois caminhos: o direto (custo baixo) que a IGP usaria para tudo, ficando congestionado, e um alternativo via POP-C (custo maior) que fica ocioso. Um túnel TE roteia parte do tráfego explicitamente pelo caminho alternativo, equilibrando a carga. Setas mostram o tráfego padrão no direto e um LSP-TE desviando parte pelo caminho de C.
+\begin{tikzpicture}[
+  font=\small,
+  r/.style={draw, circle, fill=manualblue!20, minimum size=11mm, align=center, inner sep=1pt, font=\scriptsize},
+]
+\node[r] (a) at (0,0) {POP-A};
+\node[r] (b) at (6,0) {POP-B};
+\node[r] (c) at (3,2.1) {POP-C};
+\draw[thick] (a) -- node[below]{\scriptsize direto — custo 10 (lotado)} (b);
+\draw[thick] (a) -- (c); \draw[thick] (c) -- (b);
+\node at (1.2,1.3) {\scriptsize custo 30}; \node at (4.8,1.3) {\scriptsize (ocioso)};
+\draw[-{Stealth}, destaque, manualgreen!60!black] (a) to[bend left=30]
+  node[midway, above, sloped]{\scriptsize LSP-TE (caminho explícito)} (c);
+\draw[-{Stealth}, destaque, manualgreen!60!black] (c) to[bend left=30] (b);
+\end{tikzpicture}
+```
+
+::: {#fig-mpls-te}
+A IGP mandaria tudo pelo caminho direto (custo 10), congestionando-o. Um
+**túnel TE** roteia parte do tráfego **explicitamente** por POP-C,
+aproveitando a capacidade ociosa. TE otimiza **utilização**, não só
+distância.
+:::
+
+## Túneis TE, caminho explícito e reserva
+
+O TE trabalha com **túneis** — LSPs (@sec-mpls-ldp) que **não** seguem a
+IGP, mas um **caminho definido**:
+
+- **Caminho explícito** (*explicit path*): você lista os saltos por onde
+  o LSP deve passar (ex.: A → C → B), forçando o desvio;
+- **Reserva de banda**: o LSP **reserva** X Gbps ao longo do caminho; os
+  roteadores contabilizam a banda comprometida e **rejeitam** novos LSPs
+  que não caibam — evitando sobrecarga por projeto;
+- **CSPF** (*Constrained SPF*): em vez de você listar todos os saltos, o
+  roteador **calcula** o melhor caminho que **satisfaz as restrições**
+  (banda mínima, evitar tal enlace, latência) — Dijkstra com regras.
+
+Para o CSPF funcionar, a IGP precisa **anunciar os atributos TE** dos
+enlaces (banda disponível, cores/afinidades) — extensões TE do OSPF.
+
+## RSVP-TE e o estado no RouterOS
+
+O protocolo que **sinaliza** e **reserva** os túneis TE é o **RSVP-TE**
+(*Resource Reservation Protocol — Traffic Engineering*): ele estabelece o
+LSP ao longo do caminho e mantém a reserva. No mundo MPLS-TE clássico,
+RSVP-TE é a peça central; LDP (@sec-mpls-ldp) faz o transporte "sem
+engenharia", RSVP-TE faz o "com caminho e banda".
+
+::: {.callout-warning}
+O suporte a **RSVP-TE/MPLS-TE completo** no RouterOS é **limitado e varia
+por versão** — não assuma paridade com roteadores de core dedicados
+(Cisco/Juniper). Confirme, na documentação da sua versão v7
+[@mikrotik-docs], o que está disponível **antes** de projetar um backbone
+dependente de TE. Muitas redes MikroTik obtêm 90% do benefício com
+**engenharia de custo/métrica** e **múltiplos LSPs/ECMP**, sem RSVP-TE
+formal. Este capítulo cobre o **conceito** e as alternativas práticas.
+:::
+
+## TE na prática de um provedor MikroTik
+
+Mesmo sem RSVP-TE pleno, você faz "engenharia de tráfego" com as
+ferramentas dos volumes anteriores:
+
+- **Métrica/custo por serviço**: ajustar custo OSPF (@sec-ospf-basico)
+  para mover **classes** de tráfego a caminhos diferentes — grosseiro,
+  mas eficaz para separar, por exemplo, tráfego de trânsito de tráfego
+  interno;
+- **Policy routing** (@sec-vrf): marcar tráfego (mangle) e mandá-lo por
+  uma **tabela**/next-hop específico — coloca tráfego selecionado num
+  caminho, sem depender de RSVP;
+- **Múltiplos caminhos / ECMP**: quando dois caminhos têm o **mesmo
+  custo**, a IGP balanceia entre eles (o Volume 14 aprofunda,
+  @sec-ecmp-pcc) — capacidade somada sem TE;
+- **VPLS/pseudowire por caminho**: ancorar um serviço L2 (@sec-vpls) a um
+  LSP específico para isolá-lo do resto.
+
+A regra: **comece pelo simples** (custo, ECMP, policy routing) e só vá
+para TE formal quando o backbone for grande e complexo o bastante para
+justificar a operação de RSVP-TE — e depois de confirmar o suporte.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+TE existe porque a **IGP otimiza distância, não utilização**: ela lota o
+caminho barato e ignora o ocioso. A solução conceitual é o **túnel TE** —
+um LSP com **caminho explícito** e **reserva de banda**, calculado por
+**CSPF** e sinalizado por **RSVP-TE**. Mas o conselho honesto para um
+provedor MikroTik: **confirme o suporte da sua versão** e saiba que a
+maior parte do ganho vem de ferramentas que você já domina — **custo,
+ECMP e policy routing**. TE formal é para quando o backbone realmente
+exige; antes disso, engenharia de métrica resolve.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Quatro CHRs (@sec-lab-chr) formando um losango: **lab-a** e **lab-b** nas
+pontas, com **dois** caminhos entre eles — um direto (**lab-a**–**lab-b**)
+e um via **lab-c** (**lab-a**–**lab-c**–**lab-b**). OSPF + MPLS/LDP de pé
+(@sec-mpls-ldp). O objetivo é **desviar** tráfego selecionado do caminho
+direto para o via-C, demonstrando o conceito de TE com as ferramentas
+disponíveis.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — o estado padrão da IGP.** Com custos iguais ou o direto mais
+barato, confirme que **todo** o tráfego A→B vai pelo caminho direto:
+
+```routeros
+/tool traceroute 10.255.0.2
+/ip route print where dst-address~"10.255.0.2"
+```
+
+**Passo 2 — engenharia por custo.** Suba o custo do enlace direto para
+que **uma classe** de tráfego prefira o via-C — ou, melhor, deixe os dois
+com **mesmo custo** e observe o **ECMP** balancear:
+
+```routeros
+/routing ospf interface-template set [find interfaces=ether-direto] cost=20
+```
+
+Refaça o traceroute: o caminho mudou/balanceou.
+
+**Passo 3 — policy routing (TE seletivo).** Marque um tráfego específico
+(ex.: de uma origem) e force-o pelo via-C, deixando o resto no direto:
+
+```routeros
+/ip firewall mangle add chain=prerouting src-address=192.168.70.0/24 \
+    action=mark-routing new-routing-mark=via-c
+/routing table add name=via-c fib
+/ip route add dst-address=10.255.0.2/32 gateway=<nexthop-c> routing-table=via-c
+```
+
+Prove com traceroute de dentro e fora do `192.168.70.0/24`: caminhos
+diferentes — tráfego colocado **explicitamente** num caminho.
+
+**Passo 4 — capacidade somada (ECMP).** Com os dois caminhos em custo
+igual, gere tráfego e observe a distribuição pelos dois — capacidade
+agregada sem RSVP-TE.
+
+**Passo 5 — confira o suporte TE da sua versão.** Consulte
+`/mpls` e a documentação [@mikrotik-docs] para ver o que sua versão v7
+oferece de RSVP-TE, antes de qualquer projeto dependente disso.
+
+### Verificação
+
+1. Por padrão, o tráfego A→B usa o caminho de menor custo;
+2. Ajuste de custo/ECMP redistribui ou balanceia o tráfego;
+3. Policy routing coloca uma classe **explicitamente** no via-C;
+4. Você verificou o suporte real de TE da sua versão.
+
+### Desafios
+
+1. O enlace direto A–B vive congestionado enquanto o via-C está ocioso.
+   Você sobe o custo do direto e... o congestionamento só **migrou** para
+   o via-C. Por que o ajuste de custo "puro" falhou, e que abordagem
+   coloca **parte** do tráfego em cada caminho?
+2. Explique, com suas palavras, a diferença entre o LDP (@sec-mpls-ldp) e
+   o RSVP-TE quanto ao **caminho** que o LSP segue. Quando o LDP basta e
+   quando o RSVP-TE agrega valor?
+3. Um projeto assume RSVP-TE com reserva de banda estrita num backbone
+   MikroTik. Que verificação **crítica** você faz antes de prometer isso
+   ao cliente/gestão, e qual é o plano B se o suporte for limitado?
+4. Você quer somar a capacidade de **dois** caminhos de mesma banda entre
+   A e B sem TE formal. Qual recurso usa, que condição os caminhos
+   precisam satisfazer, e qual capítulo aprofunda o tema?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Ajustar custo **move todo** o tráfego de um caminho para o outro —
+você não dividiu a carga, só a transferiu, e o via-C agora congestiona.
+Para colocar **parte** em cada caminho: **policy routing** (marcar uma
+classe e mandá-la por um caminho, o resto por outro) ou **ECMP** (custos
+iguais, a IGP balanceia). O verdadeiro TE reservaria banda por LSP; as
+alternativas práticas dividem por classe ou por hash de fluxo.
+
+**2.** O **LDP** distribui rótulos seguindo o caminho da **IGP** (menor
+custo) — o LSP vai por onde o OSPF mandaria. O **RSVP-TE** estabelece o
+LSP por um **caminho explícito/CSPF** que pode **divergir** da IGP,
+respeitando restrições (banda, evitar enlace). LDP basta para transporte
+simples e VPNs sobre o caminho ótimo da IGP; RSVP-TE agrega quando você
+precisa **forçar caminho** e **reservar banda**.
+
+**3.** Verificação crítica: **confirmar, na documentação da versão v7
+específica**, o nível de suporte a RSVP-TE/MPLS-TE do RouterOS — ele é
+limitado e varia. Plano B: obter o resultado com **engenharia de
+custo/métrica**, **ECMP** e **policy routing** (que cobrem a maior parte
+dos casos), reservando o RSVP-TE formal para quando o hardware/versão o
+suportarem plenamente — ou usar equipamento de core dedicado onde TE
+estrito for mandatório.
+
+**4.** **ECMP** (*Equal-Cost Multi-Path*): os dois caminhos precisam ter
+**custo IGP idêntico** para a IGP instalá-los juntos e balancear os
+fluxos entre eles. Aprofundado no Volume 14 (@sec-ecmp-pcc), junto com
+PCC e failover multi-link.
+:::
+
+## Resumo
+
+- **TE** resolve o que a IGP não vê: ela otimiza **distância**, lotando
+  o caminho barato e deixando o alternativo **ocioso**;
+- Conceitos: **túnel TE** (LSP com **caminho explícito**), **reserva de
+  banda**, **CSPF** (SPF com restrições) e **RSVP-TE** (sinaliza/reserva);
+- No RouterOS, o suporte a RSVP-TE é **limitado/variável** — **confirme
+  a versão** [@mikrotik-docs] antes de projetar;
+- Na prática MikroTik, a "engenharia de tráfego" vem de **custo/métrica**,
+  **policy routing** (@sec-vrf) e **ECMP** (@sec-ecmp-pcc) — comece pelo
+  simples;
+- Regra: TE formal só quando o backbone justificar; antes disso,
+  engenharia de métrica entrega a maior parte do ganho.
+
+Fecha-se o Volume 11: o backbone do provedor agora transporta por
+rótulos (MPLS/LDP), entrega serviços L2 (VPLS) e escolhe caminhos com
+intenção (TE). Da tecnologia de núcleo, o **Volume 12** volta ao
+operador: **scripts e automação** para provisionar e manter tudo isso em
+escala.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *MPLS-TE / RSVP* do RouterOS (verifique a versão)
+  [@mikrotik-docs];
+- Traffic engineering, CSPF e reserva de recursos: [@tanenbaum-redes];
+- MPLS no v7 na prática: [@discher-rosv7];
+- Engenharia de backbone em provedores: [@burgess-mikrotik].
