@@ -1,7 +1,295 @@
-# CGNAT e netmap
+# CGNAT e netmap {#sec-cgnat}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar por que o **esgotamento do IPv4** forçou o **CGNAT**
+  (*Carrier-Grade NAT*) e onde ele entra na rede do provedor;
+- Usar corretamente o bloco **`100.64.0.0/10`** (RFC 6598) e entender
+  por que ele existe (e por que **não** é RFC1918);
+- Diferenciar `masquerade`/`srcnat` de **`netmap`** e implementar CGNAT
+  **determinístico** (assinante ↔ IP público + faixa de portas fixa);
+- Dimensionar **portas por assinante** e a razão de compartilhamento
+  (*oversubscription*), pesando esgotamento de portas vs. economia de IP;
+- Reconhecer o que o CGNAT **quebra** (port-forward do cliente, alguns
+  jogos/P2P) e como mitigar.
 :::
+
+O provedor cresceu e a conta não fecha: são **milhares de assinantes** e
+um punhado de **IPv4 públicos**. Comprar mais IPv4 é caro e escasso.
+A saída da indústria inteira foi **compartilhar** cada IP público entre
+dezenas de clientes com um NAT em escala de operadora — o **CGNAT**.
+Ele é a diferença entre "acabou o IP, não dá para vender" e "seguimos
+crescendo". Este capítulo monta um CGNAT que funciona **e** que atende à
+lei (o próximo, @sec-cgnat-logging, cuida do registro legal).
+
+## Por que CGNAT e onde ele fica
+
+No @sec-nat-masquerade, a LAN privada do cliente saía para a internet
+via NAT no roteador de borda: **um IP público** servia **uma casa**. O
+CGNAT sobe esse conceito uma camada: agora **um IP público serve muitas
+casas**. Cada assinante recebe um **endereço `100.64.x.x`** (nem privado
+"de casa", nem público), e o **BNG/roteador de CGNAT** traduz o tráfego
+de todos eles para um punhado de IPv4 públicos na saída.
+
+```{.tikz}
+%%| filename: fig-cgnat-camadas
+%%| alt: Duas camadas de NAT. À esquerda, a casa do assinante com rede 192.168.0.0/24 fazendo NAT para um endereço 100.64.x.x atribuído pelo provedor. No centro, o roteador CGNAT do provedor traduzindo o bloco 100.64.0.0/10 de milhares de assinantes para poucos IPs públicos. À direita, a internet. Setas mostram o duplo NAT.
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=center, minimum height=11mm, inner sep=4pt},
+]
+\node[box, fill=manualgray!15] (casa) at (0,0) {casa\\\scriptsize 192.168.0.0/24\\\scriptsize NAT1};
+\node[box, fill=manualblue!15] (cg) at (4.2,0) {CGNAT (BNG)\\\scriptsize 100.64.0.0/10\\\scriptsize NAT2 (netmap)};
+\node[box, fill=manualgreen!15] (net) at (8.4,0) {internet\\\scriptsize IPv4 público};
+\draw[-{Stealth}, thick] (casa) -- node[above]{\scriptsize 100.64.x.x} (cg);
+\draw[-{Stealth}, thick] (cg) -- node[above]{\scriptsize 203.0.113.x} (net);
+\node[manualred, align=center] at (4.2,-1.5) {\scriptsize \textbf{NAT duplo}: casa $\to$ 100.64 $\to$ público};
+\end{tikzpicture}
+```
+
+::: {#fig-cgnat-camadas}
+O tráfego do assinante passa por **dois** NATs: o da própria casa
+(privado → `100.64.x.x`) e o do provedor (`100.64.x.x` → IPv4 público
+compartilhado). O `100.64.0.0/10` é o "espaço de manobra" entre os dois.
+:::
+
+## O espaço 100.64.0.0/10 (RFC 6598)
+
+Por que não usar `10.0.0.0/8` para endereçar os assinantes? Porque a
+**casa do cliente já usa** RFC1918 (`192.168.x.x`, às vezes `10.x`).
+Se o provedor também usasse `10.x` entre o CPE/ONU e o BNG, haveria
+**colisão** com a LAN do cliente — o NAT ficaria ambíguo. A IANA
+reservou o **`100.64.0.0/10`** (*Shared Address Space*, RFC 6598)
+**exatamente** para CGNAT: é um espaço que **não aparece** na LAN
+doméstica nem na internet pública, dedicado ao trecho
+assinante↔operadora.
+
+Regras práticas: **nunca roteie `100.64/10` para a internet**;
+**nunca aceite `100.64/10` num peering BGP** (é bogon, @sec-bgp-filtros);
+e **não** o confunda com RFC1918 nas regras de firewall.
+
+## masquerade, srcnat e netmap
+
+O RouterOS oferece três ações de srcnat relevantes aqui:
+
+- **`masquerade`**: reescreve o *source* para o IP **da interface de
+  saída**, escolhido dinamicamente. Simples, mas o mapeamento
+  assinante→IP público **muda** e é difícil de rastrear;
+- **`src-nat` (to-addresses)**: fixa o IP público de saída, mas ainda
+  distribui portas dinamicamente num pool;
+- **`netmap`**: mapeamento **1:1 de faixas** — pega um bloco de origem e
+  o mapeia, na mesma ordem, para um bloco de destino. É a base do CGNAT
+  **determinístico**.
+
+Para a operação (e para a lei, @sec-cgnat-logging), o que interessa é
+**previsibilidade**: dado um IP público, uma porta e um instante, saber
+**qual assinante** era. `masquerade` puro dificulta isso; o CGNAT
+**determinístico** resolve.
+
+## CGNAT determinístico com netmap
+
+A ideia: dividir cada IP público em **N faixas de portas** e atribuir
+**cada faixa a um assinante fixo**. Assim, o mapeamento
+`(IP público, faixa de portas) → assinante` é **calculável**, sem
+depender de consultar logs de conexão a cada evento. Menos log, resposta
+legal mais simples, diagnóstico direto.
+
+```routeros
+# mapear a faixa de assinantes 100.64.0.0/28 para 1 IP público,
+# fatiando as portas — netmap preserva a ordem do bloco
+/ip firewall nat
+add chain=srcnat action=netmap \
+    src-address=100.64.0.0/28 to-addresses=203.0.113.10 \
+    protocol=tcp to-ports=1024-4095 comment="assinantes 0-15 -> portas 1024-4095"
+```
+
+Na prática, provedores usam um **script** ou a funcionalidade de CGNAT
+determinístico para gerar as regras: cada bloco de assinantes recebe um
+IP público e uma janela de portas contígua. O @sec-cgnat-logging mostra
+como isso reduz o volume de log de "toda conexão" para "só a tabela de
+alocação".
+
+::: {.callout-warning}
+CGNAT é **destrutivo de simplicidade**: uma vez que o assinante está
+atrás de CGNAT, o **port-forward que ele fazia em casa deixa de
+funcionar** (o IP público não é dele). Câmeras, DVRs, servidores de
+jogo caseiros, alguns P2P — tudo que dependia de porta aberta de fora
+para dentro quebra. Deixe isso claro no contrato e ofereça **IP público
+dedicado** (ou IPv6, o resto deste volume) para quem precisar.
+:::
+
+## Portas por assinante e oversubscription
+
+Cada IPv4 público tem ~**64 mil portas** por protocolo. Se você dá
+**2.048 portas** a cada assinante, cabem ~**32 assinantes por IP
+público** (`65536 / 2048`). Menos portas por cliente = mais clientes por
+IP (mais economia), porém maior chance de **esgotamento de portas** —
+um cliente que abre muitas conexões (abas, apps, um torrent) fica sem
+porta e sente lentidão/falhas intermitentes.
+
+O ajuste é um trade-off:
+
+- **Poucas portas/assinante** (ex.: 512–1024): máxima economia de IP,
+  risco de esgotamento com usuários pesados;
+- **Muitas portas/assinante** (ex.: 4096+): folga por cliente, menos
+  clientes por IP;
+- **Regra de bolso**: comece com ~**1.000–2.000 portas/assinante** e
+  monitore o esgotamento (contadores/log) antes de apertar.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+CGNAT é como você **vende internet sem IPv4 suficiente**: um IP público
+compartilhado por dezenas de assinantes endereçados em `100.64/10`. Faça
+**determinístico** (netmap + faixas de portas fixas) — não por elegância,
+mas porque isso torna o mapeamento `IP:porta:tempo → assinante`
+**calculável**, o que simplifica a operação **e** a obrigação legal do
+próximo capítulo. E lembre do preço: CGNAT **quebra** o acesso de fora
+para dentro do cliente — planeje IP dedicado/IPv6 para quem precisa. A
+economia de IPv4 é real; a dívida de complexidade também.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Três CHRs (@sec-lab-chr): **lab-bng** = roteador CGNAT do provedor;
+**lab-cli** = "casa do assinante" (com sua própria LAN
+`192.168.88.0/24` e NAT interno), recebendo um `100.64.0.10/24` do lado
+do provedor; **lab-net** = simulando a internet, com um IP "público"
+`203.0.113.1` e um serviço para pingar. O lab-bng faz o CGNAT entre
+`100.64.0.0/24` e o público `203.0.113.10`.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — endereçar o trecho CGNAT.** No lab-bng:
+
+```routeros
+/ip address add address=100.64.0.1/24 interface=ether2 comment="lado assinantes"
+/ip address add address=203.0.113.10/32 interface=ether3 comment="IP publico CGNAT"
+```
+
+**Passo 2 — o NAT determinístico (netmap).** Mapeie um bloco pequeno de
+assinantes para o IP público, fatiando portas:
+
+```routeros
+/ip firewall nat
+add chain=srcnat action=netmap src-address=100.64.0.0/28 \
+    to-addresses=203.0.113.10 protocol=tcp to-ports=1024-8191 \
+    comment="assinantes .0-.15"
+add chain=srcnat action=netmap src-address=100.64.0.0/28 \
+    to-addresses=203.0.113.10 protocol=udp to-ports=1024-8191
+```
+
+**Passo 3 — prove a tradução.** Do lab-cli (origem `100.64.0.10`),
+gere tráfego para o lab-net e observe no lab-bng:
+
+```routeros
+/ip firewall connection print where src-address~"100.64"
+```
+
+Você verá a conexão com **reply-src** no `203.0.113.10` e a porta
+traduzida dentro da faixa definida — o assinante escondido atrás do IP
+público.
+
+**Passo 4 — bogon no lugar certo.** Garanta que o `100.64/10` **não**
+escapa: no firewall filter do lab-bng, confirme que nada roteia esse
+bloco para fora sem NAT (regra de higiene do @sec-bgp-filtros).
+
+**Passo 5 — sinta o esgotamento.** Reduza a faixa para pouquíssimas
+portas (`to-ports=1024-1034`) e gere muitas conexões simultâneas do
+lab-cli. Observe conexões falhando por falta de porta — a demonstração
+viva do trade-off de oversubscription. Restaure a faixa depois.
+
+### Verificação
+
+1. Conexões do assinante saem com *source* = IP público e porta na
+   faixa determinística;
+2. O `connection print` casa `100.64.x.x` ↔ `203.0.113.10:porta`;
+3. Estreitar a faixa de portas provoca falhas de conexão sob carga;
+4. `100.64/10` não é roteado/anunciado para fora.
+
+### Desafios
+
+1. Um cliente reclama que a câmera dele "sumiu" da internet depois que
+   você o migrou para CGNAT — o app não conecta de fora. Explique
+   **exatamente** por que, e liste duas soluções (uma que envolve IPv4,
+   outra que aponta para o resto deste volume).
+2. A autoridade pede: "quem usava o IP `203.0.113.10`, porta de origem
+   `5000`, às 21h34?". Com CGNAT **determinístico**, por que você
+   responde **sem** vasculhar um log gigante de conexões? Descreva o
+   raciocínio de cálculo faixa→assinante.
+3. Você tem 4.000 assinantes e quer no máximo esgotamento raro. Com IPs
+   públicos de 64k portas e a meta de ~2.000 portas/assinante, quantos
+   IPv4 públicos você precisa? Mostre a conta e o que muda se apertar
+   para 1.000 portas.
+4. Por que usar `masquerade` puro no CGNAT é uma má ideia do ponto de
+   vista **legal e operacional**, mesmo que "funcione"? Relacione com o
+   @sec-cgnat-logging.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** A câmera dependia de **port-forward** no roteador de casa, que
+só funciona quando o IP público **é do cliente**. Atrás de CGNAT, o IP
+público é **compartilhado** e o provedor não redireciona portas de
+entrada para cada assinante — logo, conexões **de fora para dentro**
+não têm como chegar. Soluções: (a) vender/atribuir um **IPv4 público
+dedicado** ao cliente (sai do CGNAT); (b) usar **IPv6** (resto do
+volume), em que cada casa tem endereços roteáveis próprios e o acesso de
+fora volta a ser possível (com firewall adequado, @sec-firewall-ipv6).
+
+**2.** No CGNAT determinístico, cada IP público é fatiado em **faixas de
+portas fixas por assinante**. A porta de origem `5000` cai numa faixa
+específica, e essa faixa está **pré-atribuída** a um assinante conhecido
+(a tabela de alocação). Basta calcular a qual bloco a porta pertence —
+não é preciso ter registrado **aquela conexão**, só a **regra de
+alocação** (que é estática). É por isso que o determinístico reduz o log
+de "toda conexão" para "a tabela".
+
+**3.** `65536 portas / 2000 portas por assinante ≈ 32 assinantes por
+IP`. Para 4.000 assinantes: `4000 / 32 ≈ 125 IPv4 públicos`. Apertando
+para 1.000 portas/assinante: `65536 / 1000 ≈ 65 assinantes por IP` →
+`4000 / 65 ≈ 62 IPv4` — **metade** dos IPs, ao custo de dobrar o risco
+de esgotamento de portas para usuários pesados.
+
+**4.** `masquerade` escolhe IP/porta de saída **dinamicamente**, então o
+mesmo assinante aparece com mapeamentos que **mudam** o tempo todo. Para
+atender a lei (@sec-cgnat-logging) você precisaria **logar cada
+conexão** (volume enorme) para reconstruir "quem era quem". Operacional:
+diagnosticar/atribuir tráfego a um cliente vira garimpo. O determinístico
+troca esse custo por uma **tabela estática** — mesma economia de IP, sem
+a dívida de log e rastreio.
+:::
+
+## Resumo
+
+- **CGNAT** compartilha um IPv4 público entre dezenas de assinantes,
+  endereçados em **`100.64.0.0/10`** (RFC 6598) — nem RFC1918, nem
+  público, dedicado ao trecho operadora↔assinante;
+- Prefira **`netmap` determinístico**: faixas de portas fixas por
+  assinante tornam o mapeamento `IP:porta:tempo → cliente`
+  **calculável** (essencial para @sec-cgnat-logging);
+- **Portas por assinante** é um trade-off: menos portas = mais clientes
+  por IP, mais risco de esgotamento; comece em ~1.000–2.000 e monitore;
+- CGNAT **quebra** acesso de fora para dentro (port-forward do cliente);
+  ofereça IPv4 dedicado ou **IPv6** a quem precisa;
+- Higiene: `100.64/10` **nunca** roteado/anunciado para fora.
+
+A economia de IPv4 tem prazo de validade — a solução definitiva é o
+**IPv6**, com endereço de sobra para cada casa. Mas antes, uma
+obrigação que não é opcional no Brasil: o **registro legal** do CGNAT.
+O @sec-cgnat-logging trata do que a lei exige e como cumpri-la sem
+afogar o provedor em logs.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- RFC 6598 — *IANA-Reserved IPv4 Prefix for Shared Address Space*;
+- Documentação oficial: *NAT* e *CGNAT/netmap* do RouterOS [@mikrotik-docs];
+- NAT em escala e esgotamento de portas: [@tanenbaum-redes];
+- CGNAT em provedores: [@burgess-mikrotik].
