@@ -1,7 +1,407 @@
-# Enlaces PtP: Nstreme e NV2
+# Enlaces PtP: Nstreme e NV2 {#sec-ptp-nstreme-nv2}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar por que o CSMA/CA do 802.11 padrão desperdiça capacidade em
+  enlaces ponto a ponto longos (o problema do *ACK timeout*);
+- Descrever o que Nstreme e NV2 mudam no acesso ao meio — *polling* e
+  TDMA — e por que isso importa a partir de alguns quilômetros;
+- Escolher entre 802.11, Nstreme e NV2 para um enlace PtP concreto;
+- Configurar um enlace PtP completo com NV2 nos dois lados, incluindo
+  os parâmetros de TDMA (`tdma-period-size`, `nv2-cell-radius`);
+- Dimensionar a capacidade real esperada de um enlace (taxa aérea ≠
+  throughput útil) e validá-la com `bandwidth-test`.
 :::
+
+No @sec-wireless-routeros montamos um enlace sem fio e aprendemos a
+lê-lo pela registration table. Ele funcionava — mas usava o protocolo
+802.11 de fábrica, o mesmo do WiFi doméstico. Para dois rádios a 30 cm
+um do outro, tudo bem. Para o backhaul que liga sua torre rural à sede,
+a 15 km, o 802.11 padrão joga fora boa parte da capacidade que você
+pagou. Este capítulo explica por quê — e apresenta as duas respostas da
+MikroTik: **Nstreme** e **NV2**.
+
+## O problema: 802.11 foi feito para dentro de casa
+
+O 802.11 usa **CSMA/CA** (*Carrier Sense Multiple Access with Collision
+Avoidance*): antes de transmitir, o rádio escuta o canal; se está
+ocupado, espera um tempo aleatório e tenta de novo. Cada quadro
+entregue exige um **ACK** de volta — se o ACK não chega dentro de um
+prazo curto, o transmissor assume perda e retransmite.
+
+Esse desenho embute duas suposições de ambiente doméstico:
+
+1. **Todo mundo se escuta.** O *carrier sense* só evita colisões se as
+   estações detectam as transmissões umas das outras. Em enlaces
+   longos, com antenas diretivas apontadas para lados diferentes, isso
+   raramente é verdade.
+2. **A distância é desprezível.** O prazo do ACK foi calibrado para
+   metros. A luz percorre ~300 m por microssegundo; em 15 km, só a
+   viagem de ida e volta do quadro + ACK consome ~100 µs. O rádio
+   precisa **esperar parado** esse tempo a cada quadro — e se o prazo
+   não for esticado (o famoso ajuste de `distance`), ele retransmite
+   quadros que teriam chegado.
+
+O resultado prático: quanto mais longo o enlace, maior a fração do
+tempo de ar gasta em espera e retransmissão, e menor o throughput útil.
+Um enlace 802.11 de 15 km pode entregar **menos da metade** do que a
+taxa aérea sugere — e degrada ainda mais com qualquer interferência.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O CSMA/CA é uma reunião educada: cada um espera o silêncio para falar,
+e quem fala espera o "entendi" do outro lado antes de continuar. Numa
+sala pequena, funciona. Agora ponha os participantes a 15 km de
+distância gritando por megafone: o "entendi" demora tanto a voltar que
+todo mundo passa a reunião esperando — ou repetindo o que já tinha
+dito. Nstreme e NV2 trocam a reunião educada por um **moderador com
+cronômetro**: cada um recebe sua janela de fala e ninguém espera
+confirmação a cada frase.
+:::
+
+## Nstreme: o polling da primeira geração
+
+O **Nstreme** é o protocolo proprietário original da MikroTik (era do
+RouterOS v3/v4). Ele substitui a disputa do CSMA/CA por **polling**: o
+AP pergunta a cada estação, uma por vez, se tem algo a transmitir.
+Além disso:
+
+- **Elimina o ACK por quadro** — os quadros são agregados em blocos
+  (*framer*) e confirmados em lote;
+- **Sem limite de distância por protocolo** — como não há prazo de ACK
+  por quadro, o enlace não "expira" com a distância;
+- Só funciona **entre equipamentos MikroTik** (os dois lados precisam
+  falar Nstreme).
+
+Parâmetros que você verá em configurações legadas:
+
+| Parâmetro | O que faz | Valor típico PtP |
+|---|---|---|
+| `wireless-protocol=nstreme` | ativa o protocolo | nos dois lados |
+| `framer-policy` | como agregar quadros | `best-fit` |
+| `framer-limit` | tamanho máx. do bloco agregado (bytes) | `3200` |
+| `disable-csma` | desliga o *carrier sense* (PtP puro) | `yes` |
+
+: Parâmetros do Nstreme {#tbl-nstreme-params}
+
+O Nstreme resolve o ACK e a distância, mas o polling tem um custo: o
+AP gasta tempo de ar *perguntando*, mesmo a estações sem tráfego. Num
+PtP (uma estação só) isso é pequeno; num PtMP com dezenas de clientes,
+o overhead cresce. Foi para isso que veio o sucessor.
+
+## NV2: TDMA de verdade
+
+O **NV2** (*Nstreme version 2*) abandona o polling e implementa
+**TDMA** (*Time Division Multiple Access*): o tempo de ar é dividido em
+**períodos fixos**, e o AP publica, a cada período, um **mapa de
+alocação** dizendo quem transmite em qual fatia — downlink e uplink.
+Ninguém escuta o canal, ninguém disputa, ninguém espera ACK individual:
+cada rádio já sabe **quando** é sua vez.
+
+```{.tikz}
+%%| filename: fig-tdma-nv2
+%%| alt: Comparação entre o acesso ao meio do 802.11 CSMA/CA, com esperas e retransmissões entre quadros, e o TDMA do NV2, em que o tempo é dividido em períodos com fatias de downlink e uplink alocadas pelo AP sem intervalos de disputa.
+\begin{tikzpicture}[
+  font=\small,
+  slot/.style={draw, minimum height=7mm, anchor=west, inner sep=2pt},
+]
+% ---- linha 1: 802.11 CSMA/CA ----
+\node[anchor=west] at (0,2.2) {\textbf{802.11 (CSMA/CA)} — disputa + ACK por quadro};
+\node[slot, fill=manualblue!30, minimum width=14mm] (a1) at (0,1.2) {dados};
+\node[slot, fill=manualgray!40, minimum width=8mm]  (a2) at (1.6,1.2) {espera};
+\node[slot, fill=manualgreen!30, minimum width=7mm] (a3) at (2.6,1.2) {ACK};
+\node[slot, fill=manualgray!40, minimum width=10mm] (a4) at (3.5,1.2) {disputa};
+\node[slot, fill=manualblue!30, minimum width=14mm] (a5) at (4.7,1.2) {dados};
+\node[slot, fill=manualgray!40, minimum width=8mm]  (a6) at (6.3,1.2) {espera};
+\node[slot, fill=manualred!30, minimum width=12mm]  (a7) at (7.3,1.2) {retransm.};
+\node[slot, fill=manualgreen!30, minimum width=7mm] (a8) at (8.7,1.2) {ACK};
+% ---- linha 2: NV2 TDMA ----
+\node[anchor=west] at (0,0) {\textbf{NV2 (TDMA)} — períodos fixos, sem disputa};
+\node[slot, fill=manualyellow!40, minimum width=6mm]  (b0) at (0,-1) {mapa};
+\node[slot, fill=manualblue!30, minimum width=30mm]   (b1) at (0.8,-1) {downlink (AP $\to$ estação)};
+\node[slot, fill=manualgreen!30, minimum width=22mm]  (b2) at (4.2,-1) {uplink (estação $\to$ AP)};
+\node[slot, fill=manualyellow!40, minimum width=6mm]  (b3) at (6.8,-1) {mapa};
+\node[slot, fill=manualblue!30, minimum width=16mm]   (b4) at (7.6,-1) {downlink};
+% chaves de período
+\draw[decorate, decoration={brace, mirror, amplitude=4pt}]
+  (0,-1.55) -- (6.6,-1.55) node[midway, below=5pt] {um período TDMA (\texttt{tdma-period-size})};
+% eixo do tempo
+\draw[-{Stealth}, manualgray] (0,-2.6) -- (9.6,-2.6) node[right] {tempo};
+\end{tikzpicture}
+```
+
+::: {#fig-tdma-nv2}
+No 802.11, cada quadro paga disputa, espera de ACK e eventuais
+retransmissões — e o custo cresce com a distância. No NV2, o AP publica
+um mapa e o tempo de ar vira fatias contíguas de downlink e uplink, sem
+disputa nem ACK individual.
+:::
+
+As consequências práticas do TDMA:
+
+- **Latência previsível**: cada estação transmite a intervalos
+  regulares. O *jitter* despenca — crucial para VoIP e jogos;
+- **Throughput estável sob carga**: sem disputa, adicionar tráfego não
+  multiplica colisões;
+- **Escala em PtMP**: o mapa de alocação distribui o tempo entre
+  dezenas de estações sem overhead de polling (por isso o NV2 é a base
+  do @sec-ptmp-rural);
+- **Proprietário**: como o Nstreme, exige MikroTik dos dois lados.
+
+### Os dois parâmetros que você precisa entender
+
+**`tdma-period-size`** (1–10 ms, padrão dinâmico): o tamanho do
+período. Período **maior** = mais tempo útil por mapa publicado =
+**mais throughput**, porém **mais latência** (cada estação espera mais
+pela sua fatia). Período **menor** = o inverso. Para PtP de backhaul,
+2–4 ms costuma equilibrar; deixe `dynamic` na dúvida.
+
+**`nv2-cell-radius`** (km, padrão 30): informa ao AP a distância da
+estação **mais distante**. O AP usa isso para dimensionar os tempos de
+guarda entre fatias (o sinal precisa ter tempo de viajar!). Valor menor
+que o real → fatias se atropelam e o enlace perde quadros; valor muito
+maior que o real → tempo de guarda desperdiçado. Meça no mapa e
+arredonde para cima.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Protocolo de acesso ao meio **não muda a física** — sinal, SNR e taxa
+aérea continuam os do @sec-fundamentos-radio. O que Nstreme e NV2
+mudam é **quanto do tempo de ar vira dado útil**. Num enlace curto e
+limpo, a diferença para o 802.11 é pequena; num enlace longo, ou num
+PtMP carregado, é a diferença entre entregar 40% e entregar 80% da
+capacidade aérea. Primeiro garanta o enlace saudável (Volume 5 até
+aqui); depois escolha o protocolo que não desperdiça o que o enlace
+oferece.
+:::
+
+## Qual protocolo usar?
+
+| Cenário | Protocolo | Por quê |
+|---|---|---|
+| PtP curto (< 3 km), limpo | `802.11` ou NV2 | diferença pequena; 802.11 mantém interoperabilidade |
+| PtP longo (> 3 km) | **NV2** | TDMA elimina o custo de ACK/distância |
+| PtP com hardware antigo (um lado sem suporte a NV2) | Nstreme | ainda melhor que 802.11 puro |
+| PtMP (torre com vários clientes) | **NV2** | mapa TDMA escala; polling e CSMA não |
+| Enlace com equipamento de outro fabricante | `802.11` | Nstreme/NV2 são proprietários |
+
+: Escolha de protocolo por cenário {#tbl-escolha-protocolo}
+
+Regra de bolso do provedor: **NV2 em tudo que for MikroTik↔MikroTik e
+esteja fora da sua sala**. Use `wireless-protocol=any` na estação
+durante a migração (ela segue o AP), e trave em `nv2` quando o setor
+inteiro tiver migrado.
+
+### Taxa aérea não é throughput
+
+A registration table do capítulo anterior mostrava, por exemplo,
+`rate 866Mbps-80MHz/2S`. Essa é a **taxa aérea** (PHY): o ritmo com que
+os bits voam *enquanto* o rádio transmite. O throughput útil desconta
+preâmbulos, mapas TDMA, tempos de guarda, retransmissões e o fato de o
+canal ser **half-duplex** (download e upload dividem o mesmo ar).
+
+Estimativa honesta para dimensionar backhaul:
+
+$$
+\text{throughput útil} \approx \text{taxa aérea} \times 0{,}55
+\quad \text{(NV2, enlace saudável, soma down+up)}
+$$
+
+Um enlace que negocia 866 Mbps entrega na prática ~450–480 Mbps
+agregados. Se o seu plano de capacidade precisa de 400 Mbps de
+download, esse enlace **não sobra** — dimensione o rádio pela conta,
+não pelo número da caixa.
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+O CHR não tem rádio, então este é um **laboratório de configuração e
+leitura**: os comandos abaixo são exatamente os que você aplicaria em
+um par de rádios reais (ex.: dois LHG 5) formando o backhaul
+sede ↔ torre do nosso provedor fictício. Se você tem dois equipamentos
+MikroTik com wireless na bancada, tudo funciona neles; senão, valide a
+sintaxe num CHR (os menus `/interface wireless` existem, sem
+interfaces) e concentre-se em **prever** cada saída antes de lê-la.
+Topologia de referência do livro: @sec-lab-chr.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — lado A (sede, AP do enlace).** PtP com NV2, banda de
+5 GHz, canal de 40 MHz fora da faixa DFS mais disputada, e SSID
+exclusivo do enlace:
+
+```routeros
+/interface wireless security-profiles
+add name=ptp-sede-torre authentication-types=wpa2-psk mode=dynamic-keys \
+    wpa2-pre-shared-key=Backhaul!Forte2026
+
+/interface wireless
+set wlan1 disabled=no mode=ap-bridge band=5ghz-a/n/ac \
+    channel-width=20/40mhz-Ce frequency=5500 ssid=ptp-sede-torre-01 \
+    wireless-protocol=nv2 security-profile=ptp-sede-torre \
+    nv2-cell-radius=15 tdma-period-size=3
+```
+
+O `nv2-cell-radius=15` cobre nossos 15 km de enlace com folga mínima;
+`tdma-period-size=3` favorece throughput sem arruinar a latência.
+
+**Passo 2 — lado B (torre, estação).** `station-bridge` (queremos L2
+transparente para o backhaul, como visto no @sec-wireless-routeros) e
+`wireless-protocol=nv2`:
+
+```routeros
+/interface wireless security-profiles
+add name=ptp-sede-torre authentication-types=wpa2-psk mode=dynamic-keys \
+    wpa2-pre-shared-key=Backhaul!Forte2026
+
+/interface wireless
+set wlan1 disabled=no mode=station-bridge band=5ghz-a/n/ac \
+    channel-width=20/40mhz-Ce ssid=ptp-sede-torre-01 \
+    wireless-protocol=nv2 security-profile=ptp-sede-torre
+```
+
+Na estação não se define `frequency` nem parâmetros de TDMA: ela
+**segue o AP** — varre a banda, encontra o SSID e obedece ao mapa de
+alocação que ele publica.
+
+**Passo 3 — conferir que o NV2 está de fato ativo.** Em rádios reais:
+
+```routeros
+/interface wireless registration-table print detail
+```
+
+```
+ 0 interface=wlan1 mac-address=CC:2D:E0:11:22:33 ap=no wds=no
+   rx-rate="390Mbps-40MHz/2S" tx-rate="390Mbps-40MHz/2S"
+   uptime=12m4s signal-strength=-61dBm tx-signal-strength=-62dBm
+   signal-to-noise=39dB nv2=yes tx-ccq=96% rx-ccq=95%
+```
+
+A linha que interessa: **`nv2=yes`**. Se aparecer `nv2=no`, um dos
+lados caiu para 802.11 (protocolo `any` + AP mal configurado é a causa
+clássica) e todo o ganho do capítulo evaporou.
+
+**Passo 4 — medir o throughput real.** O RouterOS traz um gerador de
+tráfego embutido, o `bandwidth-test`. Do lado B contra o lado A
+(IP 10.99.0.1 na gerência do enlace):
+
+```routeros
+/tool bandwidth-test address=10.99.0.1 protocol=udp direction=both \
+    user=vitor password=Lab!Segura2026
+```
+
+```
+    status: running
+  duration: 18s
+tx-current: 231.4Mbps
+rx-current: 224.9Mbps
+```
+
+::: {.callout-warning}
+O `bandwidth-test` **satura o enlace e o CPU** dos dois rádios. Em
+produção, rode fora do horário de pico, por poucos segundos, e nunca a
+partir do rádio que está roteando clientes — os resultados saem
+distorcidos e os clientes sentem.
+:::
+
+**Passo 5 — a prova da conta.** Taxa aérea negociada: 390 Mbps
+(40 MHz/2S). Nossa estimativa: $390 \times 0{,}55 \approx 214$ Mbps
+agregados. O teste mostrou ~230+225 = 455? Não — `direction=both` mede
+os dois sentidos **simultaneamente** dividindo o ar: o agregado real é
+tx+rx ≈ 456 Mbps *aparentes* apenas se o enlace fosse full-duplex.
+Compare cada sentido isolado (`direction=transmit`, depois `receive`)
+com a taxa aérea para ver o half-duplex em ação.
+
+### Verificação
+
+1. `registration-table print detail` mostra `nv2=yes` nos dois lados;
+2. O CCQ ficou ≥ 90% **durante** o bandwidth-test (rode os dois ao
+   mesmo tempo em janelas separadas) — TDMA sob carga não colapsa;
+3. `direction=transmit` e `direction=receive` isolados somam mais que
+   o `both` de cada sentido — você viu o half-duplex;
+4. Você sabe dizer, sem olhar o texto, o que acontece se
+   `nv2-cell-radius` for menor que a distância real do enlace.
+
+### Desafios
+
+1. Um enlace PtP de 25 km com NV2 funciona, mas perde ~3% dos pacotes
+   de forma constante, com bom sinal (-58 dBm) e SNR de 35 dB. O
+   `nv2-cell-radius` está no padrão de fábrica de um firmware antigo:
+   10. Explique a relação.
+2. O gerente quer "dobrar a banda do backhaul" trocando
+   `tdma-period-size` de 3 para 10. Estime o efeito real no throughput
+   e o efeito colateral na latência — e proponha a mudança que de fato
+   dobraria a capacidade (dica: física, não protocolo).
+3. Você precisa fechar um PtP entre um SXT MikroTik e um rádio de outro
+   fabricante que "fala 802.11ac". Quais linhas dos Passos 1 e 2 mudam,
+   e o que você perde?
+4. Num PtP saudável, `bandwidth-test protocol=tcp` mostra bem menos
+   que `protocol=udp`. O enlace está ruim? Justifique pensando em quem
+   gera e quem confirma o tráfego em cada protocolo.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O `nv2-cell-radius=10` dimensiona os tempos de guarda para
+10 km, mas o sinal leva o tempo de 25 km para chegar. Transmissões da
+estação chegam ao AP **depois** do fim da fatia reservada, invadindo a
+fatia seguinte: quadros corrompidos de forma constante e independente
+do sinal — exatamente o sintoma. Ajustar `nv2-cell-radius=25` resolve.
+
+**2.** Período maior reduz a fração de ar gasta em mapas e guardas —
+ganho real, porém modesto (tipicamente < 10–15%, longe de dobrar), ao
+custo de a estação esperar até 10 ms pela sua fatia: a latência (e o
+jitter percebido em VoIP) sobe. Para dobrar capacidade de verdade:
+mais espectro ou mais fluxos — canal de 40→80 MHz (se o espectro local
+permitir) ou hardware com mais cadeias/frequência mais limpa. Protocolo
+não cria hertz.
+
+**3.** Muda uma linha em cada lado: `wireless-protocol=nv2` →
+`wireless-protocol=802.11` (ou `any` no lado MikroTik). Perde-se o
+TDMA: volta o ACK por quadro com prazo sensível à distância (ajuste
+`distance` no AP!), a latência fica irregular e o throughput cai — e
+`nv2-cell-radius`/`tdma-period-size` passam a ser ignorados.
+
+**4.** Não necessariamente. O teste UDP mede o ar bruto: o gerador
+empurra datagramas sem esperar confirmação. O TCP embute controle de
+congestionamento e confirmações — que atravessam o mesmo enlace
+half-duplex no sentido contrário e disputam CPU no rádio. Menos TCP que
+UDP é esperado; preocupante é TCP *muito* abaixo (aí investigue perda
+de pacotes, que derruba TCP desproporcionalmente).
+:::
+
+## Resumo
+
+- O 802.11 paga **disputa + ACK por quadro**, e o prazo do ACK foi
+  calibrado para ambientes internos: em enlaces longos, a espera e as
+  retransmissões comem o throughput;
+- **Nstreme** (polling, sem ACK por quadro) foi a primeira resposta;
+  **NV2** (TDMA com mapa de alocação) é a atual — latência previsível,
+  throughput estável e escala em PtMP; ambos exigem MikroTik dos dois
+  lados;
+- `tdma-period-size` troca latência por throughput;
+  **`nv2-cell-radius` deve cobrir a estação mais distante**, senão as
+  fatias TDMA se atropelam;
+- Regra de bolso: **NV2 em todo enlace MikroTik↔MikroTik externo**;
+  802.11 apenas para interoperar com outros fabricantes;
+- Taxa aérea ≠ throughput: estime ~55% da PHY (agregado, half-duplex)
+  e **valide com `bandwidth-test`** — fora do pico e com cautela.
+
+No próximo capítulo (@sec-ptmp-rural) o NV2 mostra sua força de
+verdade: uma setorial atendendo dezenas de assinantes rurais em PtMP.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *Wireless — Nstreme/NV2 protocols* e
+  *Bandwidth Test* [@mikrotik-docs];
+- Fundamentos de acesso ao meio (CSMA/CA, TDMA): [@tanenbaum-redes];
+- Configuração wireless no RouterOS v7: [@discher-rosv7];
+- Prática de enlaces MikroTik: [@burgess-mikrotik].
