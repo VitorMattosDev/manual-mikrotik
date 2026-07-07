@@ -163,10 +163,10 @@ Pré-requisitos: Vol. 2 (Vol. 3 recomendado).*
 *Objetivo: enxergar a rede e diagnosticar com método.
 Pré-requisitos: Vol. 3.*
 
-- [ ] `volumes/v13-monitoramento/01-logs-syslog.qmd` — Logs: topics, actions, syslog remoto centralizado.
-- [ ] `volumes/v13-monitoramento/02-snmp-graphing-dude.qmd` — SNMP, graphing e The Dude: monitorando o parque do provedor.
-- [ ] `volumes/v13-monitoramento/03-torch-sniffer-profile.qmd` — Torch, packet sniffer e profile: enxergando tráfego e CPU em tempo real.
-- [ ] `volumes/v13-monitoramento/04-metodologia-troubleshooting.qmd` — Metodologia de troubleshooting: da reclamação do cliente à causa raiz.
+- [x] `volumes/v13-monitoramento/01-logs-syslog.qmd` — Logs: topics, actions, syslog remoto centralizado.
+- [x] `volumes/v13-monitoramento/02-snmp-graphing-dude.qmd` — SNMP, graphing e The Dude: monitorando o parque do provedor.
+- [x] `volumes/v13-monitoramento/03-torch-sniffer-profile.qmd` — Torch, packet sniffer e profile: enxergando tráfego e CPU em tempo real.
+- [x] `volumes/v13-monitoramento/04-metodologia-troubleshooting.qmd` — Metodologia de troubleshooting: da reclamação do cliente à causa raiz.
 
 ## Volume 14 — Alta disponibilidade
 *Objetivo: sobreviver a falhas de link e de equipamento.

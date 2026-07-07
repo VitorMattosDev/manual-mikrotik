@@ -1,7 +1,268 @@
-# Metodologia de troubleshooting
+# Metodologia de troubleshooting {#sec-troubleshooting}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Aplicar um **método** de diagnóstico — da reclamação do cliente à causa
+  raiz — em vez de tentar coisas ao acaso;
+- Usar o modelo em **camadas** (física → enlace → rede → transporte →
+  aplicação) para **isolar** onde o problema está;
+- Escolher, em cada passo, a ferramenta certa dos capítulos anteriores
+  (log, SNMP, Torch, sniffer, profile, ping/traceroute);
+- Formular e **testar hipóteses** (dividir para conquistar), documentar o
+  que descobriu e **confirmar a correção**;
+- Reconhecer os **padrões recorrentes** deste manual (MTU, next-hop,
+  assimetria, conntrack, custo) e ir direto ao provável.
 :::
+
+O Volume 13 deu os sentidos: log (@sec-logs), métricas (@sec-snmp-dude) e
+as lupas (@sec-torch-sniffer). Falta o mais importante: **o método**.
+Sem ele, mesmo com as melhores ferramentas, o operador tenta coisas ao
+acaso, reinicia na esperança, culpa a operadora — e o cliente segue sem
+internet. Com método, você vai da reclamação vaga ("tá lento") à causa
+raiz ("o enlace do POP-3 está com MTU errado após a troca de rádio") de
+forma **sistemática e reproduzível**. Este capítulo fecha o volume — e
+amarra o manual inteiro — com a metodologia que transforma ferramentas em
+diagnóstico.
+
+## O método: da reclamação à causa raiz
+
+Diagnóstico bom segue passos, não palpites:
+
+1. **Defina o problema** — traduza a reclamação vaga em algo testável.
+   "Tá lento" vira "downloads de HTTPS travam para o cliente X, mas ping
+   e páginas leves funcionam". Metade dos diagnósticos se resolve **aqui**,
+   só perguntando direito;
+2. **Reproduza e delimite** — quando acontece? para quem? sempre ou às
+   vezes? um cliente, um POP, todos? O escopo aponta a causa: **um**
+   cliente ≠ **um** POP ≠ **a rede toda**;
+3. **Isole por camadas** — suba a pilha (adiante): o problema é físico,
+   de enlace, de rede, de transporte ou de aplicação?
+4. **Formule hipóteses e teste** — divida para conquistar: cada teste
+   deve **eliminar metade** das possibilidades;
+5. **Corrija e confirme** — aplique a correção e **prove** que resolveu
+   (não só "parece que voltou"); documente para a próxima vez.
+
+::: {.callout-tip}
+## A pergunta que economiza horas
+
+Antes de tocar em qualquer coisa: **"o que mudou?"**. A esmagadora
+maioria das falhas surge depois de uma mudança — um upgrade, uma regra
+nova, uma troca de equipamento, uma alteração na operadora. `/log`,
+histórico de config e o "funcionava ontem" apontam o culpado mais rápido
+que qualquer ferramenta. Rede que "quebrou sozinha" quase sempre teve uma
+mudança que ninguém associou.
+:::
+
+## Isolar por camadas: dividir para conquistar
+
+O modelo em camadas é o mapa para **localizar** o problema. Suba do
+concreto ao abstrato e, em cada uma, faça a pergunta e o teste:
+
+```{.tikz}
+%%| filename: fig-camadas-diag
+%%| alt: Pilha de camadas de diagnóstico, de baixo para cima, com a pergunta e a ferramenta de cada uma. Física (o link está up? cabo/rádio/sinal). Enlace (L2/ARP/VLAN/MAC). Rede (IP/rota/ping/traceroute). Transporte (porta/firewall/NAT/conntrack/MTU). Aplicação (DNS/serviço). Uma seta lateral indica subir a pilha isolando onde o problema está.
+\begin{tikzpicture}[
+  font=\small,
+  lay/.style={draw, minimum width=62mm, minimum height=8mm, font=\scriptsize, align=center},
+]
+\node[lay, fill=manualgreen!15] (app) at (0,2) {\textbf{Aplicação} — DNS resolve? serviço no ar? · nslookup};
+\node[lay, fill=manualblue!12] (tra) at (0,1) {\textbf{Transporte} — porta/firewall/NAT/conntrack/MTU · sniffer};
+\node[lay, fill=manualyellow!18] (net) at (0,0) {\textbf{Rede} — IP/rota certos? · ping, traceroute, ip route};
+\node[lay, fill=manualyellow!25] (enl) at (0,-1) {\textbf{Enlace} — L2/VLAN/ARP/MAC · bridge host, ip arp};
+\node[lay, fill=manualgray!25] (fis) at (0,-2) {\textbf{Física} — link up? cabo/rádio/sinal · interface, sinal};
+\draw[-{Stealth}, very thick, manualred] (4.2,-2.3) -- node[right]{\scriptsize isolar} (4.2,2.3);
+\end{tikzpicture}
+```
+
+::: {#fig-camadas-diag}
+Suba a pilha isolando: se a **física** está de pé (link up, sinal ok),
+suba ao **enlace**; se o IP e a rota estão certos (**rede**), suba ao
+**transporte** — e assim por diante. Cada camada confirmada elimina um
+andar inteiro de suspeitas.
+:::
+
+- **Física**: a interface está `running`? o rádio tem sinal
+  (@sec-alinhamento)? cabo/porta ok? — `/interface`, sinal;
+- **Enlace**: VLAN certa, ARP resolvendo, MAC aprendido? — `/ip arp`,
+  `/interface bridge host`;
+- **Rede**: o IP e a **rota** estão corretos? o ping/traceroute chega? —
+  `ping`, `traceroute`, `/ip route` (o Volume 8 inteiro);
+- **Transporte**: a **porta** está liberada (firewall)? **NAT** correto?
+  **conntrack**? **MTU/MSS**? — sniffer, `/ip firewall connection`;
+- **Aplicação**: **DNS** resolve? o serviço remoto está no ar? —
+  `/resolve`, teste ao serviço.
+
+## Os padrões recorrentes deste manual
+
+Depois de milhares de diagnósticos, você percebe que **os mesmos
+culpados** reaparecem. Ter essa lista na cabeça te leva direto ao provável:
+
+- **MTU/MSS**: "ping passa, tráfego grande trava" — PPPoE, túnel, OSPF,
+  MPLS, IPv6/PMTUD. O fantasma nº 1 do manual
+  (@sec-panorama-tuneis);
+- **Next-hop / rota**: rota aprendida mas **inativa** (iBGP sem IGP,
+  @sec-bgp-peering); default recursiva (@sec-interligacao-pops);
+- **Assimetria**: ida por um caminho, volta por outro — custo ajustado em
+  um só lado (@sec-ospf-basico), confunde conntrack/firewall;
+- **Conntrack/firewall**: regra na ordem errada (first-match,
+  @sec-chains-firewall), conntrack estourado, `invalid` dropado
+  cedo demais;
+- **Hora/NTP**: log inútil, certificado falhando, correlação impossível
+  (@sec-logs);
+- **"O que mudou"**: upgrade, regra nova, troca de hardware.
+
+Quando o sintoma casa um padrão, **teste o padrão primeiro** — economiza
+horas.
+
+## Confirmar a correção (e não se enganar)
+
+Um erro comum é declarar vitória cedo demais. "Reiniciei e voltou" **não**
+é diagnóstico — é adiar o problema (que volta). Depois de corrigir:
+
+- **Prove** que resolveu a **causa**, não o sintoma: reproduza o teste
+  original e confirme;
+- **Documente**: o que era, o que causou, o que resolveu — vira base de
+  conhecimento e acelera o próximo caso;
+- **Verifique efeitos colaterais**: a correção não quebrou outra coisa?
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Ferramentas sem método são tentativa e erro. O método é: **definir** o
+problema (traduzir a reclamação), **delimitar** o escopo (um cliente? um
+POP? todos?), **isolar por camadas** (física → aplicação, cada uma
+eliminando um andar), **testar hipóteses** que dividem o espaço pela
+metade, e **confirmar a causa** (não o sintoma). Comece **sempre** por
+"**o que mudou?**" e tenha na cabeça os **padrões recorrentes** (MTU,
+next-hop, assimetria, conntrack, NTP) para ir direto ao provável.
+Diagnóstico é raciocínio disciplinado com as lupas certas — não sorte.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Reaproveite qualquer topologia dos volumes anteriores (idealmente a de
+interligação de POPs, @sec-interligacao-pops, ou o BNG PPPoE) — o
+importante é ter uma rede funcional na qual um colega (ou você) **injeta
+uma falha** para outro **diagnosticar** com método. O laboratório é sobre
+**processo**, não sobre um comando novo.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — injete uma falha "às cegas".** Peça a alguém (ou sorteie)
+para quebrar **uma** coisa sem te dizer: MTU errado num túnel, custo OSPF
+num lado, regra de firewall dropando, DNS apontado errado, rota removida.
+
+**Passo 2 — defina e delimite.** Antes de qualquer comando, escreva: o
+que exatamente falha? para quem? sempre? Reproduza o sintoma
+(ping/traceroute/serviço) e **anote o escopo**.
+
+**Passo 3 — pergunte "o que mudou".** Olhe `/log`, `/system history` (se
+disponível) e a config recente — busque a alteração.
+
+**Passo 4 — suba as camadas.** Física (`/interface print`) → enlace
+(`/ip arp print`) → rede (`ping`, `traceroute`, `/ip route print`) →
+transporte (`/ip firewall connection`, sniffer, teste de MTU com
+`ping ... do-not-fragment`) → aplicação (`/resolve`). **Pare** na camada
+onde o teste falha.
+
+**Passo 5 — teste hipóteses.** Em cada suspeita, faça um teste que
+**elimina metade**. Ex.: se ping pequeno passa e grande não → hipótese
+MTU → teste `do-not-fragment` em vários tamanhos → confirma/refuta.
+
+**Passo 6 — corrija e confirme.** Aplique a correção, **reproduza o teste
+original** e prove que voltou. Documente: falha, causa, correção. Compare
+com o "gabarito" de quem injetou.
+
+### Verificação
+
+1. Você definiu o problema em termos testáveis antes de agir;
+2. Delimitou o escopo (um cliente/POP/todos) e checou "o que mudou";
+3. Isolou a **camada** da falha subindo a pilha;
+4. Confirmou a **causa** (não só o sintoma) e documentou.
+
+### Desafios
+
+1. Cliente reclama "internet lenta". Escreva as **três** primeiras
+   perguntas que transformam isso em problema testável, e o que cada
+   resposta possível te diz sobre o escopo.
+2. Ping ao gateway passa, traceroute para a internet morre no seu próprio
+   roteador de borda, e outros clientes estão ok. Em que **camada** está
+   o problema, qual a hipótese mais provável, e o teste que a confirma?
+3. Um enlace foi trocado de rádio ontem; hoje "sites grandes não abrem"
+   para os clientes atrás dele, mas ping e navegação leve funcionam. Sem
+   olhar nada, qual é sua **primeira** hipótese (e por quê), e como a
+   confirma em um comando?
+4. Você "resolveu" um problema reiniciando o concentrador e ele voltou.
+   Duas horas depois, voltou a falhar. Explique por que reiniciar não é
+   diagnóstico e descreva o que você deveria ter feito para achar a causa.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) **"Lento como? para fazer o quê?"** — separa "abrir sites" de
+"download" de "jogo/latência" (aplicações diferentes, causas diferentes).
+(b) **"Só você ou outros aparelhos/vizinhos também?"** — delimita o
+escopo: um dispositivo, a casa, o POP, a rede. (c) **"Desde quando? mudou
+algo?"** — data e mudança apontam a causa. As respostas movem o
+diagnóstico de "lento" (intangível) para um problema com escopo e
+provável causa.
+
+**2.** **Rede** (camada 3), no **seu roteador de borda**. Como outros
+clientes estão ok e o traceroute morre **no seu** equipamento, a
+hipótese mais provável é uma **rota/NAT/firewall** afetando **aquele**
+cliente/origem — ou uma rota default/next-hop específica. Confirme com
+`/ip route print` (a rota para a internet existe e está ativa?),
+`/ip firewall connection` e um teste de NAT; se o traceroute para no
+borda, o pacote não está saindo — rota ou firewall.
+
+**3.** **MTU/MSS**. O padrão "trocou o rádio ontem" + "ping e leve
+funcionam, grande trava" grita MTU: o novo enlace tem MTU menor e o
+tráfego grande é descartado (PMTUD/MSS). Confirma em um comando:
+`/ping <destino> size=1500 do-not-fragment` — se falha e um tamanho
+menor passa, é MTU. Correção: MSS clamp / ajustar MTU
+(@sec-panorama-tuneis). "O que mudou" + padrão recorrente = diagnóstico
+em segundos.
+
+**4.** Reiniciar **mascara** o sintoma limpando o estado (conntrack,
+sessões, memória) sem tocar na **causa** — que continua lá e volta a se
+manifestar. Você deveria ter: definido o problema, olhado **o que mudou**
+(`/log`), isolado a camada (a falha reaparece → capture o estado
+**antes** do próximo reboot: profile se era CPU, sniffer/torch se era
+tráfego, log se era evento), formulado hipótese e confirmado a causa.
+Reboot é último recurso operacional, não método de diagnóstico.
+:::
+
+## Resumo
+
+- **Método > palpite**: **definir** (traduzir a reclamação), **delimitar**
+  (escopo: cliente/POP/todos), **isolar por camadas**, **testar
+  hipóteses** (dividir pela metade), **confirmar a causa**;
+- Comece **sempre** por **"o que mudou?"** — a maioria das falhas segue
+  uma mudança;
+- **Camadas** (física → enlace → rede → transporte → aplicação) localizam
+  o problema; cada camada confirmada elimina um andar de suspeitas;
+- Tenha na cabeça os **padrões recorrentes** do manual: **MTU/MSS**,
+  **next-hop/rota**, **assimetria**, **conntrack/firewall**, **NTP** —
+  teste o padrão primeiro;
+- **Confirme a causa**, não o sintoma; documente; reiniciar **não** é
+  diagnóstico.
+
+Fecha-se o Volume 13: a rede agora é **enxergada** (log, métricas) e
+**diagnosticada com método** (lupas + metodologia). Da visibilidade, o
+**Volume 14** ataca a resiliência de verdade — **alta disponibilidade**:
+sobreviver a falhas de link e de equipamento sem o cliente perceber.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: ferramentas de diagnóstico do RouterOS
+  [@mikrotik-docs];
+- Metodologia de troubleshooting e modelo em camadas: [@tanenbaum-redes];
+- Diagnóstico no v7 na prática: [@discher-rosv7];
+- Operação e suporte em provedores: [@burgess-mikrotik].
