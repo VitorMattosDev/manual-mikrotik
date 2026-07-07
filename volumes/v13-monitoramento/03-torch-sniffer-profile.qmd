@@ -1,7 +1,296 @@
-# Torch, packet sniffer e profile
+# Torch, packet sniffer e profile {#sec-torch-sniffer}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Usar o **Torch** para ver, em tempo real, **quem** está consumindo
+  banda numa interface (por IP, protocolo, porta);
+- Capturar tráfego com o **packet sniffer** e analisá-lo (na caixa ou
+  exportando para o Wireshark) para diagnósticos profundos;
+- Usar o **profile** para descobrir **qual processo** consome a CPU do
+  roteador quando ele "está lento";
+- Escolher a ferramenta certa para cada pergunta — "quem usa a banda?",
+  "por que este pacote não passa?", "por que a CPU está alta?";
+- Aplicar essas lupas **com responsabilidade** (impacto de CPU, privacidade
+  do tráfego capturado).
 :::
+
+Log (@sec-logs) e SNMP (@sec-snmp-dude) dão a visão histórica e de
+conjunto. Mas quando o problema é **agora** — "o link está lotado neste
+instante", "este cliente não conecta", "a CPU disparou" — você precisa de
+**lupas em tempo real**. O RouterOS traz três: **Torch** (quem usa a
+banda), **packet sniffer** (o que há nos pacotes) e **profile** (o que
+come a CPU). Este capítulo ensina a apontar cada lupa para a pergunta
+certa — a habilidade que separa o diagnóstico rápido do "reinicia e
+torce".
+
+## Torch: quem está usando a banda agora
+
+O **Torch** é o analisador de tráfego em tempo real: escolha uma
+interface e ele mostra, ao vivo, os fluxos que passam — **origem,
+destino, protocolo, porta e taxa** (bps). É a resposta imediata para "o
+enlace está lotado, **quem** está puxando?".
+
+```routeros
+# Torch na interface de trânsito, agrupando por IP de origem
+/tool torch interface=ether1-wan src-address=0.0.0.0/0 \
+    port=any protocol=any
+```
+
+No WinBox, o Torch é interativo (ordena por taxa, filtra por
+protocolo/porta em tempo real). Em segundos você vê que "80% do tráfego é
+um IP fazendo download na porta 443" ou "há um flood de UDP para um
+destino" — informação acionável na hora.
+
+```{.tikz}
+%%| filename: fig-lupas
+%%| alt: Três lupas de diagnóstico em tempo real e a pergunta que cada uma responde. Torch aponta para "quem usa a banda" (fluxos por IP/porta). Packet sniffer aponta para "o que há no pacote" (captura para análise/Wireshark). Profile aponta para "o que consome a CPU" (processos). Cada ferramenta ligada à sua pergunta por uma seta.
+\begin{tikzpicture}[
+  font=\small,
+  tool/.style={draw, rounded corners, fill=manualblue!15, align=center, minimum height=9mm, minimum width=26mm, font=\scriptsize},
+  q/.style={draw, rounded corners, fill=manualyellow!20, align=center, minimum height=9mm, minimum width=34mm, font=\scriptsize},
+]
+\node[tool] (torch) at (0,1.6) {Torch};
+\node[tool] (sniff) at (0,0) {packet sniffer};
+\node[tool] (prof) at (0,-1.6) {profile};
+\node[q] (q1) at (5,1.6) {quem usa a banda?};
+\node[q] (q2) at (5,0) {o que há no pacote?};
+\node[q] (q3) at (5,-1.6) {o que consome a CPU?};
+\draw[-{Stealth}] (torch) -- (q1);
+\draw[-{Stealth}] (sniff) -- (q2);
+\draw[-{Stealth}] (prof) -- (q3);
+\end{tikzpicture}
+```
+
+::: {#fig-lupas}
+Cada lupa responde a **uma** pergunta. Diagnóstico eficiente é apontar a
+ferramenta certa: Torch para tráfego, sniffer para conteúdo de pacote,
+profile para CPU. Errar a lupa é perder tempo.
+:::
+
+## Packet sniffer: o que há dentro dos pacotes
+
+Quando o problema é "**por que** este pacote não passa?" ou "o que
+exatamente está sendo trocado?", o Torch (que vê fluxos) não basta —
+você precisa **ver os pacotes**. O **packet sniffer** captura o tráfego
+e permite analisá-lo:
+
+```routeros
+# capturar tráfego de/para um IP específico, para um arquivo
+/tool sniffer set filter-ip-address=100.64.0.10/32 file-name=diag.pcap
+/tool sniffer start
+# ... reproduza o problema ...
+/tool sniffer stop
+```
+
+O arquivo `.pcap` gerado pode ser **exportado e aberto no Wireshark** —
+a análise profunda (handshakes TCP, retransmissões, DHCP/PPPoE
+negociando, PMTUD) mora lá. Para diagnósticos rápidos, o `/tool sniffer
+quick` mostra pacotes ao vivo no terminal.
+
+::: {.callout-warning}
+O sniffer captura **conteúdo real** do tráfego dos clientes — dados
+sensíveis. Use com **filtro estreito** (o IP/porta do problema, não
+"tudo"), pelo **tempo mínimo**, e trate o `.pcap` como material
+confidencial (apague depois, não versione). Capturar tráfego alheio sem
+necessidade e sem cuidado é problema **de privacidade e legal**, não só
+técnico. Além disso, sniffar tudo num roteador movimentado **pesa na
+CPU**.
+:::
+
+## Profile: o que está consumindo a CPU
+
+"O roteador está lento, a CPU em 100% — **por quê**?" O **profile**
+responde: ele mostra, em tempo real, **qual processo/função** está
+consumindo o processador:
+
+```routeros
+/tool profile
+```
+
+A saída lista categorias — `firewall`, `routing`, `encrypting`
+(túneis!), `queue`, `networking`, `management`, `unclassified` — com o
+**percentual de CPU** de cada. Isso transforma "a CPU está alta" em "o
+firewall está comendo 70% da CPU" ou "o `encrypting` disparou" (um túnel
+IPsec sob carga). Sem o profile, você chuta; com ele, você **sabe onde
+olhar**.
+
+Casos típicos que o profile revela:
+
+- **`firewall` alto**: regras mal ordenadas, conntrack estourado, um
+  ataque; revise o Volume 3;
+- **`encrypting` alto**: IPsec/WireGuard (Volume 10) sob mais carga que o
+  hardware aguenta;
+- **`routing`/`ospf` alto**: flapping/recálculo (o desafio do
+  @sec-ospf-avancado);
+- **`queue` alto**: filas complexas demais (Volume 7).
+
+## Escolhendo a lupa certa
+
+A eficiência do diagnóstico está em **mapear pergunta → ferramenta**:
+
+| Pergunta | Ferramenta |
+|---|---|
+| Quem está usando a banda / o link lotou? | **Torch** |
+| Por que este pacote/conexão não passa? | **packet sniffer** (→ Wireshark) |
+| Por que a CPU está alta / o roteador lento? | **profile** |
+| O que aconteceu e quando? | **log** (@sec-logs) |
+| Qual a tendência ao longo do tempo? | **SNMP/gráfico** (@sec-snmp-dude) |
+
+Essas cinco cobrem quase todo diagnóstico de RouterOS. O erro comum é
+usar a lupa errada — abrir o sniffer para descobrir "quem usa a banda"
+(o Torch faz melhor e mais leve), ou olhar gráfico quando o problema é
+**agora** (Torch/profile).
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Diagnóstico em tempo real é **apontar a lupa certa para a pergunta
+certa**: **Torch** para "quem usa a banda", **packet sniffer** para "o
+que há no pacote" (exporte para o Wireshark), **profile** para "o que
+come a CPU". Somadas ao **log** (o que aconteceu) e ao **SNMP** (a
+tendência), elas resolvem quase tudo. Duas responsabilidades: o sniffer
+captura **dados sensíveis** — filtro estreito, tempo mínimo, `.pcap`
+confidencial; e essas ferramentas **custam CPU** — não deixe rodando à
+toa num equipamento sob carga. Ferramenta certa, uso responsável,
+diagnóstico em minutos.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Um CHR (@sec-lab-chr) roteando tráfego entre dois hosts (**lab-cli** e
+**lab-srv**), com um gerador de tráfego (download, `bandwidth-test`, ou
+ping em volume) para você ter o que observar. Opcional: Wireshark na sua
+máquina para abrir o `.pcap` exportado.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — Torch em ação.** Gere tráfego do lab-cli e observe no CHR:
+
+```routeros
+/tool torch interface=ether2 src-address=0.0.0.0/0 protocol=any port=any
+```
+
+Identifique o IP e a porta que dominam a taxa — "quem usa a banda".
+
+**Passo 2 — filtre o Torch.** Repita filtrando por protocolo/porta (ex.:
+só `tcp` porta 443) e veja o Torch isolar aquele fluxo.
+
+**Passo 3 — capture com o sniffer.** Reproduza um "problema" (ex.: uma
+conexão específica) capturando só o IP envolvido:
+
+```routeros
+/tool sniffer set filter-ip-address=<ip-cli>/32 file-name=diag.pcap
+/tool sniffer start
+# gere o tráfego
+/tool sniffer stop
+/file print where name~"diag"
+```
+
+Exporte o `.pcap` e abra no Wireshark — veja o handshake TCP, os
+pacotes reais.
+
+**Passo 4 — profile sob carga.** Gere carga que estresse a CPU (muitas
+conexões, um túnel cifrado transferindo) e rode:
+
+```routeros
+/tool profile
+```
+
+Identifique qual categoria domina a CPU. Ligue/desligue um recurso (ex.:
+um firewall pesado) e veja o profile mudar.
+
+**Passo 5 — a lupa errada.** Tente descobrir "quem usa a banda" **pelo
+sniffer** e sinta como é mais trabalhoso e pesado que o Torch — a lição
+de escolher a ferramenta certa.
+
+**Passo 6 — higiene.** Apague o `.pcap` após a análise e confirme que o
+sniffer está parado (não deixe capturando).
+
+### Verificação
+
+1. O Torch identifica o(s) fluxo(s) que dominam a interface;
+2. O sniffer gera um `.pcap` analisável no Wireshark;
+3. O profile aponta a categoria que consome a CPU;
+4. Você percebeu, na prática, o custo de usar a lupa errada;
+5. `.pcap` apagado e sniffer parado (higiene).
+
+### Desafios
+
+1. Um enlace de trânsito está saturado às 20h todo dia. Que ferramenta
+   você usa **no momento** para achar o culpado, e que ferramenta usa
+   para provar que é **recorrente** (todo dia às 20h)? Por que as duas?
+2. Um cliente PPPoE conecta mas "a internet não funciona". Ping ao
+   gateway passa, mas sites não abrem. Qual lupa revela se é MTU/PMTUD, e
+   o que você procuraria no `.pcap`?
+3. A CPU do concentrador vive em 95% e ninguém sabe por quê. Descreva
+   como o **profile** transforma esse mistério em ação, e cite duas
+   categorias suspeitas e o que cada uma indicaria.
+4. Um técnico deixou o sniffer capturando **todo** o tráfego do
+   concentrador por horas "para garantir". Aponte os **dois** problemas
+   (um técnico, um de privacidade/legal) e o procedimento correto.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** **No momento**: **Torch** na interface de trânsito às 20h mostra
+**quem** (IP/porta/protocolo) está puxando a banda — o culpado ao vivo.
+**Recorrência**: **SNMP/gráfico** (@sec-snmp-dude) do tráfego da
+interface mostra o **padrão diário** (pico às 20h todo dia). Torch
+responde "quem agora"; o gráfico responde "quando e com que frequência".
+As duas juntas: causa imediata + confirmação do padrão.
+
+**2.** O **packet sniffer** (→ Wireshark). Sinal de **MTU/PMTUD**: o
+handshake TCP completa, pacotes pequenos passam, mas os grandes (ou o
+`ICMP Packet Too Big`/fragmentação) somem — no `.pcap` você vê
+retransmissões dos segmentos grandes e ausência do ajuste de MSS. É o
+mesmo fantasma do PPPoE/túnel; a correção é o **MSS clamp**
+(@sec-panorama-tuneis).
+
+**3.** O **profile** (`/tool profile`) lista o **percentual de CPU por
+categoria**, transformando "CPU alta" em "o quê" está consumindo.
+Suspeitas: **`firewall`** alto → regras/conntrack mal dimensionados ou
+ataque (revisar Volume 3); **`encrypting`** alto → túneis IPsec/WireGuard
+(Volume 10) além da capacidade do hardware. Com a categoria em mãos, você
+sabe **onde** agir em vez de chutar.
+
+**4.** (a) **Técnico**: sniffar todo o tráfego de um concentrador
+**pesa na CPU** e pode **degradar** justamente o serviço, além de gerar
+`.pcap` gigante. (b) **Privacidade/legal**: captura conteúdo real dos
+clientes (dados sensíveis) sem necessidade nem filtro — risco legal e de
+privacidade. Correto: **filtro estreito** (o IP/porta do problema),
+**tempo mínimo**, `.pcap` tratado como confidencial e **apagado** após a
+análise.
+:::
+
+## Resumo
+
+- **Torch**: quem usa a banda **agora** (fluxos por IP/porta/protocolo,
+  em tempo real) — leve e direto;
+- **Packet sniffer**: o que há **dentro** dos pacotes; capture com
+  **filtro estreito** e analise no **Wireshark** (`.pcap`);
+- **Profile**: qual **processo consome a CPU** (`firewall`,
+  `encrypting`, `routing`, `queue`...) — transforma "CPU alta" em ação;
+- Escolha a lupa pela pergunta: Torch (banda), sniffer (pacote), profile
+  (CPU), **log** (evento), **SNMP** (tendência);
+- Responsabilidade: sniffer captura **dados sensíveis** (filtro/tempo
+  mínimos, confidencial) e as lupas **custam CPU** — não deixe rodando à
+  toa.
+
+Você já tem os cinco sentidos: log, métricas e as três lupas. Falta
+juntá-los num **método** — como ir da reclamação do cliente à causa raiz
+sem se perder. O @sec-troubleshooting fecha o volume com a metodologia.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *Torch*, *Packet Sniffer*, *Profiler* do RouterOS
+  [@mikrotik-docs];
+- Análise de tráfego e diagnóstico: [@tanenbaum-redes];
+- Ferramentas de diagnóstico no v7: [@discher-rosv7];
+- Diagnóstico em campo em provedores: [@burgess-mikrotik].
