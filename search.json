@@ -5791,6 +5791,369 @@
     ]
   },
   {
+    "objectID": "volumes/v14-alta-disponibilidade/01-vrrp.html",
+    "href": "volumes/v14-alta-disponibilidade/01-vrrp.html",
+    "title": "67  VRRP: gateway redundante",
+    "section": "",
+    "text": "67.1 O problema: o gateway é um ponto único de falha\nTodos os volumes anteriores tornaram a rede mais capaz — mas um roteador de borda ou de POP ainda é um único equipamento. Se ele reinicia, queima ou trava, toda a LAN/clientes atrás dele ficam sem gateway, mesmo que os links estejam de pé. O VRRP (Virtual Router Redundancy Protocol) elimina esse ponto único: dois roteadores compartilham um gateway virtual, e se o principal cai, o reserva assume em segundos, sem o cliente reconfigurar nada. Abre o Volume 14 — alta disponibilidade — pela peça mais fundamental: o gateway que não morre.\nOs clientes de uma LAN apontam para um gateway (192.168.1.1). Esse IP mora em um roteador. Se o roteador cai, o IP some — e nenhum cliente sai, ainda que exista um segundo roteador ocioso ao lado. Mudar o gateway de todos os clientes na mão é impensável. Precisamos que o gateway seja redundante, não o cliente.\nO VRRP resolve com um IP virtual (VIP) que flutua entre dois roteadores: quem estiver ativo (master) responde por ele; o outro (backup) espera. Os clientes apontam para o VIP e nunca sabem qual roteador físico está por trás.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>67</span>  <span class='chapter-title'>VRRP: gateway redundante</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/01-vrrp.html#o-problema-o-gateway-é-um-ponto-único-de-falha",
+    "href": "volumes/v14-alta-disponibilidade/01-vrrp.html#o-problema-o-gateway-é-um-ponto-único-de-falha",
+    "title": "67  VRRP: gateway redundante",
+    "section": "",
+    "text": "O VIP (.1) é o gateway que os clientes conhecem; ele vive no master (maior prioridade) e migra para o backup se o master cair. Para o cliente, o gateway nunca mudou — a falha é invisível.\n\n\nFigura 67.1",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>67</span>  <span class='chapter-title'>VRRP: gateway redundante</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/01-vrrp.html#como-o-vrrp-funciona",
+    "href": "volumes/v14-alta-disponibilidade/01-vrrp.html#como-o-vrrp-funciona",
+    "title": "67  VRRP: gateway redundante",
+    "section": "67.2 Como o VRRP funciona",
+    "text": "67.2 Como o VRRP funciona\n\nVIP (IP virtual): o gateway que os clientes usam; anunciado pelo master;\nMAC virtual: o VRRP usa um MAC padronizado (00:00:5E:00:01: VRID), então quando o backup assume, os clientes nem precisam atualizar o ARP — o mesmo MAC responde. Failover transparente;\nPrioridade: quem tem maior prioridade vira master; o resto é backup. O master envia advertisements periódicos; se o backup para de ouvi-los, assume;\nVRID (Virtual Router ID): identifica o grupo VRRP; precisa bater nos dois roteadores;\nPreempção: quando o master original volta, ele retoma o papel (se preemption ligado) — ou deixa o backup seguir (se desligado, evita flapping).",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>67</span>  <span class='chapter-title'>VRRP: gateway redundante</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/01-vrrp.html#configurando-vrrp",
+    "href": "volumes/v14-alta-disponibilidade/01-vrrp.html#configurando-vrrp",
+    "title": "67  VRRP: gateway redundante",
+    "section": "67.3 Configurando VRRP",
+    "text": "67.3 Configurando VRRP\nEm cada roteador, cria-se a interface VRRP sobre a interface da LAN e adiciona-se o VIP a ela:\n# Roteador A (master) — prioridade alta\n/interface vrrp\nadd name=vrrp-lan interface=ether2 vrid=10 priority=150 \\\n    authentication=ah password=\"VrrpForte\"\n/ip address add address=192.168.1.1/24 interface=vrrp-lan\n\n# Roteador B (backup) — mesma VRID/senha, prioridade menor\n/interface vrrp\nadd name=vrrp-lan interface=ether2 vrid=10 priority=100 \\\n    authentication=ah password=\"VrrpForte\"\n/ip address add address=192.168.1.1/24 interface=vrrp-lan\n\no VIP (192.168.1.1) é adicionado à interface VRRP — é ele que flutua;\nvrid e password/autenticação idênticos nos dois lados;\nprioridade diferente (150 vs. 100) define quem é master.\n\nOs clientes apontam o gateway para 192.168.1.1 e pronto — se A cair, B vira master e assume o VIP em segundos.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>67</span>  <span class='chapter-title'>VRRP: gateway redundante</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/01-vrrp.html#rastreando-o-uplink-o-master-não-pode-estar-cego",
+    "href": "volumes/v14-alta-disponibilidade/01-vrrp.html#rastreando-o-uplink-o-master-não-pode-estar-cego",
+    "title": "67  VRRP: gateway redundante",
+    "section": "67.4 Rastreando o uplink: o master não pode estar “cego”",
+    "text": "67.4 Rastreando o uplink: o master não pode estar “cego”\nUm perigo sutil: o roteador A pode estar up na LAN (segue master) mas ter perdido o uplink (a saída para a internet caiu). Ele continua “dono” do VIP, mas leva o tráfego para um buraco — os clientes têm gateway, mas não têm internet. A solução é rastrear o uplink e baixar a prioridade de A quando ele perde a saída, deixando B (que tem uplink) assumir:\n# script + netwatch (@sec-scheduler): se o uplink de A cair, reduz a prioridade VRRP\n/tool netwatch add host=&lt;gateway-operadora&gt; \\\n    down-script=\"/interface vrrp set vrrp-lan priority=50\" \\\n    up-script=\"/interface vrrp set vrrp-lan priority=150\"\nAssim, master é quem realmente tem saída, não só quem está ligado. Sem isso, o VRRP protege contra a queda do equipamento, mas não contra a queda do uplink — meio HA.\n\n\n\n\n\n\nAviso\n\n\n\nSplit de master (os dois se acham master ao mesmo tempo) causa conflito de IP/MAC e caos na LAN. Causas: VRID diferente, autenticação divergente, ou os dois roteadores sem se ver (problema de L2 entre eles). Garanta VRID/senha idênticos e um caminho L2 sólido entre os dois. E sincronize a config de roteamento/NAT dos dois — de nada adianta o backup assumir o VIP se ele não tem as mesmas rotas e regras que o master.\n\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nVRRP torna o gateway redundante, não o cliente: um VIP com MAC virtual flutua entre dois roteadores, e o backup assume em segundos — transparente, porque o cliente vê o mesmo IP e o mesmo MAC. Mas HA de verdade exige duas coisas além do básico: rastrear o uplink (baixar a prioridade de quem perdeu a saída, para o master não ficar “cego”) e sincronizar rotas/NAT entre os dois (o backup precisa saber fazer o mesmo trabalho). VRID/senha idênticos evitam o split de master. Gateway que não morre é a base da alta disponibilidade.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>67</span>  <span class='chapter-title'>VRRP: gateway redundante</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/01-vrrp.html#laboratório",
+    "href": "volumes/v14-alta-disponibilidade/01-vrrp.html#laboratório",
+    "title": "67  VRRP: gateway redundante",
+    "section": "67.5 🧪 Laboratório",
+    "text": "67.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nTrês CHRs (Capítulo 5): lab-a e lab-b (os dois roteadores redundantes, ambos na LAN 192.168.1.0/24 via uma rede interna comum e ambos com uplink para uma “internet”), e lab-cli (o cliente, gateway 192.168.1.1). Objetivo: derrubar o master e ver o cliente seguir navegando.\n\n\n\n67.5.1 Comandos passo a passo\nPasso 1 — VRRP nos dois roteadores. No lab-a (master):\n/interface vrrp add name=vrrp-lan interface=ether2 vrid=10 priority=150 \\\n    authentication=ah password=\"LabVrrp\"\n/ip address add address=192.168.1.1/24 interface=vrrp-lan\nNo lab-b, idêntico mas priority=100.\nPasso 2 — confirme master/backup. Em cada um:\n/interface vrrp print\nO lab-a deve mostrar master, o lab-b backup.\nPasso 3 — cliente navegando. No lab-cli (gw 192.168.1.1), pingue a internet continuamente (/ping 8.8.8.8 ou o “servidor” do lab).\nPasso 4 — derrube o master. Desligue o lab-a (ou a interface VRRP). Observe: o ping do cliente mal pisca — o lab-b vira master e assume o VIP. Confirme /interface vrrp print no lab-b (agora master).\nPasso 5 — rastreie o uplink. Configure o netwatch do uplink no lab-a (bloco acima). Derrube só o uplink de A (não o equipamento) e veja a prioridade cair e B assumir — mesmo com A “vivo” na LAN.\nPasso 6 — preempção. Religue A e observe se ele retoma o master (preempção ligada) ou deixa B seguir. Ajuste conforme a política.\n\n\n67.5.2 Verificação\n\nlab-a é master, lab-b é backup (prioridades);\nDerrubar o master faz o backup assumir o VIP em segundos, quase sem perda para o cliente;\nO rastreamento de uplink faz B assumir quando A perde a saída (mesmo up na LAN);\nA preempção se comporta conforme configurado ao master voltar.\n\n\n\n67.5.3 Desafios\n\nVocê configurou VRRP, mas os dois roteadores se dizem master e a LAN ficou instável. Liste as três causas de split de master e como confirmar cada uma.\nO master caiu, o backup assumiu o VIP, mas os clientes continuam sem internet — o ping ao gateway funciona, à internet não. O que o backup provavelmente não tinha, e como você garante isso de antemão?\nO uplink do master caiu (o equipamento seguiu ligado). Sem rastreamento, o que acontece com os clientes e por quê? Descreva o mecanismo que corrige e como ele “convence” o VRRP a trocar.\nPor que o MAC virtual do VRRP é essencial para o failover ser transparente? O que aconteceria no cache ARP dos clientes se cada roteador usasse seu próprio MAC?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. (a) VRID diferente entre os dois → não se reconhecem como o mesmo grupo, cada um vira master; confira /interface vrrp print. (b) Autenticação/senha divergente → um ignora os advertisements do outro; mesmo comando/campo de auth. (c) Sem visibilidade L2 entre eles → um problema de bridge/VLAN impede que ouçam os advertisements um do outro; teste com ping L2/verifique a topologia. Em todos, o sintoma é o mesmo: dois masters, conflito de VIP/MAC.\n2. O backup não tinha as mesmas rotas/NAT que o master (rota default, masquerade, regras de firewall). Assumir o VIP dá o gateway, mas sem a configuração de saída o tráfego morre no backup. Garanta de antemão sincronizando a config de roteamento/NAT dos dois roteadores (manualmente com disciplina, por script/provisionamento Capítulo 62, ou export/import) — HA de gateway pressupõe paridade de configuração.\n3. Sem rastreamento, o master segue dono do VIP apesar de não ter saída — os clientes têm gateway, mas o tráfego vai para um buraco (master “cego”). A correção é rastrear o uplink (netwatch, Capítulo 61): quando a saída cai, um script reduz a prioridade VRRP do master abaixo da do backup; o backup, agora com prioridade maior, assume o VIP. O VRRP troca porque a decisão master/backup é por prioridade, e você a manipulou conforme a saúde do uplink.\n4. O MAC virtual faz o VIP responder sempre com o mesmo endereço de enlace, independentemente de qual roteador físico está ativo. Assim, quando o backup assume, o cache ARP dos clientes (IP→MAC) continua válido — nada muda para eles. Se cada roteador usasse seu próprio MAC, no failover o MAC do VIP mudaria e os clientes só voltariam a navegar após o cache ARP expirar (ou um ARP gratuito), causando uma interrupção perceptível. O MAC virtual é o que torna o failover imediato e transparente.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>67</span>  <span class='chapter-title'>VRRP: gateway redundante</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/01-vrrp.html#resumo",
+    "href": "volumes/v14-alta-disponibilidade/01-vrrp.html#resumo",
+    "title": "67  VRRP: gateway redundante",
+    "section": "67.6 Resumo",
+    "text": "67.6 Resumo\n\nVRRP torna o gateway redundante: um VIP com MAC virtual flutua entre master e backup, e o failover é transparente (mesmo IP e MAC para o cliente);\nPrioridade decide o master; VRID/senha idênticos evitam split de master; preempção controla o retorno do master original;\nRastreie o uplink (netwatch baixando a prioridade) para o master não ficar “cego” (up na LAN, sem saída);\nSincronize rotas/NAT entre os dois — o backup precisa fazer o mesmo trabalho, não só responder pelo VIP;\nFailover em segundos, sem o cliente reconfigurar nada.\n\nVRRP protege contra a queda de um roteador. Falta proteger contra a queda de um cabo/porta entre equipamentos — e somar a banda de vários enlaces. O Capítulo 68 cobre o bonding (agregação de links).",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>67</span>  <span class='chapter-title'>VRRP: gateway redundante</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/01-vrrp.html#bibliografia-do-capítulo",
+    "href": "volumes/v14-alta-disponibilidade/01-vrrp.html#bibliografia-do-capítulo",
+    "title": "67  VRRP: gateway redundante",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção VRRP do RouterOS (MikroTik, 2026);\nRedundância de gateway e protocolos FHRP: (Tanenbaum; Feamster; Wetherall, 2021);\nVRRP no v7 na prática: (Discher, 2016);\nAlta disponibilidade em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>67</span>  <span class='chapter-title'>VRRP: gateway redundante</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/02-bonding.html",
+    "href": "volumes/v14-alta-disponibilidade/02-bonding.html",
+    "title": "68  Bonding: agregação de links",
+    "section": "",
+    "text": "68.1 O que o bonding entrega (e o que não entrega)\nO Capítulo 67 protegeu contra a queda de um equipamento. Mas entre dois equipamentos há cabos e portas que também falham — e um único enlace tem um teto de banda. O bonding (link aggregation) resolve os dois: junta vários enlaces físicos numa interface lógica que soma a capacidade e sobrevive à perda de um membro. É como transformar quatro cabos de 1 Gbps entre o switch e o roteador do POP num troco de 4 Gbps que continua funcionando se um cabo cair.\nUm bond agrupa N interfaces físicas numa só interface lógica. Dois benefícios, conforme o modo:\nO porém fundamental, que confunde todo mundo: agregar 4×1 Gbps não faz um único fluxo (um download, uma sessão TCP) atingir 4 Gbps. O tráfego é distribuído por hashing (por MAC, IP ou porta), e cada fluxo é “grudado” em um membro para não desordenar os pacotes. Você soma a banda entre muitos fluxos (muitos clientes), não dentro de um só. Quatro cabos de 1 Gbps = 4 Gbps para o conjunto, ~1 Gbps para cada conexão individual.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>68</span>  <span class='chapter-title'>Bonding: agregação de links</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/02-bonding.html#o-que-o-bonding-entrega-e-o-que-não-entrega",
+    "href": "volumes/v14-alta-disponibilidade/02-bonding.html#o-que-o-bonding-entrega-e-o-que-não-entrega",
+    "title": "68  Bonding: agregação de links",
+    "section": "",
+    "text": "Mais banda agregada: o tráfego é distribuído entre os membros — a capacidade total cresce;\nRedundância: se um membro (cabo/porta/SFP) cai, os outros seguem — o bond permanece up.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nQuatro enlaces agregados: muitos fluxos se espalham pelos membros (capacidade somada), mas cada fluxo individual trafega por um membro. Bonding escala o agregado, não o fluxo único — a fonte nº 1 de expectativa frustrada.\n\n\nFigura 68.1",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>68</span>  <span class='chapter-title'>Bonding: agregação de links</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/02-bonding.html#os-modos-lacp-balance-xor-active-backup",
+    "href": "volumes/v14-alta-disponibilidade/02-bonding.html#os-modos-lacp-balance-xor-active-backup",
+    "title": "68  Bonding: agregação de links",
+    "section": "68.2 Os modos: LACP, balance-xor, active-backup",
+    "text": "68.2 Os modos: LACP, balance-xor, active-backup\n\n802.3ad (LACP): o padrão de mercado. Os dois lados negociam a agregação dinamicamente (o LACP detecta membros saudáveis e os agrupa). Exige que o outro lado também fale LACP (switch gerenciável, configurado em port-channel/LAG). Preferível sempre que possível;\nbalance-xor: distribui por hashing sem negociação — estático. Funciona quando o outro lado não faz LACP, mas ambos precisam estar configurados de forma compatível;\nactive-backup: sem soma de banda — só redundância. Um membro ativo, os outros em espera; se o ativo cai, outro assume. Não exige nada especial do outro lado; bom para redundância pura de caminho.\n\nA escolha: LACP para agregar banda + redundância com um switch gerenciável; active-backup para redundância simples de cabo/porta sem exigência do outro lado; balance-xor como meio-termo estático.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>68</span>  <span class='chapter-title'>Bonding: agregação de links</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/02-bonding.html#configurando-um-bond-lacp",
+    "href": "volumes/v14-alta-disponibilidade/02-bonding.html#configurando-um-bond-lacp",
+    "title": "68  Bonding: agregação de links",
+    "section": "68.3 Configurando um bond LACP",
+    "text": "68.3 Configurando um bond LACP\n# agrega ether3 e ether4 num bond LACP\n/interface bonding\nadd name=bond-uplink slaves=ether3,ether4 mode=802.3ad \\\n    transmit-hash-policy=layer-2-and-3 lacp-rate=1sec\n\n# use o bond como uma interface normal (endereço, bridge, etc.)\n/ip address add address=10.0.0.1/30 interface=bond-uplink\n\nmode=802.3ad (LACP) — o outro lado (switch) precisa ter o port-channel correspondente;\ntransmit-hash-policy define como os fluxos são distribuídos (layer-2-and-3 = por MAC+IP; layer-3-and-4 inclui porta, melhor distribuição). Escolha conforme a diversidade do tráfego;\nlacp-rate=1sec = detecção mais rápida de membro caído.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>68</span>  <span class='chapter-title'>Bonding: agregação de links</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/02-bonding.html#verificação-e-failover",
+    "href": "volumes/v14-alta-disponibilidade/02-bonding.html#verificação-e-failover",
+    "title": "68  Bonding: agregação de links",
+    "section": "68.4 Verificação e failover",
+    "text": "68.4 Verificação e failover\n/interface bonding monitor bond-uplink\nMostra o estado de cada membro (LACP negociado, ativo). Para testar o failover, derrube um membro (desconecte um cabo) e confirme que o bond permanece up com banda reduzida — a redundância em ação. Some ao tráfego real e observe pelo Torch (Capítulo 65) como os fluxos se distribuem entre os membros.\n\n\n\n\n\n\nAviso\n\n\n\nModo divergente entre os lados é o erro nº 1: um lado em LACP e o outro em balance-xor (ou em port-channel estático) causa loops, flapping ou um bond que “sobe mas não passa tráfego direito”. Os dois lados precisam concordar no modo. E não prometa “4 Gbps de download” ao vender um bond de 4×1 Gbps — um único fluxo continua limitado a um membro; a expectativa errada gera reclamação legítima.\n\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nBonding junta enlaces físicos numa interface lógica para somar capacidade e sobreviver à queda de um cabo/porta — mas a soma é entre fluxos, não dentro de um: o hashing gruda cada conexão num membro, então um download único não vê a banda agregada. Escolha o modo pelo objetivo e pelo outro lado: LACP (negociado, com switch gerenciável) para agregar + redundar; active-backup para redundância pura sem exigência. Os dois lados têm de concordar no modo, sob pena de loop/flapping. Bonding é HA e capacidade na camada 2, entre dois equipamentos — diferente do ECMP (camada 3, entre caminhos), o próximo capítulo.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>68</span>  <span class='chapter-title'>Bonding: agregação de links</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/02-bonding.html#laboratório",
+    "href": "volumes/v14-alta-disponibilidade/02-bonding.html#laboratório",
+    "title": "68  Bonding: agregação de links",
+    "section": "68.5 🧪 Laboratório",
+    "text": "68.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nDois CHRs (Capítulo 5) ligados por duas redes internas (simulando dois cabos) — lab-a e lab-b — para formar um bond entre eles. Um host de cada lado gera tráfego para observar distribuição e failover. (Em CHR, LACP entre dois roteadores funciona; num cenário real, o outro lado costuma ser um switch com LAG.)\n\n\n\n68.5.1 Comandos passo a passo\nPasso 1 — crie o bond nos dois lados. No lab-a:\n/interface bonding add name=bond1 slaves=ether2,ether3 mode=802.3ad \\\n    transmit-hash-policy=layer-3-and-4 lacp-rate=1sec\n/ip address add address=10.0.0.1/30 interface=bond1\nNo lab-b, idêntico com 10.0.0.2/30 e o mesmo modo.\nPasso 2 — verifique a negociação.\n/interface bonding monitor bond1\nConfirme que os dois membros negociaram LACP e estão ativos.\nPasso 3 — tráfego e distribuição. Gere vários fluxos (de hosts/ portas diferentes) através do bond e observe no Torch como se espalham pelos membros. Depois gere um único fluxo grande e note que ele usa um membro só — a lição do hashing.\nPasso 4 — failover de membro. Desconecte um dos cabos (desabilite uma rede interna) e confirme que o bond segue up (com metade da banda). Reconecte e veja o membro voltar.\nPasso 5 — modo divergente (erro proposital). Mude um lado para balance-xor e observe os problemas (bond instável/tráfego errático); volte os dois para o mesmo modo. Sinta por que os lados têm de concordar.\n\n\n68.5.2 Verificação\n\nOs dois membros negociam LACP e o monitor os mostra ativos;\nMúltiplos fluxos se distribuem; um único fluxo usa um membro só;\nDerrubar um membro mantém o bond up com banda reduzida;\nModo divergente entre os lados quebra o bond.\n\n\n\n68.5.3 Desafios\n\nVocê vendeu um “link de 2 Gbps” agregando 2×1 Gbps e o cliente reclama que o teste de velocidade dá só ~1 Gbps. Ele não está errado sobre o teste. Explique o que aconteceu e o que o bond realmente entrega — e como você deveria ter descrito o produto.\nUm bond LACP “sobe” mas o tráfego fica errático e há flapping. Qual é a causa mais provável no outro lado e como confirma?\nVocê quer só redundância de dois enlaces entre um roteador e um equipamento que não fala LACP, sem precisar somar banda. Qual modo usa e por que ele é o certo aqui?\nDiferencie bonding de ECMP (Capítulo 69) quanto à camada e ao que agregam. Dê um cenário para cada um.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. O teste de velocidade abre (tipicamente) um único fluxo, que o bond gruda em um membro por causa do hashing — logo, ~1 Gbps. O bond de 2×1 Gbps entrega 2 Gbps de agregado (entre muitos fluxos/clientes), não 2 Gbps para uma conexão. Você deveria ter descrito como “2 Gbps de capacidade agregada” (com redundância), deixando claro que um fluxo único fica limitado a 1 Gbps. Para um único fluxo mais rápido, seria preciso um enlace físico maior, não agregação.\n2. O outro lado não está configurado para LACP compatível — porta não incluída no port-channel/LAG, ou em modo estático incompatível. Isso causa negociação instável, loops e flapping. Confirme com /interface bonding monitor (LACP não negociado/parcial) e na configuração do switch (o LAG existe e inclui as portas certas, no mesmo modo).\n3. active-backup: dá redundância (um ativo, outro em espera; troca na falha) sem exigir nada especial do outro lado (não negocia LACP, não precisa de LAG). Como o objetivo é só sobreviver à queda de um enlace — não somar banda — active-backup é o modo certo e o mais simples de interoperar.\n4. Bonding age na camada 2, agregando enlaces físicos entre dois equipamentos numa interface lógica (soma de portas/cabos). ECMP age na camada 3, distribuindo tráfego entre múltiplos caminhos/ rotas de mesmo custo (roteadores diferentes, links de trânsito distintos). Cenário bonding: 4 cabos entre o switch e o roteador do POP. Cenário ECMP (Capítulo 69): dois links de trânsito de operadoras diferentes balanceando saída para a internet.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>68</span>  <span class='chapter-title'>Bonding: agregação de links</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/02-bonding.html#resumo",
+    "href": "volumes/v14-alta-disponibilidade/02-bonding.html#resumo",
+    "title": "68  Bonding: agregação de links",
+    "section": "68.6 Resumo",
+    "text": "68.6 Resumo\n\nBonding agrega enlaces físicos numa interface lógica: soma capacidade e redunda cabo/porta entre dois equipamentos;\nA soma é entre fluxos (hashing gruda cada conexão a um membro) — um único fluxo não atinge a banda agregada;\nModos: 802.3ad (LACP) negociado (exige LACP do outro lado, melhor opção), balance-xor estático, active-backup (só redundância, sem exigência);\nOs dois lados têm de concordar no modo (senão loop/flapping); escolha o transmit-hash-policy pela diversidade do tráfego;\nBonding é HA/capacidade na camada 2, entre dois equipamentos — distinto do ECMP (camada 3, entre caminhos).\n\nBonding agrega portas entre equipamentos vizinhos. Falta agregar e balancear caminhos de camada 3 — múltiplos links de trânsito para a internet. O Capítulo 69 cobre ECMP e o load balancing PCC.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>68</span>  <span class='chapter-title'>Bonding: agregação de links</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/02-bonding.html#bibliografia-do-capítulo",
+    "href": "volumes/v14-alta-disponibilidade/02-bonding.html#bibliografia-do-capítulo",
+    "title": "68  Bonding: agregação de links",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção Bonding do RouterOS (MikroTik, 2026);\nAgregação de enlaces (LACP/802.3ad): (Tanenbaum; Feamster; Wetherall, 2021);\nBonding no v7 na prática: (Discher, 2016);\nRedundância de enlace em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>68</span>  <span class='chapter-title'>Bonding: agregação de links</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html",
+    "href": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html",
+    "title": "69  ECMP e load balancing PCC",
+    "section": "",
+    "text": "69.1 Camada 3: agregar caminhos, não portas\nO bonding (Capítulo 68) somou portas entre dois equipamentos. Mas o provedor com dois links de trânsito de operadoras diferentes tem um problema de outra natureza: como usar os dois ao mesmo tempo (somar a banda de saída) e sobreviver à queda de um, na camada 3? Não há cabo para agregar — são caminhos distintos, com gateways distintos. As respostas são ECMP e PCC. Este capítulo mostra as duas, seus limites e quando subir para o BGP.\nA diferença essencial com o bonding: aqui os “membros” são rotas para o mesmo destino (a internet) por gateways diferentes — o link da operadora A e o da B. Balancear significa mandar parte das conexões por A e parte por B. E o desafio central do balanceamento L3 é a estabilidade da conexão: uma sessão TCP (ou um login, um HTTPS) tem de sair sempre pelo mesmo link — se os pacotes de uma conexão se dividirem entre A e B, o NAT de cada lado usa IPs de origem diferentes e a conexão quebra.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>69</span>  <span class='chapter-title'>ECMP e load balancing PCC</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#camada-3-agregar-caminhos-não-portas",
+    "href": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#camada-3-agregar-caminhos-não-portas",
+    "title": "69  ECMP e load balancing PCC",
+    "section": "",
+    "text": "Balanceamento L3 correto distribui conexões inteiras entre os links (per-connection), não pacotes soltos. Cada sessão sai sempre pelo mesmo link — senão o NAT a quebra. É a diferença entre “usar dois links” e “derrubar todas as conexões”.\n\n\nFigura 69.1",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>69</span>  <span class='chapter-title'>ECMP e load balancing PCC</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#ecmp-rotas-de-mesmo-custo",
+    "href": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#ecmp-rotas-de-mesmo-custo",
+    "title": "69  ECMP e load balancing PCC",
+    "section": "69.2 ECMP: rotas de mesmo custo",
+    "text": "69.2 ECMP: rotas de mesmo custo\nO ECMP (Equal-Cost Multi-Path) é o jeito mais simples: instale duas rotas default com o mesmo custo, uma para cada gateway, e o RouterOS balanceia entre elas:\n# duas defaults de mesmo custo -&gt; ECMP\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-opA&gt; check-gateway=ping\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-opB&gt; check-gateway=ping\nO RouterOS moderno faz ECMP per-connection (cada conexão nova escolhe um gateway e fica nele) — o que mantém as sessões estáveis. O check-gateway=ping dá o failover: se um gateway para de responder, sua rota é desativada e todo o tráfego vai para o outro. Simples e eficaz para muitos casos.\nLimite do ECMP: o balanceamento é “cego” (não controla proporção nem critério) e, historicamente, versões antigas faziam per-packet (que quebrava conexões). Para controle fino, entra o PCC.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>69</span>  <span class='chapter-title'>ECMP e load balancing PCC</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#pcc-classificar-por-conexão-com-mangle",
+    "href": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#pcc-classificar-por-conexão-com-mangle",
+    "title": "69  ECMP e load balancing PCC",
+    "section": "69.3 PCC: classificar por conexão com mangle",
+    "text": "69.3 PCC: classificar por conexão com mangle\nO PCC (Per Connection Classifier) é a ferramenta de balanceamento controlado. Com mangle (Capítulo 20), ele calcula um hash de cada conexão (por src/dst/porta) e a atribui a um “balde” — e você marca-a para sair por um link específico, estável por toda a sua duração:\n# classifica conexões em 2 baldes por src+dst address e marca rota\n/ip firewall mangle\nadd chain=prerouting connection-mark=no-mark dst-address-type=!local \\\n    per-connection-classifier=both-addresses:2/0 \\\n    action=mark-connection new-connection-mark=via-A passthrough=yes\nadd chain=prerouting connection-mark=no-mark dst-address-type=!local \\\n    per-connection-classifier=both-addresses:2/1 \\\n    action=mark-connection new-connection-mark=via-B passthrough=yes\n# marca a rota conforme o balde\nadd chain=prerouting connection-mark=via-A action=mark-routing new-routing-mark=to-A\nadd chain=prerouting connection-mark=via-B action=mark-routing new-routing-mark=to-B\n# cada routing-mark tem sua default (via-A/via-B)\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-opA&gt; routing-table=to-A check-gateway=ping\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-opB&gt; routing-table=to-B check-gateway=ping\n# e uma default \"normal\" para o tráfego do próprio roteador / failover\n\nper-connection-classifier=both-addresses:2/0 = “balde 0 de 2, por origem+destino” — o connection-mark garante que a conexão inteira fique no mesmo balde (estável);\ncada balde vira uma routing-mark com sua default (Capítulo 46) — policy routing puro;\nNAT por link: cada saída precisa de masquerade na sua interface (o tráfego que sai por A tem source de A, por B de B).",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>69</span>  <span class='chapter-title'>ECMP e load balancing PCC</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#load-balancing-failover-juntos",
+    "href": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#load-balancing-failover-juntos",
+    "title": "69  ECMP e load balancing PCC",
+    "section": "69.4 Load balancing + failover juntos",
+    "text": "69.4 Load balancing + failover juntos\nBalancear sem failover é frágil: se um link cai, metade das conexões morre. Some check-gateway=ping (ou netwatch, Capítulo 61) a cada rota, de modo que a queda de um link redirecione suas conexões novas para o outro. Com PCC + check-gateway, você tem os dois: uso dos dois links e sobrevivência à queda de um — o balanceamento resiliente que o provedor quer.\n\n\n\n\n\n\nAviso\n\n\n\nNAT é a armadilha do balanceamento multi-link. Se uma conexão sai por A mas o NAT a marca com IP de B (ou o failover a move no meio), o destino vê a origem mudar e derruba a sessão. Garanta: (1) marcação per-connection (a conexão inteira num link só); (2) masquerade por interface de saída; (3) que o failover mova só conexões novas, não as estabelecidas. Errar isso dá o sintoma clássico “a internet cai toda hora por alguns segundos” — na verdade, conexões trocando de IP no meio.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>69</span>  <span class='chapter-title'>ECMP e load balancing PCC</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#quando-subir-para-o-bgp",
+    "href": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#quando-subir-para-o-bgp",
+    "title": "69  ECMP e load balancing PCC",
+    "section": "69.5 Quando subir para o BGP",
+    "text": "69.5 Quando subir para o BGP\nECMP/PCC balanceiam saída com dois links de trânsito comuns (sem ASN próprio). Mas eles não controlam o tráfego de entrada nem dão a resiliência real de rotas — para isso, a resposta é o BGP (Capítulo 44): com ASN e bloco próprios, você anuncia seus prefixos às duas operadoras, controla entrada (prepend, Capítulo 45) e saída (local-pref), e o roteamento é de verdade, não um truque de NAT. Regra: PCC/ECMP para o provedor pequeno com IPs das operadoras; BGP quando você tem ASN próprio e precisa de controle real.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nECMP e PCC balanceiam caminhos de camada 3 (dois links de trânsito), diferente do bonding (portas L2). O princípio que não se viola: per-connection — a conexão inteira sai sempre pelo mesmo link, senão o NAT a quebra. ECMP (duas defaults de mesmo custo + check-gateway) é o simples; PCC (mangle classificando por hash + routing-marks) é o controlado. Sempre com failover (check-gateway) e masquerade por interface. E saiba o teto: para controlar entrada e ter resiliência real, a resposta é BGP com ASN próprio, não truque de NAT.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>69</span>  <span class='chapter-title'>ECMP e load balancing PCC</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#laboratório",
+    "href": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#laboratório",
+    "title": "69  ECMP e load balancing PCC",
+    "section": "69.6 🧪 Laboratório",
+    "text": "69.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nTrês CHRs (Capítulo 5): lab-rt (o roteador com dois links) ligado a lab-opA e lab-opB (duas “operadoras”, cada uma com um gateway e uma “internet” atrás), e lab-cli na LAN gerando conexões. Objetivo: usar os dois links e sobreviver à queda de um sem derrubar as conexões.\n\n\n\n69.6.1 Comandos passo a passo\nPasso 1 — ECMP simples. No lab-rt, duas defaults de mesmo custo com check-gateway:\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-A&gt; check-gateway=ping\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-B&gt; check-gateway=ping\nGere várias conexões do lab-cli e observe (Torch, Capítulo 65) que umas saem por A e outras por B.\nPasso 2 — failover ECMP. Derrube o gateway A (desligue lab-opA) e confirme que as conexões novas vão todas por B; a rota de A some (/ip route print). Religue e volta a balancear.\nPasso 3 — PCC controlado. Substitua o ECMP pela marcação PCC (blocos de mangle + routing-marks acima) e o masquerade por interface:\n/ip firewall nat add chain=srcnat out-interface=&lt;if-A&gt; action=masquerade\n/ip firewall nat add chain=srcnat out-interface=&lt;if-B&gt; action=masquerade\nPasso 4 — prove a estabilidade. Abra uma conexão longa (um download, um SSH) e confirme que ela não troca de link no meio (o connection-mark a segura). Veja em /ip firewall connection a marca da conexão.\nPasso 5 — failover com PCC. Derrube um link e confirme que as conexões estabelecidas no link vivo seguem, e as do link morto reconectam pelo outro — sem a “internet caindo toda hora”.\n\n\n69.6.2 Verificação\n\nECMP distribui conexões entre A e B; check-gateway faz failover;\nPCC mantém cada conexão estável num link (não troca no meio);\nMasquerade por interface evita a quebra por mudança de IP de origem;\nA queda de um link não derruba as conexões do outro.\n\n\n\n69.6.3 Desafios\n\nCom dois links balanceados, os clientes reclamam que “a internet cai por alguns segundos toda hora” — sessões de banco/HTTPS caem e reconectam. Qual é a causa (pense em NAT/IP de origem) e as duas correções?\nVocê configurou ECMP per-packet numa versão antiga e as conexões vivem quebrando. Explique por que per-packet quebra sessões e qual é a abordagem correta.\nUm link de trânsito cai; metade das conexões morre e não volta sozinha. O que faltou na configuração de rotas, e qual parâmetro/ ferramenta garante o failover?\nQuando você recomendaria BGP (Capítulo 44) em vez de PCC para um provedor com dois links? Cite o que o PCC não consegue fazer.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Conexões estão trocando de link no meio (e, portanto, de IP de origem no NAT), o que o destino interpreta como sessão inválida e derruba. Correções: (a) marcação per-connection (PCC com connection-mark, para a conexão inteira ficar num link); (b) masquerade por interface de saída (cada link com seu source) e garantir que o failover mova apenas conexões novas, não as estabelecidas.\n2. ECMP per-packet manda pacotes da mesma conexão por links diferentes; como cada link faz NAT com um IP de origem distinto, o destino vê a origem “pular” e considera os pacotes de sessões diferentes — a conexão quebra. O correto é per-connection (o RouterOS moderno já faz, ou use PCC): a conexão inteira num link só, estável do início ao fim.\n3. Faltou o check-gateway=ping (ou netwatch) nas rotas: sem ele, a rota do link morto permanece ativa, e as conexões atribuídas a ela continuam sendo enviadas para o buraco. Com check-gateway=ping, a rota do gateway que não responde é desativada, e o tráfego (novo) vai para o link vivo — o failover que faltava.\n4. BGP quando o provedor tem ASN e bloco próprios e precisa de controle real de roteamento: influenciar o tráfego de entrada (prepend/communities, Capítulo 45), ter resiliência de rotas de verdade (não truque de NAT) e não depender de masquerade. O PCC não controla entrada (a decisão é do outro AS), não anuncia seus prefixos e depende de NAT — limites que o BGP remove. PCC é para o provedor pequeno com IPs das operadoras; BGP é o passo profissional.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>69</span>  <span class='chapter-title'>ECMP e load balancing PCC</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#resumo",
+    "href": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#resumo",
+    "title": "69  ECMP e load balancing PCC",
+    "section": "69.7 Resumo",
+    "text": "69.7 Resumo\n\nECMP/PCC agregam e balanceiam caminhos de camada 3 (links de trânsito) — diferente do bonding (portas L2);\nPrincípio inviolável: per-connection — a conexão inteira sai sempre pelo mesmo link, senão o NAT a quebra;\nECMP: duas defaults de mesmo custo + check-gateway — simples, balanceia e faz failover; PCC: mangle classifica por hash em routing-marks — controlado e estável;\nSempre com masquerade por interface e failover (check-gateway/ netwatch); mover só conexões novas no failover;\nTeto do PCC/ECMP: não controla entrada nem dá roteamento real — para isso, BGP com ASN próprio (Capítulo 44).\n\nVimos gateway redundante (VRRP), portas agregadas (bonding) e caminhos balanceados (ECMP/PCC). Falta juntar tudo num failover multi-link de verdade — com detecção real de queda e recuperação automática. O Capítulo 70 fecha o volume.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>69</span>  <span class='chapter-title'>ECMP e load balancing PCC</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#bibliografia-do-capítulo",
+    "href": "volumes/v14-alta-disponibilidade/03-ecmp-pcc.html#bibliografia-do-capítulo",
+    "title": "69  ECMP e load balancing PCC",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: ECMP, Mangle/PCC, Routing do RouterOS (MikroTik, 2026);\nBalanceamento de carga e multipath: (Tanenbaum; Feamster; Wetherall, 2021);\nLoad balancing no v7 na prática: (Discher, 2016);\nMúltiplos trânsitos em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>69</span>  <span class='chapter-title'>ECMP e load balancing PCC</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/04-failover-multilink.html",
+    "href": "volumes/v14-alta-disponibilidade/04-failover-multilink.html",
+    "title": "70  Failover multi-link na prática",
+    "section": "",
+    "text": "70.1 O problema da detecção: “up” não é “funcionando”\nOs capítulos anteriores deram as peças: gateway redundante (Capítulo 67), portas agregadas (Capítulo 68), caminhos balanceados (Capítulo 69). Este as integra no cenário mais crítico do provedor: failover de trânsito — quando o link primário para a internet cai, o secundário assume automaticamente, e volta quando o primário se recupera. O diabo mora na detecção: a maioria dos failovers falha não por configurar mal a rota reserva, mas por não perceber que o primário morreu. Este capítulo resolve a detecção de verdade.\nA rota flutuante do Capítulo 41 dá a base: uma default primária (distância 1) e uma reserva (distância 2). Mas quando a primária deve sair da tabela? Se você depende só do estado da interface, cai numa armadilha: a interface para a operadora fica up (portadora presente, o cabo/fibra está lá), mas o caminho além dela está morto — o equipamento da operadora travou, o upstream dela caiu, uma rota sumiu do lado de lá. A interface diz “up”, o tráfego vai para o buraco, e o failover nunca dispara.\nA detecção precisa ser fim a fim: confirmar que um alvo do outro lado (na internet) está alcançável por aquele link. Três ferramentas fazem isso, em ordem de robustez.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>70</span>  <span class='chapter-title'>Failover multi-link na prática</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#o-problema-da-detecção-up-não-é-funcionando",
+    "href": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#o-problema-da-detecção-up-não-é-funcionando",
+    "title": "70  Failover multi-link na prática",
+    "section": "",
+    "text": "A interface do primário está up, mas o caminho além está morto. Só um teste fim a fim (pingar um alvo na internet forçado a sair pelo primário) detecta isso e dispara o failover. Confiar no “up” da interface é o erro que faz o failover não funcionar.\n\n\nFigura 70.1",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>70</span>  <span class='chapter-title'>Failover multi-link na prática</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#recursive-routing-o-failover-confiável",
+    "href": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#recursive-routing-o-failover-confiável",
+    "title": "70  Failover multi-link na prática",
+    "section": "70.2 Recursive routing: o failover confiável",
+    "text": "70.2 Recursive routing: o failover confiável\nA técnica mais robusta é o recursive routing. A ideia: a rota default primária não aponta direto para o gateway — ela aponta para um alvo remoto (ex.: 8.8.8.8), e esse alvo só é alcançável por uma rota específica que sai pelo primário com check-gateway. Se o alvo para de responder por aquele caminho, a rota específica cai, a default recursiva perde resolução e some — e a reserva assume.\n# 1) rota específica para o \"alvo sentinela\" SÓ pelo primário, com check-gateway\n/ip route add dst-address=8.8.8.8/32 gateway=&lt;gw-primario&gt; \\\n    scope=10 check-gateway=ping\n\n# 2) default primária RECURSIVA: resolve via o alvo (target-scope alcança a rota acima)\n/ip route add dst-address=0.0.0.0/0 gateway=8.8.8.8 \\\n    target-scope=11 distance=1 comment=\"primario recursivo\"\n\n# 3) default reserva pelo secundário (distância maior)\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-secundario&gt; distance=2\nO mecanismo: a default primária (distância 1) só é válida enquanto 8.8.8.8 for alcançável pelo primário (a rota /32 com check-gateway). Cai o caminho fim a fim → a /32 some → a default recursiva fica sem next-hop → a reserva (distância 2) assume. E tudo volta sozinho quando o primário se recupera. É failover que reage ao caminho real, não ao estado da porta.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>70</span>  <span class='chapter-title'>Failover multi-link na prática</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#combinando-as-ferramentas",
+    "href": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#combinando-as-ferramentas",
+    "title": "70  Failover multi-link na prática",
+    "section": "70.3 Combinando as ferramentas",
+    "text": "70.3 Combinando as ferramentas\nNa prática, você compõe:\n\nRota flutuante (distâncias 1 e 2, Capítulo 41): a estrutura primário/reserva;\nRecursive routing ou check-gateway: a detecção (recursivo = fim a fim, o mais robusto; check-gateway simples = só o gateway imediato);\nNetwatch + script (Capítulo 61): para lógica extra na transição (trocar NAT, notificar o NOC, ajustar VRRP) — o down-script/up-script;\nMúltiplos alvos para não depender de um só (se 8.8.8.8 cai, seu failover não pode disparar por engano) — pingue mais de um alvo confiável.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>70</span>  <span class='chapter-title'>Failover multi-link na prática</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#o-desenho-de-resiliência-do-provedor",
+    "href": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#o-desenho-de-resiliência-do-provedor",
+    "title": "70  Failover multi-link na prática",
+    "section": "70.4 O desenho de resiliência do provedor",
+    "text": "70.4 O desenho de resiliência do provedor\nFechando o volume, as peças se somam num desenho de HA de ponta a ponta:\n\nGateway redundante (VRRP, Capítulo 67): a LAN sobrevive à queda de um roteador;\nEnlaces agregados (bonding, Capítulo 68): a conexão entre equipamentos sobrevive à queda de um cabo e soma banda;\nMúltiplos trânsitos (ECMP/PCC, Capítulo 69): usa os dois links e balanceia;\nFailover fim a fim (este capítulo): a saída para a internet troca automaticamente na queda real;\nBGP (Capítulo 44) quando há ASN próprio: resiliência de roteamento de verdade, controle de entrada e saída.\n\nCada camada cobre um tipo de falha; juntas, o provedor sobrevive a quedas de link e de equipamento sem o cliente perceber — o objetivo do volume.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nFailover falha na detecção, não na rota reserva: a interface fica up enquanto o caminho além dela está morto, e o tráfego vai para o buraco. A solução é detecção fim a fim — o recursive routing amarra a default primária à alcançabilidade de um alvo remoto por aquele link (com check-gateway), de modo que a rota some quando o caminho real cai e a reserva assume — voltando sozinha na recuperação. Combine rota flutuante + recursivo + netwatch, use múltiplos alvos, e some às camadas do volume (VRRP, bonding, ECMP/PCC, BGP). HA de verdade é reagir ao caminho, não ao estado da porta.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>70</span>  <span class='chapter-title'>Failover multi-link na prática</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#laboratório",
+    "href": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#laboratório",
+    "title": "70  Failover multi-link na prática",
+    "section": "70.5 🧪 Laboratório",
+    "text": "70.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nQuatro CHRs (Capítulo 5): lab-rt (dois links), lab-opA (primário) e lab-opB (secundário), e lab-net (a “internet” atrás das duas operadoras, com um alvo sentinela 8.8.8.8 simulado). O truque do lab: você vai derrubar o caminho além da operadora A (não a interface do lab-rt) para provar a detecção fim a fim.\n\n\n\n70.5.1 Comandos passo a passo\nPasso 1 — rota flutuante ingênua. Comece com o básico:\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-A&gt; distance=1\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-B&gt; distance=2\nPasso 2 — prove a falha da detecção ingênua. Derrube o caminho além de A (desligue o uplink de lab-opA, mantendo a interface lab-rt↔︎lab-opA up). Observe: o lab-rt continua mandando pela default primária (distância 1) — a internet caiu e o failover não disparou. O problema em carne e osso.\nPasso 3 — recursive routing. Substitua pela solução recursiva:\n/ip route add dst-address=8.8.8.8/32 gateway=&lt;gw-A&gt; scope=10 check-gateway=ping\n/ip route add dst-address=0.0.0.0/0 gateway=8.8.8.8 target-scope=11 distance=1\n/ip route add dst-address=0.0.0.0/0 gateway=&lt;gw-B&gt; distance=2\nPasso 4 — prove o failover fim a fim. Derrube de novo o caminho além de A. Agora: a /32 para 8.8.8.8 perde o check-gateway, some; a default recursiva fica sem next-hop; a reserva (distância 2) assume. O cliente segue navegando por B. Confirme com /ip route print e traceroute.\nPasso 5 — recuperação automática. Restaure o caminho de A. A /32 volta, a default recursiva revive, e o tráfego retorna ao primário — sem intervenção.\nPasso 6 — script na transição. Adicione netwatch/down-script para notificar (log) e, se usar NAT por link, ajustar o masquerade na troca.\n\n\n70.5.2 Verificação\n\nA rota flutuante ingênua não detecta a queda do caminho além (interface up);\nO recursive routing detecta e faz failover fim a fim para o secundário;\nA recuperação do primário retorna o tráfego automaticamente;\n(Opcional) o script de transição loga/ajusta NAT.\n\n\n\n70.5.3 Desafios\n\nSeu failover baseado em check-gateway do gateway imediato não disparou quando o upstream da operadora caiu (o gateway dela respondia ping, mas a internet estava fora). Explique por que, e como o recursive routing com alvo remoto corrige.\nVocê usou 8.8.8.8 como único alvo sentinela. Um dia o 8.8.8.8 ficou instável e seu failover disparou sem motivo (o trânsito estava bom). Qual foi o erro e como torná-lo robusto?\nO failover funciona, mas na volta do primário as conexões ativas caem por um instante. Relacione com o balanceamento do Capítulo 69: o que move só conexões novas e por que isso importa aqui também?\nMonte, em uma frase cada, como VRRP, bonding, ECMP/PCC e failover recursivo cobrem tipos de falha diferentes — e por que um provedor sério usa os quatro.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. O check-gateway testava só o gateway imediato da operadora, que continuava vivo (respondia ping) mesmo com o upstream dela caído — então a rota primária permaneceu válida e o failover não disparou. O recursive routing corrige porque amarra a default a um alvo remoto na internet (além da operadora): se esse alvo não é alcançável pelo primário, o caminho real está morto, e a rota some. Detecção fim a fim vê o que o gateway imediato esconde.\n2. Depender de um único alvo torna seu failover refém da saúde daquele alvo — se ele oscila, você faz failover à toa. Torne robusto pingando múltiplos alvos confiáveis (ex.: dois ou três IPs estáveis de provedores distintos) e só considere o link morto se todos falharem por aquele caminho. Assim, a instabilidade de um alvo isolado não engana a detecção.\n3. Na volta do primário, o tráfego muda de link e, se o NAT remarcar as conexões estabelecidas (novo IP de origem), elas caem — o mesmo problema do Capítulo 69. O que evita: mover só conexões novas na transição (manter as estabelecidas no link em que nasceram) e/ou desligar a preempção imediata (deixar o primário reassumir de forma suave). Estabilidade de conexão vale tanto no balanceamento quanto no failover.\n4. VRRP: sobrevive à queda de um roteador (gateway redundante). Bonding: sobrevive à queda de um cabo/porta entre equipamentos e soma banda (camada 2). ECMP/PCC: usa e balanceia múltiplos links de trânsito (camada 3). Failover recursivo: troca a saída na queda real de um trânsito e volta sozinho. Cada um cobre uma falha distinta (equipamento, cabo, uso/balance, caminho fim a fim); juntos dão HA de ponta a ponta — por isso o provedor sério usa os quatro.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>70</span>  <span class='chapter-title'>Failover multi-link na prática</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#resumo",
+    "href": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#resumo",
+    "title": "70  Failover multi-link na prática",
+    "section": "70.6 Resumo",
+    "text": "70.6 Resumo\n\nFailover falha na detecção, não na rota reserva: interface up com caminho morto engana quem confia no estado da porta;\nRecursive routing dá detecção fim a fim: a default primária depende da alcançabilidade de um alvo remoto pelo link (com check-gateway) — cai o caminho, a rota some, a reserva assume, e volta sozinha;\nComponha rota flutuante (distâncias) + recursivo/check-gateway\n\nnetwatch/script + múltiplos alvos (não dependa de um só);\n\nNo failover/retorno, mova só conexões novas (estabilidade, Capítulo 69);\nDesenho de HA: VRRP (equipamento) + bonding (cabo) + ECMP/PCC (balance) + failover recursivo (caminho) + BGP (roteamento real) — cada camada, um tipo de falha.\n\nFecha-se o Volume 14: a rede do provedor agora sobrevive a falhas de link e de equipamento sem o cliente perceber. Falta o capítulo que junta tudo — dos quatorze volumes — no desenho e na operação de um provedor real. É o Volume 15, operação de ISP de ponta a ponta.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>70</span>  <span class='chapter-title'>Failover multi-link na prática</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#bibliografia-do-capítulo",
+    "href": "volumes/v14-alta-disponibilidade/04-failover-multilink.html#bibliografia-do-capítulo",
+    "title": "70  Failover multi-link na prática",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: Routing (recursive, check-gateway), Netwatch do RouterOS (MikroTik, 2026);\nDetecção de falha e failover: (Tanenbaum; Feamster; Wetherall, 2021);\nFailover multi-link no v7: (Discher, 2016);\nResiliência de trânsito em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 14 — Alta disponibilidade",
+      "<span class='chapter-number'>70</span>  <span class='chapter-title'>Failover multi-link na prática</span>"
+    ]
+  },
+  {
     "objectID": "referencias.html",
     "href": "referencias.html",
     "title": "Referências",

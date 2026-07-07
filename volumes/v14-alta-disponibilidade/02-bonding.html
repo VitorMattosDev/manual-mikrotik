@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>60&nbsp; Linguagem de script do RouterOS – Manual de MikroTik</title>
+<title>68&nbsp; Bonding: agregação de links – Manual de MikroTik</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -53,8 +53,8 @@ div.csl-indent {
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<link href="../../volumes/v12-scripts/02-scheduler-netwatch-backups.html" rel="next">
-<link href="../../volumes/v11-mpls/03-traffic-engineering.html" rel="prev">
+<link href="../../volumes/v14-alta-disponibilidade/03-ecmp-pcc.html" rel="next">
+<link href="../../volumes/v14-alta-disponibilidade/01-vrrp.html" rel="prev">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/popper.min.js"></script>
@@ -105,7 +105,7 @@ div.csl-indent {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v12-scripts/01-linguagem-script.html">Volume 12 — Scripts e automação</a></li><li class="breadcrumb-item"><a href="../../volumes/v12-scripts/01-linguagem-script.html"><span class="chapter-number">60</span>&nbsp; <span class="chapter-title">Linguagem de script do RouterOS</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v14-alta-disponibilidade/01-vrrp.html">Volume 14 — Alta disponibilidade</a></li><li class="breadcrumb-item"><a href="../../volumes/v14-alta-disponibilidade/02-bonding.html"><span class="chapter-number">68</span>&nbsp; <span class="chapter-title">Bonding: agregação de links</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
@@ -617,16 +617,16 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-12" role="navigation" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-12" role="navigation" aria-expanded="false">
  <span class="menu-text">Volume 12 — Scripts e automação</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-12" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-12" role="navigation" aria-expanded="false" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-12" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-12" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v12-scripts/01-linguagem-script.html" class="sidebar-item-text sidebar-link active">
+  <a href="../../volumes/v12-scripts/01-linguagem-script.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">60</span>&nbsp; <span class="chapter-title">Linguagem de script do RouterOS</span></span></a>
   </div>
 </li>
@@ -681,13 +681,13 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-14" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-14" role="navigation" aria-expanded="true">
  <span class="menu-text">Volume 14 — Alta disponibilidade</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-14" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-14" role="navigation" aria-expanded="true" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-14" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-14" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../volumes/v14-alta-disponibilidade/01-vrrp.html" class="sidebar-item-text sidebar-link">
@@ -696,7 +696,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v14-alta-disponibilidade/02-bonding.html" class="sidebar-item-text sidebar-link">
+  <a href="../../volumes/v14-alta-disponibilidade/02-bonding.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">68</span>&nbsp; <span class="chapter-title">Bonding: agregação de links</span></span></a>
   </div>
 </li>
@@ -741,29 +741,27 @@ div.csl-indent {
     <h2 id="toc-title">Índice</h2>
    
   <ul>
-  <li><a href="#variáveis-e-tipos" id="toc-variáveis-e-tipos" class="nav-link active" data-scroll-target="#variáveis-e-tipos"><span class="header-section-number">60.1</span> Variáveis e tipos</a></li>
-  <li><a href="#condicionais-e-a-estrutura-do-controle" id="toc-condicionais-e-a-estrutura-do-controle" class="nav-link" data-scroll-target="#condicionais-e-a-estrutura-do-controle"><span class="header-section-number">60.2</span> Condicionais e a estrutura do controle</a></li>
-  <li><a href="#loops-e-a-operação-sobre-itens-de-menu" id="toc-loops-e-a-operação-sobre-itens-de-menu" class="nav-link" data-scroll-target="#loops-e-a-operação-sobre-itens-de-menu"><span class="header-section-number">60.3</span> Loops e a operação sobre itens de menu</a></li>
-  <li><a href="#capturando-saída-e-parseando" id="toc-capturando-saída-e-parseando" class="nav-link" data-scroll-target="#capturando-saída-e-parseando"><span class="header-section-number">60.4</span> Capturando saída e parseando</a></li>
-  <li><a href="#funções-reutilizáveis" id="toc-funções-reutilizáveis" class="nav-link" data-scroll-target="#funções-reutilizáveis"><span class="header-section-number">60.5</span> Funções reutilizáveis</a></li>
-  <li><a href="#tratamento-de-erro-e-idempotência" id="toc-tratamento-de-erro-e-idempotência" class="nav-link" data-scroll-target="#tratamento-de-erro-e-idempotência"><span class="header-section-number">60.6</span> Tratamento de erro e idempotência</a></li>
-  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">60.7</span> 🧪 Laboratório</a>
+  <li><a href="#o-que-o-bonding-entrega-e-o-que-não-entrega" id="toc-o-que-o-bonding-entrega-e-o-que-não-entrega" class="nav-link active" data-scroll-target="#o-que-o-bonding-entrega-e-o-que-não-entrega"><span class="header-section-number">68.1</span> O que o bonding entrega (e o que não entrega)</a></li>
+  <li><a href="#os-modos-lacp-balance-xor-active-backup" id="toc-os-modos-lacp-balance-xor-active-backup" class="nav-link" data-scroll-target="#os-modos-lacp-balance-xor-active-backup"><span class="header-section-number">68.2</span> Os modos: LACP, balance-xor, active-backup</a></li>
+  <li><a href="#configurando-um-bond-lacp" id="toc-configurando-um-bond-lacp" class="nav-link" data-scroll-target="#configurando-um-bond-lacp"><span class="header-section-number">68.3</span> Configurando um bond LACP</a></li>
+  <li><a href="#verificação-e-failover" id="toc-verificação-e-failover" class="nav-link" data-scroll-target="#verificação-e-failover"><span class="header-section-number">68.4</span> Verificação e failover</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">68.5</span> 🧪 Laboratório</a>
   <ul class="collapse">
-  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">60.7.1</span> Comandos passo a passo</a></li>
-  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">60.7.2</span> Verificação</a></li>
-  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">60.7.3</span> Desafios</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">68.5.1</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">68.5.2</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">68.5.3</span> Desafios</a></li>
   </ul></li>
-  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">60.8</span> Resumo</a></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">68.6</span> Resumo</a></li>
   <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v12-scripts/01-linguagem-script.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v14-alta-disponibilidade/02-bonding.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v12-scripts/01-linguagem-script.html">Volume 12 — Scripts e automação</a></li><li class="breadcrumb-item"><a href="../../volumes/v12-scripts/01-linguagem-script.html"><span class="chapter-number">60</span>&nbsp; <span class="chapter-title">Linguagem de script do RouterOS</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v14-alta-disponibilidade/01-vrrp.html">Volume 14 — Alta disponibilidade</a></li><li class="breadcrumb-item"><a href="../../volumes/v14-alta-disponibilidade/02-bonding.html"><span class="chapter-number">68</span>&nbsp; <span class="chapter-title">Bonding: agregação de links</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span id="sec-linguagem-script" class="quarto-section-identifier"><span class="chapter-number">60</span>&nbsp; <span class="chapter-title">Linguagem de script do RouterOS</span></span></h1>
+<h1 class="title"><span id="sec-bonding" class="quarto-section-identifier"><span class="chapter-number">68</span>&nbsp; <span class="chapter-title">Bonding: agregação de links</span></span></h1>
 </div>
 
 
@@ -792,27 +790,240 @@ div.csl-indent {
 <div class="callout-body-container callout-body">
 <p>Ao final deste capítulo, você será capaz de:</p>
 <ul>
-<li>Escrever scripts no RouterOS: <strong>variáveis</strong> (<code>:local</code>/<code>:global</code>), <strong>tipos</strong>, <strong>condicionais</strong> (<code>:if</code>) e <strong>loops</strong> (<code>:foreach</code>/<code>:for</code>);</li>
-<li>Entender a peça central do RouterOS script: percorrer e <strong>agir sobre itens</strong> de menus (<code>/interface</code>, <code>/ip address</code>) com <code>find</code>, <code>[]</code> e <code>do</code>;</li>
-<li>Capturar saída de comandos, <strong>parsear</strong> valores e montar mensagens (log, e-mail) com interpolação;</li>
-<li>Criar <strong>funções</strong> reutilizáveis (via <code>:global</code>) e tratar erros com <code>:do { } on-error={ }</code>;</li>
-<li>Escrever scripts <strong>idempotentes e seguros</strong> — que podem rodar de novo sem duplicar nem quebrar a configuração.</li>
+<li>Explicar o que o <strong>bonding</strong> entrega: <strong>somar a banda</strong> de vários enlaces <strong>e/ou</strong> ter <strong>redundância</strong> de cabo/porta entre equipamentos;</li>
+<li>Escolher o <strong>modo</strong> certo: <strong>802.3ad (LACP)</strong>, <strong>balance-xor</strong>, <strong>active-backup</strong> e o que cada um exige do outro lado;</li>
+<li>Entender por que agregar links <strong>não</strong> dá “soma linear” para um único fluxo — o papel do <strong>hashing</strong> na distribuição;</li>
+<li>Configurar um bond LACP entre dois roteadores/switch e verificar a agregação e o failover de um membro;</li>
+<li>Reconhecer os limites e erros: modo divergente entre os lados, esperar 4 Gbps num único download, e bonding vs.&nbsp;ECMP (<a href="03-ecmp-pcc.html" class="quarto-xref"><span>Capítulo 69</span></a>).</li>
 </ul>
 </div>
 </div>
-<p>Até aqui, cada configuração foi <strong>manual</strong>. Funciona para um roteador; não escala para um parque de centenas. A <strong>linguagem de script</strong> do RouterOS transforma tarefas repetitivas em código: verificar links, aplicar mudanças em massa, reagir a eventos, gerar relatórios. Não é uma linguagem “de programador” — é enxuta e cheia de peculiaridades — mas domina-se o essencial rápido, e o retorno é enorme: o que você faria em 200 roteadores à mão, um script faz em segundos. Este capítulo é a base; os próximos automatizam (<a href="02-scheduler-netwatch-backups.html" class="quarto-xref"><span>Capítulo 61</span></a>) e provisionam em massa (<a href="03-api-provisionamento.html" class="quarto-xref"><span>Capítulo 62</span></a>).</p>
-<section id="variáveis-e-tipos" class="level2" data-number="60.1">
-<h2 data-number="60.1" class="anchored" data-anchor-id="variáveis-e-tipos"><span class="header-section-number">60.1</span> Variáveis e tipos</h2>
-<p>Toda variável é declarada com <strong>escopo</strong>:</p>
+<p>O <a href="01-vrrp.html" class="quarto-xref"><span>Capítulo 67</span></a> protegeu contra a queda de um <strong>equipamento</strong>. Mas entre dois equipamentos há <strong>cabos e portas</strong> que também falham — e um único enlace tem um teto de banda. O <strong>bonding</strong> (<em>link aggregation</em>) resolve os dois: junta <strong>vários enlaces físicos</strong> numa <strong>interface lógica</strong> que <strong>soma a capacidade</strong> e <strong>sobrevive</strong> à perda de um membro. É como transformar quatro cabos de 1 Gbps entre o switch e o roteador do POP num troco de 4 Gbps que continua funcionando se um cabo cair.</p>
+<section id="o-que-o-bonding-entrega-e-o-que-não-entrega" class="level2" data-number="68.1">
+<h2 data-number="68.1" class="anchored" data-anchor-id="o-que-o-bonding-entrega-e-o-que-não-entrega"><span class="header-section-number">68.1</span> O que o bonding entrega (e o que não entrega)</h2>
+<p>Um bond agrupa N interfaces físicas numa só interface lógica. Dois benefícios, conforme o modo:</p>
 <ul>
-<li><strong><code>:local</code></strong> — vive só dentro do script/bloco atual (o padrão que você deve usar);</li>
-<li><strong><code>:global</code></strong> — persiste entre scripts e sessões (use com parcimônia; é como uma variável global de verdade — poderosa e perigosa).</li>
+<li><strong>Mais banda agregada</strong>: o tráfego é distribuído entre os membros — a <strong>capacidade total</strong> cresce;</li>
+<li><strong>Redundância</strong>: se um membro (cabo/porta/SFP) cai, os outros seguem — o bond permanece up.</li>
 </ul>
-<pre class="routeros"><code>:local nome "borda-pop1"
-:local contador 0
-:local ativo true
-:local rede 192.168.1.0/24</code></pre>
-<p>O RouterOS <strong>infere o tipo</strong> pelo valor: <code>num</code>, <code>str</code>, <code>bool</code>, <code>ip</code>, <code>ip-prefix</code>, <code>time</code>, <code>array</code>, e outros. Tipos importam — comparar um <code>str</code> “10” com um <code>num</code> 10 dá resultado inesperado. Converta quando necessário (<code>[:tonum $x]</code>, <code>[:tostr $x]</code>).</p>
+<p>O <strong>porém</strong> fundamental, que confunde todo mundo: agregar 4×1 Gbps <strong>não</strong> faz um <strong>único fluxo</strong> (um download, uma sessão TCP) atingir 4 Gbps. O tráfego é distribuído por <strong>hashing</strong> (por MAC, IP ou porta), e cada fluxo é “grudado” em <strong>um</strong> membro para não desordenar os pacotes. Você soma a banda <strong>entre muitos fluxos</strong> (muitos clientes), não dentro de um só. Quatro cabos de 1 Gbps = 4 Gbps para <strong>o conjunto</strong>, ~1 Gbps para <strong>cada</strong> conexão individual.</p>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="227.568558pt" height="132.669878pt" viewbox="-68.014948 -68.014949 227.568558 132.669878">
+<defs>
+<path id="tz_fig_bonding_g0-13" d="M4.20523-4.839851L3.668244-4.804981C3.619427-4.804981 3.612453-4.804981 3.57061-4.818929C3.305604-4.881694 3.152179-4.881694 2.963885-4.881694C1.966625-4.881694 .850809-4.609714 .850809-3.758904V-3.096389H.27198V-2.705853H.850809V-.390535H.383562V0C.404483 0 .948443-.027895 1.26924-.027895C1.610959-.027895 2.133998 0 2.154919 0V-.390535H1.687671V-2.705853H3.368369V-.390535H2.901121V0C2.922042 0 3.466002-.027895 3.7868-.027895C4.128518-.027895 4.651557 0 4.672478 0V-.390535H4.20523V-4.839851ZM1.638854-3.096389V-3.737983C1.638854-3.884433 1.638854-4.177335 2.043337-4.38655C2.343213-4.553923 2.740722-4.560897 2.894147-4.560897C2.93599-4.560897 3.263761-4.553923 3.263761-4.526027C3.263761-4.519054 3.263761-4.51208 3.249813-4.498132C3.187049-4.400498 3.173101-4.288917 3.173101-4.226152C3.173101-4.14944 3.200996-3.954172 3.368369-3.835616V-3.096389H1.638854Z"></path>
+<path id="tz_fig_bonding_g0-101" d="M3.598506-1.45056C3.744956-1.45056 3.84259-1.45056 3.84259-1.659776C3.84259-1.862017 3.793773-2.385056 3.459029-2.726775C3.082441-3.103362 2.566376-3.159153 2.182814-3.159153C.892653-3.159153 .278954-2.39203 .278954-1.569116C.278954-.739228 .920548 .041843 2.30137 .041843C2.552428 .041843 2.956912 .013948 3.305604-.174346C3.717061-.390535 3.84259-.72528 3.84259-.795019C3.84259-.948443 3.689166-.948443 3.619427-.948443C3.493898-.948443 3.459029-.941469 3.403238-.829888C3.152179-.313823 2.517559-.313823 2.399004-.313823C1.297136-.313823 1.262267-1.129763 1.248319-1.45056H3.598506ZM1.248319-1.743462C1.255293-2.015442 1.290162-2.838356 2.189788-2.838356S3.138232-2.043337 3.152179-1.743462H1.248319Z"></path>
+<path id="tz_fig_bonding_g0-110" d="M4.267995-2.099128C4.267995-2.956912 3.717061-3.138232 3.075467-3.138232C2.231631-3.138232 1.841096-2.636115 1.708593-2.412951V-3.138232L.446326-3.082441V-2.691905C.857783-2.691905 .913574-2.691905 .913574-2.419925V-.390535H.446326V0C.4533 0 1.018182-.027895 1.352927-.027895C1.694645-.027895 2.259527 0 2.266501 0V-.390535H1.799253V-1.736488C1.799253-2.545455 2.524533-2.817435 2.942964-2.817435C3.249813-2.817435 3.382316-2.657036 3.382316-2.154919V-.390535H2.915068V0C2.922042 0 3.486924-.027895 3.821669-.027895C4.163387-.027895 4.728269 0 4.735243 0V-.390535H4.267995V-2.099128Z"></path>
+<path id="tz_fig_bonding_g0-111" d="M4.226152-1.520299C4.226152-2.350187 3.619427-3.159153 2.252553-3.159153C.871731-3.159153 .278954-2.343213 .278954-1.520299C.278954-.704359 .899626 .041843 2.252553 .041843C3.612453 .041843 4.226152-.711333 4.226152-1.520299ZM2.252553-.313823C1.248319-.313823 1.248319-1.004234 1.248319-1.603985C1.248319-2.161893 1.248319-2.838356 2.252553-2.838356S3.256787-2.161893 3.256787-1.603985C3.256787-1.004234 3.256787-.313823 2.252553-.313823Z"></path>
+<path id="tz_fig_bonding_g0-114" d="M1.687671-1.464508C1.687671-2.092154 1.973599-2.782565 2.601245-2.817435C2.594271-2.810461 2.503611-2.691905 2.503611-2.517559C2.503611-2.245579 2.698879-2.043337 2.977833-2.043337S3.452055-2.245579 3.452055-2.517559C3.452055-2.901121 3.061519-3.138232 2.629141-3.138232C2.127024-3.138232 1.792279-2.803487 1.603985-2.371108H1.597011V-3.138232L.383562-3.082441V-2.691905C.795019-2.691905 .850809-2.691905 .850809-2.419925V-.390535H.383562V0C.411457 0 .948443-.027895 1.276214-.027895C1.548194-.027895 2.224658 0 2.273474 0V-.390535H1.687671V-1.464508Z"></path>
+<path id="tz_fig_bonding_g0-115" d="M3.012702-2.93599C3.012702-3.075467 3.012702-3.159153 2.84533-3.159153C2.796513-3.159153 2.775592-3.159153 2.66401-3.103362C2.650062-3.096389 2.559402-3.054545 2.531507-3.054545C2.524533-3.054545 2.510585-3.054545 2.48269-3.068493C2.196762-3.159153 1.903861-3.159153 1.75741-3.159153C1.555168-3.159153 1.129763-3.159153 .781071-2.970859C.383562-2.747696 .327771-2.385056 .327771-2.224658C.327771-1.471482 1.248319-1.332005 1.736488-1.255293C2.161893-1.192528 2.670984-1.115816 2.670984-.753176C2.670984-.278954 1.980573-.278954 1.8132-.278954C1.150685-.278954 .9066-.578829 .774097-.955417C.732254-1.073973 .72528-1.08792 .550934-1.08792C.348692-1.08792 .327771-1.066999 .327771-.864757V-.18132C.327771-.041843 .327771 .041843 .488169 .041843C.550934 .041843 .564882 .041843 .711333-.048817C.753176-.069738 .864757-.132503 .9066-.160399C1.26924 .041843 1.645828 .041843 1.806227 .041843C2.036364 .041843 3.235866 .041843 3.235866-.990286C3.235866-1.311083 3.068493-1.534247 2.908095-1.66675C2.580324-1.93873 2.280448-1.987547 1.701619-2.078207C1.30411-2.140971 .892653-2.203736 .892653-2.48269C.892653-2.873225 1.590037-2.873225 1.736488-2.873225C2.524533-2.873225 2.552428-2.552428 2.57335-2.385056C2.587298-2.245579 2.629141-2.231631 2.789539-2.231631C2.991781-2.231631 3.012702-2.252553 3.012702-2.454795V-2.93599Z"></path>
+<path id="tz_fig_bonding_g0-116" d="M1.708593-2.705853H2.84533V-3.096389H1.708593V-4.428394H1.26924C1.262267-3.779826 .934496-3.047572 .195268-3.02665V-2.705853H.822914V-.843836C.822914-.153425 1.387796 .041843 1.994521 .041843C2.545455 .041843 2.991781-.278954 2.991781-.843836V-1.206476H2.552428V-.871731C2.552428-.390535 2.259527-.313823 2.12005-.313823C1.715567-.313823 1.708593-.655542 1.708593-.843836V-2.705853Z"></path>
+<path id="tz_fig_bonding_g0-117" d="M2.915068-3.082441V-2.691905C3.326526-2.691905 3.382316-2.691905 3.382316-2.419925V-1.129763C3.382316-.550934 2.93599-.278954 2.405978-.278954C1.806227-.278954 1.799253-.432379 1.799253-.767123V-3.138232L.446326-3.082441V-2.691905C.857783-2.691905 .913574-2.691905 .913574-2.419925V-.843836C.913574-.034869 1.687671 .041843 2.287422 .041843C2.517559 .041843 3.033624 .041843 3.431133-.4533V.041843L4.735243 0V-.390535C4.323786-.390535 4.267995-.390535 4.267995-.662516V-3.138232L2.915068-3.082441Z"></path>
+<path id="tz_fig_bonding_g0-120" d="M2.75467-1.687671L3.717061-2.657036C3.884433-2.705853 4.065753-2.705853 4.365629-2.705853V-3.096389C4.142466-3.075467 3.912329-3.068493 3.689166-3.068493C3.452055-3.068493 2.970859-3.089415 2.915068-3.096389V-2.705853C3.005729-2.705853 3.054545-2.691905 3.103362-2.66401L2.447821-2.001494L1.771357-2.705853H1.959651V-3.096389C1.917808-3.096389 1.366874-3.068493 1.073973-3.068493C.808966-3.068493 .550934-3.075467 .285928-3.096389V-2.705853H.808966L1.952677-1.513325L.948443-.502117C.857783-.418431 .850809-.411457 .63462-.397509C.523039-.390535 .278954-.390535 .244085-.390535V0C.467248-.020922 .697385-.027895 .920548-.027895C1.108842-.027895 1.603985-.006974 1.694645 0V-.390535C1.583064-.390535 1.555168-.404483 1.506351-.439352L2.259527-1.192528L3.033624-.390535H2.852304V0C2.859278 0 3.417186-.027895 3.737983-.027895C3.996015-.027895 4.261021-.020922 4.519054 0V-.390535H4.002989L2.75467-1.687671Z"></path>
+<path id="tz_fig_bonding_g1-13" d="M3.640349-4.839851C3.584558-4.832877 3.375342-4.798007 3.354421-4.798007C3.340473-4.798007 3.326526-4.798007 3.291656-4.818929C3.040598-4.909589 2.740722-4.909589 2.608219-4.909589C1.75741-4.909589 .864757-4.533001 .864757-3.772852V-3.005729H.265006V-2.75467H.864757V-.550934C.864757-.251059 .795019-.251059 .341719-.251059V0C.355666 0 .843836-.027895 1.12279-.027895C1.387796-.027895 1.645828-.020922 1.910834 0V-.251059C1.457534-.251059 1.387796-.251059 1.387796-.550934V-2.75467H3.11731V-.550934C3.11731-.251059 3.047572-.251059 2.594271-.251059V0C2.608219 0 3.096389-.027895 3.375342-.027895C3.640349-.027895 3.898381-.020922 4.163387 0V-.251059C3.710087-.251059 3.640349-.251059 3.640349-.550934V-4.839851ZM1.3599-3.005729V-3.765878C1.3599-4.379577 1.931756-4.714321 2.601245-4.714321C2.775592-4.714321 2.915068-4.707347 3.089415-4.665504C3.005729-4.609714 2.956912-4.505106 2.956912-4.400498C2.956912-4.358655 2.970859-4.20523 3.11731-4.121544V-3.005729H1.3599Z"></path>
+<path id="tz_fig_bonding_g1-40" d="M2.475716-5.230386C1.150685-4.29589 .801993-2.817435 .801993-1.750436C.801993-.767123 1.094894 .760149 2.475716 1.736488C2.531507 1.736488 2.615193 1.736488 2.615193 1.652802C2.615193 1.610959 2.594271 1.597011 2.545455 1.548194C1.617933 .711333 1.276214-.474222 1.276214-1.743462C1.276214-3.626401 1.994521-4.546949 2.566376-5.063014C2.594271-5.090909 2.615193-5.111831 2.615193-5.1467C2.615193-5.230386 2.531507-5.230386 2.475716-5.230386Z"></path>
+<path id="tz_fig_bonding_g1-41" d="M.627646-5.230386C.578829-5.230386 .495143-5.230386 .495143-5.1467C.495143-5.111831 .516065-5.090909 .557908-5.042092C1.157659-4.491158 1.827148-3.549689 1.827148-1.750436C1.827148-.292902 1.373848 .808966 .620672 1.492403C.502117 1.610959 .495143 1.617933 .495143 1.652802S.516065 1.736488 .585803 1.736488C.669489 1.736488 1.332005 1.276214 1.792279 .404483C2.099128-.174346 2.30137-.927522 2.30137-1.743462C2.30137-2.726775 2.008468-4.254047 .627646-5.230386Z"></path>
+<path id="tz_fig_bonding_g1-49" d="M2.336239-4.435367C2.336239-4.623661 2.322291-4.630635 2.127024-4.630635C1.680697-4.191283 1.046077-4.184309 .760149-4.184309V-3.93325C.927522-3.93325 1.387796-3.93325 1.771357-4.128518V-.571856C1.771357-.341719 1.771357-.251059 1.073973-.251059H.808966V0C.934496-.006974 1.792279-.027895 2.050311-.027895C2.266501-.027895 3.145205-.006974 3.29863 0V-.251059H3.033624C2.336239-.251059 2.336239-.341719 2.336239-.571856V-4.435367Z"></path>
+<path id="tz_fig_bonding_g1-52" d="M3.689166-1.143711V-1.39477H2.915068V-4.505106C2.915068-4.651557 2.915068-4.700374 2.761644-4.700374C2.677958-4.700374 2.650062-4.700374 2.580324-4.60274L.27198-1.39477V-1.143711H2.322291V-.571856C2.322291-.334745 2.322291-.251059 1.75741-.251059H1.569116V0C1.917808-.013948 2.364134-.027895 2.615193-.027895C2.873225-.027895 3.319552-.013948 3.668244 0V-.251059H3.47995C2.915068-.251059 2.915068-.334745 2.915068-.571856V-1.143711H3.689166ZM2.371108-3.947198V-1.39477H.530012L2.371108-3.947198Z"></path>
+<path id="tz_fig_bonding_g1-59" d="M1.527273-2.601245C1.527273-2.84533 1.332005-3.005729 1.129763-3.005729C.885679-3.005729 .72528-2.810461 .72528-2.608219C.72528-2.364134 .920548-2.203736 1.12279-2.203736C1.366874-2.203736 1.527273-2.399004 1.527273-2.601245ZM1.352927-.062765C1.345953 .432379 1.17858 .822914 .871731 1.164633C.829888 1.206476 .822914 1.220423 .822914 1.248319C.822914 1.290162 .871731 1.352927 .920548 1.352927C1.011208 1.352927 1.548194 .788045 1.548194-.055791C1.548194-.292902 1.513325-.801993 1.12279-.801993C.857783-.801993 .72528-.592777 .72528-.404483C.72528-.209215 .850809 0 1.129763 0C1.248319 0 1.325031-.048817 1.352927-.062765Z"></path>
+<path id="tz_fig_bonding_g1-61" d="M5.355915-2.343213C5.460523-2.343213 5.620922-2.343213 5.620922-2.517559C5.620922-2.684932 5.453549-2.684932 5.362889-2.684932H.746202C.655542-2.684932 .488169-2.684932 .488169-2.517559C.488169-2.343213 .648568-2.343213 .753176-2.343213H5.355915ZM5.362889-.808966C5.453549-.808966 5.620922-.808966 5.620922-.976339C5.620922-1.150685 5.460523-1.150685 5.355915-1.150685H.753176C.648568-1.150685 .488169-1.150685 .488169-.976339C.488169-.808966 .655542-.808966 .746202-.808966H5.362889Z"></path>
+<path id="tz_fig_bonding_g1-97" d="M3.110336-1.868991C3.110336-2.238605 3.110336-2.503611 2.789539-2.761644C2.503611-2.998755 2.168867-3.110336 1.75741-3.110336C1.094894-3.110336 .627646-2.859278 .627646-2.433873C.627646-2.21071 .781071-2.092154 .962391-2.092154C1.150685-2.092154 1.290162-2.231631 1.290162-2.419925C1.290162-2.538481 1.234371-2.684932 1.046077-2.740722C1.297136-2.915068 1.701619-2.915068 1.743462-2.915068C2.133998-2.915068 2.559402-2.657036 2.559402-2.071233V-1.855044C2.175841-1.841096 1.715567-1.820174 1.206476-1.63188C.578829-1.401743 .383562-1.018182 .383562-.704359C.383562-.104608 1.108842 .069738 1.603985 .069738C2.161893 .069738 2.489664-.244085 2.636115-.516065C2.66401-.230137 2.852304 .034869 3.173101 .034869C3.187049 .034869 3.863512 .034869 3.863512-.627646V-1.011208H3.626401V-.63462C3.626401-.564882 3.626401-.230137 3.368369-.230137S3.110336-.557908 3.110336-.648568V-1.868991ZM2.559402-.983313C2.559402-.313823 1.973599-.125529 1.659776-.125529C1.30411-.125529 .969365-.36264 .969365-.704359C.969365-1.08792 1.30411-1.624907 2.559402-1.673724V-.983313Z"></path>
+<path id="tz_fig_bonding_g1-98" d="M1.387796-4.839851L.341719-4.763138V-4.51208C.81594-4.51208 .864757-4.456289 .864757-4.107597V0H1.101868L1.345953-.425405C1.610959-.076712 1.994521 .069738 2.364134 .069738C3.284682 .069738 4.072727-.620672 4.072727-1.506351C4.072727-2.357161 3.354421-3.075467 2.440847-3.075467C2.022416-3.075467 1.638854-2.908095 1.387796-2.657036V-4.839851ZM1.415691-2.336239C1.610959-2.657036 1.987547-2.880199 2.405978-2.880199C2.796513-2.880199 3.075467-2.657036 3.214944-2.447821C3.354421-2.245579 3.438107-1.973599 3.438107-1.513325C3.438107-1.352927 3.438107-.829888 3.152179-.502117C2.873225-.188294 2.531507-.125529 2.329265-.125529C1.771357-.125529 1.492403-.564882 1.415691-.711333V-2.336239Z"></path>
+<path id="tz_fig_bonding_g1-99" d="M2.712827-2.782565C2.587298-2.726775 2.517559-2.615193 2.517559-2.475716C2.517559-2.287422 2.650062-2.147945 2.84533-2.147945C3.033624-2.147945 3.180075-2.266501 3.180075-2.489664C3.180075-3.110336 2.21071-3.110336 2.015442-3.110336C.969365-3.110336 .320797-2.308344 .320797-1.506351C.320797-.627646 1.066999 .069738 1.980573 .069738C3.019676 .069738 3.263761-.753176 3.263761-.836862S3.173101-.920548 3.145205-.920548C3.054545-.920548 3.047572-.899626 3.012702-.801993C2.859278-.369614 2.489664-.153425 2.064259-.153425C1.583064-.153425 .955417-.509091 .955417-1.513325C.955417-2.399004 1.387796-2.887173 2.036364-2.887173C2.127024-2.887173 2.461768-2.887173 2.712827-2.782565Z"></path>
+<path id="tz_fig_bonding_g1-100" d="M2.48269-4.763138V-4.51208C2.949938-4.51208 3.005729-4.463263 3.005729-4.121544V-2.677958C2.747696-2.929016 2.412951-3.075467 2.02939-3.075467C1.101868-3.075467 .320797-2.378082 .320797-1.499377C.320797-.627646 1.060025 .069738 1.945704 .069738C2.517559 .069738 2.859278-.237111 2.977833-.36264V.069738L4.051806 0V-.251059C3.584558-.251059 3.528767-.299875 3.528767-.641594V-4.839851L2.48269-4.763138ZM2.977833-.732254C2.796513-.404483 2.440847-.125529 1.987547-.125529C1.597011-.125529 1.318057-.355666 1.17858-.557908C1.039103-.767123 .955417-1.046077 .955417-1.492403C.955417-1.652802 .955417-2.175841 1.241345-2.503611C1.520299-2.817435 1.862017-2.880199 2.064259-2.880199C2.399004-2.880199 2.698879-2.726775 2.894147-2.475716C2.977833-2.364134 2.977833-2.357161 2.977833-2.224658V-.732254Z"></path>
+<path id="tz_fig_bonding_g1-101" d="M3.068493-1.590037C3.214944-1.590037 3.263761-1.590037 3.263761-1.743462C3.263761-2.357161 2.922042-3.110336 1.882939-3.110336C.969365-3.110336 .27198-2.385056 .27198-1.527273C.27198-.641594 1.046077 .069738 1.973599 .069738C2.915068 .069738 3.263761-.683437 3.263761-.836862C3.263761-.864757 3.249813-.934496 3.145205-.934496C3.054545-.934496 3.040598-.892653 3.019676-.822914C2.803487-.258032 2.273474-.153425 2.022416-.153425C1.694645-.153425 1.380822-.299875 1.171606-.564882C.913574-.892653 .9066-1.318057 .9066-1.590037H3.068493ZM.913574-1.771357C.990286-2.75467 1.617933-2.915068 1.882939-2.915068C2.740722-2.915068 2.768618-1.945704 2.775592-1.771357H.913574Z"></path>
+<path id="tz_fig_bonding_g1-103" d="M1.004234-1.241345C1.108842-1.17858 1.3599-1.025156 1.764384-1.025156C2.48269-1.025156 3.005729-1.506351 3.005729-2.050311C3.005729-2.322291 2.880199-2.538481 2.712827-2.719801C3.02665-2.942964 3.29863-2.949938 3.417186-2.949938C3.38929-2.922042 3.354421-2.894147 3.354421-2.782565C3.354421-2.643088 3.459029-2.559402 3.577584-2.559402C3.675218-2.559402 3.800747-2.629141 3.800747-2.789539S3.668244-3.145205 3.38929-3.145205C3.284682-3.145205 2.908095-3.124284 2.580324-2.824408C2.371108-2.977833 2.078207-3.075467 1.771357-3.075467C1.053051-3.075467 .530012-2.594271 .530012-2.050311C.530012-1.778331 .669489-1.527273 .864757-1.345953C.808966-1.283188 .655542-1.053051 .655542-.781071C.655542-.690411 .676463-.36264 .948443-.160399C.63462-.055791 .27198 .174346 .27198 .536986C.27198 1.046077 1.039103 1.429639 1.980573 1.429639C2.866252 1.429639 3.689166 1.080946 3.689166 .523039C3.689166 .313823 3.605479-.062765 3.221918-.27198C2.810461-.488169 2.399004-.488169 1.72254-.488169C1.569116-.488169 1.318057-.488169 1.262267-.495143C1.039103-.54396 .913574-.753176 .913574-.955417C.913574-1.129763 .962391-1.185554 1.004234-1.241345ZM1.771357-1.234371C1.08792-1.234371 1.08792-1.903861 1.08792-2.050311C1.08792-2.161893 1.08792-2.440847 1.227397-2.622167C1.325031-2.740722 1.513325-2.866252 1.764384-2.866252C2.447821-2.866252 2.447821-2.196762 2.447821-2.050311C2.447821-1.93873 2.447821-1.659776 2.308344-1.478456C2.21071-1.3599 2.022416-1.234371 1.771357-1.234371ZM1.771357-.020922C2.39203-.020922 3.263761-.020922 3.263761 .530012C3.263761 .899626 2.712827 1.220423 1.980573 1.220423S.697385 .892653 .697385 .530012C.697385 .285928 .920548-.013948 1.366874-.020922H1.771357Z"></path>
+<path id="tz_fig_bonding_g1-104" d="M3.591532-2.113076C3.591532-2.719801 3.291656-3.075467 2.545455-3.075467C1.924782-3.075467 1.583064-2.705853 1.429639-2.440847H1.422665V-4.839851L.376588-4.763138V-4.51208C.843836-4.51208 .899626-4.463263 .899626-4.121544V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-2.113076Z"></path>
+<path id="tz_fig_bonding_g1-105" d="M1.471482-4.302864C1.471482-4.505106 1.30411-4.700374 1.066999-4.700374C.857783-4.700374 .669489-4.533001 .669489-4.302864C.669489-4.051806 .871731-3.898381 1.066999-3.898381C1.290162-3.898381 1.471482-4.072727 1.471482-4.302864ZM.411457-2.998755V-2.747696C.850809-2.747696 .913574-2.705853 .913574-2.364134V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.415691-.027895 1.66675-.020922 1.910834 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.54396V-3.075467L.411457-2.998755Z"></path>
+<path id="tz_fig_bonding_g1-109" d="M5.732503-2.113076C5.732503-2.719801 5.432628-3.075467 4.686426-3.075467C4.135492-3.075467 3.758904-2.775592 3.57061-2.426899C3.431133-2.922042 3.054545-3.075467 2.545455-3.075467C1.973599-3.075467 1.603985-2.761644 1.408717-2.399004H1.401743V-3.075467L.376588-2.998755V-2.747696C.843836-2.747696 .899626-2.698879 .899626-2.357161V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-1.806227C3.591532-2.538481 4.170361-2.880199 4.630635-2.880199C5.118804-2.880199 5.181569-2.496638 5.181569-2.140971V-.550934C5.181569-.251059 5.111831-.251059 4.658531-.251059V0C4.672478 0 5.160648-.027895 5.453549-.027895C5.711582-.027895 6.192777-.006974 6.255542 0V-.251059C5.802242-.251059 5.732503-.251059 5.732503-.550934V-2.113076Z"></path>
+<path id="tz_fig_bonding_g1-110" d="M3.591532-2.113076C3.591532-2.719801 3.291656-3.075467 2.545455-3.075467C1.973599-3.075467 1.603985-2.761644 1.408717-2.399004H1.401743V-3.075467L.376588-2.998755V-2.747696C.843836-2.747696 .899626-2.698879 .899626-2.357161V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-2.113076Z"></path>
+<path id="tz_fig_bonding_g1-111" d="M3.689166-1.48543C3.689166-2.357161 2.942964-3.110336 1.980573-3.110336S.27198-2.357161 .27198-1.48543C.27198-.620672 1.039103 .069738 1.980573 .069738S3.689166-.620672 3.689166-1.48543ZM1.980573-.153425C1.72254-.153425 1.345953-.237111 1.115816-.578829C.927522-.864757 .9066-1.227397 .9066-1.548194C.9066-1.84807 .913574-2.259527 1.157659-2.559402C1.332005-2.761644 1.624907-2.915068 1.980573-2.915068C2.39203-2.915068 2.684932-2.719801 2.838356-2.503611C3.033624-2.231631 3.054545-1.882939 3.054545-1.548194S3.033624-.843836 2.831382-.557908C2.643088-.292902 2.322291-.153425 1.980573-.153425Z"></path>
+<path id="tz_fig_bonding_g1-114" d="M1.387796-1.590037C1.387796-2.175841 1.659776-2.880199 2.322291-2.880199C2.259527-2.831382 2.203736-2.740722 2.203736-2.629141C2.203736-2.399004 2.385056-2.308344 2.517559-2.308344C2.684932-2.308344 2.838356-2.419925 2.838356-2.629141C2.838356-2.866252 2.615193-3.075467 2.287422-3.075467C1.93873-3.075467 1.555168-2.859278 1.345953-2.329265H1.338979V-3.075467L.341719-2.998755V-2.747696C.808966-2.747696 .864757-2.698879 .864757-2.357161V-.550934C.864757-.251059 .795019-.251059 .341719-.251059V0C.376588 0 .850809-.027895 1.136737-.027895C1.436613-.027895 1.743462-.013948 2.043337 0V-.251059H1.903861C1.387796-.251059 1.387796-.327771 1.387796-.564882V-1.590037Z"></path>
+<path id="tz_fig_bonding_g1-115" d="M2.643088-2.929016C2.643088-3.047572 2.643088-3.110336 2.545455-3.110336C2.510585-3.110336 2.496638-3.110336 2.405978-3.02665C2.39203-3.019676 2.322291-2.956912 2.280448-2.922042C2.071233-3.068493 1.806227-3.110336 1.548194-3.110336C.550934-3.110336 .313823-2.587298 .313823-2.238605C.313823-2.015442 .411457-1.834122 .578829-1.694645C.843836-1.464508 1.108842-1.415691 1.54122-1.345953C1.889913-1.283188 2.454795-1.185554 2.454795-.718306C2.454795-.446326 2.266501-.125529 1.597011-.125529S.683437-.564882 .557908-1.039103C.536986-1.129763 .530012-1.157659 .432379-1.157659C.313823-1.157659 .313823-1.108842 .313823-.969365V-.111582C.313823 .006974 .313823 .069738 .411457 .069738C.474222 .069738 .606725-.076712 .746202-.230137C1.053051 .055791 1.429639 .069738 1.597011 .069738C2.503611 .069738 2.838356-.418431 2.838356-.913574C2.838356-1.17858 2.719801-1.387796 2.538481-1.555168C2.273474-1.799253 1.952677-1.855044 1.708593-1.896887C1.150685-1.994521 .697385-2.078207 .697385-2.447821C.697385-2.670984 .885679-2.942964 1.548194-2.942964C2.357161-2.942964 2.39203-2.378082 2.405978-2.175841C2.412951-2.099128 2.496638-2.099128 2.524533-2.099128C2.643088-2.099128 2.643088-2.147945 2.643088-2.280448V-2.929016Z"></path>
+<path id="tz_fig_bonding_g1-116" d="M1.401743-2.75467H2.489664V-3.005729H1.401743V-4.288917H1.164633C1.157659-3.66127 .871731-2.970859 .202242-2.949938V-2.75467H.850809V-.871731C.850809-.09066 1.436613 .069738 1.827148 .069738C2.294396 .069738 2.615193-.327771 2.615193-.878705V-1.262267H2.378082V-.885679C2.378082-.411457 2.154919-.153425 1.882939-.153425C1.401743-.153425 1.401743-.739228 1.401743-.864757V-2.75467Z"></path>
+<path id="tz_fig_bonding_g1-117" d="M2.517559-2.998755V-2.747696C2.984807-2.747696 3.040598-2.698879 3.040598-2.357161V-1.164633C3.040598-.550934 2.643088-.125529 2.113076-.125529C1.478456-.125529 1.45056-.425405 1.45056-.781071V-3.075467L.376588-2.998755V-2.747696C.899626-2.747696 .899626-2.726775 .899626-2.106102V-1.060025C.899626-.578829 .899626 .069738 2.064259 .069738C2.217684 .069738 2.726775 .069738 3.061519-.516065H3.068493V.069738L4.11457 0V-.251059C3.647323-.251059 3.591532-.299875 3.591532-.641594V-3.075467L2.517559-2.998755Z"></path>
+<path id="tz_fig_bonding_g1-119" d="M4.881694-2.329265C5.021171-2.677958 5.251308-2.747696 5.467497-2.75467V-3.005729C5.279203-2.984807 5.167621-2.977833 4.96538-2.977833C4.756164-2.977833 4.491158-2.984807 4.281943-3.005729V-2.75467C4.526027-2.747696 4.644583-2.615193 4.644583-2.447821C4.644583-2.39203 4.644583-2.378082 4.60274-2.280448L3.926276-.54396L3.173101-2.447821C3.159153-2.48269 3.138232-2.538481 3.138232-2.580324C3.138232-2.733748 3.319552-2.75467 3.514819-2.75467V-3.005729C3.263761-2.984807 3.012702-2.977833 2.761644-2.977833C2.559402-2.977833 2.350187-2.991781 2.147945-3.005729V-2.75467C2.308344-2.75467 2.454795-2.75467 2.545455-2.698879C2.643088-2.629141 2.705853-2.399004 2.705853-2.39203C2.705853-2.378082 2.691905-2.336239 2.677958-2.308344L2.022416-.648568L1.318057-2.447821C1.276214-2.545455 1.276214-2.552428 1.276214-2.580324C1.276214-2.75467 1.527273-2.75467 1.652802-2.75467V-3.005729C1.638854-3.005729 1.143711-2.977833 .864757-2.977833C.648568-2.977833 .425405-2.984807 .209215-3.005729V-2.75467C.481196-2.75467 .63462-2.75467 .711333-2.552428L1.680697-.09066C1.72254 .013948 1.743462 .069738 1.868991 .069738S2.015442 .013948 2.050311-.076712L2.838356-2.071233L3.612453-.097634C3.654296 .006974 3.682192 .069738 3.807721 .069738S3.954172 .020922 3.996015-.09066L4.881694-2.329265Z"></path>
+<path id="tz_fig_bonding_g1-120" d="M2.364134-1.562142C2.357161-1.569116 2.308344-1.624907 2.308344-1.63188C2.308344-1.652802 2.768618-2.147945 2.831382-2.21071C3.075467-2.48269 3.319552-2.747696 3.870486-2.75467V-3.005729C3.675218-2.991781 3.472976-2.977833 3.284682-2.977833C3.075467-2.977833 2.803487-2.984807 2.594271-3.005729V-2.75467C2.712827-2.733748 2.733748-2.657036 2.733748-2.594271C2.733748-2.580324 2.733748-2.475716 2.629141-2.357161L2.140971-1.806227L1.562142-2.468742C1.492403-2.545455 1.48543-2.580324 1.48543-2.608219C1.48543-2.712827 1.583064-2.75467 1.673724-2.75467V-3.005729C1.415691-2.984807 1.150685-2.977833 .892653-2.977833C.683437-2.977833 .418431-2.984807 .216189-3.005729V-2.75467C.536986-2.75467 .718306-2.75467 .899626-2.545455L1.771357-1.54122C1.778331-1.534247 1.827148-1.478456 1.827148-1.471482C1.827148-1.45056 1.30411-.878705 1.234371-.801993C.976339-.523039 .739228-.265006 .18132-.251059V0C.390535-.013948 .54396-.027895 .760149-.027895C.969365-.027895 1.248319-.020922 1.457534 0V-.251059C1.373848-.265006 1.318057-.313823 1.318057-.411457C1.318057-.54396 1.39477-.63462 1.506351-.753176L1.994521-1.290162L2.601245-.599751C2.733748-.4533 2.733748-.439352 2.733748-.397509C2.733748-.258032 2.57335-.251059 2.545455-.251059V0C2.608219-.006974 3.110336-.027895 3.333499-.027895S3.779826-.020922 4.002989 0V-.251059C3.535741-.251059 3.47995-.292902 3.319552-.474222L2.364134-1.562142Z"></path>
+</defs>
+<g id="tz_fig_bonding_page1">
+<g stroke-miterlimit="10" transform="translate(-39.469254,-4.51461)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g fill="#dfecfb">
+<g fill="#dfecfb">
+<path d="M24.45274 28.45274H-24.45274C-26.66191 28.45274-28.45274 26.66191-28.45274 24.45274V-24.45274C-28.45274-26.66191-26.66191-28.45274-24.45274-28.45274H24.45274C26.66191-28.45274 28.45274-26.66191 28.45274-24.45274V24.45274C28.45274 26.66191 26.66191 28.45274 24.45274 28.45274ZM-28.45274-28.45274"></path>
+</g>
+<g transform="translate(-14.65285,-2.43054)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-39.469254,-4.51461)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-39.469254" y="-4.51461" href="#tz_fig_bonding_g1-114"></use>
+<use x="-36.355911" y="-4.51461" href="#tz_fig_bonding_g1-111"></use>
+<use x="-32.384671" y="-4.51461" href="#tz_fig_bonding_g1-116"></use>
+<use x="-29.271327" y="-4.51461" href="#tz_fig_bonding_g1-101"></use>
+<use x="-25.729036" y="-4.51461" href="#tz_fig_bonding_g1-97"></use>
+<use x="-21.757795" y="-4.51461" href="#tz_fig_bonding_g1-100"></use>
+<use x="-17.357606" y="-4.51461" href="#tz_fig_bonding_g1-111"></use>
+<use x="-13.386366" y="-4.51461" href="#tz_fig_bonding_g1-114"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#dfecfb">
+<g fill="#dfecfb">
+<path d="M195.1692 28.45274H146.26372C144.05455 28.45274 142.26372 26.66191 142.26372 24.45274V-24.45274C142.26372-26.66191 144.05455-28.45274 146.26372-28.45274H195.1692C197.37837-28.45274 199.1692-26.66191 199.1692-24.45274V24.45274C199.1692 26.66191 197.37837 28.45274 195.1692 28.45274ZM142.26372-28.45274"></path>
+</g>
+<g transform="translate(159.7053,-2.43054)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-39.469254,-4.51461)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-39.469254" y="-4.51461" href="#tz_fig_bonding_g1-115"></use>
+<use x="-36.313013" y="-4.51461" href="#tz_fig_bonding_g1-119"></use>
+<use x="-30.625978" y="-4.51461" href="#tz_fig_bonding_g1-105"></use>
+<use x="-28.370533" y="-4.51461" href="#tz_fig_bonding_g1-116"></use>
+<use x="-25.257189" y="-4.51461" href="#tz_fig_bonding_g1-99"></use>
+<use x="-21.92938" y="-4.51461" href="#tz_fig_bonding_g1-104"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="0.8">
+<g fill="#256d0e" stroke="#256d0e">
+<path d="M28.65274 34.1432H199.3692" fill="none"></path>
+</g>
+</g>
+<g stroke-width="0.8">
+<g fill="#174d88" stroke="#174d88">
+<path d="M28.65274 11.38092H199.3692" fill="none"></path>
+</g>
+</g>
+<g stroke-width="0.8">
+<g fill="#d7433b" stroke="#d7433b">
+<path d="M28.65274-11.38092H199.3692" fill="none"></path>
+</g>
+</g>
+<g stroke-width="0.8">
+<g fill="#b35210" stroke="#b35210">
+<path d="M28.65274-34.1432H199.3692" fill="none"></path>
+</g>
+</g>
+<g transform="translate(53.23239,55.15549)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-39.469254,-4.51461)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-39.469254" y="-4.51461" href="#tz_fig_bonding_g1-98"></use>
+<use x="-34.854598" y="-4.51461" href="#tz_fig_bonding_g1-111"></use>
+<use x="-30.883358" y="-4.51461" href="#tz_fig_bonding_g1-110"></use>
+<use x="-26.483169" y="-4.51461" href="#tz_fig_bonding_g1-100"></use>
+<use x="-19.398588" y="-4.51461" href="#tz_fig_bonding_g1-40"></use>
+<use x="-16.285245" y="-4.51461" href="#tz_fig_bonding_g1-52"></use>
+<use x="-9.629613" y="-4.51461" href="#tz_fig_bonding_g1-109"></use>
+<use x="-3.08468" y="-4.51461" href="#tz_fig_bonding_g1-101"></use>
+<use x=".457612" y="-4.51461" href="#tz_fig_bonding_g1-109"></use>
+<use x="6.788062" y="-4.51461" href="#tz_fig_bonding_g1-98"></use>
+<use x="11.188252" y="-4.51461" href="#tz_fig_bonding_g1-114"></use>
+<use x="14.301595" y="-4.51461" href="#tz_fig_bonding_g1-111"></use>
+<use x="18.272835" y="-4.51461" href="#tz_fig_bonding_g1-115"></use>
+<use x="21.429076" y="-4.51461" href="#tz_fig_bonding_g1-41"></use>
+</g>
+</g>
+</g>
+</g>
+<g fill="#d7433b" stroke="#d7433b">
+<g fill="#d7433b" stroke="#d7433b">
+</g>
+<g transform="translate(-3.33424,-64.34595)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-39.469254,-4.51461)scale(-1,-1)">
+<g fill="#d7433b">
+<g stroke="none">
+<g fill="#d7433b">
+<use x="-39.469254" y="-4.51461" href="#tz_fig_bonding_g1-115"></use>
+<use x="-36.313013" y="-4.51461" href="#tz_fig_bonding_g1-111"></use>
+<use x="-32.341773" y="-4.51461" href="#tz_fig_bonding_g1-109"></use>
+<use x="-25.79684" y="-4.51461" href="#tz_fig_bonding_g1-97"></use>
+<use x="-19.141208" y="-4.51461" href="#tz_fig_bonding_g0-101"></use>
+<use x="-15.01017" y="-4.51461" href="#tz_fig_bonding_g0-110"></use>
+<use x="-10.248864" y="-4.51461" href="#tz_fig_bonding_g0-116"></use>
+<use x="-6.725973" y="-4.51461" href="#tz_fig_bonding_g0-114"></use>
+<use x="-2.998284" y="-4.51461" href="#tz_fig_bonding_g0-101"></use>
+<use x="4.160281" y="-4.51461" href="#tz_fig_bonding_g0-13"></use>
+<use x="9.224604" y="-4.51461" href="#tz_fig_bonding_g0-117"></use>
+<use x="14.233592" y="-4.51461" href="#tz_fig_bonding_g0-120"></use>
+<use x="18.994899" y="-4.51461" href="#tz_fig_bonding_g0-111"></use>
+<use x="23.508524" y="-4.51461" href="#tz_fig_bonding_g0-115"></use>
+<use x="27.080957" y="-4.51461" href="#tz_fig_bonding_g1-59"></use>
+<use x="32.020794" y="-4.51461" href="#tz_fig_bonding_g1-49"></use>
+<use x="38.676426" y="-4.51461" href="#tz_fig_bonding_g1-13"></use>
+<use x="43.187311" y="-4.51461" href="#tz_fig_bonding_g1-117"></use>
+<use x="47.5875" y="-4.51461" href="#tz_fig_bonding_g1-120"></use>
+<use x="51.773221" y="-4.51461" href="#tz_fig_bonding_g1-111"></use>
+<use x="58.428853" y="-4.51461" href="#tz_fig_bonding_g1-61"></use>
+<use x="67.229229" y="-4.51461" href="#tz_fig_bonding_g1-49"></use>
+<use x="73.884861" y="-4.51461" href="#tz_fig_bonding_g1-109"></use>
+<use x="80.429794" y="-4.51461" href="#tz_fig_bonding_g1-101"></use>
+<use x="83.972085" y="-4.51461" href="#tz_fig_bonding_g1-109"></use>
+<use x="90.302536" y="-4.51461" href="#tz_fig_bonding_g1-98"></use>
+<use x="94.702725" y="-4.51461" href="#tz_fig_bonding_g1-114"></use>
+<use x="97.816068" y="-4.51461" href="#tz_fig_bonding_g1-111"></use>
+<use x="104.4717" y="-4.51461" href="#tz_fig_bonding_g1-40"></use>
+<use x="107.585043" y="-4.51461" href="#tz_fig_bonding_g1-104"></use>
+<use x="111.985232" y="-4.51461" href="#tz_fig_bonding_g1-97"></use>
+<use x="115.956473" y="-4.51461" href="#tz_fig_bonding_g1-115"></use>
+<use x="119.112714" y="-4.51461" href="#tz_fig_bonding_g1-104"></use>
+<use x="123.512903" y="-4.51461" href="#tz_fig_bonding_g1-105"></use>
+<use x="125.768348" y="-4.51461" href="#tz_fig_bonding_g1-110"></use>
+<use x="130.168538" y="-4.51461" href="#tz_fig_bonding_g1-103"></use>
+<use x="134.139778" y="-4.51461" href="#tz_fig_bonding_g1-41"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+<div id="fig-bonding" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bonding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<p>Quatro enlaces agregados: muitos fluxos se espalham pelos membros (capacidade somada), mas <strong>cada</strong> fluxo individual trafega por <strong>um</strong> membro. Bonding escala o <strong>agregado</strong>, não o fluxo único — a fonte nº 1 de expectativa frustrada.</p>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-bonding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;68.1
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="os-modos-lacp-balance-xor-active-backup" class="level2" data-number="68.2">
+<h2 data-number="68.2" class="anchored" data-anchor-id="os-modos-lacp-balance-xor-active-backup"><span class="header-section-number">68.2</span> Os modos: LACP, balance-xor, active-backup</h2>
+<ul>
+<li><strong>802.3ad (LACP)</strong>: o padrão de mercado. Os dois lados <strong>negociam</strong> a agregação dinamicamente (o LACP detecta membros saudáveis e os agrupa). Exige que o <strong>outro lado também fale LACP</strong> (switch gerenciável, configurado em <em>port-channel</em>/<em>LAG</em>). Preferível sempre que possível;</li>
+<li><strong>balance-xor</strong>: distribui por hashing <strong>sem</strong> negociação — estático. Funciona quando o outro lado não faz LACP, mas ambos precisam estar configurados de forma compatível;</li>
+<li><strong>active-backup</strong>: <strong>sem</strong> soma de banda — só <strong>redundância</strong>. Um membro ativo, os outros em espera; se o ativo cai, outro assume. Não exige nada especial do outro lado; bom para redundância pura de caminho.</li>
+</ul>
+<p>A escolha: <strong>LACP</strong> para agregar banda + redundância com um switch gerenciável; <strong>active-backup</strong> para redundância simples de cabo/porta sem exigência do outro lado; <strong>balance-xor</strong> como meio-termo estático.</p>
+</section>
+<section id="configurando-um-bond-lacp" class="level2" data-number="68.3">
+<h2 data-number="68.3" class="anchored" data-anchor-id="configurando-um-bond-lacp"><span class="header-section-number">68.3</span> Configurando um bond LACP</h2>
+<pre class="routeros"><code># agrega ether3 e ether4 num bond LACP
+/interface bonding
+add name=bond-uplink slaves=ether3,ether4 mode=802.3ad \
+    transmit-hash-policy=layer-2-and-3 lacp-rate=1sec
+
+# use o bond como uma interface normal (endereço, bridge, etc.)
+/ip address add address=10.0.0.1/30 interface=bond-uplink</code></pre>
+<ul>
+<li><code>mode=802.3ad</code> (LACP) — o outro lado (switch) precisa ter o <em>port-channel</em> correspondente;</li>
+<li><code>transmit-hash-policy</code> define <strong>como</strong> os fluxos são distribuídos (<code>layer-2-and-3</code> = por MAC+IP; <code>layer-3-and-4</code> inclui porta, melhor distribuição). Escolha conforme a diversidade do tráfego;</li>
+<li><code>lacp-rate=1sec</code> = detecção mais rápida de membro caído.</li>
+</ul>
+</section>
+<section id="verificação-e-failover" class="level2" data-number="68.4">
+<h2 data-number="68.4" class="anchored" data-anchor-id="verificação-e-failover"><span class="header-section-number">68.4</span> Verificação e failover</h2>
+<pre class="routeros"><code>/interface bonding monitor bond-uplink</code></pre>
+<p>Mostra o estado de cada membro (LACP negociado, ativo). Para testar o failover, derrube <strong>um</strong> membro (desconecte um cabo) e confirme que o bond <strong>permanece up</strong> com banda reduzida — a redundância em ação. Some ao tráfego real e observe pelo Torch (<a href="../v13-monitoramento/03-torch-sniffer-profile.html" class="quarto-xref"><span>Capítulo 65</span></a>) como os fluxos se distribuem entre os membros.</p>
 <div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -823,308 +1034,9 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>A sintaxe do RouterOS script é <strong>exigente e sem perdão</strong>: <code>:set x 5</code> (não <code>x = 5</code>), o <code>$</code> <strong>só</strong> para <strong>ler</strong> a variável (<code>:put $x</code>), espaços ao redor de operadores importam, e <code>{ }</code> de blocos têm regras próprias. Erros de sintaxe costumam falhar em silêncio ou com mensagens crípticas. <strong>Teste incrementalmente</strong> — linha a linha no terminal antes de montar o script inteiro.</p>
+<p><strong>Modo divergente entre os lados</strong> é o erro nº 1: um lado em LACP e o outro em balance-xor (ou em port-channel estático) causa loops, flapping ou um bond que “sobe mas não passa tráfego direito”. Os <strong>dois lados</strong> precisam concordar no modo. E não prometa “4 Gbps de download” ao vender um bond de 4×1 Gbps — um único fluxo continua limitado a <strong>um</strong> membro; a expectativa errada gera reclamação legítima.</p>
 </div>
 </div>
-</section>
-<section id="condicionais-e-a-estrutura-do-controle" class="level2" data-number="60.2">
-<h2 data-number="60.2" class="anchored" data-anchor-id="condicionais-e-a-estrutura-do-controle"><span class="header-section-number">60.2</span> Condicionais e a estrutura do controle</h2>
-<pre class="routeros"><code>:local sinal -65
-:if ($sinal &lt; -70) do={
-    :log warning "Sinal fraco: $sinal dBm"
-} else={
-    :log info "Sinal ok: $sinal dBm"
-}</code></pre>
-<p>Note a interpolação: dentro de <code>"..."</code>, <code>$sinal</code> é <strong>substituído</strong> pelo valor. É assim que se montam mensagens de log e e-mail.</p>
-</section>
-<section id="loops-e-a-operação-sobre-itens-de-menu" class="level2" data-number="60.3">
-<h2 data-number="60.3" class="anchored" data-anchor-id="loops-e-a-operação-sobre-itens-de-menu"><span class="header-section-number">60.3</span> Loops e a operação sobre itens de menu</h2>
-<p>O coração do RouterOS script é <strong>agir sobre os itens</strong> de um menu. Duas peças fazem isso: <strong><code>find</code></strong> (retorna os itens que casam um critério) e <strong><code>:foreach</code></strong> (percorre e age). Exemplo: desabilitar todas as interfaces cujo comentário contém “teste”:</p>
-<pre class="routeros"><code>:foreach i in=[/interface find where comment~"teste"] do={
-    /interface disable $i
-    :log info "desabilitada: $[/interface get $i name]"
-}</code></pre>
-<ul>
-<li><code>[/interface find where ...]</code> retorna um <strong>array</strong> de referências internas;</li>
-<li><code>/interface get $i name</code> <strong>lê</strong> um campo daquele item;</li>
-<li><code>/interface disable $i</code> <strong>age</strong> sobre ele.</li>
-</ul>
-<p>Esse padrão — <code>find</code> → <code>foreach</code> → <code>get</code>/<code>set</code>/ação — é 80% dos scripts úteis de RouterOS. O <code>:for</code> numérico também existe para contagens:</p>
-<pre class="routeros"><code>:for n from=1 to=5 do={ :log info "iteracao $n" }</code></pre>
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="168.427377pt" height="171.672588pt" viewbox="-68.014948 -68.014948 168.427377 171.672588">
-<defs>
-<path id="tz_fig_script_loop_g0-12" d="M2.719801-3.02665C2.643088-3.019676 2.608219-3.019676 2.594271-3.012702S2.566376-3.005729 2.468742-3.005729H1.3599V-3.765878C1.3599-4.456289 2.078207-4.714321 2.559402-4.714321C2.796513-4.714321 3.033624-4.665504 3.214944-4.519054C2.963885-4.463263 2.942964-4.267995 2.942964-4.184309C2.942964-3.96812 3.11731-3.84259 3.284682-3.84259C3.410212-3.84259 3.626401-3.926276 3.626401-4.198257C3.626401-4.581818 3.235866-4.909589 2.587298-4.909589C1.862017-4.909589 .864757-4.581818 .864757-3.772852V-3.005729H.265006V-2.75467H.864757V-.550934C.864757-.251059 .795019-.251059 .341719-.251059V0C.355666 0 .843836-.027895 1.12279-.027895C1.387796-.027895 1.645828-.020922 1.910834 0V-.251059C1.457534-.251059 1.387796-.251059 1.387796-.550934V-2.75467H2.775592C3.061519-2.75467 3.11731-2.684932 3.11731-2.378082V-.550934C3.11731-.251059 3.047572-.251059 2.594271-.251059V0C2.608219 0 3.096389-.027895 3.375342-.027895C3.640349-.027895 3.898381-.020922 4.163387 0V-.251059C3.710087-.251059 3.640349-.251059 3.640349-.550934V-3.089415L2.719801-3.02665Z"></path>
-<path id="tz_fig_script_loop_g0-19" d="M1.799253-3.528767C2.343213-3.926276 2.768618-4.219178 2.901121-4.323786C3.012702-4.400498 3.075467-4.449315 3.075467-4.581818S2.956912-4.867746 2.789539-4.867746C2.677958-4.867746 2.622167-4.804981 2.552428-4.728269L1.638854-3.710087L1.799253-3.528767Z"></path>
-<path id="tz_fig_script_loop_g0-40" d="M2.475716-5.230386C1.150685-4.29589 .801993-2.817435 .801993-1.750436C.801993-.767123 1.094894 .760149 2.475716 1.736488C2.531507 1.736488 2.615193 1.736488 2.615193 1.652802C2.615193 1.610959 2.594271 1.597011 2.545455 1.548194C1.617933 .711333 1.276214-.474222 1.276214-1.743462C1.276214-3.626401 1.994521-4.546949 2.566376-5.063014C2.594271-5.090909 2.615193-5.111831 2.615193-5.1467C2.615193-5.230386 2.531507-5.230386 2.475716-5.230386Z"></path>
-<path id="tz_fig_script_loop_g0-41" d="M.627646-5.230386C.578829-5.230386 .495143-5.230386 .495143-5.1467C.495143-5.111831 .516065-5.090909 .557908-5.042092C1.157659-4.491158 1.827148-3.549689 1.827148-1.750436C1.827148-.292902 1.373848 .808966 .620672 1.492403C.502117 1.610959 .495143 1.617933 .495143 1.652802S.516065 1.736488 .585803 1.736488C.669489 1.736488 1.332005 1.276214 1.792279 .404483C2.099128-.174346 2.30137-.927522 2.30137-1.743462C2.30137-2.726775 2.008468-4.254047 .627646-5.230386Z"></path>
-<path id="tz_fig_script_loop_g0-46" d="M1.527273-.397509C1.527273-.641594 1.332005-.801993 1.129763-.801993C.885679-.801993 .72528-.606725 .72528-.404483C.72528-.160399 .920548 0 1.12279 0C1.366874 0 1.527273-.195268 1.527273-.397509Z"></path>
-<path id="tz_fig_script_loop_g0-47" d="M3.438107-4.930511C3.472976-5.014197 3.472976-5.042092 3.472976-5.05604C3.472976-5.174595 3.375342-5.230386 3.305604-5.230386C3.187049-5.230386 3.152179-5.1467 3.11731-5.05604L.523039 1.443587C.488169 1.527273 .488169 1.555168 .488169 1.569116C.488169 1.687671 .585803 1.743462 .655542 1.743462C.774097 1.743462 .808966 1.659776 .843836 1.569116L3.438107-4.930511Z"></path>
-<path id="tz_fig_script_loop_g0-58" d="M1.527273-2.601245C1.527273-2.84533 1.332005-3.005729 1.129763-3.005729C.885679-3.005729 .72528-2.810461 .72528-2.608219C.72528-2.364134 .920548-2.203736 1.12279-2.203736C1.366874-2.203736 1.527273-2.399004 1.527273-2.601245ZM1.527273-.397509C1.527273-.641594 1.332005-.801993 1.129763-.801993C.885679-.801993 .72528-.606725 .72528-.404483C.72528-.160399 .920548 0 1.12279 0C1.366874 0 1.527273-.195268 1.527273-.397509Z"></path>
-<path id="tz_fig_script_loop_g0-97" d="M3.110336-1.868991C3.110336-2.238605 3.110336-2.503611 2.789539-2.761644C2.503611-2.998755 2.168867-3.110336 1.75741-3.110336C1.094894-3.110336 .627646-2.859278 .627646-2.433873C.627646-2.21071 .781071-2.092154 .962391-2.092154C1.150685-2.092154 1.290162-2.231631 1.290162-2.419925C1.290162-2.538481 1.234371-2.684932 1.046077-2.740722C1.297136-2.915068 1.701619-2.915068 1.743462-2.915068C2.133998-2.915068 2.559402-2.657036 2.559402-2.071233V-1.855044C2.175841-1.841096 1.715567-1.820174 1.206476-1.63188C.578829-1.401743 .383562-1.018182 .383562-.704359C.383562-.104608 1.108842 .069738 1.603985 .069738C2.161893 .069738 2.489664-.244085 2.636115-.516065C2.66401-.230137 2.852304 .034869 3.173101 .034869C3.187049 .034869 3.863512 .034869 3.863512-.627646V-1.011208H3.626401V-.63462C3.626401-.564882 3.626401-.230137 3.368369-.230137S3.110336-.557908 3.110336-.648568V-1.868991ZM2.559402-.983313C2.559402-.313823 1.973599-.125529 1.659776-.125529C1.30411-.125529 .969365-.36264 .969365-.704359C.969365-1.08792 1.30411-1.624907 2.559402-1.673724V-.983313Z"></path>
-<path id="tz_fig_script_loop_g0-98" d="M1.387796-4.839851L.341719-4.763138V-4.51208C.81594-4.51208 .864757-4.456289 .864757-4.107597V0H1.101868L1.345953-.425405C1.610959-.076712 1.994521 .069738 2.364134 .069738C3.284682 .069738 4.072727-.620672 4.072727-1.506351C4.072727-2.357161 3.354421-3.075467 2.440847-3.075467C2.022416-3.075467 1.638854-2.908095 1.387796-2.657036V-4.839851ZM1.415691-2.336239C1.610959-2.657036 1.987547-2.880199 2.405978-2.880199C2.796513-2.880199 3.075467-2.657036 3.214944-2.447821C3.354421-2.245579 3.438107-1.973599 3.438107-1.513325C3.438107-1.352927 3.438107-.829888 3.152179-.502117C2.873225-.188294 2.531507-.125529 2.329265-.125529C1.771357-.125529 1.492403-.564882 1.415691-.711333V-2.336239Z"></path>
-<path id="tz_fig_script_loop_g0-99" d="M2.712827-2.782565C2.587298-2.726775 2.517559-2.615193 2.517559-2.475716C2.517559-2.287422 2.650062-2.147945 2.84533-2.147945C3.033624-2.147945 3.180075-2.266501 3.180075-2.489664C3.180075-3.110336 2.21071-3.110336 2.015442-3.110336C.969365-3.110336 .320797-2.308344 .320797-1.506351C.320797-.627646 1.066999 .069738 1.980573 .069738C3.019676 .069738 3.263761-.753176 3.263761-.836862S3.173101-.920548 3.145205-.920548C3.054545-.920548 3.047572-.899626 3.012702-.801993C2.859278-.369614 2.489664-.153425 2.064259-.153425C1.583064-.153425 .955417-.509091 .955417-1.513325C.955417-2.399004 1.387796-2.887173 2.036364-2.887173C2.127024-2.887173 2.461768-2.887173 2.712827-2.782565Z"></path>
-<path id="tz_fig_script_loop_g0-100" d="M2.48269-4.763138V-4.51208C2.949938-4.51208 3.005729-4.463263 3.005729-4.121544V-2.677958C2.747696-2.929016 2.412951-3.075467 2.02939-3.075467C1.101868-3.075467 .320797-2.378082 .320797-1.499377C.320797-.627646 1.060025 .069738 1.945704 .069738C2.517559 .069738 2.859278-.237111 2.977833-.36264V.069738L4.051806 0V-.251059C3.584558-.251059 3.528767-.299875 3.528767-.641594V-4.839851L2.48269-4.763138ZM2.977833-.732254C2.796513-.404483 2.440847-.125529 1.987547-.125529C1.597011-.125529 1.318057-.355666 1.17858-.557908C1.039103-.767123 .955417-1.046077 .955417-1.492403C.955417-1.652802 .955417-2.175841 1.241345-2.503611C1.520299-2.817435 1.862017-2.880199 2.064259-2.880199C2.399004-2.880199 2.698879-2.726775 2.894147-2.475716C2.977833-2.364134 2.977833-2.357161 2.977833-2.224658V-.732254Z"></path>
-<path id="tz_fig_script_loop_g0-101" d="M3.068493-1.590037C3.214944-1.590037 3.263761-1.590037 3.263761-1.743462C3.263761-2.357161 2.922042-3.110336 1.882939-3.110336C.969365-3.110336 .27198-2.385056 .27198-1.527273C.27198-.641594 1.046077 .069738 1.973599 .069738C2.915068 .069738 3.263761-.683437 3.263761-.836862C3.263761-.864757 3.249813-.934496 3.145205-.934496C3.054545-.934496 3.040598-.892653 3.019676-.822914C2.803487-.258032 2.273474-.153425 2.022416-.153425C1.694645-.153425 1.380822-.299875 1.171606-.564882C.913574-.892653 .9066-1.318057 .9066-1.590037H3.068493ZM.913574-1.771357C.990286-2.75467 1.617933-2.915068 1.882939-2.915068C2.740722-2.915068 2.768618-1.945704 2.775592-1.771357H.913574Z"></path>
-<path id="tz_fig_script_loop_g0-102" d="M1.436613-2.75467H2.308344V-3.005729H1.408717V-3.7868C1.408717-4.42142 1.785305-4.714321 2.085181-4.714321C2.147945-4.714321 2.217684-4.700374 2.287422-4.679452C2.189788-4.623661 2.133998-4.51208 2.133998-4.400498C2.133998-4.212204 2.266501-4.079701 2.454795-4.079701S2.775592-4.212204 2.775592-4.400498C2.775592-4.700374 2.475716-4.909589 2.092154-4.909589C1.54122-4.909589 .913574-4.519054 .913574-3.7868V-3.005729H.313823V-2.75467H.913574V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.425405 0 .899626-.027895 1.185554-.027895C1.48543-.027895 1.792279-.013948 2.092154 0V-.251059H1.952677C1.436613-.251059 1.436613-.327771 1.436613-.564882V-2.75467Z"></path>
-<path id="tz_fig_script_loop_g0-103" d="M1.004234-1.241345C1.108842-1.17858 1.3599-1.025156 1.764384-1.025156C2.48269-1.025156 3.005729-1.506351 3.005729-2.050311C3.005729-2.322291 2.880199-2.538481 2.712827-2.719801C3.02665-2.942964 3.29863-2.949938 3.417186-2.949938C3.38929-2.922042 3.354421-2.894147 3.354421-2.782565C3.354421-2.643088 3.459029-2.559402 3.577584-2.559402C3.675218-2.559402 3.800747-2.629141 3.800747-2.789539S3.668244-3.145205 3.38929-3.145205C3.284682-3.145205 2.908095-3.124284 2.580324-2.824408C2.371108-2.977833 2.078207-3.075467 1.771357-3.075467C1.053051-3.075467 .530012-2.594271 .530012-2.050311C.530012-1.778331 .669489-1.527273 .864757-1.345953C.808966-1.283188 .655542-1.053051 .655542-.781071C.655542-.690411 .676463-.36264 .948443-.160399C.63462-.055791 .27198 .174346 .27198 .536986C.27198 1.046077 1.039103 1.429639 1.980573 1.429639C2.866252 1.429639 3.689166 1.080946 3.689166 .523039C3.689166 .313823 3.605479-.062765 3.221918-.27198C2.810461-.488169 2.399004-.488169 1.72254-.488169C1.569116-.488169 1.318057-.488169 1.262267-.495143C1.039103-.54396 .913574-.753176 .913574-.955417C.913574-1.129763 .962391-1.185554 1.004234-1.241345ZM1.771357-1.234371C1.08792-1.234371 1.08792-1.903861 1.08792-2.050311C1.08792-2.161893 1.08792-2.440847 1.227397-2.622167C1.325031-2.740722 1.513325-2.866252 1.764384-2.866252C2.447821-2.866252 2.447821-2.196762 2.447821-2.050311C2.447821-1.93873 2.447821-1.659776 2.308344-1.478456C2.21071-1.3599 2.022416-1.234371 1.771357-1.234371ZM1.771357-.020922C2.39203-.020922 3.263761-.020922 3.263761 .530012C3.263761 .899626 2.712827 1.220423 1.980573 1.220423S.697385 .892653 .697385 .530012C.697385 .285928 .920548-.013948 1.366874-.020922H1.771357Z"></path>
-<path id="tz_fig_script_loop_g0-104" d="M3.591532-2.113076C3.591532-2.719801 3.291656-3.075467 2.545455-3.075467C1.924782-3.075467 1.583064-2.705853 1.429639-2.440847H1.422665V-4.839851L.376588-4.763138V-4.51208C.843836-4.51208 .899626-4.463263 .899626-4.121544V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-2.113076Z"></path>
-<path id="tz_fig_script_loop_g0-105" d="M1.471482-4.302864C1.471482-4.505106 1.30411-4.700374 1.066999-4.700374C.857783-4.700374 .669489-4.533001 .669489-4.302864C.669489-4.051806 .871731-3.898381 1.066999-3.898381C1.290162-3.898381 1.471482-4.072727 1.471482-4.302864ZM.411457-2.998755V-2.747696C.850809-2.747696 .913574-2.705853 .913574-2.364134V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.415691-.027895 1.66675-.020922 1.910834 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.54396V-3.075467L.411457-2.998755Z"></path>
-<path id="tz_fig_script_loop_g0-108" d="M1.436613-4.839851L.390535-4.763138V-4.51208C.857783-4.51208 .913574-4.463263 .913574-4.121544V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.436613-.027895 1.694645-.020922 1.959651 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.550934V-4.839851Z"></path>
-<path id="tz_fig_script_loop_g0-109" d="M5.732503-2.113076C5.732503-2.719801 5.432628-3.075467 4.686426-3.075467C4.135492-3.075467 3.758904-2.775592 3.57061-2.426899C3.431133-2.922042 3.054545-3.075467 2.545455-3.075467C1.973599-3.075467 1.603985-2.761644 1.408717-2.399004H1.401743V-3.075467L.376588-2.998755V-2.747696C.843836-2.747696 .899626-2.698879 .899626-2.357161V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-1.806227C3.591532-2.538481 4.170361-2.880199 4.630635-2.880199C5.118804-2.880199 5.181569-2.496638 5.181569-2.140971V-.550934C5.181569-.251059 5.111831-.251059 4.658531-.251059V0C4.672478 0 5.160648-.027895 5.453549-.027895C5.711582-.027895 6.192777-.006974 6.255542 0V-.251059C5.802242-.251059 5.732503-.251059 5.732503-.550934V-2.113076Z"></path>
-<path id="tz_fig_script_loop_g0-110" d="M3.591532-2.113076C3.591532-2.719801 3.291656-3.075467 2.545455-3.075467C1.973599-3.075467 1.603985-2.761644 1.408717-2.399004H1.401743V-3.075467L.376588-2.998755V-2.747696C.843836-2.747696 .899626-2.698879 .899626-2.357161V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-2.113076Z"></path>
-<path id="tz_fig_script_loop_g0-111" d="M3.689166-1.48543C3.689166-2.357161 2.942964-3.110336 1.980573-3.110336S.27198-2.357161 .27198-1.48543C.27198-.620672 1.039103 .069738 1.980573 .069738S3.689166-.620672 3.689166-1.48543ZM1.980573-.153425C1.72254-.153425 1.345953-.237111 1.115816-.578829C.927522-.864757 .9066-1.227397 .9066-1.548194C.9066-1.84807 .913574-2.259527 1.157659-2.559402C1.332005-2.761644 1.624907-2.915068 1.980573-2.915068C2.39203-2.915068 2.684932-2.719801 2.838356-2.503611C3.033624-2.231631 3.054545-1.882939 3.054545-1.548194S3.033624-.843836 2.831382-.557908C2.643088-.292902 2.322291-.153425 1.980573-.153425Z"></path>
-<path id="tz_fig_script_loop_g0-112" d="M1.93873 1.101868C1.48543 1.101868 1.415691 1.101868 1.415691 .801993V-.334745C1.45056-.299875 1.778331 .069738 2.364134 .069738C3.284682 .069738 4.072727-.620672 4.072727-1.506351C4.072727-2.364134 3.361395-3.075467 2.475716-3.075467C2.078207-3.075467 1.673724-2.929016 1.387796-2.650062V-3.075467L.341719-2.998755V-2.747696C.829888-2.747696 .864757-2.712827 .864757-2.419925V.801993C.864757 1.101868 .795019 1.101868 .341719 1.101868V1.352927C.355666 1.352927 .843836 1.325031 1.136737 1.325031C1.39477 1.325031 1.875965 1.345953 1.93873 1.352927V1.101868ZM1.415691-2.322291C1.624907-2.670984 2.02939-2.852304 2.399004-2.852304C2.984807-2.852304 3.438107-2.238605 3.438107-1.506351C3.438107-.711333 2.915068-.125529 2.322291-.125529C1.708593-.125529 1.436613-.662516 1.415691-.704359V-2.322291Z"></path>
-<path id="tz_fig_script_loop_g0-114" d="M1.387796-1.590037C1.387796-2.175841 1.659776-2.880199 2.322291-2.880199C2.259527-2.831382 2.203736-2.740722 2.203736-2.629141C2.203736-2.399004 2.385056-2.308344 2.517559-2.308344C2.684932-2.308344 2.838356-2.419925 2.838356-2.629141C2.838356-2.866252 2.615193-3.075467 2.287422-3.075467C1.93873-3.075467 1.555168-2.859278 1.345953-2.329265H1.338979V-3.075467L.341719-2.998755V-2.747696C.808966-2.747696 .864757-2.698879 .864757-2.357161V-.550934C.864757-.251059 .795019-.251059 .341719-.251059V0C.376588 0 .850809-.027895 1.136737-.027895C1.436613-.027895 1.743462-.013948 2.043337 0V-.251059H1.903861C1.387796-.251059 1.387796-.327771 1.387796-.564882V-1.590037Z"></path>
-<path id="tz_fig_script_loop_g0-115" d="M2.643088-2.929016C2.643088-3.047572 2.643088-3.110336 2.545455-3.110336C2.510585-3.110336 2.496638-3.110336 2.405978-3.02665C2.39203-3.019676 2.322291-2.956912 2.280448-2.922042C2.071233-3.068493 1.806227-3.110336 1.548194-3.110336C.550934-3.110336 .313823-2.587298 .313823-2.238605C.313823-2.015442 .411457-1.834122 .578829-1.694645C.843836-1.464508 1.108842-1.415691 1.54122-1.345953C1.889913-1.283188 2.454795-1.185554 2.454795-.718306C2.454795-.446326 2.266501-.125529 1.597011-.125529S.683437-.564882 .557908-1.039103C.536986-1.129763 .530012-1.157659 .432379-1.157659C.313823-1.157659 .313823-1.108842 .313823-.969365V-.111582C.313823 .006974 .313823 .069738 .411457 .069738C.474222 .069738 .606725-.076712 .746202-.230137C1.053051 .055791 1.429639 .069738 1.597011 .069738C2.503611 .069738 2.838356-.418431 2.838356-.913574C2.838356-1.17858 2.719801-1.387796 2.538481-1.555168C2.273474-1.799253 1.952677-1.855044 1.708593-1.896887C1.150685-1.994521 .697385-2.078207 .697385-2.447821C.697385-2.670984 .885679-2.942964 1.548194-2.942964C2.357161-2.942964 2.39203-2.378082 2.405978-2.175841C2.412951-2.099128 2.496638-2.099128 2.524533-2.099128C2.643088-2.099128 2.643088-2.147945 2.643088-2.280448V-2.929016Z"></path>
-<path id="tz_fig_script_loop_g0-116" d="M1.401743-2.75467H2.489664V-3.005729H1.401743V-4.288917H1.164633C1.157659-3.66127 .871731-2.970859 .202242-2.949938V-2.75467H.850809V-.871731C.850809-.09066 1.436613 .069738 1.827148 .069738C2.294396 .069738 2.615193-.327771 2.615193-.878705V-1.262267H2.378082V-.885679C2.378082-.411457 2.154919-.153425 1.882939-.153425C1.401743-.153425 1.401743-.739228 1.401743-.864757V-2.75467Z"></path>
-<path id="tz_fig_script_loop_g0-119" d="M4.881694-2.329265C5.021171-2.677958 5.251308-2.747696 5.467497-2.75467V-3.005729C5.279203-2.984807 5.167621-2.977833 4.96538-2.977833C4.756164-2.977833 4.491158-2.984807 4.281943-3.005729V-2.75467C4.526027-2.747696 4.644583-2.615193 4.644583-2.447821C4.644583-2.39203 4.644583-2.378082 4.60274-2.280448L3.926276-.54396L3.173101-2.447821C3.159153-2.48269 3.138232-2.538481 3.138232-2.580324C3.138232-2.733748 3.319552-2.75467 3.514819-2.75467V-3.005729C3.263761-2.984807 3.012702-2.977833 2.761644-2.977833C2.559402-2.977833 2.350187-2.991781 2.147945-3.005729V-2.75467C2.308344-2.75467 2.454795-2.75467 2.545455-2.698879C2.643088-2.629141 2.705853-2.399004 2.705853-2.39203C2.705853-2.378082 2.691905-2.336239 2.677958-2.308344L2.022416-.648568L1.318057-2.447821C1.276214-2.545455 1.276214-2.552428 1.276214-2.580324C1.276214-2.75467 1.527273-2.75467 1.652802-2.75467V-3.005729C1.638854-3.005729 1.143711-2.977833 .864757-2.977833C.648568-2.977833 .425405-2.984807 .209215-3.005729V-2.75467C.481196-2.75467 .63462-2.75467 .711333-2.552428L1.680697-.09066C1.72254 .013948 1.743462 .069738 1.868991 .069738S2.015442 .013948 2.050311-.076712L2.838356-2.071233L3.612453-.097634C3.654296 .006974 3.682192 .069738 3.807721 .069738S3.954172 .020922 3.996015-.09066L4.881694-2.329265Z"></path>
-<path id="tz_fig_script_loop_g0-120" d="M2.364134-1.562142C2.357161-1.569116 2.308344-1.624907 2.308344-1.63188C2.308344-1.652802 2.768618-2.147945 2.831382-2.21071C3.075467-2.48269 3.319552-2.747696 3.870486-2.75467V-3.005729C3.675218-2.991781 3.472976-2.977833 3.284682-2.977833C3.075467-2.977833 2.803487-2.984807 2.594271-3.005729V-2.75467C2.712827-2.733748 2.733748-2.657036 2.733748-2.594271C2.733748-2.580324 2.733748-2.475716 2.629141-2.357161L2.140971-1.806227L1.562142-2.468742C1.492403-2.545455 1.48543-2.580324 1.48543-2.608219C1.48543-2.712827 1.583064-2.75467 1.673724-2.75467V-3.005729C1.415691-2.984807 1.150685-2.977833 .892653-2.977833C.683437-2.977833 .418431-2.984807 .216189-3.005729V-2.75467C.536986-2.75467 .718306-2.75467 .899626-2.545455L1.771357-1.54122C1.778331-1.534247 1.827148-1.478456 1.827148-1.471482C1.827148-1.45056 1.30411-.878705 1.234371-.801993C.976339-.523039 .739228-.265006 .18132-.251059V0C.390535-.013948 .54396-.027895 .760149-.027895C.969365-.027895 1.248319-.020922 1.457534 0V-.251059C1.373848-.265006 1.318057-.313823 1.318057-.411457C1.318057-.54396 1.39477-.63462 1.506351-.753176L1.994521-1.290162L2.601245-.599751C2.733748-.4533 2.733748-.439352 2.733748-.397509C2.733748-.258032 2.57335-.251059 2.545455-.251059V0C2.608219-.006974 3.110336-.027895 3.333499-.027895S3.779826-.020922 4.002989 0V-.251059C3.535741-.251059 3.47995-.292902 3.319552-.474222L2.364134-1.562142Z"></path>
-<path id="tz_fig_script_loop_g0-121" d="M3.29863-2.322291C3.493898-2.747696 3.849564-2.75467 3.961146-2.75467V-3.005729C3.765878-2.991781 3.633375-2.977833 3.431133-2.977833C3.242839-2.977833 2.984807-2.984807 2.796513-3.005729V-2.75467C3.02665-2.740722 3.082441-2.601245 3.082441-2.489664C3.082441-2.405978 3.047572-2.343213 3.019676-2.273474L2.245579-.620672L1.387796-2.461768C1.366874-2.503611 1.345953-2.545455 1.345953-2.594271C1.345953-2.75467 1.583064-2.75467 1.701619-2.75467V-3.005729C1.597011-2.998755 1.094894-2.977833 .899626-2.977833C.690411-2.977833 .418431-2.984807 .216189-3.005729V-2.75467C.606725-2.75467 .683437-2.733748 .788045-2.510585L1.959651 0C1.896887 .139477 1.827148 .27198 1.764384 .411457C1.610959 .746202 1.387796 1.227397 .913574 1.227397C.739228 1.227397 .683437 1.192528 .613699 1.143711C.620672 1.143711 .81594 1.073973 .81594 .843836C.81594 .669489 .690411 .54396 .516065 .54396C.334745 .54396 .209215 .669489 .209215 .850809C.209215 1.17858 .536986 1.422665 .913574 1.422665C1.506351 1.422665 1.84807 .801993 1.945704 .592777L3.29863-2.322291Z"></path>
-</defs>
-<g id="tz_fig_script_loop_page1">
-<g stroke-miterlimit="10" transform="translate(-22.048589,-55.059807)scale(0.996264,-0.996264)">
-<g fill="#000" stroke="#000">
-<g stroke-width="0.4">
-<g fill="#e5f0fc">
-<g fill="#ffe4d1">
-<g fill="#e5f0fc">
-<g fill="#ffe4d1">
-<path d="M38.67912 12.80373H-38.67912C-40.88829 12.80373-42.67912 11.0129-42.67912 8.80373V-8.80373C-42.67912-11.0129-40.88829-12.80373-38.67912-12.80373H38.67912C40.88829-12.80373 42.67912-11.0129 42.67912-8.80373V8.80373C42.67912 11.0129 40.88829 12.80373 38.67912 12.80373ZM-42.67912-12.80373"></path>
-</g>
-</g>
-<g transform="translate(-27.17444,-5.55554)">
-<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.048589,-55.059807)scale(-1,-1)">
-<g fill="#000">
-<g stroke="none">
-<use x="-17.84142" y="-63.029919" href="#tz_fig_script_loop_g0-12"></use>
-<use x="-13.330535" y="-63.029919" href="#tz_fig_script_loop_g0-110"></use>
-<use x="-8.930346" y="-63.029919" href="#tz_fig_script_loop_g0-100"></use>
-<use x="-1.845765" y="-63.029919" href="#tz_fig_script_loop_g0-119"></use>
-<use x="3.84127" y="-63.029919" href="#tz_fig_script_loop_g0-104"></use>
-<use x="8.241459" y="-63.029919" href="#tz_fig_script_loop_g0-101"></use>
-<use x="11.783751" y="-63.029919" href="#tz_fig_script_loop_g0-114"></use>
-<use x="14.897094" y="-63.029919" href="#tz_fig_script_loop_g0-101"></use>
-<use x="21.123777" y="-63.029919" href="#tz_fig_script_loop_g0-46"></use>
-<use x="23.379223" y="-63.029919" href="#tz_fig_script_loop_g0-46"></use>
-<use x="25.634669" y="-63.029919" href="#tz_fig_script_loop_g0-46"></use>
-<use x="-22.048589" y="-55.059807" href="#tz_fig_script_loop_g0-40"></use>
-<use x="-18.935246" y="-55.059807" href="#tz_fig_script_loop_g0-97"></use>
-<use x="-14.964006" y="-55.059807" href="#tz_fig_script_loop_g0-114"></use>
-<use x="-11.850663" y="-55.059807" href="#tz_fig_script_loop_g0-114"></use>
-<use x="-8.737319" y="-55.059807" href="#tz_fig_script_loop_g0-97"></use>
-<use x="-4.980561" y="-55.059807" href="#tz_fig_script_loop_g0-121"></use>
-<use x="1.889552" y="-55.059807" href="#tz_fig_script_loop_g0-100"></use>
-<use x="6.289741" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-<use x="12.516425" y="-55.059807" href="#tz_fig_script_loop_g0-105"></use>
-<use x="14.77187" y="-55.059807" href="#tz_fig_script_loop_g0-116"></use>
-<use x="17.885213" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-<use x="21.427505" y="-55.059807" href="#tz_fig_script_loop_g0-110"></use>
-<use x="25.827694" y="-55.059807" href="#tz_fig_script_loop_g0-115"></use>
-<use x="28.983935" y="-55.059807" href="#tz_fig_script_loop_g0-41"></use>
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-<g fill="#e5f0fc">
-<g fill="#e5f0fc">
-<path d="M38.67912-35.96591H-38.67912C-40.88829-35.96591-42.67912-37.75674-42.67912-39.96591V-57.57336C-42.67912-59.78253-40.88829-61.57336-38.67912-61.57336H38.67912C40.88829-61.57336 42.67912-59.78253 42.67912-57.57336V-39.96591C42.67912-37.75674 40.88829-35.96591 38.67912-35.96591ZM-42.67912-61.57336"></path>
-</g>
-<g transform="translate(-22.68066,-51.20018)">
-<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.048589,-55.059807)scale(-1,-1)">
-<g fill="#000">
-<g stroke="none">
-<use x="-22.048589" y="-55.059807" href="#tz_fig_script_loop_g0-58"></use>
-<use x="-19.793143" y="-55.059807" href="#tz_fig_script_loop_g0-102"></use>
-<use x="-17.323217" y="-55.059807" href="#tz_fig_script_loop_g0-111"></use>
-<use x="-13.351976" y="-55.059807" href="#tz_fig_script_loop_g0-114"></use>
-<use x="-10.238633" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-<use x="-6.696341" y="-55.059807" href="#tz_fig_script_loop_g0-97"></use>
-<use x="-2.725101" y="-55.059807" href="#tz_fig_script_loop_g0-99"></use>
-<use x=".602709" y="-55.059807" href="#tz_fig_script_loop_g0-104"></use>
-<use x="7.68729" y="-55.059807" href="#tz_fig_script_loop_g0-105"></use>
-<use x="9.942735" y="-55.059807" href="#tz_fig_script_loop_g0-116"></use>
-<use x="13.056078" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-<use x="16.59837" y="-55.059807" href="#tz_fig_script_loop_g0-109"></use>
-</g>
-</g>
-</g>
-</g>
-</g>
-<g fill="#e5f0fc">
-<g fill="#e5f0fc">
-<path d="M38.67912-84.73555H-38.67912C-40.88829-84.73555-42.67912-86.52638-42.67912-88.73555V-106.343C-42.67912-108.55217-40.88829-110.343-38.67912-110.343H38.67912C40.88829-110.343 42.67912-108.55217 42.67912-106.343V-88.73555C42.67912-86.52638 40.88829-84.73555 38.67912-84.73555ZM-42.67912-110.343"></path>
-</g>
-<g transform="translate(-38.46545,-99.28928)">
-<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.048589,-55.059807)scale(-1,-1)">
-<g fill="#000">
-<g stroke="none">
-<use x="-22.048589" y="-55.059807" href="#tz_fig_script_loop_g0-103"></use>
-<use x="-18.077349" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-<use x="-14.535057" y="-55.059807" href="#tz_fig_script_loop_g0-116"></use>
-<use x="-8.737322" y="-55.059807" href="#tz_fig_script_loop_g0-99"></use>
-<use x="-5.195031" y="-55.059807" href="#tz_fig_script_loop_g0-97"></use>
-<use x="-1.22379" y="-55.059807" href="#tz_fig_script_loop_g0-109"></use>
-<use x="5.321143" y="-55.059807" href="#tz_fig_script_loop_g0-112"></use>
-<use x="9.935799" y="-55.059807" href="#tz_fig_script_loop_g0-111"></use>
-<use x="16.591431" y="-55.059807" href="#tz_fig_script_loop_g0-47"></use>
-<use x="23.247063" y="-55.059807" href="#tz_fig_script_loop_g0-58"></use>
-<use x="25.502508" y="-55.059807" href="#tz_fig_script_loop_g0-105"></use>
-<use x="27.757954" y="-55.059807" href="#tz_fig_script_loop_g0-102"></use>
-<use x="32.912272" y="-55.059807" href="#tz_fig_script_loop_g0-100"></use>
-<use x="37.312461" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-<use x="40.854753" y="-55.059807" href="#tz_fig_script_loop_g0-99"></use>
-<use x="44.397045" y="-55.059807" href="#tz_fig_script_loop_g0-105"></use>
-<use x="46.652491" y="-55.059807" href="#tz_fig_script_loop_g0-100"></use>
-<use x="51.05268" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-</g>
-</g>
-</g>
-</g>
-</g>
-<g fill="#e5f0fc">
-<g fill="#e3f5dd">
-<g fill="#e5f0fc">
-<g fill="#e3f5dd">
-<path d="M41.93874-133.50519H-41.93874C-44.1479-133.50519-45.93874-135.29602-45.93874-137.50519V-155.11264C-45.93874-157.32181-44.1479-159.11264-41.93874-159.11264H41.93874C44.1479-159.11264 45.93874-157.32181 45.93874-155.11264V-137.50519C45.93874-135.29602 44.1479-133.50519 41.93874-133.50519ZM-45.93874-159.11264"></path>
-</g>
-</g>
-<g transform="translate(-42.60576,-148.05891)">
-<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.048589,-55.059807)scale(-1,-1)">
-<g fill="#000">
-<g stroke="none">
-<use x="-22.048589" y="-55.059807" href="#tz_fig_script_loop_g0-115"></use>
-<use x="-18.892349" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-<use x="-15.350057" y="-55.059807" href="#tz_fig_script_loop_g0-116"></use>
-<use x="-9.552322" y="-55.059807" href="#tz_fig_script_loop_g0-47"></use>
-<use x="-2.89669" y="-55.059807" href="#tz_fig_script_loop_g0-100"></use>
-<use x="1.503499" y="-55.059807" href="#tz_fig_script_loop_g0-105"></use>
-<use x="3.758945" y="-55.059807" href="#tz_fig_script_loop_g0-115"></use>
-<use x="6.915185" y="-55.059807" href="#tz_fig_script_loop_g0-97"></use>
-<use x="10.886426" y="-55.059807" href="#tz_fig_script_loop_g0-98"></use>
-<use x="15.286615" y="-55.059807" href="#tz_fig_script_loop_g0-108"></use>
-<use x="17.542061" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-<use x="23.768744" y="-55.059807" href="#tz_fig_script_loop_g0-47"></use>
-<use x="30.424376" y="-55.059807" href="#tz_fig_script_loop_g0-108"></use>
-<use x="32.679822" y="-55.059807" href="#tz_fig_script_loop_g0-111"></use>
-<use x="36.651062" y="-55.059807" href="#tz_fig_script_loop_g0-103"></use>
-<use x="43.306694" y="-55.059807" href="#tz_fig_script_loop_g0-40"></use>
-<use x="46.420037" y="-55.059807" href="#tz_fig_script_loop_g0-97"></use>
-<use x="50.391278" y="-55.059807" href="#tz_fig_script_loop_g0-103"></use>
-<use x="54.362518" y="-55.059807" href="#tz_fig_script_loop_g0-105"></use>
-<use x="56.617964" y="-55.059807" href="#tz_fig_script_loop_g0-114"></use>
-<use x="59.731307" y="-55.059807" href="#tz_fig_script_loop_g0-41"></use>
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-<path d="M0-13.00372V-32.69055" fill="none"></path>
-<g transform="matrix(0.0,-1.0,1.0,0.0,0.0,-30.96594)">
-<g stroke-dasharray="none" stroke-dashoffset="0.0">
- <g stroke-linejoin="miter">
- <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
- </g>
- </g>
-</g>
-<path d="M0-61.77336V-81.46019" fill="none"></path>
-<g transform="matrix(0.0,-1.0,1.0,0.0,0.0,-79.73558)">
-<g stroke-dasharray="none" stroke-dashoffset="0.0">
- <g stroke-linejoin="miter">
- <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
- </g>
- </g>
-</g>
-<path d="M0-110.543V-130.22983" fill="none"></path>
-<g transform="matrix(0.0,-1.0,1.0,0.0,0.0,-128.50522)">
-<g stroke-dasharray="none" stroke-dashoffset="0.0">
- <g stroke-linejoin="miter">
- <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
- </g>
- </g>
-</g>
-<path d="M46.13873-146.30891C78.55226-126.12291 76.56752-66.74748 45.59225-50.21745" fill="none"></path>
-<g transform="matrix(-0.88222,0.47078,-0.47078,-0.88222,47.11374,-51.02936)">
-<g stroke-dasharray="none" stroke-dashoffset="0.0">
- <g stroke-linejoin="miter">
- <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
- </g>
- </g>
-</g>
-<g transform="translate(72.8301,-98.4612)">
-<g stroke="none" transform="scale(-1.00375,1.00375)translate(-22.048589,-55.059807)scale(-1,-1)">
-<g fill="#000">
-<g stroke="none">
-<use x="-22.048589" y="-55.059807" href="#tz_fig_script_loop_g0-112"></use>
-<use x="-17.6484" y="-55.059807" href="#tz_fig_script_loop_g0-114"></use>
-<use x="-14.535057" y="-55.059807" href="#tz_fig_script_loop_g0-19"></use>
-<use x="-14.535054" y="-55.059807" href="#tz_fig_script_loop_g0-111"></use>
-<use x="-10.563814" y="-55.059807" href="#tz_fig_script_loop_g0-120"></use>
-<use x="-6.378092" y="-55.059807" href="#tz_fig_script_loop_g0-105"></use>
-<use x="-4.122646" y="-55.059807" href="#tz_fig_script_loop_g0-109"></use>
-<use x="2.422286" y="-55.059807" href="#tz_fig_script_loop_g0-111"></use>
-<use x="9.077918" y="-55.059807" href="#tz_fig_script_loop_g0-105"></use>
-<use x="11.333364" y="-55.059807" href="#tz_fig_script_loop_g0-116"></use>
-<use x="14.446707" y="-55.059807" href="#tz_fig_script_loop_g0-101"></use>
-<use x="17.988999" y="-55.059807" href="#tz_fig_script_loop_g0-109"></use>
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-</svg>
-<div id="fig-script-loop" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-script-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<p>O padrão que resolve a maioria dos scripts: <strong><code>find</code></strong> seleciona os itens, <strong><code>:foreach</code></strong> percorre, <strong><code>get</code>/<code>:if</code></strong> decidem, e <strong><code>set</code>/ação</strong> agem. Domine este ciclo e você automatiza quase tudo no RouterOS.</p>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-script-loop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figura&nbsp;60.1
-</figcaption>
-</figure>
-</div>
-</section>
-<section id="capturando-saída-e-parseando" class="level2" data-number="60.4">
-<h2 data-number="60.4" class="anchored" data-anchor-id="capturando-saída-e-parseando"><span class="header-section-number">60.4</span> Capturando saída e parseando</h2>
-<p>Comandos entre <code>[ ]</code> retornam valor. Combinado com <code>:tonum</code>, <code>:pick</code> (fatiar string) e os arrays, você extrai o que precisa:</p>
-<pre class="routeros"><code># quantos clientes PPPoE ativos?
-:local n [:len [/interface pppoe-server active find]]
-:log info "Sessoes PPPoE ativas: $n"
-
-# ler um campo e comparar
-:local up [/interface get ether1 running]
-:if ($up = false) do={ :log error "ether1 caiu!" }</code></pre>
-</section>
-<section id="funções-reutilizáveis" class="level2" data-number="60.5">
-<h2 data-number="60.5" class="anchored" data-anchor-id="funções-reutilizáveis"><span class="header-section-number">60.5</span> Funções reutilizáveis</h2>
-<p>Funções são criadas como <code>:global</code> contendo um bloco, e aceitam parâmetros nomeados:</p>
-<pre class="routeros"><code># define uma função de notificação
-:global notificar do={
-    :log warning "[ALERTA] $mensagem"
-    # (aqui poderia disparar e-mail/telegram)
-}
-
-# usa em qualquer script
-$notificar mensagem="link de tránsito degradado"</code></pre>
-<p>Isso permite centralizar lógica (notificação, verificação) e reusá-la — a base de scripts de operação organizados.</p>
-</section>
-<section id="tratamento-de-erro-e-idempotência" class="level2" data-number="60.6">
-<h2 data-number="60.6" class="anchored" data-anchor-id="tratamento-de-erro-e-idempotência"><span class="header-section-number">60.6</span> Tratamento de erro e idempotência</h2>
-<p>Um script de produção <strong>não pode</strong> derrubar o roteador ao encontrar um erro. Envolva o que pode falhar:</p>
-<pre class="routeros"><code>:do {
-    /ip address add address=10.0.0.1/24 interface=ether2
-} on-error={
-    :log warning "endereco ja existe ou interface invalida"
-}</code></pre>
-<p>E, crucialmente, torne os scripts <strong>idempotentes</strong> — seguros para rodar de novo. Em vez de <code>add</code> cego (que duplica), <strong>verifique antes</strong>:</p>
-<pre class="routeros"><code>:if ([:len [/ip address find where address="10.0.0.1/24"]] = 0) do={
-    /ip address add address=10.0.0.1/24 interface=ether2
-}</code></pre>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -1135,12 +1047,12 @@ $notificar mensagem="link de tránsito degradado"</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>O RouterOS script gira em torno de <strong>agir sobre itens de menu</strong>: o ciclo <strong><code>find</code> → <code>:foreach</code> → <code>get</code>/<code>:if</code> → <code>set</code>/ação</strong> resolve a maioria das tarefas reais. Sobre isso, duas disciplinas que separam script de brinquedo de script de produção: <strong>idempotência</strong> (verifique antes de <code>add</code>, para poder rodar de novo sem duplicar) e <strong>tratamento de erro</strong> (<code>:do {} on-error={}</code>, para não derrubar o roteador). A sintaxe é exigente — teste incrementalmente. Dominado o ciclo, automação, agenda (<a href="02-scheduler-netwatch-backups.html" class="quarto-xref"><span>Capítulo 61</span></a>) e provisionamento em massa (<a href="03-api-provisionamento.html" class="quarto-xref"><span>Capítulo 62</span></a>) viram aplicação direta.</p>
+<p>Bonding junta enlaces físicos numa interface lógica para <strong>somar capacidade</strong> e <strong>sobreviver</strong> à queda de um cabo/porta — mas a soma é <strong>entre fluxos</strong>, não dentro de um: o hashing gruda cada conexão num membro, então um download único não vê a banda agregada. Escolha o modo pelo objetivo e pelo outro lado: <strong>LACP</strong> (negociado, com switch gerenciável) para agregar + redundar; <strong>active-backup</strong> para redundância pura sem exigência. Os <strong>dois lados</strong> têm de concordar no modo, sob pena de loop/flapping. Bonding é HA e capacidade <strong>na camada 2, entre dois equipamentos</strong> — diferente do ECMP (camada 3, entre caminhos), o próximo capítulo.</p>
 </div>
 </div>
 </section>
-<section id="laboratório" class="level2" data-number="60.7">
-<h2 data-number="60.7" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">60.7</span> 🧪 Laboratório</h2>
+<section id="laboratório" class="level2" data-number="68.5">
+<h2 data-number="68.5" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">68.5</span> 🧪 Laboratório</h2>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -1151,56 +1063,39 @@ $notificar mensagem="link de tránsito degradado"</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Um CHR (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>) com algumas interfaces e endereços configurados — o suficiente para percorrer, ler e agir. Todo o laboratório roda no terminal (<code>/system script</code> para salvar, ou colando direto). <strong>Não</strong> é preciso topologia complexa: o foco é a linguagem.</p>
+<p>Dois CHRs (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>) ligados por <strong>duas</strong> redes internas (simulando dois cabos) — <strong>lab-a</strong> e <strong>lab-b</strong> — para formar um bond entre eles. Um host de cada lado gera tráfego para observar distribuição e failover. (Em CHR, LACP entre dois roteadores funciona; num cenário real, o outro lado costuma ser um switch com LAG.)</p>
 </div>
 </div>
-<section id="comandos-passo-a-passo" class="level3" data-number="60.7.1">
-<h3 data-number="60.7.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">60.7.1</span> Comandos passo a passo</h3>
-<p><strong>Passo 1 — variáveis e tipos.</strong> No terminal:</p>
-<pre class="routeros"><code>:local x 10
-:local y "10"
-:put ($x = 10)
-:put ($x = $y)</code></pre>
-<p>Observe: comparar <code>num</code> com <code>str</code> <strong>não</strong> dá igual — a lição de tipos.</p>
-<p><strong>Passo 2 — o ciclo find/foreach.</strong> Liste e aja sobre interfaces:</p>
-<pre class="routeros"><code>:foreach i in=[/interface find] do={
-    :put "$[/interface get $i name] running=$[/interface get $i running]"
-}</code></pre>
-<p><strong>Passo 3 — condicional útil.</strong> Alerte sobre interface caída:</p>
-<pre class="routeros"><code>:foreach i in=[/interface find where !running] do={
-    :log warning "interface caida: $[/interface get $i name]"
-}</code></pre>
-<p><strong>Passo 4 — idempotência.</strong> Rode este bloco <strong>duas vezes</strong> e confirme que o endereço <strong>não</strong> duplica:</p>
-<pre class="routeros"><code>:if ([:len [/ip address find where address="10.9.9.1/24"]] = 0) do={
-    /ip address add address=10.9.9.1/24 interface=ether1
-    :log info "endereco adicionado"
-} else={ :log info "endereco ja existe, nada a fazer" }</code></pre>
-<p><strong>Passo 5 — função reutilizável.</strong> Defina <code>$notificar</code> (bloco acima) e chame-a de dois scripts diferentes; veja as mensagens no log.</p>
-<p><strong>Passo 6 — salve como script nomeado.</strong></p>
-<pre class="routeros"><code>/system script add name=checa-links source={
-    :foreach i in=[/interface find where !running] do={
-        :log warning "caiu: $[/interface get $i name]"
-    }
-}
-/system script run checa-links</code></pre>
+<section id="comandos-passo-a-passo" class="level3" data-number="68.5.1">
+<h3 data-number="68.5.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">68.5.1</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — crie o bond nos dois lados.</strong> No lab-a:</p>
+<pre class="routeros"><code>/interface bonding add name=bond1 slaves=ether2,ether3 mode=802.3ad \
+    transmit-hash-policy=layer-3-and-4 lacp-rate=1sec
+/ip address add address=10.0.0.1/30 interface=bond1</code></pre>
+<p>No lab-b, idêntico com <code>10.0.0.2/30</code> e o <strong>mesmo modo</strong>.</p>
+<p><strong>Passo 2 — verifique a negociação.</strong></p>
+<pre class="routeros"><code>/interface bonding monitor bond1</code></pre>
+<p>Confirme que os dois membros negociaram LACP e estão ativos.</p>
+<p><strong>Passo 3 — tráfego e distribuição.</strong> Gere <strong>vários</strong> fluxos (de hosts/ portas diferentes) através do bond e observe no Torch como se espalham pelos membros. Depois gere <strong>um único</strong> fluxo grande e note que ele usa <strong>um</strong> membro só — a lição do hashing.</p>
+<p><strong>Passo 4 — failover de membro.</strong> Desconecte <strong>um</strong> dos cabos (desabilite uma rede interna) e confirme que o bond <strong>segue up</strong> (com metade da banda). Reconecte e veja o membro voltar.</p>
+<p><strong>Passo 5 — modo divergente (erro proposital).</strong> Mude <strong>um</strong> lado para <code>balance-xor</code> e observe os problemas (bond instável/tráfego errático); volte os dois para o mesmo modo. Sinta por que os lados têm de concordar.</p>
 </section>
-<section id="verificação" class="level3" data-number="60.7.2">
-<h3 data-number="60.7.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">60.7.2</span> Verificação</h3>
+<section id="verificação" class="level3" data-number="68.5.2">
+<h3 data-number="68.5.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">68.5.2</span> Verificação</h3>
 <ol type="1">
-<li>Comparação <code>num</code> vs <code>str</code> mostra a diferença de tipos;</li>
-<li>O ciclo <code>find/foreach</code> percorre e lê campos das interfaces;</li>
-<li>O bloco idempotente <strong>não</strong> duplica o endereço ao rodar de novo;</li>
-<li>A função <code>$notificar</code> funciona chamada de scripts distintos;</li>
-<li>O script nomeado roda por <code>/system script run</code>.</li>
+<li>Os dois membros negociam LACP e o <code>monitor</code> os mostra ativos;</li>
+<li>Múltiplos fluxos se distribuem; um único fluxo usa um membro só;</li>
+<li>Derrubar um membro mantém o bond up com banda reduzida;</li>
+<li>Modo divergente entre os lados quebra o bond.</li>
 </ol>
 </section>
-<section id="desafios" class="level3" data-number="60.7.3">
-<h3 data-number="60.7.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">60.7.3</span> Desafios</h3>
+<section id="desafios" class="level3" data-number="68.5.3">
+<h3 data-number="68.5.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">68.5.3</span> Desafios</h3>
 <ol type="1">
-<li>Um colega escreveu um script com <code>add</code> cego que rodou no scheduler a cada 5 min por um dia — e agora há centenas de regras/endereços duplicados. Explique o erro e reescreva o trecho de forma <strong>idempotente</strong>.</li>
-<li>Um script trava o processamento e o roteador fica estranho quando uma interface esperada não existe. Qual construção evita isso, e como você a aplicaria ao <code>add</code> de um endereço numa interface que <strong>pode</strong> não estar lá?</li>
-<li>Você precisa desabilitar <strong>todas</strong> as regras de firewall com o comentário “temporario” e logar quantas foram. Escreva o script usando o ciclo <code>find/foreach</code> + contador.</li>
-<li>Por que usar <code>:global</code> para tudo é perigoso, e quando ele é <strong>realmente</strong> a escolha certa? Dê um exemplo de cada.</li>
+<li>Você vendeu um “link de 2 Gbps” agregando 2×1 Gbps e o cliente reclama que o teste de velocidade dá só ~1 Gbps. Ele <strong>não</strong> está errado sobre o teste. Explique o que aconteceu e o que o bond realmente entrega — e como você deveria ter descrito o produto.</li>
+<li>Um bond LACP “sobe” mas o tráfego fica errático e há flapping. Qual é a causa mais provável no <strong>outro lado</strong> e como confirma?</li>
+<li>Você quer <strong>só redundância</strong> de dois enlaces entre um roteador e um equipamento que <strong>não fala LACP</strong>, sem precisar somar banda. Qual modo usa e por que ele é o certo aqui?</li>
+<li>Diferencie <strong>bonding</strong> de <strong>ECMP</strong> (<a href="03-ecmp-pcc.html" class="quarto-xref"><span>Capítulo 69</span></a>) quanto à camada e ao que agregam. Dê um cenário para cada um.</li>
 </ol>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
@@ -1214,46 +1109,33 @@ $notificar mensagem="link de tránsito degradado"</code></pre>
 </div>
 <div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p><strong>1.</strong> O erro é <strong>não verificar antes de adicionar</strong>: <code>add</code> sempre cria, então rodar de novo duplica. Idempotente:</p>
-<pre class="routeros"><code>:if ([:len [/ip firewall address-list find where list="bloqueados" address="1.2.3.4"]] = 0) do={
-    /ip firewall address-list add list=bloqueados address=1.2.3.4
-}</code></pre>
-<p>A regra: <strong><code>find</code> primeiro, <code>add</code> só se não existir</strong> (ou <code>set</code> se existir). Limpeza dos duplicados: um <code>foreach</code> removendo os excedentes.</p>
-<p><strong>2.</strong> <strong><code>:do { } on-error={ }</code></strong>: envolve a operação que pode falhar, de modo que o erro seja tratado (logado) em vez de abortar o script.</p>
-<pre class="routeros"><code>:do { /ip address add address=10.0.0.1/24 interface=ether9 } \
-  on-error={ :log warning "ether9 inexistente ou endereco duplicado" }</code></pre>
-<p>Melhor ainda, combinar com verificação de existência da interface antes.</p>
-<p><strong>3.</strong></p>
-<pre class="routeros"><code>:local c 0
-:foreach r in=[/ip firewall filter find where comment="temporario"] do={
-    /ip firewall filter disable $r
-    :set c ($c + 1)
-}
-:log info "regras temporarias desabilitadas: $c"</code></pre>
-<p><strong>4.</strong> <code>:global</code> <strong>persiste</strong> entre scripts e sessões: usado à toa, vira estado escondido que outro script sobrescreve, causando bugs difíceis de achar (ação à distância). Perigoso: <code>:global i</code> num loop que colide com outro script. <strong>Certo</strong>: quando você <strong>quer</strong> compartilhar deliberadamente — uma <strong>função</strong> reutilizável (<code>:global notificar</code>) ou uma configuração lida por vários scripts. Regra: <code>:local</code> por padrão, <code>:global</code> só com intenção explícita.</p>
+<p><strong>1.</strong> O teste de velocidade abre (tipicamente) <strong>um único fluxo</strong>, que o bond gruda em <strong>um</strong> membro por causa do hashing — logo, ~1 Gbps. O bond de 2×1 Gbps entrega <strong>2 Gbps de agregado</strong> (entre muitos fluxos/clientes), não 2 Gbps para uma conexão. Você deveria ter descrito como “2 Gbps de capacidade agregada” (com redundância), deixando claro que um <strong>fluxo único</strong> fica limitado a 1 Gbps. Para um único fluxo mais rápido, seria preciso um enlace físico maior, não agregação.</p>
+<p><strong>2.</strong> O <strong>outro lado não está configurado para LACP compatível</strong> — porta não incluída no <em>port-channel</em>/LAG, ou em modo estático incompatível. Isso causa negociação instável, loops e flapping. Confirme com <code>/interface bonding monitor</code> (LACP não negociado/parcial) e na configuração do switch (o LAG existe e inclui as portas certas, no mesmo modo).</p>
+<p><strong>3.</strong> <strong>active-backup</strong>: dá redundância (um ativo, outro em espera; troca na falha) <strong>sem</strong> exigir nada especial do outro lado (não negocia LACP, não precisa de LAG). Como o objetivo é só sobreviver à queda de um enlace — não somar banda — active-backup é o modo certo e o mais simples de interoperar.</p>
+<p><strong>4.</strong> <strong>Bonding</strong> age na <strong>camada 2</strong>, agregando <strong>enlaces físicos entre dois equipamentos</strong> numa interface lógica (soma de portas/cabos). <strong>ECMP</strong> age na <strong>camada 3</strong>, distribuindo tráfego entre <strong>múltiplos caminhos/ rotas de mesmo custo</strong> (roteadores diferentes, links de trânsito distintos). Cenário bonding: 4 cabos entre o switch e o roteador do POP. Cenário ECMP (<a href="03-ecmp-pcc.html" class="quarto-xref"><span>Capítulo 69</span></a>): dois links de trânsito de operadoras diferentes balanceando saída para a internet.</p>
 </div>
 </div>
 </div>
 </section>
 </section>
-<section id="resumo" class="level2" data-number="60.8">
-<h2 data-number="60.8" class="anchored" data-anchor-id="resumo"><span class="header-section-number">60.8</span> Resumo</h2>
+<section id="resumo" class="level2" data-number="68.6">
+<h2 data-number="68.6" class="anchored" data-anchor-id="resumo"><span class="header-section-number">68.6</span> Resumo</h2>
 <ul>
-<li>Variáveis com <strong>escopo</strong> (<code>:local</code> padrão, <code>:global</code> com parcimônia); o RouterOS <strong>infere tipos</strong> — e comparar tipos diferentes engana;</li>
-<li>O ciclo central: <strong><code>find</code> → <code>:foreach</code> → <code>get</code>/<code>:if</code> → <code>set</code>/ação</strong> — resolve a maioria dos scripts (agir sobre itens de menu);</li>
-<li>Capture saída com <code>[ ]</code>, parseie com <code>:len</code>/<code>:tonum</code>/<code>:pick</code>, interpole em <code>"...$var..."</code> para log/mensagens;</li>
-<li><strong>Funções</strong> via <code>:global do={}</code> centralizam e reusam lógica;</li>
-<li>Produção exige <strong>idempotência</strong> (verifique antes de <code>add</code>) e <strong>tratamento de erro</strong> (<code>:do {} on-error={}</code>) — e teste incrementalmente, a sintaxe é exigente.</li>
+<li><strong>Bonding</strong> agrega enlaces físicos numa interface lógica: <strong>soma capacidade</strong> e <strong>redunda</strong> cabo/porta entre dois equipamentos;</li>
+<li>A soma é <strong>entre fluxos</strong> (hashing gruda cada conexão a um membro) — <strong>um único fluxo não</strong> atinge a banda agregada;</li>
+<li>Modos: <strong>802.3ad (LACP)</strong> negociado (exige LACP do outro lado, melhor opção), <strong>balance-xor</strong> estático, <strong>active-backup</strong> (só redundância, sem exigência);</li>
+<li><strong>Os dois lados</strong> têm de concordar no modo (senão loop/flapping); escolha o <code>transmit-hash-policy</code> pela diversidade do tráfego;</li>
+<li>Bonding é HA/capacidade na <strong>camada 2, entre dois equipamentos</strong> — distinto do <strong>ECMP</strong> (camada 3, entre caminhos).</li>
 </ul>
-<p>Sabendo escrever scripts, o próximo passo é fazê-los rodar <strong>sozinhos</strong> — no horário certo, em reação a um evento, guardando backups. O <a href="02-scheduler-netwatch-backups.html" class="quarto-xref"><span>Capítulo 61</span></a> cobre scheduler, netwatch e backups automáticos.</p>
+<p>Bonding agrega <strong>portas</strong> entre equipamentos vizinhos. Falta agregar e balancear <strong>caminhos</strong> de camada 3 — múltiplos links de trânsito para a internet. O <a href="03-ecmp-pcc.html" class="quarto-xref"><span>Capítulo 69</span></a> cobre ECMP e o load balancing PCC.</p>
 </section>
 <section id="bibliografia-do-capítulo" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
 <ul>
-<li>Documentação oficial: seção <em>Scripting</em> do RouterOS <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
-<li>Lógica de programação e automação: <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
-<li>Scripts no v7 na prática: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
-<li>Automação de parque em provedores: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
+<li>Documentação oficial: seção <em>Bonding</em> do RouterOS <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
+<li>Agregação de enlaces (LACP/802.3ad): <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
+<li>Bonding no v7 na prática: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
+<li>Redundância de enlace em provedores: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
 </ul>
 
 
@@ -1676,13 +1558,13 @@ TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Compu
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../../volumes/v11-mpls/03-traffic-engineering.html" class="pagination-link" aria-label="Traffic Engineering">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">59</span>&nbsp; <span class="chapter-title">Traffic Engineering</span></span>
+      <a href="../../volumes/v14-alta-disponibilidade/01-vrrp.html" class="pagination-link" aria-label="VRRP: gateway redundante">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">67</span>&nbsp; <span class="chapter-title">VRRP: gateway redundante</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../../volumes/v12-scripts/02-scheduler-netwatch-backups.html" class="pagination-link" aria-label="Scheduler, netwatch e backups automáticos">
-        <span class="nav-page-text"><span class="chapter-number">61</span>&nbsp; <span class="chapter-title">Scheduler, netwatch e backups automáticos</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../volumes/v14-alta-disponibilidade/03-ecmp-pcc.html" class="pagination-link" aria-label="ECMP e load balancing PCC">
+        <span class="nav-page-text"><span class="chapter-number">69</span>&nbsp; <span class="chapter-title">ECMP e load balancing PCC</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
@@ -1691,4 +1573,4 @@ TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Compu
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v12-scripts/01-linguagem-script.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v14-alta-disponibilidade/02-bonding.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
