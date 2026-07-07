@@ -1,7 +1,295 @@
-# MPLS: conceitos e LDP
+# MPLS: conceitos e LDP {#sec-mpls-ldp}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que é **MPLS** (comutar por **rótulos**, não por IP) e por
+  que provedores o adotam: **VPNs escaláveis** e transporte uniforme;
+- Entender o **rótulo** (label), a **pilha de rótulos**, o **LSP**
+  (caminho comutado) e os papéis **LER/LSR** (borda vs. núcleo);
+- Descrever como o **LDP** distribui rótulos automaticamente **apoiado
+  na IGP** (OSPF, @sec-ospf-basico) — MPLS **precisa** de roteamento
+  interno de pé;
+- Habilitar MPLS + LDP no RouterOS v7 e ler a tabela de rótulos
+  (`/mpls forwarding-table`, `/mpls ldp neighbor`);
+- Reconhecer o pré-requisito de **MTU** do MPLS (o rótulo adiciona
+  bytes) e os erros que impedem o LSP de subir.
 :::
+
+Os volumes anteriores rotearam a rede por **IP**: cada roteador olha o
+destino e decide o próximo salto. O **MPLS** (*Multiprotocol Label
+Switching*) muda o jogo no **núcleo** do provedor: em vez de olhar o IP a
+cada salto, os roteadores comutam por um **rótulo** curto, colado na
+entrada e trocado salto a salto até a saída. Por que isso importa? Porque
+o rótulo permite **carregar serviços** (VPNs L2 e L3, @sec-vpls) por cima
+de um núcleo que **não precisa conhecer** as rotas dos clientes — a
+chave da escalabilidade de operadora. Este capítulo estabelece o
+fundamento e liga o LDP.
+
+## Comutar por rótulo, não por IP
+
+No roteamento IP tradicional, **todo** roteador no caminho faz a mesma
+consulta cara: "qual o próximo salto para este destino?". No MPLS, essa
+decisão é tomada **uma vez, na borda**: o roteador de entrada classifica
+o pacote e **empurra um rótulo**; do núcleo em diante, cada roteador só
+olha o **rótulo** (um número), **troca** por outro e encaminha — rápido
+e uniforme. Na saída, o rótulo é **removido** e o pacote volta a ser IP
+(ou Ethernet).
+
+Os papéis:
+
+- **LER** (*Label Edge Router*) / **PE** (*Provider Edge*): a **borda** —
+  empurra o rótulo na entrada e o remove na saída. É quem "entende" o
+  serviço do cliente;
+- **LSR** (*Label Switch Router*) / **P** (*Provider*): o **núcleo** — só
+  **troca rótulos** (swap), sem olhar IP. Não precisa conhecer as rotas
+  dos clientes, só como alcançar os outros roteadores MPLS.
+
+```{.tikz}
+%%| filename: fig-mpls-lsp
+%%| alt: Um LSP atravessando o núcleo MPLS. À esquerda, o roteador de borda de entrada (PE/LER) recebe um pacote IP e empurra o rótulo 100. No núcleo, dois roteadores P/LSR trocam o rótulo: 100 vira 200, depois 200 vira 300. À direita, o PE/LER de saída remove o rótulo e entrega o pacote IP original. Setas mostram push, swap, swap, pop ao longo do caminho.
+\begin{tikzpicture}[
+  font=\small,
+  r/.style={draw, circle, minimum size=11mm, align=center, inner sep=1pt, font=\scriptsize},
+]
+\node[r, fill=manualyellow!30] (pe1) at (0,0) {PE\\entrada};
+\node[r, fill=manualblue!20] (p1) at (2.6,0) {P};
+\node[r, fill=manualblue!20] (p2) at (5.2,0) {P};
+\node[r, fill=manualyellow!30] (pe2) at (7.8,0) {PE\\saída};
+\draw[-{Stealth}, thick] (pe1) -- node[above]{\scriptsize push 100} (p1);
+\draw[-{Stealth}, thick] (p1) -- node[above]{\scriptsize swap 200} (p2);
+\draw[-{Stealth}, thick] (p2) -- node[above]{\scriptsize swap 300} (pe2);
+\draw[-{Stealth}, thick] (pe2) -- node[above]{\scriptsize pop (IP)} +(2.2,0);
+\node[align=center] at (3.9,-1.4) {\scriptsize núcleo comuta por \textbf{rótulo}; só a borda olha o IP};
+\end{tikzpicture}
+```
+
+::: {#fig-mpls-lsp}
+O caminho que o pacote rotulado segue é um **LSP** (*Label Switched
+Path*). A borda **empurra** (push) o rótulo; o núcleo **troca** (swap) a
+cada salto; a borda de saída **remove** (pop). O núcleo nunca consulta
+o IP do cliente — daí a escala.
+:::
+
+## A pilha de rótulos e o LSP
+
+O MPLS permite **empilhar** rótulos (um "pacote de pacotes"): o rótulo de
+baixo identifica o **serviço** (uma VPN, um circuito L2) e o de cima leva
+o pacote pelo **túnel de transporte** (o LSP) até o PE de saída. É essa
+pilha que faz VPLS e L3VPN (@sec-vpls) funcionarem: o núcleo só olha o
+rótulo de **transporte**; o de **serviço** só é lido na borda de saída.
+
+Um detalhe de implementação comum é o **PHP** (*Penultimate Hop
+Popping*): o penúltimo roteador remove o rótulo de transporte antes de
+entregar ao PE final, poupando-o de uma consulta dupla. Você verá isso
+como um "rótulo implícito" nas tabelas.
+
+## LDP: distribuindo rótulos automaticamente
+
+Configurar rótulo à mão em cada roteador seria insustentável. O **LDP**
+(*Label Distribution Protocol*) automatiza: cada roteador MPLS **anuncia
+aos vizinhos** qual rótulo usar para alcançar cada destino da IGP. O
+ponto crucial — e a fonte de confusão de quem começa:
+
+> **MPLS/LDP não roteia.** Ele **apenas distribui rótulos** para os
+> destinos que a **IGP** (OSPF) já conhece. Sem OSPF de pé, o LDP não
+> tem o que rotular.
+
+Ou seja, a base é o Volume 8: **OSPF** carrega os loopbacks e enlaces do
+núcleo; o **LDP** cola um rótulo em cada um. É por isso que os loopbacks
+`/32` (@sec-vrf) são tão importantes — eles são os "destinos" que os
+LSPs conectam, e as VPNs se ancoram neles.
+
+## Habilitando MPLS + LDP no RouterOS v7
+
+Assumindo OSPF já rodando entre os roteadores do núcleo (loopbacks
+alcançáveis):
+
+```routeros
+# 1) habilitar o LDP e dar a ele o transport-address (o loopback!)
+/mpls ldp
+add transport-addresses=10.255.0.1 lsr-id=10.255.0.1 vrf=main
+
+# 2) em quais interfaces falar LDP (as do núcleo, entre roteadores MPLS)
+/mpls ldp interface
+add interface=ether2
+add interface=ether3
+```
+
+- `lsr-id`/`transport-addresses` = o **loopback** — a identidade do
+  roteador no MPLS, estável (não use IP de interface física);
+- **LDP nas interfaces do núcleo** (entre PEs e Ps), **nunca** nas
+  interfaces de cliente.
+
+## Lendo e diagnosticando
+
+```routeros
+/mpls ldp neighbor print      # vizinhos LDP (devem casar os vizinhos OSPF do núcleo)
+/mpls forwarding-table print  # rótulos: in-label -> out-label + next-hop
+/mpls local-bindings print    # que rótulo ESTE roteador atribuiu a cada prefixo
+```
+
+A cadeia sadia: **OSPF `Full`** entre os roteadores → **LDP neighbor**
+estabelecido → **forwarding-table** com rótulos para os loopbacks. Se o
+LDP não sobe, quase sempre é: OSPF não alcança o loopback usado como
+`transport-address`, ou **MTU**.
+
+::: {.callout-warning}
+**MTU é pré-requisito do MPLS.** Cada rótulo adiciona 4 bytes; uma pilha
+de 2 rótulos, 8 bytes. Se o MTU do núcleo não comportar o pacote +
+rótulos, o LSP sobe mas o **tráfego grande é descartado** (o fantasma de
+sempre). Ajuste o **MPLS MTU** das interfaces do núcleo para acomodar os
+rótulos (tipicamente MTU físico ≥ 1508–1520). Sem isso, VPLS/L3VPN
+"funcionam no ping e travam no uso".
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+MPLS comuta por **rótulo**, não por IP: a borda (**PE/LER**) empurra e
+remove; o núcleo (**P/LSR**) só troca rótulos, sem conhecer as rotas dos
+clientes — é isso que dá **escala** e permite carregar VPNs
+(@sec-vpls). Mas a base é o Volume 8: **MPLS/LDP não roteia — ele rotula
+o que a IGP (OSPF) já conhece**. Loopbacks `/32` como `lsr-id`, LDP só no
+núcleo, e **MTU** ajustado para os rótulos. Sem OSPF sólido e MTU certo,
+não há MPLS.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Três CHRs (@sec-lab-chr) em linha, simulando o núcleo: **lab-pe1** —
+**lab-p** — **lab-pe2**. Cada um com loopback `/32` (`10.255.0.1/.2/.3`)
+e enlaces `/30` entre vizinhos. **OSPF** rodando entre os três (Volume
+8), com todos os loopbacks alcançáveis — é o pré-requisito.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — confirme a IGP.** Antes do MPLS, garanta OSPF `Full` e
+loopbacks alcançáveis:
+
+```routeros
+/routing ospf neighbor print
+/ip route print where ospf
+```
+
+Cada roteador tem de alcançar os loopbacks dos outros dois. **Sem isso,
+não siga** — o MPLS não tem base.
+
+**Passo 2 — ajuste o MTU para os rótulos.** Nas interfaces do núcleo,
+garanta MTU suficiente:
+
+```routeros
+/interface ethernet set [find name=ether2] mtu=1520 l2mtu=1580
+```
+
+**Passo 3 — ligue LDP nos três.** Exemplo lab-pe1:
+
+```routeros
+/mpls ldp add transport-addresses=10.255.0.1 lsr-id=10.255.0.1
+/mpls ldp interface add interface=ether2
+```
+
+Análogo em lab-p (interfaces para os dois lados) e lab-pe2.
+
+**Passo 4 — veja os vizinhos e os rótulos.**
+
+```routeros
+/mpls ldp neighbor print
+/mpls forwarding-table print
+```
+
+Os vizinhos LDP devem casar os vizinhos OSPF do núcleo; a
+forwarding-table mostra rótulos (`push/swap`) para os loopbacks.
+
+**Passo 5 — prove a comutação por rótulo.** Gere tráfego entre os
+loopbacks de lab-pe1 e lab-pe2 e observe no lab-p que ele **comuta por
+rótulo** (a forwarding-table incrementa), sem consultar o IP do cliente.
+
+**Passo 6 — quebre o MTU de propósito.** Reduza o MTU de um enlace do
+núcleo abaixo do necessário e observe LSP de pé, mas tráfego grande
+falhando — o sintoma de MTU. Restaure.
+
+### Verificação
+
+1. OSPF `Full` e loopbacks alcançáveis (pré-requisito);
+2. `ldp neighbor` estabelecido nos enlaces do núcleo;
+3. `forwarding-table` com rótulos para os loopbacks (push/swap/pop);
+4. MTU insuficiente derruba o tráfego grande, mesmo com LSP de pé.
+
+### Desafios
+
+1. O OSPF está `Full`, mas o LDP **não** forma vizinhança. `ping` entre
+   os loopbacks funciona. Qual é a causa mais provável relacionada ao
+   `transport-address`, e como confirma?
+2. LDP subiu, os rótulos aparecem, mas ao subir uma VPLS (próximo
+   capítulo) o tráfego trava em pacotes grandes. Qual é o ajuste que
+   faltou e por que o ping enganou?
+3. Um colega quer ligar LDP também na **interface do cliente** "para
+   simplificar". Explique por que isso é errado (segurança e
+   arquitetura) — o que o núcleo MPLS deve e não deve conhecer.
+4. Por que MPLS **depende** da IGP e não a substitui? Descreva o que
+   aconteceria com os LSPs se o OSPF do núcleo caísse, e o que isso diz
+   sobre a ordem de projeto (o que montar primeiro).
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O **`transport-address`/`lsr-id`** aponta para um endereço que a
+IGP não distribui, ou o LDP não está ligado nas interfaces certas. O
+`ping` entre loopbacks funciona (OSPF os conhece), mas o LDP usa o
+`transport-address` para estabelecer a sessão TCP — se ele não for um
+loopback alcançável e anunciado, a sessão não sobe. Confirme
+`/mpls ldp print` (transport correto = loopback) e
+`/mpls ldp interface print` (interfaces do núcleo listadas).
+
+**2.** Faltou **ajustar o MTU** do núcleo para acomodar os **rótulos**
+(cada um +4 bytes; VPLS/L3VPN empilham). O LSP sobe e o ping (pequeno)
+passa, mas o tráfego real com pilha de rótulos estoura o MTU e é
+descartado. Aumente o MTU/l2mtu das interfaces do núcleo (ex.: 1520/1580).
+
+**3.** LDP na interface do cliente exporia o núcleo a rótulos vindos de
+fora (risco de injeção/instabilidade) e quebraria a arquitetura: o
+**núcleo (P/LSR) não deve conhecer nem o IP nem os rótulos do cliente**,
+só como alcançar os outros roteadores MPLS. O cliente entra pela
+**borda (PE)**, que empurra/remove rótulos — o LDP vive **entre
+roteadores do provedor**, nunca voltado ao cliente.
+
+**4.** LDP **rotula o que a IGP conhece** — ele não calcula caminhos, só
+cola rótulos nas rotas do OSPF. Se o OSPF cair, os destinos somem da
+tabela e os **LSPs colapsam** (sem rota, sem rótulo, sem caminho). Ordem
+de projeto: **IGP primeiro** (OSPF sólido, loopbacks alcançáveis),
+**depois** MPLS/LDP, **depois** os serviços (VPLS/L3VPN). MPLS é uma
+camada **sobre** o roteamento, não um substituto dele.
+:::
+
+## Resumo
+
+- **MPLS** comuta por **rótulo**, não por IP: a **borda (PE/LER)**
+  empurra/remove; o **núcleo (P/LSR)** só **troca rótulos**, sem conhecer
+  rotas de cliente — a chave da **escala** e das VPNs;
+- **Pilha de rótulos**: transporte (leva pelo LSP) + serviço (VPN/L2) —
+  a base de VPLS/L3VPN (@sec-vpls);
+- **LDP** distribui rótulos **automaticamente**, mas **não roteia**:
+  rotula o que a **IGP (OSPF)** conhece — loopbacks `/32` como `lsr-id`,
+  LDP **só no núcleo**;
+- Diagnóstico: OSPF `Full` → `ldp neighbor` → `forwarding-table` com
+  rótulos; falhas comuns = transport-address não alcançável ou **MTU**;
+- **MTU é pré-requisito** — rótulos adicionam bytes; sem folga, o LSP
+  sobe e o tráfego grande trava.
+
+Com o transporte MPLS de pé, o provedor pode oferecer o que vende caro:
+**circuitos de camada 2 fim a fim** sobre o backbone. O @sec-vpls monta
+o VPLS.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *MPLS* e *LDP* do RouterOS [@mikrotik-docs];
+- Comutação por rótulos e arquitetura MPLS: [@tanenbaum-redes];
+- MPLS no v7 na prática: [@discher-rosv7];
+- MPLS em backbones de provedor: [@burgess-mikrotik].
