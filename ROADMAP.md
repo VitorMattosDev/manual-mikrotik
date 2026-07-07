@@ -114,10 +114,10 @@ Pré-requisitos: Vol. 3.*
 
 - [x] `volumes/v08-roteamento/01-rotas-estaticas-distancia.qmd` — Rotas estáticas, distância administrativa, check-gateway, blackhole.
 - [x] `volumes/v08-roteamento/02-ospf-conceitos-configuracao.qmd` — OSPF: conceitos (LSA, DR/BDR, custo) e configuração no v7 (instance/area/template).
-- [ ] `volumes/v08-roteamento/03-ospf-avancado.qmd` — OSPF avançado: múltiplas áreas, autenticação, custos, filtragem, stub.
-- [ ] `volumes/v08-roteamento/04-bgp-conceitos-peering.qmd` — BGP: AS, eBGP/iBGP, sessão com operadora/IX, anúncio de prefixos.
-- [ ] `volumes/v08-roteamento/05-bgp-filtros-communities.qmd` — BGP: routing filters do v7, communities, prepend, boas práticas de segurança (RPKI conceitual).
-- [ ] `volumes/v08-roteamento/06-vrf-boas-praticas-v7.qmd` — VRF e boas práticas de roteamento no RouterOS v7 (tabelas, rules).
+- [x] `volumes/v08-roteamento/03-ospf-avancado.qmd` — OSPF avançado: múltiplas áreas, autenticação, custos, filtragem, stub.
+- [x] `volumes/v08-roteamento/04-bgp-conceitos-peering.qmd` — BGP: AS, eBGP/iBGP, sessão com operadora/IX, anúncio de prefixos.
+- [x] `volumes/v08-roteamento/05-bgp-filtros-communities.qmd` — BGP: routing filters do v7, communities, prepend, boas práticas de segurança (RPKI conceitual).
+- [x] `volumes/v08-roteamento/06-vrf-boas-praticas-v7.qmd` — VRF e boas práticas de roteamento no RouterOS v7 (tabelas, rules).
 
 ## Volume 9 — CGNAT e IPv6
 *Objetivo: sobreviver ao esgotamento IPv4 e implantar IPv6 de verdade.

@@ -1,7 +1,342 @@
-# VRF e boas práticas no v7
+# VRF e boas práticas de roteamento no v7 {#sec-vrf}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que é uma **VRF** (roteador virtual dentro do roteador) e
+  quando ela resolve um problema que sub-redes e VLANs não resolvem;
+- Distinguir **VRF** de **routing tables** (`/routing table`) e de
+  **routing rules** (`/routing rule`) no RouterOS v7;
+- Criar uma VRF, colocar interfaces nela e vazar rotas entre VRFs
+  (*route leaking*) com controle;
+- Aplicar **policy routing** com `routing-mark`/regras para direcionar
+  tráfego por origem/serviço;
+- Fechar o volume com um **checklist** de boas práticas de roteamento
+  no v7 (loopbacks, IGP+BGP, filtros, tabelas).
 :::
+
+O volume construiu o roteamento do provedor camada por camada:
+estáticas, OSPF, BGP e filtros. Falta a peça que **separa mundos**
+dentro de um mesmo equipamento: a **VRF** (*Virtual Routing and
+Forwarding*). Ela deixa uma caixa se comportar como **vários
+roteadores independentes**, cada um com sua tabela — indispensável
+quando gerência, clientes e trânsito precisam conviver sem se enxergar.
+
+## O problema que a VRF resolve
+
+VLANs separam **camada 2**; firewall separa **quem fala com quem**. Mas
+os dois compartilham a **mesma tabela de rotas**. Há casos em que isso
+não basta:
+
+- **Sobreposição de endereços**: dois clientes usam `192.168.1.0/24`
+  no mesmo BNG. Numa tabela única, é impossível — o roteador não sabe
+  qual `192.168.1.10` é qual;
+- **Isolamento forte de gerência**: você quer uma rede de administração
+  que **fisicamente não alcança** a internet do cliente, nem por engano
+  de firewall;
+- **Serviços L3 multi-tenant**: entregar a clientes corporativos redes
+  privadas isoladas sobre o mesmo backbone (a base de uma L3VPN/MPLS,
+  Volume 11).
+
+A **VRF** dá a cada contexto sua **própria tabela de rotas e seu próprio
+espaço de encaminhamento**. `192.168.1.10` na VRF-clienteA e o mesmo IP
+na VRF-clienteB são destinos **diferentes** — porque vivem em roteadores
+virtuais diferentes.
+
+```{.tikz}
+%%| filename: fig-vrf
+%%| alt: Um roteador físico contendo três VRFs isoladas. A VRF gerência com sua interface e tabela própria; a VRF cliente-A e a VRF cliente-B, ambas usando o mesmo prefixo 192.168.1.0/24 sem conflito porque cada uma tem sua tabela. Uma seta pontilhada controlada mostra route leaking entre a VRF de trânsito e as demais.
+\begin{tikzpicture}[
+  font=\small,
+  vrf/.style={draw, rounded corners, minimum width=30mm, minimum height=15mm, align=center},
+  iface/.style={draw, fill=manualgray!20, minimum width=16mm, minimum height=5mm, font=\scriptsize},
+]
+\draw[draw=manualblue!60!black, thick, rounded corners] (-5.2,-2.6) rectangle (5.2,2.6);
+\node[manualblue!60!black] at (0,2.25) {\scriptsize roteador físico (RouterOS v7)};
+\node[vrf, fill=manualgreen!12] (g) at (-3.2,0.4) {VRF\\gerência\\\scriptsize tabela A};
+\node[vrf, fill=manualblue!12] (a) at (0,0.4) {VRF\\cliente-A\\\scriptsize 192.168.1.0/24};
+\node[vrf, fill=manualyellow!18] (b) at (3.2,0.4) {VRF\\cliente-B\\\scriptsize 192.168.1.0/24};
+\node[iface] at (-3.2,-1.6) {ether-ger};
+\node[iface] at (0,-1.6) {vlan-A};
+\node[iface] at (3.2,-1.6) {vlan-B};
+\draw (g) -- (-3.2,-1.35); \draw (a) -- (0,-1.35); \draw (b) -- (3.2,-1.35);
+\draw[<->, dashed, manualred] (a.east) -- node[above]{\scriptsize leak controlado} (b.west);
+\end{tikzpicture}
+```
+
+::: {#fig-vrf}
+Três VRFs numa mesma caixa: cliente-A e cliente-B reusam
+`192.168.1.0/24` **sem conflito**, porque cada VRF tem tabela própria.
+O tráfego só cruza de uma para outra por **route leaking** explícito —
+o padrão é o isolamento total.
+:::
+
+## VRF, routing tables e routing rules no v7
+
+O v7 tem três conceitos parecidos que confundem — vale separá-los:
+
+- **`/ip vrf`**: cria o roteador virtual e **associa interfaces** a ele.
+  É isolamento de *forwarding* — cada VRF tem sua FIB;
+- **`/routing table`**: uma tabela nomeada com `fib` (para instalar
+  rotas). Toda VRF tem uma tabela associada, mas você também usa tabelas
+  **sem** VRF para *policy routing* (mandar tráfego marcado por uma
+  tabela alternativa);
+- **`/routing rule`**: decide **qual tabela** consultar para um pacote,
+  por critérios (origem, interface, `routing-mark`). É o equivalente v7
+  das antigas *routing rules* do v6.
+
+Regra mental: **VRF isola**; **routing table + rule direciona**. VRF é
+para "estes mundos não se enxergam"; policy routing é para "este
+tráfego sai por outro caminho".
+
+## Criando e usando uma VRF
+
+```routeros
+# 1) a VRF e suas interfaces
+/ip vrf
+add name=gerencia interfaces=ether5
+
+# 2) endereço e rota DENTRO da VRF (note routing-table=gerencia)
+/ip address add address=10.99.0.1/24 interface=ether5
+/ip route add dst-address=0.0.0.0/0 gateway=10.99.0.254%gerencia routing-table=gerencia
+```
+
+A partir daí, `ether5` vive num roteador virtual próprio: seu
+`0.0.0.0/0` é **outro**, isolado da tabela `main`. Um ping originado na
+gerência **não** usa a rota da internet do cliente — o isolamento é de
+encaminhamento, não de firewall.
+
+Para serviços do próprio roteador (DNS, ping, SSH) **saírem por uma
+VRF**, muitos deles aceitam `vrf=` ou `routing-table=`; caso contrário,
+usa-se *route leaking*.
+
+## Route leaking: vazar com controle
+
+Isolamento total é o padrão, mas às vezes duas VRFs **precisam** de um
+caminho pontual (a gerência precisa alcançar um servidor central na
+VRF de trânsito). O vazamento é feito com rotas que apontam para outra
+tabela/VRF, sempre **explícito e mínimo**:
+
+```routeros
+# levar só a rota do servidor central para dentro da VRF gerencia
+/ip route add dst-address=203.0.113.10/32 \
+    gateway=<nexthop-na-vrf-transito>@main routing-table=gerencia
+```
+
+A sintaxe `@tabela`/`%interface` diz ao v7 onde resolver o next-hop. A
+disciplina aqui é a mesma dos filtros de BGP: **vaze o mínimo**, nomeie
+o propósito no `comment`, e nunca "abra tudo" para resolver um caso
+pontual — isso mata o motivo de existir da VRF.
+
+::: {.callout-warning}
+Colocar uma interface numa VRF **muda a tabela** que o tráfego dela usa.
+Configurações que assumiam a tabela `main` (rota padrão, NAT, serviços)
+param de funcionar até serem replicadas na VRF. Migre uma interface
+para VRF com **console/acesso alternativo** garantido — é fácil se
+trancar para fora.
+:::
+
+## Policy routing: tráfego por caminho, sem VRF
+
+Nem todo direcionamento precisa de VRF. Para "clientes do plano X saem
+pela operadora B", basta **marcar** o tráfego (mangle, @sec-mangle-raw)
+e mandá-lo por uma **tabela alternativa** via *routing rule*:
+
+```routeros
+/routing table add name=via-opB fib
+/ip route add dst-address=0.0.0.0/0 gateway=<opB> routing-table=via-opB
+/routing rule add src-address=100.64.8.0/22 action=lookup table=via-opB
+```
+
+Aqui não há isolamento de VRF — só uma **segunda decisão de rota** para
+um tráfego selecionado. É o que sustenta ECMP/PCC e failover multi-link
+do Volume 14, e o balanceamento de trânsito do @sec-bgp-filtros.
+
+## Checklist de boas práticas de roteamento no v7
+
+Fechando o volume, o que separa um roteamento de provedor sólido de um
+frágil:
+
+- **Loopbacks para tudo**: router-id de OSPF/BGP e sessões iBGP sobre
+  `/32` de loopback — sobrevivem à queda de uma interface física;
+- **Camadas na ordem certa**: IGP (OSPF) carrega a **infraestrutura**
+  (loopbacks, enlaces); BGP carrega **prefixos de cliente/internet**.
+  Não misture — não jogue rota de cliente no OSPF em escala;
+- **Filtros sempre**: OSPF com filtros de redistribuição; BGP com filtro
+  de **saída mínimo** e de **entrada** (bogons/RPKI). Nenhuma sessão eBGP
+  sem filtro;
+- **Tabelas e VRFs com propósito nomeado**: cada `routing table`/`vrf`
+  com `comment` do porquê; route leaking mínimo;
+- **`check-gateway`/recursivo** onde a detecção de falha importa
+  (@sec-rotas-estaticas), e temporizadores de SPF/BGP ajustados contra
+  flapping;
+- **Documentar o desenho**: ASN, blocos, áreas OSPF, comunidades — o
+  Volume 15 retoma isso no desenho de rede fim a fim.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+**VRF isola; policy routing direciona** — são respostas a perguntas
+diferentes. Use VRF quando dois mundos **não podem se enxergar**
+(gerência, multi-tenant, endereços sobrepostos); use `routing table` +
+`rule` quando o mesmo mundo precisa **sair por caminhos diferentes**. Os
+dois compartilham a mesma disciplina do volume inteiro: **isolamento é o
+padrão, vazamento é exceção explícita e mínima**. Roteamento de provedor
+não é sobre fazer o pacote chegar — é sobre controlar, com política, por
+onde ele chega.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Um CHR (@sec-lab-chr) com três interfaces internas: `ether5` (gerência),
+`ether6` (cliente-A) e `ether7` (cliente-B). Um segundo CHR faz de
+"servidor central" na tabela `main`. O objetivo é isolar gerência e
+provar sobreposição de endereços entre A e B — tudo numa caixa só.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — VRF de gerência isolada.**
+
+```routeros
+/ip vrf add name=gerencia interfaces=ether5
+/ip address add address=10.99.0.1/24 interface=ether5
+/ip route add dst-address=0.0.0.0/0 gateway=10.99.0.254%gerencia routing-table=gerencia
+```
+
+Confirme que a tabela `main` **não** tem essa rota: `/ip route print
+where routing-table=gerencia` mostra a rota; `/ip route print` (main),
+não.
+
+**Passo 2 — sobreposição de endereços.** Ponha A e B em VRFs distintas
+e dê a **ambas** o mesmo `192.168.1.0/24`:
+
+```routeros
+/ip vrf add name=cli-a interfaces=ether6
+/ip vrf add name=cli-b interfaces=ether7
+/ip address add address=192.168.1.1/24 interface=ether6
+/ip address add address=192.168.1.1/24 interface=ether7
+```
+
+Sem VRF isso seria rejeitado (endereço duplicado); **com** VRF, o v7
+aceita — cada `192.168.1.1` vive na sua tabela.
+
+**Passo 3 — prove o isolamento.** De um host na cli-a, tente pingar um
+host na cli-b (mesmo IP de rede). **Não** deve alcançar — são
+roteadores virtuais diferentes.
+
+**Passo 4 — route leaking controlado.** Leve **só** o servidor central
+(`203.0.113.10/32`) para dentro da VRF de gerência:
+
+```routeros
+/ip route add dst-address=203.0.113.10/32 gateway=<nexthop>@main routing-table=gerencia
+```
+
+De um host na gerência, agora o ping ao servidor central passa — mas
+**nada mais** da `main` está acessível. Vazamento mínimo, como manda a
+regra.
+
+**Passo 5 — policy routing sem VRF.** Na tabela `main`, mande um bloco
+de clientes sair por um gateway alternativo:
+
+```routeros
+/routing table add name=via-opB fib
+/ip route add dst-address=0.0.0.0/0 gateway=<opB> routing-table=via-opB
+/routing rule add src-address=100.64.8.0/22 action=lookup table=via-opB
+```
+
+Com `/tool traceroute` de um IP dentro e fora do `100.64.8.0/22`,
+observe caminhos de saída diferentes — sem nenhuma VRF envolvida.
+
+### Verificação
+
+1. A rota padrão da gerência existe **só** na tabela `gerencia`;
+2. O mesmo `192.168.1.0/24` coexiste em duas VRFs sem erro de duplicado;
+3. Hosts de cli-a e cli-b **não** se alcançam;
+4. Após o leak, a gerência alcança **só** o servidor central;
+5. O bloco marcado sai por outro gateway (policy routing) sem VRF.
+
+### Desafios
+
+1. Depois de mover `ether5` para a VRF de gerência, você perdeu o acesso
+   ao roteador por essa interface. Explique por que (pense em qual
+   tabela o tráfego de resposta passou a usar) e como você teria evitado
+   o "auto-trancamento".
+2. A gerência precisa resolver DNS por um servidor na `main`. O `ping`
+   ao IP do DNS (após leak) funciona, mas a resolução de nomes falha.
+   Qual é a peça que ainda falta e por quê?
+3. Quando escolher **VRF** e quando escolher **routing table + rule**
+   para o requisito "clientes do plano premium saem por outro trânsito"?
+   Justifique pela pergunta que cada ferramenta responde.
+4. Um cliente corporativo quer uma rede privada isolada entre duas
+   filiais, sobre o seu backbone, sem enxergar nem ser enxergado pela
+   internet. Descreva por que **VRF** é a base e qual tecnologia do
+   Volume 11 a estende de um roteador para **toda a rede**.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Ao entrar na VRF, `ether5` passou a usar a tabela `gerencia`, que
+(antes de você configurar) não tinha rota de volta para o seu host de
+administração — o pacote de resposta não sabia sair. Evita-se
+**configurando a rota/serviço na VRF antes** (ou junto) da migração, e
+sempre com um **acesso alternativo** garantido (outra interface na
+`main`, console) para não depender da interface que está migrando.
+
+**2.** O **serviço de DNS do roteador** precisa saber usar a rota vazada
+/ a VRF certa para alcançar o servidor. O `ping` funciona porque é
+tráfego de trânsito comum sujeito às rotas; a resolução do **próprio
+roteador** parte de um serviço que, por padrão, usa a tabela `main`.
+Falta apontar o resolvedor para sair pela rota correta (leak do
+`/32` do DNS **e** o serviço configurado para usá-la), ou rodar a
+resolução dentro do contexto da VRF.
+
+**3.** Pergunte "os mundos precisam se **enxergar**?". Se o premium é o
+mesmo cliente/rede que só precisa **sair por outro caminho** — sem
+isolamento, sem endereços sobrepostos — a resposta é **routing table +
+rule** (policy routing): mais simples, menos coisa para manter. **VRF**
+só se houver requisito de **isolamento** (não devem alcançar os demais)
+ou **sobreposição de endereços**. Ferramenta pesada para problema leve
+vira dívida operacional.
+
+**4.** A VRF dá o isolamento **local**: a rede do cliente vive numa
+tabela própria, invisível para o resto. Mas uma VRF sozinha morre no
+roteador onde foi criada. Para levar esse isolamento **por todo o
+backbone** — filial A e filial B em roteadores distintos, no mesmo
+contexto privado — usa-se **L3VPN sobre MPLS** (Volume 11), que carrega
+as VRFs entre PEs com labels. VRF é o tijolo; MPLS é a argamassa que a
+espalha pela rede.
+:::
+
+## Resumo
+
+- **VRF** = roteador virtual dentro do roteador: tabela e encaminhamento
+  próprios, resolve **isolamento forte** e **endereços sobrepostos** que
+  VLAN/firewall não resolvem;
+- No v7: **`/ip vrf`** isola (associa interfaces); **`/routing table` +
+  `/routing rule`** direcionam (policy routing) — perguntas diferentes,
+  ferramentas diferentes;
+- **Route leaking** conecta VRFs de forma **explícita e mínima**
+  (`@tabela`/`%interface`); isolamento é o padrão;
+- Cuidado operacional: mover interface para VRF muda a tabela dela —
+  garanta acesso alternativo para não se trancar;
+- **Checklist do volume**: loopbacks, IGP para infra + BGP para
+  prefixos, filtros sempre, tabelas/VRFs com propósito nomeado.
+
+Fecha-se o Volume 8: a rede do provedor agora roteia com método, do
+enlace interno ao peering global, com isolamento onde importa. O
+**Volume 9** ataca o problema que todo provedor enfrenta hoje — o
+esgotamento do IPv4 (CGNAT) e a transição para **IPv6**.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *VRF*, *Routing tables* e *Routing rules* do
+  RouterOS v7 [@mikrotik-docs];
+- Roteamento virtual e L3VPN (fundamentos): [@tanenbaum-redes];
+- VRF e policy routing no v7: [@discher-rosv7];
+- Aplicação em provedores: [@burgess-mikrotik].
