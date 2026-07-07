@@ -103,7 +103,15 @@ book:
         - volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.qmd
         - volumes/v09-cgnat-ipv6/05-firewall-ipv6.qmd
 
-    # (Volumes 10–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
+    - part: "Volume 10 — Túneis e VPN"
+      chapters:
+        - volumes/v10-tuneis-vpn/01-panorama-tuneis.qmd
+        - volumes/v10-tuneis-vpn/02-wireguard.qmd
+        - volumes/v10-tuneis-vpn/03-ipsec.qmd
+        - volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd
+        - volumes/v10-tuneis-vpn/05-interligacao-pops.qmd
+
+    # (Volumes 11–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
 
   appendices:
     - referencias.qmd
