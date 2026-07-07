@@ -1,7 +1,310 @@
-# Firewall IPv6
+# Firewall IPv6 {#sec-firewall-ipv6}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar por que o IPv6 **exige** firewall (sem o "muro acidental" do
+  NAT) e como isso muda a postura de segurança;
+- Escrever regras em **`/ipv6 firewall filter`** aproveitando o que já
+  sabe de chains e connection tracking (@sec-chains-firewall,
+  @sec-conntrack) — e o que **muda** em relação ao IPv4;
+- Tratar o **ICMPv6** corretamente: por que bloqueá-lo como no IPv4
+  **quebra** o IPv6 (ND, PMTUD) e quais tipos liberar;
+- Proteger **o roteador** (chain input) e a **LAN do cliente** (chain
+  forward) em IPv6, incluindo o CPE dual stack;
+- Montar um **conjunto mínimo** de regras IPv6 seguro para provedor e
+  reconhecer os erros que "funcionam mas deixam tudo aberto".
 :::
+
+O Volume 9 devolveu ao cliente o que o CGNAT tirou: com IPv6 dual stack
+(@sec-dhcpv6-pd), **cada dispositivo da casa é roteável de ponta a
+ponta**. Isso é o objetivo — e é também o perigo. No IPv4, o NAT/CGNAT
+funcionava como um muro involuntário: o que não tinha port-forward
+**não** era alcançável de fora. No IPv6 esse muro **não existe**. A
+única coisa entre a IoT barata da casa do cliente e a internet inteira é
+o **firewall**. Este capítulo o constrói — e fecha o volume.
+
+## Por que IPv6 sem firewall é um erro
+
+Repita o conceito até virar reflexo: **IPv6 não tem NAT protegendo por
+acidente**. Um endereço GUA numa câmera, numa TV, num roteador doméstico
+mal atualizado está **exposto à internet** no instante em que o dual
+stack sobe. Botnets varrem o espaço IPv6 procurando exatamente isso.
+
+A boa notícia: você **já sabe** firewall. Chains (input/forward/output),
+connection tracking (new/established/related/invalid), address-lists — a
+lógica do Volume 3 vale **igual** em IPv6. Só muda o menu
+(`/ipv6 firewall` em vez de `/ip firewall`) e **um detalhe crítico**: o
+**ICMPv6**.
+
+## O que muda: ICMPv6 não é o ICMP do IPv4
+
+No IPv4, era comum (e quase inofensivo) bloquear ICMP "por segurança".
+Em IPv6 isso é **fatal**: o ICMPv6 **não é** só "ping" — ele carrega o
+**Neighbor Discovery** (o ARP do IPv6), o **Router Advertisement** (o
+SLAAC, @sec-ipv6-fundamentos) e o **Packet Too Big** (essencial para o
+*Path MTU Discovery*). Bloquear ICMPv6 indiscriminadamente **quebra** o
+IPv6: vizinhos não se descobrem, hosts não se autoconfiguram, e conexões
+"grandes" travam de forma misteriosa (o mesmo sintoma de MTU do OSPF e
+do PPPoE, agora por PMTUD).
+
+Regra de ouro: **libere ICMPv6** (com sensatez de taxa), nunca o
+bloqueie por inteiro. Os tipos essenciais: NS/NA (135/136), RS/RA
+(133/134), Packet Too Big (2), Time Exceeded (3), Echo (128/129) e
+Parameter Problem (4).
+
+```{.tikz}
+%%| filename: fig-ipv6-fw
+%%| alt: Postura de firewall no IPv6. Uma seta do mundo externo tentando alcançar a LAN do cliente é barrada na chain forward por uma regra que só aceita established/related, enquanto o tráfego iniciado de dentro para fora passa. Em paralelo, o ICMPv6 (ND, RA, Packet Too Big) atravessa liberado, com uma nota de que bloqueá-lo quebra o IPv6.
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=center, minimum height=10mm, inner sep=4pt},
+]
+\node[box, fill=manualgray!15] (net) at (0,0) {internet\\\scriptsize IPv6};
+\node[box, fill=manualyellow!20, minimum width=30mm] (fw) at (4.4,0) {firewall\\\scriptsize forward};
+\node[box, fill=manualgreen!15] (lan) at (8.8,0) {LAN cliente\\\scriptsize GUA/64};
+% entrada barrada
+\draw[-{Stealth}, thick, manualred] (net) -- node[above]{\scriptsize new de fora} (fw);
+\node[manualred] at (4.4,-1.1) {\scriptsize DROP (não solicitado)};
+% saida ok
+\draw[-{Stealth}, thick, manualgreen!60!black] (lan) to[bend right=30] node[below]{\scriptsize iniciado de dentro: established} (net);
+% icmpv6
+\node[manualblue!60!black, align=center] at (4.4,1.4) {\scriptsize ICMPv6 (ND/RA/PTB) \textbf{liberado} — bloquear quebra o IPv6};
+\end{tikzpicture}
+```
+
+::: {#fig-ipv6-fw}
+A postura é a mesma do IPv4 sem NAT: aceite o que a **casa iniciou**
+(established/related), **descarte** o que vem de fora sem solicitação —
+mas **deixe o ICMPv6 passar**, porque ele é a plumbing do protocolo,
+não uma ameaça a bloquear.
+:::
+
+## Protegendo o roteador (chain input)
+
+Igual ao @sec-protegendo-roteador, mas no menu IPv6. A espinha dorsal:
+aceitar established/related, aceitar o ICMPv6 necessário, aceitar
+gerência só de fontes confiáveis, **dropar o resto**:
+
+```routeros
+/ipv6 firewall filter
+add chain=input connection-state=established,related action=accept
+add chain=input connection-state=invalid action=drop
+# ICMPv6 é OBRIGATÓRIO — libere (com limite de taxa saudável)
+add chain=input protocol=icmpv6 action=accept
+# link-local: o ND/RA vive aqui, não bloqueie o fe80::/10 no input
+add chain=input src-address=fe80::/10 action=accept
+# gerência só da rede de gestão
+add chain=input src-address-list=gerencia action=accept
+add chain=input action=drop
+```
+
+::: {.callout-warning}
+Não copie regras IPv4 trocando só o menu. Duas armadilhas: (1) **não
+existe** `100.64/10` nem RFC1918 "de casa" para tratar aqui, mas
+**existe** o `fe80::/10` (link-local) que **precisa** passar no input,
+senão o ND morre; (2) o `drop` final do input **tem** de vir **depois**
+de aceitar o ICMPv6 e o link-local — invertido, você derruba o próprio
+IPv6 do roteador.
+:::
+
+## Protegendo a LAN do cliente (chain forward)
+
+Aqui está o coração do capítulo: sem NAT, **a chain forward é o único
+muro** entre a internet e os dispositivos da casa. A política é
+"stateful": deixe sair o que a casa inicia, deixe **voltar** as respostas,
+e **bloqueie conexões novas vindas de fora**:
+
+```routeros
+/ipv6 firewall filter
+add chain=forward connection-state=established,related action=accept
+add chain=forward connection-state=invalid action=drop
+# ICMPv6 fim a fim (PMTUD!) — libere
+add chain=forward protocol=icmpv6 action=accept
+# tráfego iniciado pela LAN do cliente para a internet: ok
+add chain=forward in-interface-list=lan-clientes action=accept
+# conexões NOVAS vindas da internet para a LAN: DROP (o "muro")
+add chain=forward connection-state=new in-interface-list=wan action=drop
+```
+
+Esse conjunto reproduz, **explicitamente**, a proteção que o NAT dava de
+graça no IPv4 — com a vantagem de que agora o cliente **pode** abrir uma
+porta específica (uma exceção `accept` para um serviço), coisa que o
+CGNAT impedia. Poder com controle.
+
+## O CPE dual stack: firewall dos dois lados
+
+O CPE MikroTik do cliente (@sec-dhcpv6-pd) precisa do **mesmo** cuidado:
+por padrão, o RouterOS traz um firewall IPv6 razoável, mas em provisão em
+massa você **empurra** um conjunto mínimo (input protege o CPE, forward
+protege a LAN da casa). É o mesmo template acima, aplicado no CPE, e é o
+que separa "IPv6 ligado" de "IPv6 ligado com segurança". Provisão de
+firewall em escala é assunto do Volume 12 (@sec-api-provisionamento).
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+No IPv6, **o firewall não é opcional — ele É a segurança**. O NAT do
+IPv4 protegia por acidente; o IPv6 tira esse muro e o substitui por
+regras **explícitas** na chain forward: aceite o que a casa iniciou,
+dropе o `new` que vem de fora. E o erro que arruína tudo: **bloquear
+ICMPv6 como se fosse o ICMP do IPv4** — ele carrega ND, RA e PMTUD;
+sem ele, o IPv6 não anda. Libere ICMPv6, libere link-local no input,
+drope conexões novas de fora no forward. Faça isso **antes** de ligar
+dual stack em produção — depois é tarde.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Reaproveite o dual stack do @sec-dhcpv6-pd: **lab-cpe** (roteador do
+cliente, com `/56` delegado e LAN IPv6 no `ether3`) e **lab-host** na
+casa. Adicione **lab-attacker** = um host no lado "internet" que
+tentará alcançar o `lab-host` diretamente pelo GUA — para provar que o
+firewall barra o acesso não solicitado.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — o estado inicial perigoso.** Antes de qualquer regra, do
+lab-attacker, pingue o GUA do lab-host:
+
+```routeros
+/ping <gua-do-lab-host>
+```
+
+Sem firewall, **responde** — a casa está exposta. Esse é o problema.
+
+**Passo 2 — proteger o roteador (input).** No lab-cpe:
+
+```routeros
+/ipv6 firewall filter
+add chain=input connection-state=established,related action=accept
+add chain=input connection-state=invalid action=drop
+add chain=input protocol=icmpv6 action=accept
+add chain=input src-address=fe80::/10 action=accept
+add chain=input action=drop
+```
+
+Confirme que o IPv6 **continua funcionando** (SLAAC, ND) — se o ND
+quebrasse, você teria bloqueado o ICMPv6/link-local por engano.
+
+**Passo 3 — o muro da LAN (forward).** No lab-cpe:
+
+```routeros
+/interface list add name=wan ; /interface list add name=lan-clientes
+/interface list member add list=wan interface=pppoe-out1
+/interface list member add list=lan-clientes interface=ether3
+/ipv6 firewall filter
+add chain=forward connection-state=established,related action=accept
+add chain=forward protocol=icmpv6 action=accept
+add chain=forward in-interface-list=lan-clientes action=accept
+add chain=forward connection-state=new in-interface-list=wan action=drop
+```
+
+**Passo 4 — prove o muro.** Do lab-attacker, pingue de novo o lab-host:
+agora **não** responde (conexão nova de fora, dropada). Do lab-host,
+pingue a internet: **funciona** (established volta). O muro está de pé.
+
+**Passo 5 — abrir uma exceção controlada.** Suponha que o cliente queira
+expor um serviço (porta 443) num dispositivo. Adicione **antes** do drop:
+
+```routeros
+/ipv6 firewall filter
+add chain=forward protocol=tcp dst-port=443 \
+    dst-address=<gua-do-servidor> connection-state=new action=accept \
+    place-before=[find chain=forward connection-state=new action=drop]
+```
+
+Do lab-attacker, a 443 daquele host agora conecta — e **só** ela. O que
+o CGNAT tornava impossível, o firewall IPv6 faz com precisão cirúrgica.
+
+### Verificação
+
+1. Antes das regras, o "atacante" alcança a casa (exposição);
+2. Após o input, o roteador segue com IPv6 sadio (ND/SLAAC intactos —
+   prova de que o ICMPv6 foi liberado);
+3. Após o forward, conexões **novas** de fora são dropadas; as iniciadas
+   pela casa funcionam;
+4. A exceção `accept` abre **exatamente** um serviço, sem abrir o resto.
+
+### Desafios
+
+1. Depois de aplicar o firewall IPv6, os dispositivos da casa **pararam**
+   de receber endereço (SLAAC morreu) e vizinhos não se enxergam. Qual
+   regra você errou, e por que o ICMPv6/link-local é diferente de "só
+   ping"?
+2. O IPv6 "funciona", mas downloads grandes e alguns sites **travam** no
+   meio, enquanto páginas leves abrem normal. O ping simples passa. Qual
+   tipo de ICMPv6 você bloqueou sem querer, e que mecanismo ele sustenta?
+3. Um colega diz: "no IPv6 não preciso de firewall porque ninguém sabe o
+   endereço aleatório da minha câmera". Refute com dois argumentos
+   concretos (varredura e vazamento de endereço).
+4. Escreva a regra mínima que permite ao cliente **um** servidor web
+   IPv6 acessível de fora, mantendo o resto da casa protegido. Onde ela
+   entra na ordem das regras e por quê?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Você bloqueou o **ICMPv6** e/ou o **link-local `fe80::/10`**. O
+ICMPv6 não é "só ping": ele carrega o **Neighbor Discovery** (NS/NA — o
+ARP do IPv6) e o **Router Advertisement** (RS/RA — o SLAAC). Bloqueado,
+os vizinhos não se descobrem e os hosts não se autoconfiguram. Precisa
+haver `accept` para `protocol=icmpv6` e para `src-address=fe80::/10`
+antes do drop.
+
+**2.** Você bloqueou o **Packet Too Big** (ICMPv6 tipo 2), que sustenta
+o **Path MTU Discovery**. Sem ele, quando um caminho tem MTU menor, o
+emissor não é avisado para reduzir o pacote — conexões que mandam pacotes
+grandes (downloads) **travam**, enquanto tráfego pequeno (ping, páginas
+leves) passa. É o mesmo sintoma de MTU do OSPF/PPPoE, agora por PMTUD.
+Libere o ICMPv6 (que inclui o tipo 2).
+
+**3.** (a) **Varredura**: botnets varrem o espaço IPv6 ativo (usando DNS
+reverso, prefixos delegados conhecidos, padrões de EUI-64) — "endereço
+aleatório" não é segredo confiável. (b) **Vazamento**: o endereço aparece
+em cada conexão que o dispositivo faz (headers, logs de servidores,
+telemetria) e em anúncios/mDNS na rede — basta o dispositivo falar com o
+mundo uma vez. Segurança por obscuridade de endereço **não é**
+segurança; a proteção é o firewall stateful.
+
+**4.** `add chain=forward protocol=tcp dst-port=80,443
+dst-address=<gua-do-servidor> connection-state=new action=accept`,
+posicionada **antes** da regra que dropa `new` vindo da WAN (é
+*first-match*: se o drop viesse primeiro, a exceção nunca seria
+avaliada). Assim, só aquele host e aquelas portas são alcançáveis de
+fora; todo o resto da casa continua barrado.
+:::
+
+## Resumo
+
+- No IPv6 **não há NAT de muro**: cada dispositivo é roteável, então o
+  **firewall é a segurança** — a chain forward é o único muro da casa;
+- A lógica é a do Volume 3 (chains, conntrack, address-lists) no menu
+  **`/ipv6 firewall`** — aceite established/related, drope `new` de fora;
+- **ICMPv6 não é o ICMP do IPv4**: carrega ND, RA e Packet Too Big
+  (PMTUD) — **libere-o**; bloqueá-lo quebra descoberta, SLAAC e
+  downloads grandes;
+- No input, libere **link-local `fe80::/10`** (o ND vive lá) antes do
+  drop; no CPE dual stack, empurre o mesmo conjunto mínimo;
+- IPv6 devolve o fim a fim que o CGNAT tirou — o cliente **pode** abrir
+  um serviço com uma exceção `accept` cirúrgica.
+
+Fecha-se o Volume 9: o provedor sobrevive ao esgotamento do IPv4
+(CGNAT com registro legal) **e** implanta IPv6 de verdade (dual stack
+com firewall). Rede endereçada e protegida ponta a ponta. O **Volume
+10** interliga os POPs e dá acesso remoto seguro — o mundo dos
+**túneis e VPN**.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *IPv6 Firewall* e *ICMPv6* do RouterOS
+  [@mikrotik-docs];
+- ICMPv6, ND e PMTUD: [@tanenbaum-redes];
+- Firewall IPv6 no v7: [@discher-rosv7];
+- Segurança IPv6 em provedores: [@burgess-mikrotik].

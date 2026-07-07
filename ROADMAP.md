@@ -123,11 +123,11 @@ Pré-requisitos: Vol. 3.*
 *Objetivo: sobreviver ao esgotamento IPv4 e implantar IPv6 de verdade.
 Pré-requisitos: Vols. 6 e 8.*
 
-- [ ] `volumes/v09-cgnat-ipv6/01-cgnat-netmap.qmd` — CGNAT: conceito, 100.64.0.0/10, netmap determinístico, portas por assinante.
-- [ ] `volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.qmd` — Logging de CGNAT e requisitos legais brasileiros (Marco Civil): o que guardar e como.
-- [ ] `volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.qmd` — IPv6 no RouterOS: endereçamento, ND, SLAAC, pools.
-- [ ] `volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.qmd` — DHCPv6-PD e dual stack no PPPoE: delegando /56 ao assinante.
-- [ ] `volumes/v09-cgnat-ipv6/05-firewall-ipv6.qmd` — Firewall IPv6: diferenças do v4, ICMPv6, proteção da LAN do cliente.
+- [x] `volumes/v09-cgnat-ipv6/01-cgnat-netmap.qmd` — CGNAT: conceito, 100.64.0.0/10, netmap determinístico, portas por assinante.
+- [x] `volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.qmd` — Logging de CGNAT e requisitos legais brasileiros (Marco Civil): o que guardar e como.
+- [x] `volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.qmd` — IPv6 no RouterOS: endereçamento, ND, SLAAC, pools.
+- [x] `volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.qmd` — DHCPv6-PD e dual stack no PPPoE: delegando /56 ao assinante.
+- [x] `volumes/v09-cgnat-ipv6/05-firewall-ipv6.qmd` — Firewall IPv6: diferenças do v4, ICMPv6, proteção da LAN do cliente.
 
 ---
 
