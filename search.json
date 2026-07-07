@@ -4321,7 +4321,7 @@
     "href": "volumes/v09-cgnat-ipv6/05-firewall-ipv6.html#o-cpe-dual-stack-firewall-dos-dois-lados",
     "title": "51  Firewall IPv6",
     "section": "51.5 O CPE dual stack: firewall dos dois lados",
-    "text": "51.5 O CPE dual stack: firewall dos dois lados\nO CPE MikroTik do cliente (Capítulo 50) precisa do mesmo cuidado: por padrão, o RouterOS traz um firewall IPv6 razoável, mas em provisão em massa você empurra um conjunto mínimo (input protege o CPE, forward protege a LAN da casa). É o mesmo template acima, aplicado no CPE, e é o que separa “IPv6 ligado” de “IPv6 ligado com segurança”. Provisão de firewall em escala é assunto do Volume 12 (?sec-api-provisionamento).\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nNo IPv6, o firewall não é opcional — ele É a segurança. O NAT do IPv4 protegia por acidente; o IPv6 tira esse muro e o substitui por regras explícitas na chain forward: aceite o que a casa iniciou, dropе o new que vem de fora. E o erro que arruína tudo: bloquear ICMPv6 como se fosse o ICMP do IPv4 — ele carrega ND, RA e PMTUD; sem ele, o IPv6 não anda. Libere ICMPv6, libere link-local no input, drope conexões novas de fora no forward. Faça isso antes de ligar dual stack em produção — depois é tarde.",
+    "text": "51.5 O CPE dual stack: firewall dos dois lados\nO CPE MikroTik do cliente (Capítulo 50) precisa do mesmo cuidado: por padrão, o RouterOS traz um firewall IPv6 razoável, mas em provisão em massa você empurra um conjunto mínimo (input protege o CPE, forward protege a LAN da casa). É o mesmo template acima, aplicado no CPE, e é o que separa “IPv6 ligado” de “IPv6 ligado com segurança”. Provisão de firewall em escala é assunto do Volume 12 (Capítulo 62).\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nNo IPv6, o firewall não é opcional — ele É a segurança. O NAT do IPv4 protegia por acidente; o IPv6 tira esse muro e o substitui por regras explícitas na chain forward: aceite o que a casa iniciou, dropе o new que vem de fora. E o erro que arruína tudo: bloquear ICMPv6 como se fosse o ICMP do IPv4 — ele carrega ND, RA e PMTUD; sem ele, o IPv6 não anda. Libere ICMPv6, libere link-local no input, drope conexões novas de fora no forward. Faça isso antes de ligar dual stack em produção — depois é tarde.",
     "crumbs": [
       "Volume 9 — CGNAT e IPv6",
       "<span class='chapter-number'>51</span>  <span class='chapter-title'>Firewall IPv6</span>"
@@ -5117,6 +5117,303 @@
     "crumbs": [
       "Volume 11 — MPLS",
       "<span class='chapter-number'>59</span>  <span class='chapter-title'>Traffic Engineering</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html",
+    "href": "volumes/v12-scripts/01-linguagem-script.html",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "",
+    "text": "60.1 Variáveis e tipos\nAté aqui, cada configuração foi manual. Funciona para um roteador; não escala para um parque de centenas. A linguagem de script do RouterOS transforma tarefas repetitivas em código: verificar links, aplicar mudanças em massa, reagir a eventos, gerar relatórios. Não é uma linguagem “de programador” — é enxuta e cheia de peculiaridades — mas domina-se o essencial rápido, e o retorno é enorme: o que você faria em 200 roteadores à mão, um script faz em segundos. Este capítulo é a base; os próximos automatizam (Capítulo 61) e provisionam em massa (Capítulo 62).\nToda variável é declarada com escopo:\nO RouterOS infere o tipo pelo valor: num, str, bool, ip, ip-prefix, time, array, e outros. Tipos importam — comparar um str “10” com um num 10 dá resultado inesperado. Converta quando necessário ([:tonum $x], [:tostr $x]).",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html#variáveis-e-tipos",
+    "href": "volumes/v12-scripts/01-linguagem-script.html#variáveis-e-tipos",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "",
+    "text": ":local — vive só dentro do script/bloco atual (o padrão que você deve usar);\n:global — persiste entre scripts e sessões (use com parcimônia; é como uma variável global de verdade — poderosa e perigosa).\n\n:local nome \"borda-pop1\"\n:local contador 0\n:local ativo true\n:local rede 192.168.1.0/24\n\n\n\n\n\n\n\nAviso\n\n\n\nA sintaxe do RouterOS script é exigente e sem perdão: :set x 5 (não x = 5), o $ só para ler a variável (:put $x), espaços ao redor de operadores importam, e { } de blocos têm regras próprias. Erros de sintaxe costumam falhar em silêncio ou com mensagens crípticas. Teste incrementalmente — linha a linha no terminal antes de montar o script inteiro.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html#condicionais-e-a-estrutura-do-controle",
+    "href": "volumes/v12-scripts/01-linguagem-script.html#condicionais-e-a-estrutura-do-controle",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "60.2 Condicionais e a estrutura do controle",
+    "text": "60.2 Condicionais e a estrutura do controle\n:local sinal -65\n:if ($sinal &lt; -70) do={\n    :log warning \"Sinal fraco: $sinal dBm\"\n} else={\n    :log info \"Sinal ok: $sinal dBm\"\n}\nNote a interpolação: dentro de \"...\", $sinal é substituído pelo valor. É assim que se montam mensagens de log e e-mail.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html#loops-e-a-operação-sobre-itens-de-menu",
+    "href": "volumes/v12-scripts/01-linguagem-script.html#loops-e-a-operação-sobre-itens-de-menu",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "60.3 Loops e a operação sobre itens de menu",
+    "text": "60.3 Loops e a operação sobre itens de menu\nO coração do RouterOS script é agir sobre os itens de um menu. Duas peças fazem isso: find (retorna os itens que casam um critério) e :foreach (percorre e age). Exemplo: desabilitar todas as interfaces cujo comentário contém “teste”:\n:foreach i in=[/interface find where comment~\"teste\"] do={\n    /interface disable $i\n    :log info \"desabilitada: $[/interface get $i name]\"\n}\n\n[/interface find where ...] retorna um array de referências internas;\n/interface get $i name lê um campo daquele item;\n/interface disable $i age sobre ele.\n\nEsse padrão — find → foreach → get/set/ação — é 80% dos scripts úteis de RouterOS. O :for numérico também existe para contagens:\n:for n from=1 to=5 do={ :log info \"iteracao $n\" }\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nO padrão que resolve a maioria dos scripts: find seleciona os itens, :foreach percorre, get/:if decidem, e set/ação agem. Domine este ciclo e você automatiza quase tudo no RouterOS.\n\n\nFigura 60.1",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html#capturando-saída-e-parseando",
+    "href": "volumes/v12-scripts/01-linguagem-script.html#capturando-saída-e-parseando",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "60.4 Capturando saída e parseando",
+    "text": "60.4 Capturando saída e parseando\nComandos entre [ ] retornam valor. Combinado com :tonum, :pick (fatiar string) e os arrays, você extrai o que precisa:\n# quantos clientes PPPoE ativos?\n:local n [:len [/interface pppoe-server active find]]\n:log info \"Sessoes PPPoE ativas: $n\"\n\n# ler um campo e comparar\n:local up [/interface get ether1 running]\n:if ($up = false) do={ :log error \"ether1 caiu!\" }",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html#funções-reutilizáveis",
+    "href": "volumes/v12-scripts/01-linguagem-script.html#funções-reutilizáveis",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "60.5 Funções reutilizáveis",
+    "text": "60.5 Funções reutilizáveis\nFunções são criadas como :global contendo um bloco, e aceitam parâmetros nomeados:\n# define uma função de notificação\n:global notificar do={\n    :log warning \"[ALERTA] $mensagem\"\n    # (aqui poderia disparar e-mail/telegram)\n}\n\n# usa em qualquer script\n$notificar mensagem=\"link de tránsito degradado\"\nIsso permite centralizar lógica (notificação, verificação) e reusá-la — a base de scripts de operação organizados.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html#tratamento-de-erro-e-idempotência",
+    "href": "volumes/v12-scripts/01-linguagem-script.html#tratamento-de-erro-e-idempotência",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "60.6 Tratamento de erro e idempotência",
+    "text": "60.6 Tratamento de erro e idempotência\nUm script de produção não pode derrubar o roteador ao encontrar um erro. Envolva o que pode falhar:\n:do {\n    /ip address add address=10.0.0.1/24 interface=ether2\n} on-error={\n    :log warning \"endereco ja existe ou interface invalida\"\n}\nE, crucialmente, torne os scripts idempotentes — seguros para rodar de novo. Em vez de add cego (que duplica), verifique antes:\n:if ([:len [/ip address find where address=\"10.0.0.1/24\"]] = 0) do={\n    /ip address add address=10.0.0.1/24 interface=ether2\n}\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nO RouterOS script gira em torno de agir sobre itens de menu: o ciclo find → :foreach → get/:if → set/ação resolve a maioria das tarefas reais. Sobre isso, duas disciplinas que separam script de brinquedo de script de produção: idempotência (verifique antes de add, para poder rodar de novo sem duplicar) e tratamento de erro (:do {} on-error={}, para não derrubar o roteador). A sintaxe é exigente — teste incrementalmente. Dominado o ciclo, automação, agenda (Capítulo 61) e provisionamento em massa (Capítulo 62) viram aplicação direta.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html#laboratório",
+    "href": "volumes/v12-scripts/01-linguagem-script.html#laboratório",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "60.7 🧪 Laboratório",
+    "text": "60.7 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nUm CHR (Capítulo 5) com algumas interfaces e endereços configurados — o suficiente para percorrer, ler e agir. Todo o laboratório roda no terminal (/system script para salvar, ou colando direto). Não é preciso topologia complexa: o foco é a linguagem.\n\n\n\n60.7.1 Comandos passo a passo\nPasso 1 — variáveis e tipos. No terminal:\n:local x 10\n:local y \"10\"\n:put ($x = 10)\n:put ($x = $y)\nObserve: comparar num com str não dá igual — a lição de tipos.\nPasso 2 — o ciclo find/foreach. Liste e aja sobre interfaces:\n:foreach i in=[/interface find] do={\n    :put \"$[/interface get $i name] running=$[/interface get $i running]\"\n}\nPasso 3 — condicional útil. Alerte sobre interface caída:\n:foreach i in=[/interface find where !running] do={\n    :log warning \"interface caida: $[/interface get $i name]\"\n}\nPasso 4 — idempotência. Rode este bloco duas vezes e confirme que o endereço não duplica:\n:if ([:len [/ip address find where address=\"10.9.9.1/24\"]] = 0) do={\n    /ip address add address=10.9.9.1/24 interface=ether1\n    :log info \"endereco adicionado\"\n} else={ :log info \"endereco ja existe, nada a fazer\" }\nPasso 5 — função reutilizável. Defina $notificar (bloco acima) e chame-a de dois scripts diferentes; veja as mensagens no log.\nPasso 6 — salve como script nomeado.\n/system script add name=checa-links source={\n    :foreach i in=[/interface find where !running] do={\n        :log warning \"caiu: $[/interface get $i name]\"\n    }\n}\n/system script run checa-links\n\n\n60.7.2 Verificação\n\nComparação num vs str mostra a diferença de tipos;\nO ciclo find/foreach percorre e lê campos das interfaces;\nO bloco idempotente não duplica o endereço ao rodar de novo;\nA função $notificar funciona chamada de scripts distintos;\nO script nomeado roda por /system script run.\n\n\n\n60.7.3 Desafios\n\nUm colega escreveu um script com add cego que rodou no scheduler a cada 5 min por um dia — e agora há centenas de regras/endereços duplicados. Explique o erro e reescreva o trecho de forma idempotente.\nUm script trava o processamento e o roteador fica estranho quando uma interface esperada não existe. Qual construção evita isso, e como você a aplicaria ao add de um endereço numa interface que pode não estar lá?\nVocê precisa desabilitar todas as regras de firewall com o comentário “temporario” e logar quantas foram. Escreva o script usando o ciclo find/foreach + contador.\nPor que usar :global para tudo é perigoso, e quando ele é realmente a escolha certa? Dê um exemplo de cada.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. O erro é não verificar antes de adicionar: add sempre cria, então rodar de novo duplica. Idempotente:\n:if ([:len [/ip firewall address-list find where list=\"bloqueados\" address=\"1.2.3.4\"]] = 0) do={\n    /ip firewall address-list add list=bloqueados address=1.2.3.4\n}\nA regra: find primeiro, add só se não existir (ou set se existir). Limpeza dos duplicados: um foreach removendo os excedentes.\n2. :do { } on-error={ }: envolve a operação que pode falhar, de modo que o erro seja tratado (logado) em vez de abortar o script.\n:do { /ip address add address=10.0.0.1/24 interface=ether9 } \\\n  on-error={ :log warning \"ether9 inexistente ou endereco duplicado\" }\nMelhor ainda, combinar com verificação de existência da interface antes.\n3.\n:local c 0\n:foreach r in=[/ip firewall filter find where comment=\"temporario\"] do={\n    /ip firewall filter disable $r\n    :set c ($c + 1)\n}\n:log info \"regras temporarias desabilitadas: $c\"\n4. :global persiste entre scripts e sessões: usado à toa, vira estado escondido que outro script sobrescreve, causando bugs difíceis de achar (ação à distância). Perigoso: :global i num loop que colide com outro script. Certo: quando você quer compartilhar deliberadamente — uma função reutilizável (:global notificar) ou uma configuração lida por vários scripts. Regra: :local por padrão, :global só com intenção explícita.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html#resumo",
+    "href": "volumes/v12-scripts/01-linguagem-script.html#resumo",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "60.8 Resumo",
+    "text": "60.8 Resumo\n\nVariáveis com escopo (:local padrão, :global com parcimônia); o RouterOS infere tipos — e comparar tipos diferentes engana;\nO ciclo central: find → :foreach → get/:if → set/ação — resolve a maioria dos scripts (agir sobre itens de menu);\nCapture saída com [ ], parseie com :len/:tonum/:pick, interpole em \"...$var...\" para log/mensagens;\nFunções via :global do={} centralizam e reusam lógica;\nProdução exige idempotência (verifique antes de add) e tratamento de erro (:do {} on-error={}) — e teste incrementalmente, a sintaxe é exigente.\n\nSabendo escrever scripts, o próximo passo é fazê-los rodar sozinhos — no horário certo, em reação a um evento, guardando backups. O Capítulo 61 cobre scheduler, netwatch e backups automáticos.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/01-linguagem-script.html#bibliografia-do-capítulo",
+    "href": "volumes/v12-scripts/01-linguagem-script.html#bibliografia-do-capítulo",
+    "title": "60  Linguagem de script do RouterOS",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção Scripting do RouterOS (MikroTik, 2026);\nLógica de programação e automação: (Tanenbaum; Feamster; Wetherall, 2021);\nScripts no v7 na prática: (Discher, 2016);\nAutomação de parque em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>60</span>  <span class='chapter-title'>Linguagem de script do RouterOS</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/02-scheduler-netwatch-backups.html",
+    "href": "volumes/v12-scripts/02-scheduler-netwatch-backups.html",
+    "title": "61  Scheduler, netwatch e backups automáticos",
+    "section": "",
+    "text": "61.1 Scheduler: rodar no tempo certo\nO 1 deu a linguagem; falta fazer os scripts rodarem sozinhos. Três ferramentas transformam código em operação autônoma: o scheduler (rodar no tempo certo), o netwatch (rodar quando algo cai ou volta) e os backups automáticos (guardar a configuração fora da caixa, sem depender de você lembrar). Juntas, elas são a diferença entre um provedor que reage a problemas de madrugada e um que se defende sozinho — e sempre tem backup quando precisa.\nO scheduler dispara scripts por horário ou intervalo:",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>61</span>  <span class='chapter-title'>Scheduler, netwatch e backups automáticos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#scheduler-rodar-no-tempo-certo",
+    "href": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#scheduler-rodar-no-tempo-certo",
+    "title": "61  Scheduler, netwatch e backups automáticos",
+    "section": "",
+    "text": "# todo dia às 03:00 — backup noturno\n/system scheduler\nadd name=backup-diario start-time=03:00:00 interval=1d \\\n    on-event=\"/system script run backup-externo\"\n\n# a cada 5 minutos — verificação de links\n/system scheduler\nadd name=checa-links interval=5m on-event=\"/system script run checa-links\"\n\n# no boot — reaplica algo após reinício\n/system scheduler\nadd name=pos-boot start-time=startup on-event=\"/system script run ajustes-boot\"\n\ninterval=1d/5m/1h — período de repetição;\nstart-time=03:00:00 — horário fixo; start-time=startup — roda no boot;\non-event — o que executar (chame um script nomeado, não cole lógica gigante inline).\n\n\n\n\n\n\n\nAviso\n\n\n\nScheduler + script não idempotente = desastre em escala de tempo: um add cego rodando a cada 5 min gera milhares de duplicatas por dia (1). Antes de agendar, garanta que o script pode rodar infinitas vezes sem estragar nada. E sempre logue o que a automação faz — automação silenciosa que falha é a pior de diagnosticar.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>61</span>  <span class='chapter-title'>Scheduler, netwatch e backups automáticos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#netwatch-reagir-a-eventos-de-rede",
+    "href": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#netwatch-reagir-a-eventos-de-rede",
+    "title": "61  Scheduler, netwatch e backups automáticos",
+    "section": "61.2 Netwatch: reagir a eventos de rede",
+    "text": "61.2 Netwatch: reagir a eventos de rede\nO netwatch monitora um host (ping/TCP/HTTP) e dispara scripts quando ele cai (on-down) ou volta (on-up). É a base de failover caseiro e de alertas:\n# monitorar o gateway de trânsito; agir na queda e na volta\n/tool netwatch\nadd host=198.51.100.1 interval=10s timeout=1s \\\n    down-script=\"/system script run transito-caiu\" \\\n    up-script=\"/system script run transito-voltou\"\nUm uso clássico é failover de rota (complementar ao check-gateway do Capítulo 41): quando o trânsito primário cai, o down-script ativa a rota reserva; quando volta, o up-script a restaura. O netwatch detecta alcançabilidade fim a fim (o host lá longe), não só “o link está up” — mais confiável que olhar a interface.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nO netwatch acompanha a alcançabilidade de um host e dispara scripts nas transições. É a peça reativa da automação: failover, alerta, autorrecuperação — tudo pendurado no up-script/down-script.\n\n\nFigura 61.1",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>61</span>  <span class='chapter-title'>Scheduler, netwatch e backups automáticos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#backups-automáticos-binário-export-e-envio-externo",
+    "href": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#backups-automáticos-binário-export-e-envio-externo",
+    "title": "61  Scheduler, netwatch e backups automáticos",
+    "section": "61.3 Backups automáticos: binário, export e envio externo",
+    "text": "61.3 Backups automáticos: binário, export e envio externo\nHá dois tipos de backup (você viu no Volume 1):\n\nBackup binário (/system backup save): imagem completa, restaura idêntico na mesma versão/hardware — bom para recuperação rápida;\nExport (/export): texto legível dos comandos, portável e versionável (ideal para git/auditoria) — mas não guarda senhas por padrão.\n\nO ponto crítico: o backup não pode morar só na caixa (se ela pifa, o backup vai junto). Automatize o envio para fora:\n# script backup-externo: gera e envia por e-mail\n/system script add name=backup-externo source={\n    :local nome (\"bkp-\" . [/system identity get name] . \"-\" . \\\n        [:pick [/system clock get date] 0 11])\n    /system backup save name=$nome\n    /export file=$nome\n    # enviar por e-mail (configurar /tool e-mail antes)\n    /tool e-mail send to=\"noc@provedor.net\" subject=\"Backup $nome\" \\\n        file=\"$nome.backup\"\n}\nAlternativas de envio: /tool fetch para um servidor FTP/HTTP central (upload=yes), ou copiar via script para um repositório. O Volume 15 (?sec-hardening-operacional) integra isso à rotina de parque. Combine com o scheduler (bloco backup-diario acima) e você tem backup diário externo sem depender de memória humana.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>61</span>  <span class='chapter-title'>Scheduler, netwatch e backups automáticos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#juntando-tudo-uma-rotina-de-provedor",
+    "href": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#juntando-tudo-uma-rotina-de-provedor",
+    "title": "61  Scheduler, netwatch e backups automáticos",
+    "section": "61.4 Juntando tudo: uma rotina de provedor",
+    "text": "61.4 Juntando tudo: uma rotina de provedor\nAs três peças se combinam em automações reais:\n\nBackup diário externo: scheduler 03:00 → backup-externo → e-mail/FTP;\nFailover de trânsito: netwatch no gateway → down-script ativa reserva, up-script restaura (com log e, idealmente, alerta);\nSentinela de saúde: scheduler 5m → script que checa links, CPU, temperatura e notifica (a função $notificar do\n\nsó quando há problema;\n\nAutolimpeza: scheduler diário removendo address-lists expiradas, logs antigos, etc.\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nAutomação no RouterOS são três gatilhos: tempo (scheduler), evento de rede (netwatch) e a garantia que a operação exige — o backup externo automático. O netwatch reage a alcançabilidade fim a fim (mais confiável que “link up”) e o backup só serve se sair da caixa. Duas regras acima de tudo: automação agendada exige scripts idempotentes (senão o tempo multiplica o erro) e tudo loga (uma automação silenciosa que falha é pior que não ter automação). Faça a rede se defender sozinha — e ter backup quando não conseguir.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>61</span>  <span class='chapter-title'>Scheduler, netwatch e backups automáticos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#laboratório",
+    "href": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#laboratório",
+    "title": "61  Scheduler, netwatch e backups automáticos",
+    "section": "61.5 🧪 Laboratório",
+    "text": "61.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nDois CHRs (Capítulo 5): lab-rt (onde rodam scheduler/netwatch/ backup) e lab-alvo (o host que o netwatch monitora, para você poder derrubá-lo e ver a reação). Opcional: um servidor FTP/HTTP simples para o envio de backup, ou apenas o log/e-mail simulado.\n\n\n\n61.5.1 Comandos passo a passo\nPasso 1 — script idempotente de verificação. Reuse o checa-links do 1 (logando interfaces caídas).\nPasso 2 — agende-o.\n/system scheduler add name=checa interval=1m on-event=\"/system script run checa-links\"\nObserve o log a cada minuto. Confirme que rodar repetido não causa efeito colateral (idempotência).\nPasso 3 — netwatch reagindo. Monitore o lab-alvo:\n/system script add name=alvo-caiu source={ :log warning \"ALVO CAIU\" }\n/system script add name=alvo-voltou source={ :log info \"ALVO VOLTOU\" }\n/tool netwatch add host=&lt;ip-lab-alvo&gt; interval=5s \\\n    down-script=\"/system script run alvo-caiu\" \\\n    up-script=\"/system script run alvo-voltou\"\nPasso 4 — provoque a transição. Desligue a interface do lab-alvo (ou o CHR) e veja o down-script disparar; religue e veja o up-script. A automação reativa ao vivo.\nPasso 5 — backup automático. Crie o script backup-externo (gere backup + export) e agende-o. Se tiver FTP, use /tool fetch upload=yes para enviá-lo; senão, confirme que os arquivos foram gerados (/file print) e simule o envio.\nPasso 6 — failover por netwatch (opcional). Faça o down-script ativar uma rota reserva e o up-script restaurá-la; derrube o alvo e confirme a troca de caminho.\n\n\n61.5.2 Verificação\n\nO scheduler dispara o script no intervalo, sem efeito colateral;\nO netwatch dispara down/up nas transições do alvo;\nO backup é gerado (binário + export) e enviado/salvo fora da caixa;\n(Opcional) o failover por netwatch troca a rota na queda e restaura.\n\n\n\n61.5.3 Desafios\n\nUm script de backup agendado enche o disco do roteador em duas semanas. O envio externo funciona. Qual passo faltou na automação, e como você o adiciona sem apagar o backup do dia?\nUm netwatch com interval=1s timeout=1s num link de rádio com jitter fica oscilando (up/down/up), disparando os scripts o tempo todo. Explique o problema e como estabilizar sem perder a detecção real de queda.\nO failover por netwatch ativou a rota reserva, mas quando o primário voltou o tráfego não retornou a ele. O que faltou no up-script, e por que confiar só no down-script é meio failover?\nPor que o netwatch (host remoto) costuma ser mais confiável para failover do que olhar só o estado da interface local? Dê um cenário em que a interface está “up” mas o caminho está morto.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Faltou a rotação/limpeza dos arquivos antigos. O backup é gerado e enviado, mas as cópias locais se acumulam. Adicione ao script uma limpeza dos backups locais com mais de N dias:\n:foreach f in=[/file find where name~\"bkp-\" && creation-time&lt;([/system clock get date] - 7d)] do={ /file remove $f }\n(ajuste a comparação de data à sua versão). Assim o disco não enche e o backup do dia permanece.\n2. timeout curto demais num link com jitter marca “down” a cada atraso momentâneo — flapping. Estabilize aumentando o timeout e o interval (ex.: interval=10s timeout=3s) e/ou exigindo várias falhas seguidas antes de agir (lógica de contador no script). Você troca um pouco de tempo de detecção por estabilidade — um flap não pode disparar failover.\n3. Faltou o up-script restaurar o estado primário (reativar a rota primária / desativar a reserva). Só o down-script faz metade: detecta a queda e desvia, mas sem o retorno automático você fica preso na reserva (pior caminho) até intervir à mão. Failover completo = desviar na queda E voltar na recuperação, ambos automáticos e com log.\n4. A interface pode estar up (portadora presente) enquanto o caminho além dela está morto — o equipamento do outro lado travou, o upstream da operadora caiu, uma rota sumiu. Olhar só a interface não vê isso. O netwatch pinga um host remoto (ex.: o gateway da operadora ou um IP na internet): se ele não responde, o caminho está realmente quebrado, ainda que sua interface diga “up”. Detecção fim a fim &gt; estado de link.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>61</span>  <span class='chapter-title'>Scheduler, netwatch e backups automáticos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#resumo",
+    "href": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#resumo",
+    "title": "61  Scheduler, netwatch e backups automáticos",
+    "section": "61.6 Resumo",
+    "text": "61.6 Resumo\n\nScheduler roda scripts por horário/intervalo/boot (start-time, interval, on-event);\nNetwatch reage a eventos de rede (down-script/up-script), detectando alcançabilidade fim a fim — base de failover e alerta;\nBackups automáticos: binário (recuperação) + export (portável/versionável), enviados para fora (e-mail/fetch) — nunca só na caixa;\nCombine as três em rotinas: backup diário externo, failover por netwatch (desviar e voltar), sentinela de saúde, autolimpeza;\nRegras de ouro: idempotência (o tempo multiplica erros) e log em tudo — automação silenciosa que falha é a pior.\n\nScheduler e netwatch automatizam um roteador. Falta o salto de escala: configurar e provisionar centenas de uma vez. O Capítulo 62 cobre a API (binária e REST) e o provisionamento em massa.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>61</span>  <span class='chapter-title'>Scheduler, netwatch e backups automáticos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#bibliografia-do-capítulo",
+    "href": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#bibliografia-do-capítulo",
+    "title": "61  Scheduler, netwatch e backups automáticos",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: Scheduler, Netwatch, Backup, E-mail, Fetch do RouterOS (MikroTik, 2026);\nAutomação reativa e monitoramento: (Tanenbaum; Feamster; Wetherall, 2021);\nRotinas de operação no v7: (Discher, 2016);\nAutomação de parque em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>61</span>  <span class='chapter-title'>Scheduler, netwatch e backups automáticos</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/03-api-provisionamento.html",
+    "href": "volumes/v12-scripts/03-api-provisionamento.html",
+    "title": "62  API e provisionamento em massa",
+    "section": "",
+    "text": "62.1 As três formas de falar com o RouterOS de fora\nOs capítulos anteriores automatizaram dentro de um roteador. Mas o provedor tem centenas deles, e configurá-los um a um — mesmo com scripts locais — não escala nem se integra ao sistema de gestão (o ERP que cadastra clientes, emite boletos, provisiona planos). A resposta é a automação externa: um sistema central que fala com os roteadores por uma interface programável (API) e os configura em massa, a partir de modelos. Este capítulo fecha o Volume 12 conectando o RouterOS ao mundo dos sistemas — e à operação de verdade.\nA REST API do v7 é a novidade que muda o jogo: fala JSON sobre HTTPS, então qualquer linguagem (Python, Go, até curl) integra sem biblioteca especial. A API binária ainda vale para alto volume e onde já há bibliotecas consolidadas. SSH é o canivete para o pontual.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/03-api-provisionamento.html#as-três-formas-de-falar-com-o-routeros-de-fora",
+    "href": "volumes/v12-scripts/03-api-provisionamento.html#as-três-formas-de-falar-com-o-routeros-de-fora",
+    "title": "62  API e provisionamento em massa",
+    "section": "",
+    "text": "Forma\nTransporte\nQuando usar\n\n\n\n\nAPI binária\nporta 8728 (8729 TLS)\nAlto volume, bibliotecas maduras (Python librouteros, PHP); protocolo próprio\n\n\nREST API (v7)\nHTTP(S), porta 80/443\nIntegração moderna, JSON, fácil de qualquer linguagem/ferramenta\n\n\nSSH scripting\nSSH (22)\nRodar comandos/scripts pontuais, sem serviço extra; bom para automação simples",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/03-api-provisionamento.html#habilitando-a-rest-api-com-segurança",
+    "href": "volumes/v12-scripts/03-api-provisionamento.html#habilitando-a-rest-api-com-segurança",
+    "title": "62  API e provisionamento em massa",
+    "section": "62.2 Habilitando a REST API com segurança",
+    "text": "62.2 Habilitando a REST API com segurança\nA REST API roda sobre o serviço www-ssl (nunca sobre HTTP puro em produção — credenciais em claro!):\n# certificado + www-ssl (a REST API vive aqui)\n/ip service set www-ssl certificate=cert-api disabled=no address=10.99.0.0/24\n/ip service set www disabled=yes   # desligue o HTTP puro\n\n# usuário DEDICADO para automação, com acesso restrito\n/user add name=api-prov group=write \\\n    address=10.99.0.10 comment=\"sistema de provisionamento\"\n\n\n\n\n\n\nAviso\n\n\n\nAutomação em escala multiplica o custo de um erro de segurança: uma credencial de API vazada abre todos os roteadores de uma vez. Regras inegociáveis: TLS sempre (www-ssl, api-ssl), usuário dedicado com o mínimo de privilégio, allowed-address limitando de onde a API aceita conexão (só o IP do sistema de gestão), e nunca hardcode de senha em scripts versionados. Trate a credencial de provisionamento como a chave do reino — porque é.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/03-api-provisionamento.html#fazendo-chamadas-rest",
+    "href": "volumes/v12-scripts/03-api-provisionamento.html#fazendo-chamadas-rest",
+    "title": "62  API e provisionamento em massa",
+    "section": "62.3 Fazendo chamadas REST",
+    "text": "62.3 Fazendo chamadas REST\nA REST API espelha a estrutura de menus do RouterOS. O caminho da URL é o menu; o método HTTP é a ação:\n# LER endereços IP (GET)\ncurl -sk -u api-prov:senha \\\n  https://10.99.0.1/rest/ip/address\n\n# ADICIONAR um endereço (PUT com JSON)\ncurl -sk -u api-prov:senha -X PUT \\\n  https://10.99.0.1/rest/ip/address \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"address\":\"192.168.50.1/24\",\"interface\":\"ether2\"}'\n\n# ALTERAR um item existente (PATCH pelo .id)\ncurl -sk -u api-prov:senha -X PATCH \\\n  https://10.99.0.1/rest/ip/address/*A \\\n  -d '{\"disabled\":\"true\"}'\n\n# executar comando (POST em /rest/&lt;caminho&gt;/&lt;comando&gt;)\ncurl -sk -u api-prov:senha -X POST \\\n  https://10.99.0.1/rest/system/reboot\nO mapeamento é direto: /ip address vira /rest/ip/address, /interface print vira GET /rest/interface, e assim por diante. Isso torna a REST API previsível — se você sabe o CLI, sabe a URL.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/03-api-provisionamento.html#provisionamento-em-massa-o-padrão-template",
+    "href": "volumes/v12-scripts/03-api-provisionamento.html#provisionamento-em-massa-o-padrão-template",
+    "title": "62  API e provisionamento em massa",
+    "section": "62.4 Provisionamento em massa: o padrão template",
+    "text": "62.4 Provisionamento em massa: o padrão template\nConfigurar 300 CPEs à mão é inviável; o padrão é template + parâmetros. O sistema central guarda um modelo de configuração e, para cada equipamento, preenche os valores específicos (IP, VLAN, identidade, secret) e aplica via API:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\nO provisionamento em massa combina um template único com os dados de cada cliente (do ERP) e aplica via API sobre TLS a centenas de equipamentos. Mudou o padrão? Ajusta-se o template e reaplica — a configuração vira código, não trabalho manual repetido.\n\n\nFigura 62.1\n\n\n\nNa prática, muitos provedores usam sistemas prontos (o próprio RADIUS/User Manager do Capítulo 35 já provisiona parâmetros de sessão; sistemas de gestão como SGP, IXC, etc. falam com o MikroTik), mas o conceito é o mesmo: modelo + dados → API → equipamento. E idempotência (Capítulo 60) segue essencial — reaplicar o template não pode duplicar nem quebrar o que já existe.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/03-api-provisionamento.html#na-caixa-ou-de-fora",
+    "href": "volumes/v12-scripts/03-api-provisionamento.html#na-caixa-ou-de-fora",
+    "title": "62  API e provisionamento em massa",
+    "section": "62.5 Na caixa ou de fora?",
+    "text": "62.5 Na caixa ou de fora?\nUma decisão recorrente: automatizar dentro do roteador (scripts + scheduler/netwatch, Capítulo 61) ou de fora (API)?\n\nNa caixa: bom para lógica local e autônoma — failover, autolimpeza, verificação de saúde. Não depende de conectividade com um central; roda mesmo isolado;\nDe fora (API): bom para o que precisa de visão de conjunto e integração — provisionar cliente novo, aplicar mudança em massa, puxar dados para o monitoramento (Volume 13). O sistema central é a fonte da verdade.\n\nO provedor maduro usa os dois: scripts locais para autonomia, API/central para orquestração e integração com a gestão.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nEscala se resolve de fora: um sistema central fala com os roteadores por API (REST no v7 — JSON sobre HTTPS, a mais fácil de integrar) e aplica template + dados a centenas de equipamentos. Duas coisas não se negociam. Segurança: TLS, usuário dedicado de privilégio mínimo, allowed-address, zero senha hardcoded — porque uma credencial vazada abre o parque inteiro. Idempotência: reaplicar o modelo não pode duplicar nem quebrar. Configuração vira código; a operação, um sistema — não um humano repetindo cliques.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/03-api-provisionamento.html#laboratório",
+    "href": "volumes/v12-scripts/03-api-provisionamento.html#laboratório",
+    "title": "62  API e provisionamento em massa",
+    "section": "62.6 🧪 Laboratório",
+    "text": "62.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nUm CHR (Capítulo 5) como o roteador a provisionar (lab-rt) e uma máquina de “gestão” (seu host, com curl/Python) na mesma rede de gerência 10.99.0.0/24. Gere um certificado no lab-rt para o www-ssl. O foco é exercitar a REST API com segurança — ler, criar e alterar configuração de fora.\n\n\n\n62.6.1 Comandos passo a passo\nPasso 1 — certificado e www-ssl. No lab-rt:\n/certificate add name=cert-api common-name=lab-rt\n/certificate sign cert-api\n/ip service set www-ssl certificate=cert-api disabled=no address=10.99.0.0/24\n/ip service set www disabled=yes\nPasso 2 — usuário dedicado restrito.\n/user add name=api-prov password=\"Api-Forte-2026\" group=write address=10.99.0.10\nPasso 3 — leia pela REST API. Da máquina de gestão:\ncurl -sk -u api-prov:Api-Forte-2026 https://10.99.0.1/rest/system/resource\ncurl -sk -u api-prov:Api-Forte-2026 https://10.99.0.1/rest/ip/address\nVocê recebe JSON com os dados — configuração legível por qualquer linguagem.\nPasso 4 — crie e altere. Adicione um endereço e depois desabilite-o:\ncurl -sk -u api-prov:Api-Forte-2026 -X PUT https://10.99.0.1/rest/ip/address \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"address\":\"192.168.77.1/24\",\"interface\":\"ether2\"}'\nConfirme no lab-rt (/ip address print) que apareceu — configuração aplicada de fora.\nPasso 5 — idempotência via API. Antes de criar, consulte se já existe (GET com filtro) e só faça o PUT se não houver — o mesmo princípio do Capítulo 60, agora do lado do orquestrador.\nPasso 6 — trave a segurança. Tente acessar a API de um IP fora do allowed-address/address configurado e confirme que é recusado. Verifique que o HTTP puro (porta 80) está desligado.\n\n\n62.6.2 Verificação\n\nA REST API responde JSON sobre HTTPS (www-ssl), com HTTP puro desligado;\nGET lê configuração; PUT/PATCH criam e alteram itens de fora;\nO acesso é recusado de IP fora do permitido (usuário/serviço restrito);\nA lógica idempotente evita duplicar ao reaplicar.\n\n\n\n62.6.3 Desafios\n\nUm provedor expôs a API binária (8728) na internet, sem TLS e sem allowed-address, e teve o parque comprometido. Aponte três erros e a configuração correta para cada um.\nVocê precisa provisionar 300 CPEs idênticos, mudando só IP de gerência, VLAN e identidade por equipamento. Descreva a arquitetura (template + dados + API) e onde a idempotência entra ao reaplicar.\nQuando você escolheria script local + scheduler (Capítulo 61) em vez de API central, e vice-versa? Dê um exemplo de tarefa para cada e justifique pela dependência de conectividade.\nUm script de provisionamento guarda a senha de admin em texto no repositório git da empresa. Explique o risco concreto e duas formas de eliminá-lo sem perder a automação.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. (a) API na internet → exponha só na rede de gerência com address=/allowed-address (e, idealmente, atrás de VPN, Volume 10). (b) Sem TLS (8728) → use api-ssl (8729) ou a REST sobre www-ssl; credenciais nunca em claro. (c) Sem usuário dedicado/ privilégio mínimo → crie um usuário só para API, grupo restrito, com address do sistema de gestão. Some a isso senha forte e monitoramento de acesso.\n2. Template + dados + API: o ERP guarda, por CPE, os três valores variáveis (IP de gerência, VLAN, identidade); um orquestrador combina o template com esses dados e aplica via REST/TLS a cada equipamento. Idempotência entra ao reaplicar: cada passo consulta (GET) se o item já existe e só cria/ajusta o que difere — assim rodar o provisionamento de novo (correção, nova versão do template) não duplica endereços/VLANs nem derruba o que já estava certo.\n3. Local + scheduler: para lógica autônoma que deve funcionar mesmo sem contato com o central — failover por netwatch, autolimpeza, verificação de saúde. Roda no equipamento isolado. API central: para o que precisa de visão de conjunto/integração — provisionar cliente novo, mudança em massa, coleta para monitoramento. Depende de conectividade com o central. Exemplo: failover é local (não pode depender da nuvem); cadastrar um cliente novo é central (nasce no ERP).\n4. Senha de admin em git = qualquer um com acesso ao repositório (ou a um vazamento dele) tem acesso total ao parque, e o histórico do git guarda a senha mesmo depois de removida. Soluções: (a) cofre de segredos (variável de ambiente/secret manager) — o script lê a credencial em runtime, nunca a versiona; (b) usuário de API dedicado com privilégio mínimo e allowed-address, rotacionado periodicamente, de modo que mesmo um vazamento tenha alcance limitado e revogável. Nunca credencial em texto no código.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/03-api-provisionamento.html#resumo",
+    "href": "volumes/v12-scripts/03-api-provisionamento.html#resumo",
+    "title": "62  API e provisionamento em massa",
+    "section": "62.7 Resumo",
+    "text": "62.7 Resumo\n\nAutomação externa tem três formas: API binária (alto volume, bibliotecas), REST API v7 (JSON/HTTPS, fácil de integrar) e SSH (pontual);\nA REST API espelha os menus (/ip address → /rest/ip/address); método HTTP = ação (GET/PUT/PATCH/DELETE/POST);\nProvisionamento em massa = template + dados (ERP) → API → equipamento; configuração vira código, com idempotência essencial;\nSegurança inegociável: TLS, usuário dedicado de privilégio mínimo, allowed-address, zero senha hardcoded — credencial vazada abre o parque;\nNa caixa vs. de fora: scripts locais para autonomia (failover), API central para orquestração/integração — o provedor maduro usa os dois.\n\nFecha-se o Volume 12: da linguagem de script à automação reativa e ao provisionamento em escala. A rede se configura e se defende com código. Falta enxergá-la — logs, gráficos, tráfego em tempo real, diagnóstico com método. É o Volume 13, monitoramento e diagnóstico.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v12-scripts/03-api-provisionamento.html#bibliografia-do-capítulo",
+    "href": "volumes/v12-scripts/03-api-provisionamento.html#bibliografia-do-capítulo",
+    "title": "62  API e provisionamento em massa",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: REST API, API e Services do RouterOS (MikroTik, 2026);\nIntegração de sistemas e automação em escala: (Tanenbaum; Feamster; Wetherall, 2021);\nAPI e provisionamento no v7: (Discher, 2016);\nIntegração com sistemas de gestão de provedor: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 12 — Scripts e automação",
+      "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
     ]
   },
   {

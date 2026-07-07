@@ -618,12 +618,41 @@ div.csl-indent {
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-12" role="navigation" aria-expanded="false">
- <span class="menu-text">Apêndices</span></a>
+ <span class="menu-text">Volume 12 — Scripts e automação</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-12" role="navigation" aria-expanded="false" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
       <ul id="quarto-sidebar-section-12" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v12-scripts/01-linguagem-script.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">60</span>&nbsp; <span class="chapter-title">Linguagem de script do RouterOS</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v12-scripts/02-scheduler-netwatch-backups.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">61</span>&nbsp; <span class="chapter-title">Scheduler, netwatch e backups automáticos</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v12-scripts/03-api-provisionamento.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">62</span>&nbsp; <span class="chapter-title">API e provisionamento em massa</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-13" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-13" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-13" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
@@ -1094,7 +1123,7 @@ add chain=forward connection-state=new in-interface-list=wan action=drop</code><
 </section>
 <section id="o-cpe-dual-stack-firewall-dos-dois-lados" class="level2" data-number="51.5">
 <h2 data-number="51.5" class="anchored" data-anchor-id="o-cpe-dual-stack-firewall-dos-dois-lados"><span class="header-section-number">51.5</span> O CPE dual stack: firewall dos dois lados</h2>
-<p>O CPE MikroTik do cliente (<a href="04-dhcpv6-pd-dual-stack-pppoe.html" class="quarto-xref"><span>Capítulo 50</span></a>) precisa do <strong>mesmo</strong> cuidado: por padrão, o RouterOS traz um firewall IPv6 razoável, mas em provisão em massa você <strong>empurra</strong> um conjunto mínimo (input protege o CPE, forward protege a LAN da casa). É o mesmo template acima, aplicado no CPE, e é o que separa “IPv6 ligado” de “IPv6 ligado com segurança”. Provisão de firewall em escala é assunto do Volume 12 (<span class="quarto-unresolved-ref">?sec-api-provisionamento</span>).</p>
+<p>O CPE MikroTik do cliente (<a href="04-dhcpv6-pd-dual-stack-pppoe.html" class="quarto-xref"><span>Capítulo 50</span></a>) precisa do <strong>mesmo</strong> cuidado: por padrão, o RouterOS traz um firewall IPv6 razoável, mas em provisão em massa você <strong>empurra</strong> um conjunto mínimo (input protege o CPE, forward protege a LAN da casa). É o mesmo template acima, aplicado no CPE, e é o que separa “IPv6 ligado” de “IPv6 ligado com segurança”. Provisão de firewall em escala é assunto do Volume 12 (<a href="../v12-scripts/03-api-provisionamento.html" class="quarto-xref"><span>Capítulo 62</span></a>).</p>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
