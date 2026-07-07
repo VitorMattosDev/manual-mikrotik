@@ -1,0 +1,373 @@
+# Como funciona o PPPoE {#sec-pppoe-fundamentos}
+
+::: {.callout-note}
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar por que provedores entregam internet via **PPPoE** em vez de
+  DHCP simples — autenticação por assinante, IP controlado,
+  contabilização;
+- Descrever as duas fases do protocolo: **descoberta** (PADI → PADO →
+  PADR → PADS) e **sessão** (LCP → autenticação → IPCP);
+- Explicar de onde vem o MTU de **1492** e diagnosticar o sintoma
+  clássico de MTU errado ("ping funciona, site não abre");
+- Aplicar a correção universal de MSS (*clamping*) e saber quando ela
+  é necessária;
+- Montar um enlace PPPoE mínimo entre dois CHRs e observar cada fase
+  acontecendo no log.
+:::
+
+O Volume 5 terminou com o sinal chegando à casa do assinante. Falta o
+**contrato técnico**: como o provedor sabe *quem* é aquele cliente,
+entrega o IP *daquele plano*, mede o consumo *daquele contrato* e corta
+*só ele* quando a fatura atrasa? A resposta que a indústria consagrou é
+o **PPPoE** (*Point-to-Point Protocol over Ethernet*) — e este volume
+inteiro é sobre ele. Este capítulo explica o protocolo; os próximos
+constroem o concentrador de produção.
+
+## Por que não DHCP e pronto?
+
+No @sec-dhcp você viu que o DHCP entrega IP a qualquer um que peça na
+rede. Para uma casa, perfeito. Para um provedor, três problemas:
+
+1. **Identidade**: o DHCP identifica por MAC — clonável, trocável (o
+   cliente troca de roteador e "some"). Não há senha, não há contrato;
+2. **Sessão**: o DHCP não tem noção de "conectado/desconectado". Não
+   dá para derrubar um inadimplente *agora*, nem saber quanto tempo e
+   quantos bytes cada assinante consumiu;
+3. **Individualização**: na rede compartilhada (a VLAN de clientes do
+   @sec-segmentacao-pop, o setor PtMP do @sec-ptmp-rural), vizinhos se
+   enxergam em L2 — e qualquer política por cliente vira malabarismo.
+
+O PPPoE resolve os três de uma vez: cria, sobre a Ethernet
+compartilhada, um **túnel ponto a ponto individual** entre o roteador
+do cliente e o **concentrador** do provedor (também chamado **BNG** —
+*Broadband Network Gateway*). Dentro do túnel roda o velho **PPP** — o
+protocolo das conexões discadas — que traz de fábrica autenticação por
+usuário/senha, negociação de IP e contabilização de sessão. Cada
+assinante vira uma sessão: com login próprio, IP atribuído pelo
+provedor, contadores próprios e um botão de desligar só dele.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+A rede de acesso é o **saguão de um prédio comercial**: todo mundo
+circula pelo mesmo espaço (a Ethernet/VLAN compartilhada). O PPPoE é a
+**catraca com crachá**: para entrar de fato, cada visitante se
+identifica (usuário/senha), recebe um crachá numerado (IP da sessão) e
+a portaria registra entrada, saída e por onde andou (accounting). O
+DHCP, em comparação, é um saguão sem catraca com um bedel distribuindo
+crachás para quem estiver na fila — sem perguntar o nome.
+:::
+
+## Fase 1: descoberta (PPPoED)
+
+O cliente não sabe onde está o concentrador — pode haver vários na
+mesma rede. A fase de **descoberta** resolve isso com quatro quadros
+Ethernet (EtherType `0x8863`):
+
+| Quadro | Direção | Papel |
+|---|---|---|
+| **PADI** | cliente → broadcast | "Algum concentrador aí?" (*Initiation*) |
+| **PADO** | concentrador → cliente | "Eu! Meu nome é X, ofereço o serviço Y" (*Offer*) |
+| **PADR** | cliente → concentrador | "Fechado, quero conectar com você" (*Request*) |
+| **PADS** | concentrador → cliente | "Confirmado — sua sessão é a nº N" (*Session-confirmation*) |
+
+: Os quatro quadros da descoberta PPPoE {#tbl-descoberta-pppoe}
+
+Ao final, cliente e concentrador compartilham um **session ID**: o
+identificador do túnel. Tudo o que vier depois viaja em quadros
+EtherType `0x8864` carregando esse ID — o túnel está de pé, mas ainda
+vazio.
+
+## Fase 2: sessão (PPP)
+
+Dentro do túnel, o PPP negocia em três atos:
+
+1. **LCP** (*Link Control Protocol*): os dois lados acertam os
+   parâmetros do enlace — principalmente **MRU** (o tamanho máximo de
+   pacote que cada um aceita receber) e qual método de autenticação
+   será usado;
+2. **Autenticação**: o cliente prova quem é. **PAP** manda a senha em
+   claro; **CHAP** responde a um desafio com um hash — a senha nunca
+   viaja. Use CHAP;
+3. **IPCP** (*IP Control Protocol*): o concentrador entrega ao cliente
+   o **IP da sessão**, e opcionalmente DNS. É aqui que o IP do plano
+   contratado chega ao roteador da casa.
+
+```{.tikz}
+%%| filename: fig-fases-pppoe
+%%| alt: Diagrama de sequência do PPPoE entre cliente e concentrador. Na fase de descoberta trocam-se PADI, PADO, PADR e PADS. Estabelecido o session ID, a fase PPP negocia LCP, autenticação CHAP e IPCP, terminando com a sessão ativa e o IP entregue.
+\begin{tikzpicture}[font=\small]
+  % linhas de vida
+  \node[draw, rounded corners, fill=manualblue!20, minimum width=26mm] (cli) at (0,5.6) {cliente (casa)};
+  \node[draw, rounded corners, fill=manualgreen!20, minimum width=26mm] (bng) at (7,5.6) {concentrador (BNG)};
+  \draw[auxiliar] (0,5.2) -- (0,-2.6);
+  \draw[auxiliar] (7,5.2) -- (7,-2.6);
+  % fase descoberta
+  \node[manualgray, anchor=west] at (-2.6,4.8) {\scriptsize\textbf{descoberta}};
+  \node[manualgray, anchor=west] at (-2.6,4.45) {\scriptsize (0x8863)};
+  \draw[-{Stealth}, manualblue]  (0,4.6) -- node[above]{PADI \scriptsize(broadcast)} (7,4.6);
+  \draw[-{Stealth}, manualgreen!60!black] (7,3.9) -- node[above]{PADO} (0,3.9);
+  \draw[-{Stealth}, manualblue]  (0,3.2) -- node[above]{PADR} (7,3.2);
+  \draw[-{Stealth}, manualgreen!60!black] (7,2.5) -- node[above]{PADS \scriptsize(session ID)} (0,2.5);
+  % separador
+  \draw[dashed, manualgray] (-2.6,2.1) -- (9,2.1);
+  % fase PPP
+  \node[manualgray, anchor=west] at (-2.6,1.7) {\scriptsize\textbf{sessão PPP}};
+  \node[manualgray, anchor=west] at (-2.6,1.35) {\scriptsize (0x8864)};
+  \draw[{Stealth}-{Stealth}, manualyellow!60!black] (0,1.4) -- node[above]{LCP \scriptsize(MRU, método de aut.)} (7,1.4);
+  \draw[{Stealth}-{Stealth}, manualred] (0,0.6) -- node[above]{CHAP \scriptsize(desafio $\to$ resposta)} (7,0.6);
+  \draw[{Stealth}-{Stealth}, manualblue] (0,-0.2) -- node[above]{IPCP \scriptsize(IP do assinante, DNS)} (7,-0.2);
+  % resultado
+  \draw[destaque, manualgreen!60!black, {Stealth}-{Stealth}] (0,-1.3) -- node[above]{\textbf{sessão ativa} — tráfego do assinante} (7,-1.3);
+  \node[manualgray] at (3.5,-2.2) {\scriptsize cada quadro do túnel: Ethernet + 6 bytes PPPoE + 2 bytes PPP $\Rightarrow$ MTU 1492};
+\end{tikzpicture}
+```
+
+::: {#fig-fases-pppoe}
+As duas fases do PPPoE: a descoberta (PADI/PADO/PADR/PADS, EtherType
+0x8863) estabelece o session ID; dentro do túnel (0x8864), o PPP
+negocia enlace (LCP), autentica (CHAP) e entrega o IP (IPCP). Só então
+o tráfego do assinante flui.
+:::
+
+Quando a sessão fecha — logout, queda de enlace, corte por
+inadimplência — o lado que encerra manda um **PADT** (*Terminate*), e
+o túnel morre. O ciclo de vida completo da sessão é visível e
+controlável: exatamente o que faltava ao DHCP.
+
+## O pedágio: MTU 1492 e o site que não abre
+
+Nada é de graça. Cada quadro do túnel carrega **8 bytes extras** de
+cabeçalho (6 do PPPoE + 2 do PPP). Como o quadro Ethernet continua
+limitado a 1500 bytes de payload, sobram **1492** para o pacote IP do
+assinante — o famoso MTU do PPPoE.
+
+O sintoma clássico de MTU mal tratado é dos mais traiçoeiros:
+
+> "O ping funciona, o WhatsApp funciona, mas vários sites não abrem —
+> fica carregando para sempre."
+
+O mecanismo: pacotes pequenos (ping, mensagens) passam; pacotes
+**grandes** (a resposta HTTPS de 1500 bytes) não cabem no túnel. O
+roteador deveria avisar o remetente para fragmentar (ICMP *Fragmentation
+Needed*), mas firewalls mal configurados pelo caminho bloqueiam
+justamente esse ICMP — e o pacote grande morre em silêncio, para
+sempre (*PMTUD black hole*).
+
+A defesa do provedor é o **MSS clamping**: reescrever, no handshake de
+cada conexão TCP que atravessa o túnel, o tamanho máximo de segmento
+anunciado, forçando-o a caber em 1492:
+
+```routeros
+/ip firewall mangle
+add chain=forward protocol=tcp tcp-flags=syn action=change-mss new-mss=1452 \
+    passthrough=yes tcp-mss=1453-65535 out-interface-list=WAN \
+    comment="MSS clamping p/ tuneis PPPoE"
+```
+
+(1452 = 1492 de MTU − 40 bytes de cabeçalhos IP+TCP. A regra usa o
+mangle que você conheceu no @sec-mangle-raw.) No RouterOS, os
+*profiles* PPP fazem isso automaticamente com `change-tcp-mss=yes` —
+o @sec-pppoe-server mostra onde.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+PPPoE = **sessão individual sobre rede compartilhada**. A descoberta
+acha o concentrador, o PPP autentica e entrega o IP — e a partir daí o
+assinante não é mais "um MAC numa VLAN": é uma **sessão** com dono,
+plano, contadores e ciclo de vida. Todo o modelo comercial do provedor
+(planos, corte, histórico de consumo) se apoia nessa individualização.
+O preço é fixo e conhecido: 8 bytes por quadro — e quem esquece o MSS
+clamping paga em chamados de "internet que abre metade dos sites".
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+De volta aos CHRs de verdade! Dois bastam: `lab-r1` (concentrador) e
+`lab-r2` (cliente), ligados pela rede interna `lab-a` (ether2 ↔
+ether2). Parta do snapshot `pop-segmentado` (@sec-lab-chr) — ou de
+qualquer estado com a `lab-a` funcional. O objetivo aqui é **ver o
+protocolo**; o concentrador caprichado é assunto do próximo capítulo.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — servidor PPPoE mínimo no lab-r1.** Um usuário de teste, um
+pool e o servidor escutando na ether2:
+
+```routeros
+/ip pool add name=pool-pppoe-teste ranges=100.64.50.10-100.64.50.250
+/ppp profile add name=perfil-teste local-address=100.64.50.1 \
+    remote-address=pool-pppoe-teste
+/ppp secret add name=cliente-teste password=Pppoe!2026 profile=perfil-teste \
+    service=pppoe
+/interface pppoe-server server add interface=ether2 service-name=isp-lab \
+    default-profile=perfil-teste authentication=chap disabled=no
+```
+
+**Passo 2 — cliente PPPoE no lab-r2.** Antes, remova qualquer IP
+estático da ether2 dele (o IP virá pelo IPCP!):
+
+```routeros
+/ip address remove [find interface=ether2]
+/interface pppoe-client add interface=ether2 name=pppoe-wan user=cliente-teste \
+    password=Pppoe!2026 add-default-route=yes disabled=no
+```
+
+**Passo 3 — assista às duas fases.** No lab-r2:
+
+```routeros
+/log print where topics~"pppoe|ppp"
+```
+
+```
+12:02:11 pppoe,ppp,info pppoe-wan: initializing...
+12:02:11 pppoe,ppp,info pppoe-wan: dialing...
+12:02:12 pppoe,ppp,info pppoe-wan: authenticated
+12:02:12 pppoe,ppp,info pppoe-wan: connected
+```
+
+O `dialing` é a descoberta (PADI→PADS); `authenticated` é o CHAP;
+`connected` fecha o IPCP. Todo o diagrama da @fig-fases-pppoe em quatro
+linhas de log.
+
+**Passo 4 — inspecione o resultado.** Ainda no lab-r2:
+
+```routeros
+/interface pppoe-client monitor pppoe-wan once
+/ip address print where interface=pppoe-wan
+```
+
+```
+      status: connected
+     service: isp-lab
+     ac-name: lab-r1
+        mtu: 1480
+        mru: 1480
+```
+
+Repare: interface nova (`pppoe-wan`) com IP do pool do servidor — o
+túnel é uma interface de rede como outra qualquer, e a rota padrão
+aponta para dentro dele.
+
+**Passo 5 — o lado do concentrador.** No lab-r1:
+
+```routeros
+/ppp active print
+```
+
+```
+ # NAME           SERVICE  CALLER-ID          ADDRESS        UPTIME
+ 0 cliente-teste  pppoe    0C:11:22:33:44:02  100.64.50.10   3m21s
+```
+
+Eis a sessão: nome, MAC de origem, IP entregue, uptime. Derrube-a do
+lado do provedor — o "botão de corte" em ação:
+
+```routeros
+/ppp active remove [find name=cliente-teste]
+```
+
+No lab-r2, o log mostra `disconnected` (o PADT chegou)… e segundos
+depois `dialing` de novo: o cliente rediscou sozinho e a sessão voltou.
+
+### Verificação
+
+1. `/ppp active print` no lab-r1 mostra a sessão com o IP do pool;
+2. No lab-r2, `/ip route print` mostra a rota padrão via `pppoe-wan`;
+3. Ping do lab-r2 para `100.64.50.1` (o `local-address` do túnel)
+   responde;
+4. Após o `remove` do Passo 5, a sessão caiu **e voltou** sozinha —
+   você viu PADT + rediscagem no log.
+
+### Desafios
+
+1. Troque `authentication=chap` por `authentication=pap` no servidor e
+   reconecte. Funciona? Agora rode `/tool sniffer quick interface=ether2`
+   no lab-r1 durante a conexão. O que aparece que justifica a regra
+   "use CHAP"?
+2. No lab-r2, o `monitor` mostrou MTU 1480 em vez de 1492. A conta dos
+   8 bytes está errada? Investigue
+   `/interface pppoe-server server print` (parâmetro `max-mtu`) e
+   explique o valor conservador do RouterOS.
+3. Um assinante liga: "ping funciona, mas vários sites HTTPS não
+   carregam". Descreva (a) o mecanismo provável, (b) o teste com
+   `ping ... size=1500 do-not-fragment` que confirma, e (c) as duas
+   correções possíveis — no cliente e no concentrador.
+4. Dois concentradores respondem PADO na mesma VLAN (o antigo e o novo
+   da migração). Como o cliente escolhe? Que parâmetro do
+   `pppoe-client` (dica: `ac-name`) torna a escolha determinística —
+   e por que isso importa numa migração?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Com PAP a conexão funciona igual — mas no sniffer a senha
+`Pppoe!2026` aparece **em texto claro** dentro do quadro PAP Request.
+Qualquer um na rede de acesso (um vizinho no setor PtMP!) capturando
+quadros teria a credencial do assinante. Com CHAP, o sniffer mostra
+apenas desafio e hash — a senha nunca viaja. Regra: `chap` (ou
+`mschap2`) sempre; `pap` só para depurar em bancada.
+
+**2.** A conta está certa (1500 − 8 = 1492); o RouterOS é que assume o
+pior caso por padrão: `max-mtu`/`max-mru` de fábrica valem 1480, uma
+folga extra de 12 bytes para caminhos com encapsulamentos adicionais
+(VLAN, túneis). Defina `max-mtu=1492 max-mru=1492` no servidor e
+`max-mtu=1492` no cliente para operar no valor pleno — como faremos no
+@sec-pppoe-server.
+
+**3.** (a) *PMTUD black hole*: a resposta HTTPS vem em pacotes de 1500
+bytes com DF ligado; eles não cabem no túnel (1492), o ICMP
+*Fragmentation Needed* é bloqueado em algum firewall do caminho e o
+pacote morre em silêncio — pacotes pequenos (ping) passam. (b)
+`ping 8.8.8.8 size=1500 do-not-fragment` de dentro da casa: se
+retornar "packet too large / sem resposta" enquanto `size=1400`
+funciona, confirmado. (c) No concentrador: `change-tcp-mss=yes` no
+profile PPP (ou a regra mangle `change-mss` deste capítulo); no
+cliente: reduzir o MTU da conexão/dispositivo. A do concentrador
+conserta todos os assinantes de uma vez — é a correta para o provedor.
+
+**4.** O cliente padrão conecta ao **primeiro PADO que chegar** — numa
+migração, metade dos clientes cairia no concentrador errado ao acaso.
+Configurando `ac-name=<nome-do-concentrador>` no `pppoe-client` (o
+nome vem do PADO — o `ac-name` que o `monitor` mostrou), o cliente
+ignora ofertas de outros concentradores e a migração vira uma decisão
+sua, não da corrida de quadros. No lado servidor, o `service-name`
+cumpre papel análogo de seleção.
+:::
+
+## Resumo
+
+- PPPoE cria uma **sessão ponto a ponto autenticada** por assinante
+  sobre a Ethernet compartilhada — identidade (usuário/senha), IP
+  controlado (IPCP), contabilização e corte individual, tudo que o
+  DHCP não dá;
+- **Descoberta** (PADI→PADO→PADR→PADS, EtherType 0x8863) estabelece o
+  session ID; **sessão PPP** (0x8864) negocia LCP → autentica
+  (**CHAP**, nunca PAP em produção) → entrega IP via IPCP; PADT
+  encerra;
+- O túnel custa **8 bytes por quadro** → MTU 1492; o sintoma "ping
+  funciona, site não abre" é *PMTUD black hole* e a defesa é **MSS
+  clamping** (`change-tcp-mss=yes` no profile ou `change-mss` no
+  mangle);
+- No RouterOS: `/interface pppoe-server server` + `/ppp secret` de um
+  lado, `/interface pppoe-client` do outro; `/ppp active` é a lista
+  viva de sessões — e o botão de corte.
+
+No próximo capítulo (@sec-pppoe-server), o servidor de teste vira um
+concentrador de verdade: profiles por plano, pools organizados e a
+entrega do serviço que o cliente contratou.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *PPPoE* e *PPP* [@mikrotik-docs];
+- PPP, LCP e autenticação (RFC 2516 e família PPP): [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- Operação de provedor: [@burgess-mikrotik].

@@ -72,7 +72,14 @@ book:
         - volumes/v05-wireless/05-alinhamento-troubleshooting.qmd
         - volumes/v05-wireless/06-capsman-wifi-moderno.qmd
 
-    # (Volumes 6–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
+    - part: "Volume 6 — PPPoE e gestão de assinantes"
+      chapters:
+        - volumes/v06-pppoe/01-como-funciona-pppoe.qmd
+        - volumes/v06-pppoe/02-pppoe-server-profiles-pools.qmd
+        - volumes/v06-pppoe/03-radius-user-manager-gestao.qmd
+        - volumes/v06-pppoe/04-boas-praticas-concentrador.qmd
+
+    # (Volumes 7–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
 
   appendices:
     - referencias.qmd
