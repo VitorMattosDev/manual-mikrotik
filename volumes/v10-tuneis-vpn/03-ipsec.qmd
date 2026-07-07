@@ -1,7 +1,294 @@
-# IPsec
+# IPsec {#sec-ipsec}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar as peças do **IPsec** no RouterOS — **profile**, **peer**,
+  **proposal**, **policy**, **identity** — e como elas se encaixam;
+- Distinguir as duas fases (**IKE** para negociar a chave, **ESP** para
+  cifrar os dados) e por que **IKEv2** é a escolha atual;
+- Diferenciar IPsec **policy-based** (por seletores) de **tunnel/VTI**
+  (por interface) e quando cada um serve;
+- Montar um **site-to-site IKEv2** entre dois POPs e interoperar com
+  firewall de outro fabricante;
+- Diagnosticar o "clássico do IPsec": fase que não fecha, seletores que
+  não batem, e o NAT-Traversal.
 :::
+
+O @sec-wireguard entregou o túnel cifrado mais simples. Então por que
+aprender IPsec, mais complexo? **Interoperabilidade**: o IPsec é o
+**padrão universal** de VPN — todo firewall sério (Fortinet, Cisco,
+pfSense, Palo Alto) fala IPsec, e frequentemente o provedor precisa
+fechar túnel com um equipamento que **não** é MikroTik. Onde o WireGuard
+exige os dois lados falando WireGuard, o IPsec conversa com qualquer um.
+O preço é a configuração em peças — que este capítulo desmonta.
+
+## As peças do IPsec no RouterOS
+
+IPsec no RouterOS é um quebra-cabeça de objetos que se referenciam.
+Entender **o papel de cada peça** é metade da batalha:
+
+- **`profile`**: parâmetros da **fase 1 (IKE)** — algoritmos de
+  hash/criptografia, grupo DH, tempo de vida. É "como negociar a chave";
+- **`peer`**: **com quem** falar (endereço do outro lado), qual
+  `profile` usar e a versão do IKE (**`exchange-mode=ike2`**);
+- **`proposal`**: parâmetros da **fase 2 (ESP)** — como **cifrar os
+  dados** depois que a chave foi negociada;
+- **`identity`**: **como se autenticar** com aquele peer — chave
+  pré-compartilhada (`secret`/PSK), certificado, etc.;
+- **`policy`**: **qual tráfego** proteger — os **seletores** (rede local
+  ↔ rede remota) e o modo (tunnel).
+
+```{.tikz}
+%%| filename: fig-ipsec-pecas
+%%| alt: As peças do IPsec e suas relações. O peer aponta para um profile (fase 1, IKE) e define o endereço remoto e IKEv2. A identity liga o peer a um método de autenticação (PSK ou certificado). A policy define os seletores de tráfego local e remoto e usa uma proposal (fase 2, ESP) para cifrar. Setas mostram profile e proposal como conjuntos de algoritmos que os dois lados precisam ter em comum.
+\begin{tikzpicture}[
+  font=\small,
+  b/.style={draw, rounded corners, align=center, minimum height=10mm, inner sep=3pt, font=\scriptsize},
+]
+\node[b, fill=manualblue!15] (peer) at (0,1.4) {peer\\(endereço remoto, ike2)};
+\node[b, fill=manualyellow!20] (prof) at (-3.4,0) {profile\\(fase 1 / IKE)};
+\node[b, fill=manualyellow!20] (id) at (0,-0.2) {identity\\(PSK / cert)};
+\node[b, fill=manualgreen!15] (pol) at (3.4,1.4) {policy\\(seletores local/remoto)};
+\node[b, fill=manualgreen!15] (prop) at (3.4,-0.2) {proposal\\(fase 2 / ESP)};
+\draw[-{Stealth}] (peer) -- (prof);
+\draw[-{Stealth}] (peer) -- (id);
+\draw[-{Stealth}] (pol) -- (prop);
+\draw[-{Stealth}] (pol) -- (peer);
+\node[align=center, manualred] at (0,-1.6) {\scriptsize os \textbf{algoritmos} do profile e da proposal precisam BATER nos dois lados};
+\end{tikzpicture}
+```
+
+::: {#fig-ipsec-pecas}
+O `peer` (com quem, fase 1) usa um `profile`; a `identity` diz como
+provar quem é; a `policy` (que tráfego) usa uma `proposal` (fase 2).
+Se os **algoritmos** de qualquer fase não coincidirem entre os lados, o
+túnel não fecha — a causa nº 1 de dor de cabeça no IPsec.
+:::
+
+## Duas fases: IKE negocia, ESP cifra
+
+O IPsec trabalha em duas etapas:
+
+1. **Fase 1 (IKE)**: os dois lados se **autenticam** (PSK ou certificado)
+   e negociam um canal seguro para conversar — a "chave da chave". O
+   **IKEv2** é a versão atual: mais rápido, mais robusto, com melhor
+   suporte a NAT e roaming. Use `ike2` salvo quando o outro lado só
+   suportar o antigo IKEv1;
+2. **Fase 2 (ESP)**: usando o canal da fase 1, negociam como **cifrar o
+   tráfego real** (a `proposal`) e passam a proteger os pacotes que casam
+   a `policy`.
+
+A divisão explica os sintomas: se a **fase 1 não fecha**, é
+peer/profile/autenticação; se a fase 1 fecha mas a **fase 2 não**, é
+proposal/seletores.
+
+## policy-based vs. tunnel/VTI
+
+Há dois estilos de IPsec, e a escolha muda o que você consegue fazer:
+
+- **Policy-based** (clássico): a `policy` casa tráfego por **seletores**
+  (ex.: `src=10.0.1.0/24 dst=10.0.2.0/24`) e o cifra. **Não cria
+  interface** — logo, **não** dá para rodar OSPF/BGP por cima
+  (@sec-panorama-tuneis) nem fazer roteamento dinâmico. Simples para
+  site-to-site fixo;
+- **Tunnel/VTI ou IPsec sobre outra interface**: quando você precisa de
+  **roteamento dinâmico** ou de uma interface roteável, o padrão é
+  **GRE/IP-in-IP + IPsec** (@sec-gre-eoip): o GRE dá a interface, o IPsec
+  cifra. É o desenho recomendado para interligar POPs com IGP
+  (@sec-interligacao-pops).
+
+Regra: **site-to-site fixo e simples** → policy-based direto;
+**roteamento dinâmico entre POPs** → GRE+IPsec.
+
+## Montando um site-to-site IKEv2 (PSK)
+
+```routeros
+# POP-A
+/ip ipsec profile
+add name=ike2-prof hash-algorithm=sha256 enc-algorithm=aes-256 dh-group=modp2048
+/ip ipsec peer
+add name=para-B address=<publico-B> profile=ike2-prof exchange-mode=ike2
+/ip ipsec identity
+add peer=para-B auth-method=pre-shared-key secret="Ch@ve-Forte-2026"
+/ip ipsec proposal
+add name=esp-prop auth-algorithms=sha256 enc-algorithms=aes-256-cbc pfs-group=modp2048
+/ip ipsec policy
+add peer=para-B tunnel=yes proposal=esp-prop \
+    src-address=10.0.1.0/24 dst-address=10.0.2.0/24
+```
+
+No **POP-B**, o espelho: mesmo `profile`/`proposal` (algoritmos batendo),
+`peer` apontando para o público de A, **mesmo `secret`**, e a `policy`
+com **src/dst invertidos** (`src=10.0.2.0/24 dst=10.0.1.0/24`). Essa
+inversão simétrica dos seletores é obrigatória — se não baterem em
+espelho, a fase 2 não fecha.
+
+::: {.callout-warning}
+Quando há **NAT no caminho** (comum: o POP atrás de CGNAT), habilite o
+**NAT-Traversal** (o IPsec encapsula o ESP em UDP/4500). Sem ele, o ESP
+"puro" (protocolo 50) é frequentemente bloqueado/quebrado pelo NAT e o
+túnel fecha a fase 1 mas **não passa tráfego**. No RouterOS o NAT-T é
+automático no IKEv2, mas confirme que o **UDP 500 e 4500** estão
+liberados no firewall.
+:::
+
+## Diagnóstico do IPsec
+
+```routeros
+/ip ipsec active-peers print
+/ip ipsec policy print   # veja a coluna de flags/ph2-state
+/ip ipsec installed-sa print
+```
+
+- **`active-peers`** vazio / fase 1 não estabelece → peer, profile
+  (algoritmos), autenticação (PSK diferente), ou UDP 500 bloqueado;
+- fase 1 ok mas **policy sem SA (ph2) instalada** → `proposal` não bate,
+  ou **seletores** (src/dst) não estão em espelho;
+- fase 2 ok mas **sem tráfego** → NAT-T ausente (libere 4500), rota, ou
+  o tráfego não casa os seletores.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+IPsec é a moeda de **interoperabilidade**: quando o outro lado não é
+MikroTik, é ele que fecha o túnel. O custo é montar peças que se
+referenciam — **profile/peer** (fase 1, IKE) e **proposal/policy** (fase
+2, ESP) — e a regra que resolve a maioria dos problemas é uma só: **os
+algoritmos precisam bater e os seletores precisam estar em espelho** nos
+dois lados. Para **roteamento dinâmico**, não force o policy-based:
+use **GRE+IPsec**. E onde houver NAT, **NAT-Traversal (UDP 4500)** ou o
+túnel fecha e não anda.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Dois CHRs (@sec-lab-chr) como POPs: **lab-a** (LAN `10.0.1.0/24`, público
+alcançável) e **lab-b** (LAN `10.0.2.0/24`). Opcional: um NAT no meio
+para exercitar NAT-T. Objetivo: site-to-site IKEv2 com PSK protegendo o
+tráfego entre as duas LANs.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — profile e proposal (algoritmos idênticos).** Em **ambos**:
+
+```routeros
+/ip ipsec profile add name=p1 hash-algorithm=sha256 enc-algorithm=aes-256 dh-group=modp2048
+/ip ipsec proposal add name=p2 auth-algorithms=sha256 enc-algorithms=aes-256-cbc pfs-group=modp2048
+```
+
+**Passo 2 — peer + identity.** No lab-a (apontando para o público de B),
+e o espelho no lab-b, com o **mesmo secret**:
+
+```routeros
+/ip ipsec peer add name=peer address=<publico-outro> profile=p1 exchange-mode=ike2
+/ip ipsec identity add peer=peer auth-method=pre-shared-key secret="lab-psk-forte"
+```
+
+**Passo 3 — policy com seletores em espelho.** No lab-a:
+
+```routeros
+/ip ipsec policy add peer=peer tunnel=yes proposal=p2 \
+    src-address=10.0.1.0/24 dst-address=10.0.2.0/24
+```
+
+No lab-b, **invertido**: `src=10.0.2.0/24 dst=10.0.1.0/24`.
+
+**Passo 4 — evite NAT no tráfego do túnel.** Garanta que o srcnat/
+masquerade da WAN **não** capture o tráfego `10.0.1.0/24 → 10.0.2.0/24`
+(uma regra `accept` antes do masquerade, casando dst da rede remota) —
+senão o IPsec não reconhece os seletores.
+
+**Passo 5 — suba e verifique.**
+
+```routeros
+/ip ipsec active-peers print
+/ip ipsec policy print
+```
+
+`active-peers` com a fase 1, e a `policy` mostrando a SA da fase 2
+instalada. Pingue host↔host entre as LANs e confirme, no
+`installed-sa`, os contadores subindo (tráfego cifrado).
+
+### Verificação
+
+1. `active-peers` mostra a fase 1 estabelecida;
+2. A `policy` tem SA de fase 2 instalada (seletores em espelho);
+3. Ping host↔host passa e os contadores de SA sobem;
+4. O tráfego do túnel **não** é capturado pelo masquerade da WAN.
+
+### Desafios
+
+1. A fase 1 fecha (`active-peers` ok), mas nenhum tráfego passa e a
+   `policy` não instala SA de fase 2. Cite as **duas** causas mais
+   comuns e como confirmar cada uma.
+2. Tudo "certo", mas os hosts não se pingam — e você descobre que o
+   masquerade da WAN está reescrevendo o tráfego antes do IPsec. Explique
+   por que isso quebra os seletores e qual regra corrige.
+3. O provedor precisa rodar **OSPF** entre os dois POPs sobre um enlace
+   **cifrado**. Por que o IPsec **policy-based** deste capítulo não
+   serve, e qual é o desenho recomendado (aponte o capítulo)?
+4. Um dos POPs está atrás de **CGNAT**. A fase 1 fecha às vezes, mas o
+   tráfego é errático. Qual recurso do IPsec está em jogo, e que portas
+   você confere no firewall?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) **`proposal` (fase 2) não bate**: os algoritmos de ESP
+(`enc`/`auth`/PFS) diferem entre os lados — confira que `proposal` é
+idêntica nos dois. (b) **Seletores não estão em espelho**: o `src/dst` da
+`policy` de um lado tem de ser o inverso exato do outro; qualquer
+divergência (uma máscara diferente) impede a fase 2. Confirme com
+`/ip ipsec policy print` comparando os dois lados.
+
+**2.** O masquerade reescreve o *source* do pacote **antes** de o IPsec
+avaliar os seletores; o pacote deixa de casar `src=10.0.1.0/24` e o
+IPsec o ignora (sai em claro pela WAN). Corrige-se com uma regra de NAT
+`accept` **antes** do masquerade: `chain=srcnat dst-address=10.0.2.0/24
+action=accept` (não traduzir o tráfego destinado à rede remota do
+túnel).
+
+**3.** Policy-based **não cria interface**, e o OSPF precisa de uma
+interface para formar adjacência e trocar Hellos. O desenho recomendado
+é **GRE + IPsec** (@sec-gre-eoip): o GRE fornece a interface roteável
+(onde o OSPF roda) e o IPsec cifra o transporte. Também interligação de
+POPs no @sec-interligacao-pops.
+
+**4.** **NAT-Traversal**. Atrás de CGNAT, o ESP puro (protocolo 50) não
+sobrevive à tradução; o IKEv2 encapsula o ESP em **UDP/4500** (NAT-T)
+para atravessar. Se o tráfego é errático, confira que **UDP 500 e 4500**
+estão liberados no firewall (input) e que o NAT-T está ativo — sem ele, a
+fase 1 até fecha, mas o ESP não passa de forma confiável.
+:::
+
+## Resumo
+
+- IPsec é o **padrão de interoperabilidade** — use quando o outro lado
+  **não** é MikroTik (ou exige IPsec);
+- Peças: **profile/peer** (fase 1, IKE — negocia a chave, use
+  **`ike2`**), **proposal/policy** (fase 2, ESP — cifra os dados),
+  **identity** (PSK/cert);
+- Regra de ouro: **algoritmos batendo** (profile e proposal) e
+  **seletores em espelho** (src/dst invertidos) nos dois lados;
+- **Policy-based** para site-to-site fixo; **GRE+IPsec** quando precisa
+  de **interface**/roteamento dinâmico;
+- Com NAT no caminho, **NAT-Traversal (UDP 4500)** é obrigatório; e não
+  deixe o **masquerade** capturar o tráfego do túnel.
+
+IPsec e WireGuard cifram **camada 3**. Falta o que transporta
+**roteamento** e **camada 2** entre POPs — e os túneis de acesso legado.
+O @sec-gre-eoip cobre GRE, EoIP, L2TP/SSTP e ZeroTier.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *IPsec* do RouterOS [@mikrotik-docs];
+- IKE, ESP e arquitetura IPsec: [@tanenbaum-redes];
+- IPsec no v7 e interoperabilidade: [@discher-rosv7];
+- Túneis site-to-site em provedores: [@burgess-mikrotik].
