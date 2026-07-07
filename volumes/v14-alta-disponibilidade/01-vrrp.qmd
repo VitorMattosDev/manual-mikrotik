@@ -1,7 +1,281 @@
-# VRRP: gateway redundante
+# VRRP: gateway redundante {#sec-vrrp}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o problema que o **VRRP** resolve: o gateway como **ponto
+  único de falha** de toda uma LAN/POP;
+- Entender o **IP virtual (VIP)**, o **MAC virtual**, master/backup,
+  **prioridade** e **preempção**;
+- Configurar VRRP entre dois roteadores para um gateway redundante que
+  **sobrevive** à queda de um deles, transparente para os clientes;
+- Combinar VRRP com **rastreamento de uplink** (para não virar master um
+  roteador que perdeu a saída) e sincronizar a config dos dois;
+- Reconhecer os erros clássicos: VRID/autenticação divergentes, split de
+  master, e o master "cego" (up na LAN, sem uplink).
 :::
+
+Todos os volumes anteriores tornaram a rede mais capaz — mas um roteador
+de borda ou de POP ainda é **um único equipamento**. Se ele reinicia,
+queima ou trava, **toda** a LAN/clientes atrás dele ficam sem gateway,
+mesmo que os links estejam de pé. O **VRRP** (*Virtual Router Redundancy
+Protocol*) elimina esse ponto único: **dois** roteadores compartilham um
+**gateway virtual**, e se o principal cai, o reserva assume **em
+segundos**, sem o cliente reconfigurar nada. Abre o Volume 14 — alta
+disponibilidade — pela peça mais fundamental: o gateway que não morre.
+
+## O problema: o gateway é um ponto único de falha
+
+Os clientes de uma LAN apontam para **um** gateway (`192.168.1.1`). Esse
+IP mora em **um** roteador. Se o roteador cai, o IP some — e nenhum
+cliente sai, ainda que exista um segundo roteador ocioso ao lado. Mudar o
+gateway de todos os clientes na mão é impensável. Precisamos que o
+**gateway** seja redundante, não o cliente.
+
+O VRRP resolve com um **IP virtual (VIP)** que **flutua** entre dois
+roteadores: quem estiver ativo (**master**) responde por ele; o outro
+(**backup**) espera. Os clientes apontam para o **VIP** e nunca sabem
+qual roteador físico está por trás.
+
+```{.tikz}
+%%| filename: fig-vrrp
+%%| alt: Dois roteadores compartilhando um gateway virtual VRRP. Roteador A (master, prioridade alta) e roteador B (backup, prioridade baixa) na mesma LAN. Ambos conhecem o IP virtual 192.168.1.1, mas só o master responde por ele. Os clientes apontam para o VIP. Setas mostram o tráfego indo pelo master; uma seta tracejada mostra o backup assumindo o VIP quando o master cai.
+\begin{tikzpicture}[
+  font=\small,
+  r/.style={draw, rounded corners, align=center, minimum height=12mm, minimum width=26mm, font=\scriptsize},
+]
+\node[r, fill=manualgreen!18] (a) at (0,1.3) {roteador A\\\scriptsize MASTER (prio 150)};
+\node[r, fill=manualgray!20] (b) at (0,-1.3) {roteador B\\\scriptsize BACKUP (prio 100)};
+\node[draw, circle, fill=manualyellow!30, minimum size=13mm, font=\scriptsize, align=center] (vip) at (4,0) {VIP\\.1};
+\node[r, fill=manualblue!12] (cli) at (8,0) {clientes\\\scriptsize gw = .1};
+\draw[-{Stealth}, very thick, manualgreen!60!black] (a) -- (vip);
+\draw[-{Stealth}, dashed, manualred] (b) -- node[below, sloped]{\scriptsize assume se A cai} (vip);
+\draw[-{Stealth}, thick] (cli) -- (vip);
+\end{tikzpicture}
+```
+
+::: {#fig-vrrp}
+O VIP (`.1`) é o gateway que os clientes conhecem; ele vive no **master**
+(maior prioridade) e **migra** para o backup se o master cair. Para o
+cliente, o gateway nunca mudou — a falha é invisível.
+:::
+
+## Como o VRRP funciona
+
+- **VIP** (IP virtual): o gateway que os clientes usam; anunciado pelo
+  master;
+- **MAC virtual**: o VRRP usa um **MAC padronizado** (`00:00:5E:00:01:
+  VRID`), então quando o backup assume, os clientes **nem precisam
+  atualizar o ARP** — o mesmo MAC responde. Failover transparente;
+- **Prioridade**: quem tem maior prioridade vira **master**; o resto é
+  **backup**. O master envia *advertisements* periódicos; se o backup
+  para de ouvi-los, **assume**;
+- **VRID** (*Virtual Router ID*): identifica o grupo VRRP; **precisa
+  bater** nos dois roteadores;
+- **Preempção**: quando o master original volta, ele **retoma** o papel
+  (se `preemption` ligado) — ou deixa o backup seguir (se desligado,
+  evita flapping).
+
+## Configurando VRRP
+
+Em cada roteador, cria-se a interface VRRP sobre a interface da LAN e
+adiciona-se o **VIP** a ela:
+
+```routeros
+# Roteador A (master) — prioridade alta
+/interface vrrp
+add name=vrrp-lan interface=ether2 vrid=10 priority=150 \
+    authentication=ah password="VrrpForte"
+/ip address add address=192.168.1.1/24 interface=vrrp-lan
+
+# Roteador B (backup) — mesma VRID/senha, prioridade menor
+/interface vrrp
+add name=vrrp-lan interface=ether2 vrid=10 priority=100 \
+    authentication=ah password="VrrpForte"
+/ip address add address=192.168.1.1/24 interface=vrrp-lan
+```
+
+- o **VIP** (`192.168.1.1`) é adicionado à **interface VRRP** — é ele que
+  flutua;
+- `vrid` e `password`/autenticação **idênticos** nos dois lados;
+- prioridade **diferente** (150 vs. 100) define quem é master.
+
+Os clientes apontam o gateway para `192.168.1.1` e pronto — se A cair, B
+vira master e assume o VIP em segundos.
+
+## Rastreando o uplink: o master não pode estar "cego"
+
+Um perigo sutil: o roteador A pode estar **up na LAN** (segue master) mas
+ter **perdido o uplink** (a saída para a internet caiu). Ele continua
+"dono" do VIP, mas leva o tráfego para um buraco — os clientes têm
+gateway, mas não têm internet. A solução é **rastrear o uplink** e
+**baixar a prioridade** de A quando ele perde a saída, deixando B (que
+tem uplink) assumir:
+
+```routeros
+# script + netwatch (@sec-scheduler): se o uplink de A cair, reduz a prioridade VRRP
+/tool netwatch add host=<gateway-operadora> \
+    down-script="/interface vrrp set vrrp-lan priority=50" \
+    up-script="/interface vrrp set vrrp-lan priority=150"
+```
+
+Assim, master é **quem realmente tem saída**, não só quem está ligado.
+Sem isso, o VRRP protege contra a queda do equipamento, mas **não**
+contra a queda do uplink — meio HA.
+
+::: {.callout-warning}
+**Split de master** (os dois se acham master ao mesmo tempo) causa
+conflito de IP/MAC e caos na LAN. Causas: **VRID diferente**,
+**autenticação divergente**, ou os dois roteadores **sem se ver**
+(problema de L2 entre eles). Garanta VRID/senha idênticos e um caminho L2
+sólido entre os dois. E sincronize a **config de roteamento/NAT** dos
+dois — de nada adianta o backup assumir o VIP se ele não tem as mesmas
+rotas e regras que o master.
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+VRRP torna o **gateway** redundante, não o cliente: um **VIP** com **MAC
+virtual** flutua entre dois roteadores, e o backup assume em segundos —
+transparente, porque o cliente vê o mesmo IP e o mesmo MAC. Mas HA de
+verdade exige duas coisas além do básico: **rastrear o uplink** (baixar a
+prioridade de quem perdeu a saída, para o master não ficar "cego") e
+**sincronizar rotas/NAT** entre os dois (o backup precisa saber fazer o
+mesmo trabalho). VRID/senha idênticos evitam o **split de master**.
+Gateway que não morre é a base da alta disponibilidade.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Três CHRs (@sec-lab-chr): **lab-a** e **lab-b** (os dois roteadores
+redundantes, ambos na LAN `192.168.1.0/24` via uma rede interna comum e
+ambos com uplink para uma "internet"), e **lab-cli** (o cliente, gateway
+`192.168.1.1`). Objetivo: derrubar o master e ver o cliente seguir
+navegando.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — VRRP nos dois roteadores.** No lab-a (master):
+
+```routeros
+/interface vrrp add name=vrrp-lan interface=ether2 vrid=10 priority=150 \
+    authentication=ah password="LabVrrp"
+/ip address add address=192.168.1.1/24 interface=vrrp-lan
+```
+
+No lab-b, idêntico mas `priority=100`.
+
+**Passo 2 — confirme master/backup.** Em cada um:
+
+```routeros
+/interface vrrp print
+```
+
+O lab-a deve mostrar `master`, o lab-b `backup`.
+
+**Passo 3 — cliente navegando.** No lab-cli (gw `192.168.1.1`), pingue a
+internet continuamente (`/ping 8.8.8.8` ou o "servidor" do lab).
+
+**Passo 4 — derrube o master.** Desligue o lab-a (ou a interface VRRP).
+Observe: o ping do cliente **mal pisca** — o lab-b vira master e assume o
+VIP. Confirme `/interface vrrp print` no lab-b (agora `master`).
+
+**Passo 5 — rastreie o uplink.** Configure o netwatch do uplink no lab-a
+(bloco acima). Derrube **só o uplink** de A (não o equipamento) e veja a
+prioridade cair e B assumir — mesmo com A "vivo" na LAN.
+
+**Passo 6 — preempção.** Religue A e observe se ele **retoma** o master
+(preempção ligada) ou deixa B seguir. Ajuste conforme a política.
+
+### Verificação
+
+1. lab-a é master, lab-b é backup (prioridades);
+2. Derrubar o master faz o backup assumir o VIP em segundos, quase sem
+   perda para o cliente;
+3. O rastreamento de uplink faz B assumir quando A perde a saída (mesmo
+   up na LAN);
+4. A preempção se comporta conforme configurado ao master voltar.
+
+### Desafios
+
+1. Você configurou VRRP, mas **os dois** roteadores se dizem `master` e a
+   LAN ficou instável. Liste as três causas de split de master e como
+   confirmar cada uma.
+2. O master caiu, o backup assumiu o VIP, mas os clientes **continuam sem
+   internet** — o ping ao gateway funciona, à internet não. O que o
+   backup provavelmente **não** tinha, e como você garante isso de
+   antemão?
+3. O uplink do master caiu (o equipamento seguiu ligado). Sem
+   rastreamento, o que acontece com os clientes e por quê? Descreva o
+   mecanismo que corrige e como ele "convence" o VRRP a trocar.
+4. Por que o **MAC virtual** do VRRP é essencial para o failover ser
+   **transparente**? O que aconteceria no cache ARP dos clientes se cada
+   roteador usasse seu próprio MAC?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) **VRID diferente** entre os dois → não se reconhecem como o
+mesmo grupo, cada um vira master; confira `/interface vrrp print`. (b)
+**Autenticação/senha divergente** → um ignora os advertisements do outro;
+mesmo comando/campo de auth. (c) **Sem visibilidade L2 entre eles** → um
+problema de bridge/VLAN impede que ouçam os advertisements um do outro;
+teste com ping L2/verifique a topologia. Em todos, o sintoma é o mesmo:
+dois masters, conflito de VIP/MAC.
+
+**2.** O backup **não tinha as mesmas rotas/NAT** que o master (rota
+default, masquerade, regras de firewall). Assumir o VIP dá o **gateway**,
+mas sem a configuração de **saída** o tráfego morre no backup. Garanta de
+antemão **sincronizando a config de roteamento/NAT** dos dois roteadores
+(manualmente com disciplina, por script/provisionamento
+@sec-api-provisionamento, ou export/import) — HA de gateway pressupõe
+paridade de configuração.
+
+**3.** Sem rastreamento, o master segue **dono do VIP** apesar de não ter
+saída — os clientes têm gateway, mas o tráfego vai para um buraco (master
+"cego"). A correção é **rastrear o uplink** (netwatch, @sec-scheduler):
+quando a saída cai, um script **reduz a prioridade** VRRP do master
+abaixo da do backup; o backup, agora com prioridade maior, **assume** o
+VIP. O VRRP troca porque a decisão master/backup é por **prioridade**, e
+você a manipulou conforme a saúde do uplink.
+
+**4.** O MAC virtual faz o VIP responder **sempre com o mesmo endereço de
+enlace**, independentemente de qual roteador físico está ativo. Assim,
+quando o backup assume, o **cache ARP** dos clientes (IP→MAC) **continua
+válido** — nada muda para eles. Se cada roteador usasse seu **próprio
+MAC**, no failover o MAC do VIP mudaria e os clientes só voltariam a
+navegar após o **cache ARP expirar** (ou um ARP gratuito), causando uma
+interrupção perceptível. O MAC virtual é o que torna o failover
+**imediato e transparente**.
+:::
+
+## Resumo
+
+- **VRRP** torna o **gateway** redundante: um **VIP** com **MAC virtual**
+  flutua entre master e backup, e o failover é **transparente** (mesmo
+  IP e MAC para o cliente);
+- **Prioridade** decide o master; **VRID/senha idênticos** evitam **split
+  de master**; **preempção** controla o retorno do master original;
+- **Rastreie o uplink** (netwatch baixando a prioridade) para o master
+  não ficar "cego" (up na LAN, sem saída);
+- **Sincronize rotas/NAT** entre os dois — o backup precisa fazer o mesmo
+  trabalho, não só responder pelo VIP;
+- Failover em segundos, sem o cliente reconfigurar nada.
+
+VRRP protege contra a queda de **um roteador**. Falta proteger contra a
+queda de **um cabo/porta** entre equipamentos — e somar a banda de
+vários enlaces. O @sec-bonding cobre o bonding (agregação de links).
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *VRRP* do RouterOS [@mikrotik-docs];
+- Redundância de gateway e protocolos FHRP: [@tanenbaum-redes];
+- VRRP no v7 na prática: [@discher-rosv7];
+- Alta disponibilidade em provedores: [@burgess-mikrotik].
