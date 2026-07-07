@@ -95,7 +95,15 @@ book:
         - volumes/v08-roteamento/05-bgp-filtros-communities.qmd
         - volumes/v08-roteamento/06-vrf-boas-praticas-v7.qmd
 
-    # (Volumes 9–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
+    - part: "Volume 9 — CGNAT e IPv6"
+      chapters:
+        - volumes/v09-cgnat-ipv6/01-cgnat-netmap.qmd
+        - volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.qmd
+        - volumes/v09-cgnat-ipv6/03-ipv6-fundamentos-routeros.qmd
+        - volumes/v09-cgnat-ipv6/04-dhcpv6-pd-dual-stack-pppoe.qmd
+        - volumes/v09-cgnat-ipv6/05-firewall-ipv6.qmd
+
+    # (Volumes 10–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
 
   appendices:
     - referencias.qmd
