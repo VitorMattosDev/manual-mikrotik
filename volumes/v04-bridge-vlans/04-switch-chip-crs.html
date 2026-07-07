@@ -647,12 +647,47 @@ div.csl-indent {
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-13" role="navigation" aria-expanded="false">
- <span class="menu-text">Apêndices</span></a>
+ <span class="menu-text">Volume 13 — Monitoramento e diagnóstico</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-13" role="navigation" aria-expanded="false" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
       <ul id="quarto-sidebar-section-13" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v13-monitoramento/01-logs-syslog.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">63</span>&nbsp; <span class="chapter-title">Logs e syslog remoto</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v13-monitoramento/02-snmp-graphing-dude.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">64</span>&nbsp; <span class="chapter-title">SNMP, graphing e The Dude</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v13-monitoramento/03-torch-sniffer-profile.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">65</span>&nbsp; <span class="chapter-title">Torch, packet sniffer e profile</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v13-monitoramento/04-metodologia-troubleshooting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">66</span>&nbsp; <span class="chapter-title">Metodologia de troubleshooting</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-14" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-14" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-14" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
@@ -1331,7 +1366,7 @@ Aviso
 <p>(<code>new-dst-ports=""</code> = descartar.) É o jeito de impor “nesta porta, só este equipamento” num POP — sem gastar um ciclo de CPU. As regras variam por chip; as dos CRS3xx são particularmente ricas (é o embrião do <em>Layer 3 hardware offloading</em> dos CRS3xx/5xx mais novos — roteamento no chip, fora do nosso escopo, mas bom saber que existe).</p>
 <p><strong>Port mirroring — o grampo legítimo.</strong> Copiar o tráfego de uma porta para outra, onde um analisador escuta:</p>
 <pre class="routeros"><code>/interface ethernet switch set switch1 mirror-source=ether5 mirror-target=ether10</code></pre>
-<p>No <span class="quarto-unresolved-ref">?sec-torch-sniffer</span> você verá o sniffer do próprio RouterOS; o mirror é a versão “de verdade” para depurar a porta de um cliente sem entrar no caminho.</p>
+<p>No <a href="../v13-monitoramento/03-torch-sniffer-profile.html" class="quarto-xref"><span>Capítulo 65</span></a> você verá o sniffer do próprio RouterOS; o mirror é a versão “de verdade” para depurar a porta de um cliente sem entrar no caminho.</p>
 <p><strong>Host table de hardware.</strong> A prima da <code>/interface bridge host</code>: <code>/interface ethernet switch host print</code> mostra os MACs que <strong>o chip</strong> conhece — e aceita entradas estáticas (prender um MAC a uma porta). Nos CRS3xx integrada à da bridge; nos legados, é a que vale.</p>
 <p>E os <strong>limites</strong>: cada chip tem tabelas finitas — tantos mil MACs, tantas VLANs ativas, tantas regras de ACL. A ficha técnica (<a href="../v01-primeiros-passos/02-hardware-linhas-produto.html" class="quarto-xref"><span>Capítulo 2</span></a>) e a página <em>Switch Chip Features</em> trazem os números; um POP com mais MACs que a tabela do chip degrada para inundação (o switch vira hub para os excedentes). Projetar é conferir os números <strong>antes</strong>.</p>
 <div class="callout callout-style-default callout-important callout-titled">

@@ -1945,7 +1945,7 @@
     "href": "volumes/v04-bridge-vlans/04-switch-chip-crs.html#o-que-mais-mora-no-chip",
     "title": "25  Switch chip nos CRS",
     "section": "25.3 O que mais mora no chip",
-    "text": "25.3 O que mais mora no chip\nVLAN é o prato principal, mas o porão tem mais ferramentas — todas em velocidade de fio:\nRule table — ACLs de hardware. Uma tabela de regras estilo firewall (matchers de MAC, IP, porta; ações de drop/redirect/mirror) processada pelo chip:\n/interface ethernet switch rule add switch=switch1 ports=ether5 src-mac-address=!AA:BB:CC:DD:EE:FF/FF:FF:FF:FF:FF:FF copy-to-cpu=no new-dst-ports=\"\" comment=\"so o MAC autorizado fala nesta porta\"\n(new-dst-ports=\"\" = descartar.) É o jeito de impor “nesta porta, só este equipamento” num POP — sem gastar um ciclo de CPU. As regras variam por chip; as dos CRS3xx são particularmente ricas (é o embrião do Layer 3 hardware offloading dos CRS3xx/5xx mais novos — roteamento no chip, fora do nosso escopo, mas bom saber que existe).\nPort mirroring — o grampo legítimo. Copiar o tráfego de uma porta para outra, onde um analisador escuta:\n/interface ethernet switch set switch1 mirror-source=ether5 mirror-target=ether10\nNo ?sec-torch-sniffer você verá o sniffer do próprio RouterOS; o mirror é a versão “de verdade” para depurar a porta de um cliente sem entrar no caminho.\nHost table de hardware. A prima da /interface bridge host: /interface ethernet switch host print mostra os MACs que o chip conhece — e aceita entradas estáticas (prender um MAC a uma porta). Nos CRS3xx integrada à da bridge; nos legados, é a que vale.\nE os limites: cada chip tem tabelas finitas — tantos mil MACs, tantas VLANs ativas, tantas regras de ACL. A ficha técnica (Capítulo 2) e a página Switch Chip Features trazem os números; um POP com mais MACs que a tabela do chip degrada para inundação (o switch vira hub para os excedentes). Projetar é conferir os números antes.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nO switch chip é um computador de comutação com tabelas próprias — VLANs, MACs, ACLs — e o seu trabalho é programá-lo no idioma certo da geração: bridge filtering nos CRS3xx+ (o RouterOS traduz), menu do chip nos legados. Misturar idiomas ou exceder as tabelas derruba o tráfego para a CPU — e o “switch de 10 Gbps lento” quase sempre é isso: hardware esperando alguém falar a língua dele.",
+    "text": "25.3 O que mais mora no chip\nVLAN é o prato principal, mas o porão tem mais ferramentas — todas em velocidade de fio:\nRule table — ACLs de hardware. Uma tabela de regras estilo firewall (matchers de MAC, IP, porta; ações de drop/redirect/mirror) processada pelo chip:\n/interface ethernet switch rule add switch=switch1 ports=ether5 src-mac-address=!AA:BB:CC:DD:EE:FF/FF:FF:FF:FF:FF:FF copy-to-cpu=no new-dst-ports=\"\" comment=\"so o MAC autorizado fala nesta porta\"\n(new-dst-ports=\"\" = descartar.) É o jeito de impor “nesta porta, só este equipamento” num POP — sem gastar um ciclo de CPU. As regras variam por chip; as dos CRS3xx são particularmente ricas (é o embrião do Layer 3 hardware offloading dos CRS3xx/5xx mais novos — roteamento no chip, fora do nosso escopo, mas bom saber que existe).\nPort mirroring — o grampo legítimo. Copiar o tráfego de uma porta para outra, onde um analisador escuta:\n/interface ethernet switch set switch1 mirror-source=ether5 mirror-target=ether10\nNo Capítulo 65 você verá o sniffer do próprio RouterOS; o mirror é a versão “de verdade” para depurar a porta de um cliente sem entrar no caminho.\nHost table de hardware. A prima da /interface bridge host: /interface ethernet switch host print mostra os MACs que o chip conhece — e aceita entradas estáticas (prender um MAC a uma porta). Nos CRS3xx integrada à da bridge; nos legados, é a que vale.\nE os limites: cada chip tem tabelas finitas — tantos mil MACs, tantas VLANs ativas, tantas regras de ACL. A ficha técnica (Capítulo 2) e a página Switch Chip Features trazem os números; um POP com mais MACs que a tabela do chip degrada para inundação (o switch vira hub para os excedentes). Projetar é conferir os números antes.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nO switch chip é um computador de comutação com tabelas próprias — VLANs, MACs, ACLs — e o seu trabalho é programá-lo no idioma certo da geração: bridge filtering nos CRS3xx+ (o RouterOS traduz), menu do chip nos legados. Misturar idiomas ou exceder as tabelas derruba o tráfego para a CPU — e o “switch de 10 Gbps lento” quase sempre é isso: hardware esperando alguém falar a língua dele.",
     "crumbs": [
       "Volume 4 — Bridge, switching e VLANs",
       "<span class='chapter-number'>25</span>  <span class='chapter-title'>Switch chip nos CRS</span>"
@@ -4035,7 +4035,7 @@
     "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#configurando-o-registro-no-routeros",
     "title": "48  Logging de CGNAT e requisitos legais",
     "section": "48.4 Configurando o registro no RouterOS",
-    "text": "48.4 Configurando o registro no RouterOS\nO ponto de partida é hora certa e envio para fora (a caixa não é o cofre):\n# 1) NTP: sem relógio sincronizado, nenhum log vale\n/system ntp client set enabled=yes servers=a.ntp.br,b.ntp.br\n\n# 2) syslog remoto: log NÃO mora no roteador (memória volátil, espaço)\n/system logging action\nadd name=coletor target=remote remote=10.99.0.20 remote-port=514\n/system logging\nadd topics=info,account action=coletor\nSe optar por logar conexões (CGNAT dinâmico), habilite o log da regra de NAT com parcimônia — e saiba que o destino tem de ser um coletor externo dimensionado (o Volume 13, ?sec-logs, trata de syslog centralizado):\n/ip firewall nat set [find action=netmap] log=yes log-prefix=\"cgnat\"\nPara o desenho determinístico, você não liga log por conexão: guarda a tabela de alocação (um export das regras/NAT) e o accounting do RADIUS — versionados e retidos pelo prazo legal.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nCGNAT sem registro é passivo legal: você não consegue dizer quem fez o quê, e a lei cobra que consiga. A escolha inteligente não é “logar mais” — é projetar para logar menos: CGNAT determinístico (tabela estática) + accounting RADIUS (100.64 → assinante) reconstroem qualquer requisição com uma fração do volume de um log de conexões. Sobre isso, três não-negociáveis: NTP (hora certa), coletor externo (o log não mora na caixa) e retenção com sigilo pelo prazo. E o lembrete honesto: a parte técnica é esta; a jurídica, confirme com advogado.",
+    "text": "48.4 Configurando o registro no RouterOS\nO ponto de partida é hora certa e envio para fora (a caixa não é o cofre):\n# 1) NTP: sem relógio sincronizado, nenhum log vale\n/system ntp client set enabled=yes servers=a.ntp.br,b.ntp.br\n\n# 2) syslog remoto: log NÃO mora no roteador (memória volátil, espaço)\n/system logging action\nadd name=coletor target=remote remote=10.99.0.20 remote-port=514\n/system logging\nadd topics=info,account action=coletor\nSe optar por logar conexões (CGNAT dinâmico), habilite o log da regra de NAT com parcimônia — e saiba que o destino tem de ser um coletor externo dimensionado (o Volume 13, Capítulo 63, trata de syslog centralizado):\n/ip firewall nat set [find action=netmap] log=yes log-prefix=\"cgnat\"\nPara o desenho determinístico, você não liga log por conexão: guarda a tabela de alocação (um export das regras/NAT) e o accounting do RADIUS — versionados e retidos pelo prazo legal.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nCGNAT sem registro é passivo legal: você não consegue dizer quem fez o quê, e a lei cobra que consiga. A escolha inteligente não é “logar mais” — é projetar para logar menos: CGNAT determinístico (tabela estática) + accounting RADIUS (100.64 → assinante) reconstroem qualquer requisição com uma fração do volume de um log de conexões. Sobre isso, três não-negociáveis: NTP (hora certa), coletor externo (o log não mora na caixa) e retenção com sigilo pelo prazo. E o lembrete honesto: a parte técnica é esta; a jurídica, confirme com advogado.",
     "crumbs": [
       "Volume 9 — CGNAT e IPv6",
       "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
@@ -4046,7 +4046,7 @@
     "href": "volumes/v09-cgnat-ipv6/02-logging-requisitos-legais.html#laboratório",
     "title": "48  Logging de CGNAT e requisitos legais",
     "section": "48.5 🧪 Laboratório",
-    "text": "48.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nReaproveite o lab-bng do Capítulo 47 (CGNAT determinístico ativo) e adicione lab-log = um coletor syslog (pode ser outro CHR com o serviço de log, ou um host Linux com rsyslog) em 10.99.0.20. Um lab-cli gera tráfego como assinante 100.64.0.10.\n\n\n\n48.5.1 Comandos passo a passo\nPasso 1 — hora certa em tudo. No lab-bng e no lab-log:\n/system ntp client set enabled=yes servers=a.ntp.br\n/system clock print\nConfirme que o relógio está sincronizado antes de qualquer log.\nPasso 2 — syslog remoto. No lab-bng:\n/system logging action add name=coletor target=remote remote=10.99.0.20\n/system logging add topics=info action=coletor\nNo lab-log, verifique que as mensagens chegam (/log print se for CHR, ou o arquivo do rsyslog).\nPasso 3 — a tabela de alocação como registro. Exporte as regras de CGNAT — é o “documento” que amarra IP público:portas → 100.64:\n/ip firewall nat export file=cgnat-alocacao\nGuarde esse export (versionado, com data). Ele é a metade estática da resposta legal.\nPasso 4 — accounting do assinante. Se o lab tem PPPoE/RADIUS (Capítulo 35), confirme que o login do assinante gera um registro usuário → 100.64.0.10 com timestamp. Sem RADIUS no lab, simule anotando manualmente a associação e a hora.\nPasso 5 — simule uma requisição. Escolha um IP público:porta de uma conexão real do lab-cli (visto no connection print) e percorra a cadeia: porta → faixa (tabela do Passo 3) → 100.64.0.10 → assinante (Passo 4). Cronometre: com o determinístico, são minutos, não horas.\n\n\n48.5.2 Verificação\n\nRelógio sincronizado (NTP) em BNG e coletor;\nMensagens de log chegam ao coletor externo;\nO export da tabela de alocação amarra IP público:portas → 100.64;\nA cadeia IP:porta:tempo → 100.64 → assinante fecha a partir dos dois registros (tabela + accounting).\n\n\n\n48.5.3 Desafios\n\nSeu coletor de log encheu o disco em três dias com CGNAT dinâmico logando toda conexão. Sem comprar mais disco, que mudança de projeto derruba o volume mantendo a capacidade de resposta legal? Explique por que funciona.\nUma ordem judicial pede o responsável por 203.0.113.10:5000 às 2026-03-01 21:34. Liste, na ordem, quais registros você consulta e como eles se encadeiam até o nome do assinante.\nVocê descobre que o NTP do BNG estava errado em +7 minutos durante uma semana. Qual é o impacto nos registros daquele período e o que você faz? Por que hora errada é tão grave num registro legal?\nUm técnico sugere guardar os logs apenas no próprio roteador “para simplificar”. Aponte dois motivos técnicos pelos quais isso falha o requisito de retenção — e o desenho correto.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Migrar para CGNAT determinístico: a tradução vira uma função estática (faixa de portas fixa por assinante), então você guarda só a tabela de alocação + o accounting (100.64 → usuário), não cada conexão. O volume cai ordens de grandeza porque você deixou de registrar eventos e passou a registrar regras — e a resposta legal continua completa porque a regra é suficiente para recalcular quem era quem.\n2. (a) Tabela de alocação CGNAT vigente naquela data: a porta 5000 no IP 203.0.113.10 cai numa faixa atribuída a um 100.64.x.x. (b) Accounting do RADIUS/PPPoE no instante 21:34: qual usuário estava com aquele 100.64.x.x (sessão Start/Stop cobrindo o horário). (c) Cadastro: usuário → contrato/pessoa. Os três encadeados dão o responsável, com hora sincronizada validando o instante.\n3. Todos os registros daquele período têm o carimbo de tempo deslocado em +7 min, então uma requisição que aponta para um horário pode cair no assinante errado (se a alocação mudou nesse intervalo). Você documenta o desvio (o offset conhecido) para poder corrigir as consultas daquele período e conserta o NTP. Hora errada é grave porque o registro legal é uma afirmação temporal: sem hora confiável, ele não identifica ninguém com segurança.\n4. (a) Volatilidade/espaço: a memória do roteador é pequena e alguns logs se perdem no reboot; não há como reter 1 ano. (b) Risco e integridade: se o roteador é comprometido ou substituído, o registro vai junto — e um log que o próprio operador pode alterar tem valor probatório frágil. Desenho correto: syslog remoto para um coletor dedicado, com retenção pelo prazo, backup e acesso controlado (?sec-logs).",
+    "text": "48.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nReaproveite o lab-bng do Capítulo 47 (CGNAT determinístico ativo) e adicione lab-log = um coletor syslog (pode ser outro CHR com o serviço de log, ou um host Linux com rsyslog) em 10.99.0.20. Um lab-cli gera tráfego como assinante 100.64.0.10.\n\n\n\n48.5.1 Comandos passo a passo\nPasso 1 — hora certa em tudo. No lab-bng e no lab-log:\n/system ntp client set enabled=yes servers=a.ntp.br\n/system clock print\nConfirme que o relógio está sincronizado antes de qualquer log.\nPasso 2 — syslog remoto. No lab-bng:\n/system logging action add name=coletor target=remote remote=10.99.0.20\n/system logging add topics=info action=coletor\nNo lab-log, verifique que as mensagens chegam (/log print se for CHR, ou o arquivo do rsyslog).\nPasso 3 — a tabela de alocação como registro. Exporte as regras de CGNAT — é o “documento” que amarra IP público:portas → 100.64:\n/ip firewall nat export file=cgnat-alocacao\nGuarde esse export (versionado, com data). Ele é a metade estática da resposta legal.\nPasso 4 — accounting do assinante. Se o lab tem PPPoE/RADIUS (Capítulo 35), confirme que o login do assinante gera um registro usuário → 100.64.0.10 com timestamp. Sem RADIUS no lab, simule anotando manualmente a associação e a hora.\nPasso 5 — simule uma requisição. Escolha um IP público:porta de uma conexão real do lab-cli (visto no connection print) e percorra a cadeia: porta → faixa (tabela do Passo 3) → 100.64.0.10 → assinante (Passo 4). Cronometre: com o determinístico, são minutos, não horas.\n\n\n48.5.2 Verificação\n\nRelógio sincronizado (NTP) em BNG e coletor;\nMensagens de log chegam ao coletor externo;\nO export da tabela de alocação amarra IP público:portas → 100.64;\nA cadeia IP:porta:tempo → 100.64 → assinante fecha a partir dos dois registros (tabela + accounting).\n\n\n\n48.5.3 Desafios\n\nSeu coletor de log encheu o disco em três dias com CGNAT dinâmico logando toda conexão. Sem comprar mais disco, que mudança de projeto derruba o volume mantendo a capacidade de resposta legal? Explique por que funciona.\nUma ordem judicial pede o responsável por 203.0.113.10:5000 às 2026-03-01 21:34. Liste, na ordem, quais registros você consulta e como eles se encadeiam até o nome do assinante.\nVocê descobre que o NTP do BNG estava errado em +7 minutos durante uma semana. Qual é o impacto nos registros daquele período e o que você faz? Por que hora errada é tão grave num registro legal?\nUm técnico sugere guardar os logs apenas no próprio roteador “para simplificar”. Aponte dois motivos técnicos pelos quais isso falha o requisito de retenção — e o desenho correto.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Migrar para CGNAT determinístico: a tradução vira uma função estática (faixa de portas fixa por assinante), então você guarda só a tabela de alocação + o accounting (100.64 → usuário), não cada conexão. O volume cai ordens de grandeza porque você deixou de registrar eventos e passou a registrar regras — e a resposta legal continua completa porque a regra é suficiente para recalcular quem era quem.\n2. (a) Tabela de alocação CGNAT vigente naquela data: a porta 5000 no IP 203.0.113.10 cai numa faixa atribuída a um 100.64.x.x. (b) Accounting do RADIUS/PPPoE no instante 21:34: qual usuário estava com aquele 100.64.x.x (sessão Start/Stop cobrindo o horário). (c) Cadastro: usuário → contrato/pessoa. Os três encadeados dão o responsável, com hora sincronizada validando o instante.\n3. Todos os registros daquele período têm o carimbo de tempo deslocado em +7 min, então uma requisição que aponta para um horário pode cair no assinante errado (se a alocação mudou nesse intervalo). Você documenta o desvio (o offset conhecido) para poder corrigir as consultas daquele período e conserta o NTP. Hora errada é grave porque o registro legal é uma afirmação temporal: sem hora confiável, ele não identifica ninguém com segurança.\n4. (a) Volatilidade/espaço: a memória do roteador é pequena e alguns logs se perdem no reboot; não há como reter 1 ano. (b) Risco e integridade: se o roteador é comprometido ou substituído, o registro vai junto — e um log que o próprio operador pode alterar tem valor probatório frágil. Desenho correto: syslog remoto para um coletor dedicado, com retenção pelo prazo, backup e acesso controlado (Capítulo 63).",
     "crumbs": [
       "Volume 9 — CGNAT e IPv6",
       "<span class='chapter-number'>48</span>  <span class='chapter-title'>Logging de CGNAT e requisitos legais</span>"
@@ -5414,6 +5414,380 @@
     "crumbs": [
       "Volume 12 — Scripts e automação",
       "<span class='chapter-number'>62</span>  <span class='chapter-title'>API e provisionamento em massa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/01-logs-syslog.html",
+    "href": "volumes/v13-monitoramento/01-logs-syslog.html",
+    "title": "63  Logs e syslog remoto",
+    "section": "",
+    "text": "63.1 O modelo: topics e actions\nOs volumes anteriores construíram e automatizaram a rede. Agora ela precisa ser enxergada. O primeiro sentido do operador é o log: o registro do que aconteceu — quem logou, qual link caiu, qual adjacência OSPF quebrou, quando. Bem configurado, o log é a diferença entre “o cliente reclamou às 22h e não sei por quê” e “o enlace do POP-3 caiu às 21h58, veja aqui”. Este capítulo abre o Volume 13 dominando o log local e, crucialmente, sua centralização — porque log que fica só na caixa não serve para operar um parque.\nO RouterOS separa o que registrar de para onde mandar:",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>63</span>  <span class='chapter-title'>Logs e syslog remoto</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/01-logs-syslog.html#o-modelo-topics-e-actions",
+    "href": "volumes/v13-monitoramento/01-logs-syslog.html#o-modelo-topics-e-actions",
+    "title": "63  Logs e syslog remoto",
+    "section": "",
+    "text": "Topics: categorias do evento — system, firewall, dhcp, ospf, pppoe, wireless, error, warning, info, account, etc. Um evento pode ter vários topics;\nActions: destinos — memory (buffer volátil), disk (arquivo), remote (syslog para outro host), email. Cada action tem seus parâmetros;\nRegras de logging (/system logging): casam topics → action. “Mande tudo de error e warning para o coletor remoto”; “guarde account em disco”.\n\n/system logging\nadd topics=error,warning,critical action=remote\nadd topics=account action=disk\nadd topics=ospf action=memory\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\nUm evento é classificado por topics e, pelas regras, encaminhado a uma ou mais actions. O destino que importa para operar um parque é o remote (syslog): tira o log da caixa e o centraliza.\n\n\nFigura 63.1",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>63</span>  <span class='chapter-title'>Logs e syslog remoto</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/01-logs-syslog.html#lendo-o-log-local",
+    "href": "volumes/v13-monitoramento/01-logs-syslog.html#lendo-o-log-local",
+    "title": "63  Logs e syslog remoto",
+    "section": "63.2 Lendo o log local",
+    "text": "63.2 Lendo o log local\n/log print\n/log print where topics~\"ospf\"\n/log print where topics~\"error\"\n/log print follow    # acompanha em tempo real (como tail -f)\nO follow é o seu “tail” ao vivo — indispensável ao diagnosticar um problema em andamento. Filtrar por topic separa o sinal do ruído: quando um enlace instabiliza, where topics~\"ospf\" mostra as adjacências subindo e caindo sem a poluição do resto.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>63</span>  <span class='chapter-title'>Logs e syslog remoto</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/01-logs-syslog.html#por-que-o-log-não-pode-morar-só-na-caixa",
+    "href": "volumes/v13-monitoramento/01-logs-syslog.html#por-que-o-log-não-pode-morar-só-na-caixa",
+    "title": "63  Logs e syslog remoto",
+    "section": "63.3 Por que o log não pode morar só na caixa",
+    "text": "63.3 Por que o log não pode morar só na caixa\nO log local do RouterOS tem três limitações fatais para operação:\n\nVolátil: o buffer memory some no reboot — e o reboot muitas vezes é justamente o evento que você queria investigar;\nPequeno: cabe pouca coisa; eventos antigos são sobrescritos em horas num roteador movimentado;\nVai junto no incidente: se a caixa é comprometida, roubada ou pifa, o log vai com ela — e um log que o próprio invasor pode apagar tem pouco valor.\n\nA solução é o syslog remoto: enviar os logs, em tempo real, para um coletor central que os guarda com retenção e segurança.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>63</span>  <span class='chapter-title'>Logs e syslog remoto</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/01-logs-syslog.html#configurando-syslog-remoto",
+    "href": "volumes/v13-monitoramento/01-logs-syslog.html#configurando-syslog-remoto",
+    "title": "63  Logs e syslog remoto",
+    "section": "63.4 Configurando syslog remoto",
+    "text": "63.4 Configurando syslog remoto\n# 1) NTP primeiro — log sem hora certa é inútil (a mesma lição do CGNAT)\n/system ntp client set enabled=yes servers=a.ntp.br,b.ntp.br\n\n# 2) a action remote apontando para o coletor\n/system logging action\nadd name=coletor target=remote remote=10.99.0.20 remote-port=514 \\\n    src-address=10.99.0.1\n\n# 3) o que mandar para lá (comece por error/warning/critical + o que operar)\n/system logging\nadd topics=error,warning,critical action=coletor\nadd topics=account action=coletor\nDo lado do coletor (um servidor com rsyslog/syslog-ng, ou o próprio The Dude, Capítulo 64), você recebe, indexa e retém os logs de todo o parque num só lugar. É lá que se correlaciona: “às 21h58, três POPs reportaram queda de OSPF ao mesmo tempo” — padrão invisível olhando caixa por caixa.\n\n\n\n\n\n\nAviso\n\n\n\nLog demais é tão ruim quanto log de menos. Mandar debug ou topics=! (tudo) de centenas de roteadores para o coletor o afoga e esconde o que importa. Comece com error,warning,critical + os topics que você opera (account para o legal, ospf/pppoe para a rede) e só ligue debug temporariamente, no equipamento específico, enquanto investiga. Sinal, não volume.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>63</span>  <span class='chapter-title'>Logs e syslog remoto</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/01-logs-syslog.html#centralização-retenção-e-o-elo-legal",
+    "href": "volumes/v13-monitoramento/01-logs-syslog.html#centralização-retenção-e-o-elo-legal",
+    "title": "63  Logs e syslog remoto",
+    "section": "63.5 Centralização, retenção e o elo legal",
+    "text": "63.5 Centralização, retenção e o elo legal\nA centralização de logs não é só conveniência — conecta com o Capítulo 48: o accounting de CGNAT e as associações 100.64 → assinante vivem no fluxo de log, e a lei exige retenção. O coletor central é onde isso se materializa: hora sincronizada (NTP), retenção pelo prazo, acesso controlado, backup. Um desenho de log de provedor tem três camadas:\n\nOperacional: error/warning/critical + topics de rede → diagnóstico do dia a dia;\nLegal: account/accounting → retenção pelo prazo, sob sigilo (Capítulo 48);\nSegurança: logins, mudanças de config → auditoria de quem fez o quê.\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nLog é o primeiro sentido do operador — mas só serve centralizado. O modelo é simples (topics = o que, actions = para onde), e a decisão que importa é uma: mandar para um coletor remoto por syslog, porque o log local é volátil, pequeno e some no incidente. Some a isso NTP (hora certa, senão o log não vale) e disciplina de volume (error/warning + o que você opera, não debug de tudo). O coletor central é onde você correlaciona o parque e cumpre a retenção legal (Capítulo 48). Sem centralização, você tem logs; não tem visibilidade.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>63</span>  <span class='chapter-title'>Logs e syslog remoto</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/01-logs-syslog.html#laboratório",
+    "href": "volumes/v13-monitoramento/01-logs-syslog.html#laboratório",
+    "title": "63  Logs e syslog remoto",
+    "section": "63.6 🧪 Laboratório",
+    "text": "63.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nDois CHRs (Capítulo 5): lab-rt (gera os logs) e lab-log (o coletor — outro CHR recebendo por remote, ou um host Linux com rsyslog em 10.99.0.20). Provoque eventos (queda de interface, login) para vê-los fluir até o coletor.\n\n\n\n63.6.1 Comandos passo a passo\nPasso 1 — hora certa. No lab-rt e no coletor:\n/system ntp client set enabled=yes servers=a.ntp.br\n/system clock print\nPasso 2 — leia o log local e filtre.\n/log print where topics~\"system\"\n/log print follow\nEm outra sessão, desabilite/reabilite uma interface e veja o evento aparecer ao vivo.\nPasso 3 — syslog remoto. No lab-rt:\n/system logging action add name=coletor target=remote remote=10.99.0.20\n/system logging add topics=error,warning,critical action=coletor\n/system logging add topics=info action=coletor\nPasso 4 — prove a chegada. No coletor (se CHR, /log print; se Linux, o arquivo do rsyslog). Gere um evento no lab-rt (login, queda de interface) e confirme que aparece no coletor, com a hora certa.\nPasso 5 — separe sinal de ruído. Ligue topics=ospf,debug temporariamente e observe o volume explodir; desligue e volte ao conjunto enxuto. Sinta na prática por que “logar tudo” não escala.\nPasso 6 — simule o incidente. Reinicie o lab-rt e confirme que o log memory local sumiu, mas o que foi para o coletor permanece — a razão de existir do syslog remoto.\n\n\n63.6.2 Verificação\n\nNTP sincronizado; eventos com hora correta;\n/log print follow mostra eventos ao vivo; filtro por topic funciona;\nEventos chegam ao coletor remoto;\nApós reboot, o log local some mas o do coletor permanece.\n\n\n\n63.6.3 Desafios\n\nApós um reboot inesperado de um roteador de POP, você quer saber o que causou — mas o /log print está vazio (só eventos após o boot). Explique por que, e o que teria preservado a evidência.\nO coletor central está recebendo gigabytes/hora e ninguém acha mais nada útil. Qual é o erro de configuração provável e como você reduz o volume sem perder o que importa para operar e para a lei?\nTrês POPs reportaram “queda de OSPF” quase no mesmo instante. Olhando caixa por caixa você não percebeu o padrão; no coletor, sim. Que propriedade do log centralizado tornou isso visível, e por que a hora certa (NTP) foi essencial?\nRelacione a centralização de logs deste capítulo com a obrigação de retenção do Capítulo 48: que topic/fluxo precisa ser retido, por quanto tempo, e por que o coletor (não o roteador) é o lugar certo.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. O log memory é volátil — o reboot o apaga, e o próprio reboot é o que você queria investigar. Preservaria a evidência ter syslog remoto (o evento pré-reboot já estaria no coletor) e/ou logar topics críticos em disk. Log local não sobrevive ao evento mais importante.\n2. Provavelmente estão mandando debug/tudo de muitos roteadores para o coletor. Reduza para error,warning,critical + os topics que você realmente opera (account, ospf, pppoe), e ligue debug só temporariamente e no equipamento específico durante a investigação. Volume alto esconde o sinal e ainda pressiona armazenamento/retenção legal.\n3. A correlação temporal entre fontes: o coletor junta os logs de todos os POPs numa linha do tempo única, então três quedas simultâneas “saltam aos olhos” — invisível quando você olha um roteador de cada vez. A hora certa (NTP) foi essencial porque a correlação depende de timestamps confiáveis: relógios dessincronizados espalhariam os eventos e esconderiam a simultaneidade.\n4. O fluxo de account/accounting (associações 100.64 → assinante, sessões PPPoE, alocações CGNAT) precisa ser retido pelo prazo legal (~1 ano, Capítulo 48), sob sigilo. O coletor é o lugar certo porque o roteador é volátil, pequeno e adulterável — a retenção, integridade e controle de acesso exigidos pela lei só existem num repositório central dedicado.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>63</span>  <span class='chapter-title'>Logs e syslog remoto</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/01-logs-syslog.html#resumo",
+    "href": "volumes/v13-monitoramento/01-logs-syslog.html#resumo",
+    "title": "63  Logs e syslog remoto",
+    "section": "63.7 Resumo",
+    "text": "63.7 Resumo\n\nModelo de log: topics (o que) + actions (para onde), casados por regras de logging;\nLeia local com /log print (where topics~, follow), mas o log local é volátil, pequeno e some no incidente;\nA decisão-chave é syslog remoto para um coletor central — onde se correlaciona o parque e se cumpre a retenção legal (Capítulo 48);\nNTP é pré-requisito (hora certa) e disciplina de volume é essencial (error/warning + o que se opera, debug só temporário);\nTrês camadas de log: operacional, legal (account) e segurança (logins/mudanças).\n\nLog conta o que já aconteceu, em texto. Falta enxergar tendências e estado — gráficos de tráfego, CPU, uso ao longo do tempo, e um mapa do parque. O Capítulo 64 cobre SNMP, graphing e The Dude.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>63</span>  <span class='chapter-title'>Logs e syslog remoto</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/01-logs-syslog.html#bibliografia-do-capítulo",
+    "href": "volumes/v13-monitoramento/01-logs-syslog.html#bibliografia-do-capítulo",
+    "title": "63  Logs e syslog remoto",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: seção Log e System/Logging do RouterOS (MikroTik, 2026);\nSyslog, correlação e observabilidade: (Tanenbaum; Feamster; Wetherall, 2021);\nLogging no v7 na prática: (Discher, 2016);\nCentralização de logs em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>63</span>  <span class='chapter-title'>Logs e syslog remoto</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/02-snmp-graphing-dude.html",
+    "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html",
+    "title": "64  SNMP, graphing e The Dude",
+    "section": "",
+    "text": "64.1 SNMP: a base de todo gráfico\nO log (Capítulo 63) conta eventos — o que aconteceu, em texto. Mas operar um provedor exige ver tendências e estado ao longo do tempo: o tráfego do enlace está crescendo? a CPU do concentrador vive em 90%? o sinal daquele rádio degradou na última semana? Isso são métricas numéricas amostradas periodicamente — e a fundação universal para coletá-las é o SNMP. Este capítulo liga o SNMP com segurança, mostra o graphing nativo e o The Dude, e ensina a pergunta que precede qualquer dashboard: o que medir.\nO SNMP (Simple Network Management Protocol) é o jeito padrão de um sistema externo perguntar a um equipamento seus contadores. As peças:\nO provedor não costuma coletar SNMP com o RouterOS; ele expõe SNMP para um NMS (Network Management System) externo — Zabbix, LibreNMS, PRTG, Grafana+SNMP — que faz o polling de todo o parque, guarda o histórico e desenha os gráficos.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#snmp-a-base-de-todo-gráfico",
+    "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#snmp-a-base-de-todo-gráfico",
+    "title": "64  SNMP, graphing e The Dude",
+    "section": "",
+    "text": "OID (Object Identifier): o “endereço” de uma métrica (ex.: bytes de entrada da interface 3). Uma árvore numérica padronizada;\nMIB: o “dicionário” que traduz OIDs em nomes legíveis;\nComunidade (v1/v2c) ou usuário (v3): a credencial de acesso;\nPolling: o NMS pergunta periodicamente (a cada 30 s, 5 min) e guarda a série temporal — de onde saem os gráficos.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nO NMS externo faz polling de SNMP em cada equipamento, guarda as séries temporais e gera gráficos e alertas. O RouterOS só expõe os contadores; a inteligência (histórico, correlação, alerta) mora no NMS.\n\n\nFigura 64.1",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#habilitando-snmp-com-segurança",
+    "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#habilitando-snmp-com-segurança",
+    "title": "64  SNMP, graphing e The Dude",
+    "section": "64.2 Habilitando SNMP com segurança",
+    "text": "64.2 Habilitando SNMP com segurança\nO erro clássico é deixar a comunidade public (v2c) exposta — qualquer um lê o estado do seu equipamento. Faça SNMPv3 (autenticado e cifrado) ou, no mínimo, uma comunidade restrita por allowed-address:\n# SNMPv3: usuário com autenticação e criptografia\n/snmp community\nadd name=nms-ro addresses=10.99.0.20 read-access=yes write-access=no \\\n    security=private authentication-protocol=SHA1 \\\n    encryption-protocol=AES authentication-password=\"Auth-Forte\" \\\n    encryption-password=\"Enc-Forte\"\n/snmp set enabled=yes contact=\"noc@provedor.net\" location=\"POP-1\" \\\n    trap-community=nms-ro\n\naddresses/allowed-address: só o NMS pode consultar;\nwrite-access=no: SNMP de monitoramento é somente leitura — nunca dê escrita;\nSNMPv3 com SHA/AES quando possível; public/v2c só em rede de gerência isolada e restrita.\n\n\n\n\n\n\n\nAviso\n\n\n\nSNMP aberto é uma porta de reconhecimento para atacantes: revela topologia, versões, interfaces, tráfego — um mapa da sua rede. Nunca exponha SNMP na internet, nunca deixe public sem restrição. Comunidade forte + allowed-address do NMS + rede de gerência isolada.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#graphing-nativo-vs.-monitoramento-externo",
+    "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#graphing-nativo-vs.-monitoramento-externo",
+    "title": "64  SNMP, graphing e The Dude",
+    "section": "64.3 Graphing nativo vs. monitoramento externo",
+    "text": "64.3 Graphing nativo vs. monitoramento externo\nO RouterOS tem um graphing embutido (/tool graphing) que desenha gráficos simples de tráfego/recursos, acessíveis pelo navegador. Ele serve para um olhar rápido num equipamento isolado, mas não escala: sem histórico longo, sem correlação entre equipamentos, sem alerta central.\n\nGraphing nativo: bom para lab, um roteador, um diagnóstico pontual;\nNMS externo (SNMP): obrigatório para parque — histórico, dashboards, alertas, capacidade, tendências. É onde você responde “o enlace vai saturar em quantas semanas?”.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#the-dude-mapa-e-disponibilidade",
+    "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#the-dude-mapa-e-disponibilidade",
+    "title": "64  SNMP, graphing e The Dude",
+    "section": "64.4 The Dude: mapa e disponibilidade",
+    "text": "64.4 The Dude: mapa e disponibilidade\nO The Dude é a ferramenta de monitoramento da própria MikroTik: um servidor (roda como pacote no RouterOS ou em CHR dedicado) que descobre a rede, desenha um mapa com o estado (verde/vermelho), faz polling (SNMP, ping, serviços) e alerta quando algo cai. Para provedores menores, é um NMS completo e gratuito; para maiores, costuma conviver com Zabbix/LibreNMS.\nO Dude brilha em: mapa visual do parque (útil no NOC), checagem de disponibilidade (up/down com notificação) e integração natural com o RouterOS (RoMON, ?sec-hardening-operacional, para alcançar equipamentos sem IP de gerência direto).",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#o-que-medir",
+    "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#o-que-medir",
+    "title": "64  SNMP, graphing e The Dude",
+    "section": "64.5 O que medir",
+    "text": "64.5 O que medir\nUm dashboard só é útil se mede o que prevê problema. O essencial num provedor:\n\nTráfego por interface (bps in/out): saturação, tendência de crescimento, capacidade;\nCPU e memória: concentrador PPPoE/BNG sob carga, roteador de borda no limite;\nTemperatura e tensão (onde houver): POP solar, equipamento em campo;\nSinal/CCQ/SNR de rádio (Capítulo 31): degradação de enlace antes da queda;\nSessões PPPoE ativas, uso de CGNAT (portas), estado de BGP/ OSPF: saúde dos serviços.\n\nA regra: meça o que você agiria a respeito. Métrica que ninguém olha nem aciona alerta é ruído no dashboard.\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nLog mostra eventos; SNMP mostra tendências e estado no tempo — e é a base de todo sistema de gráficos. O RouterOS expõe SNMP; a inteligência (histórico, correlação, alerta) mora num NMS externo (Zabbix/LibreNMS) ou no The Dude. Duas disciplinas: segurança (SNMPv3 ou comunidade restrita + allowed-address, somente leitura, nunca na internet — SNMP aberto é um mapa da sua rede para o atacante) e foco (meça o que você agiria a respeito: tráfego, CPU, sinal, saúde de serviço). Dashboard não é enfeite — é o que te avisa antes do cliente reclamar.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#laboratório",
+    "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#laboratório",
+    "title": "64  SNMP, graphing e The Dude",
+    "section": "64.6 🧪 Laboratório",
+    "text": "64.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nUm CHR (Capítulo 5) como equipamento monitorado (lab-rt) e uma máquina de monitoramento — um CHR com The Dude (lab-dude) ou um host com LibreNMS/Zabbix/snmpwalk na rede de gerência 10.99.0.0/24. O foco é expor SNMP com segurança e coletá-lo de fora.\n\n\n\n64.6.1 Comandos passo a passo\nPasso 1 — habilite SNMP restrito. No lab-rt:\n/snmp community add name=nms-ro addresses=10.99.0.20 read-access=yes write-access=no\n/snmp set enabled=yes location=\"LAB\" contact=\"noc@lab\"\nPasso 2 — colete de fora. Da máquina de monitoramento (Linux):\nsnmpwalk -v2c -c nms-ro 10.99.0.1 | head\n# tráfego da interface (ifTable) — a base dos gráficos:\nsnmpwalk -v2c -c nms-ro 10.99.0.1 IF-MIB::ifInOctets\nVocê vê os contadores que o NMS transformaria em gráfico.\nPasso 3 — prove a restrição. Tente consultar de um IP fora do addresses e confirme que é recusado — a segurança do SNMP.\nPasso 4 — graphing nativo. Ligue o graphing de uma interface e veja o gráfico local no navegador:\n/tool graphing interface add interface=ether1\nPasso 5 — The Dude (se disponível). No lab-dude, adicione o lab-rt, deixe-o descobrir/monitorar, e veja o mapa com o estado. Derrube uma interface e observe o alerta/estado mudar.\nPasso 6 — escolha as métricas. Liste, para o lab-rt, as 5 métricas que você colocaria num dashboard de produção e o limiar de alerta de cada uma (ex.: CPU &gt; 85%, tráfego &gt; 80% da capacidade).\n\n\n64.6.2 Verificação\n\nsnmpwalk do NMS retorna contadores (ifInOctets etc.);\nConsulta de IP não autorizado é recusada; acesso é somente leitura;\nGraphing nativo desenha o tráfego de uma interface;\n(The Dude) o mapa reflete o estado e alerta na queda.\n\n\n\n64.6.3 Desafios\n\nUm atacante fez reconhecimento da sua rede lendo SNMP public exposto e mapeou topologia, versões e tráfego. Aponte os três erros de configuração e a correção de cada um.\nSeu graphing nativo mostra o tráfego de hoje, mas o gestor pergunta “quando este enlace vai saturar?” e você não sabe responder. Qual é a limitação do graphing nativo e o que resolve?\nVocê quer ser avisado antes de o cliente reclamar de um rádio degradando. Qual métrica monitorar, com que tendência olhar, e por que o SNMP/polling é adequado (e onde ele tem limite)?\nDiferencie log (Capítulo 63) de SNMP quanto ao que cada um responde. Dê um problema real que só o log explica e outro que só a métrica SNMP revela.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. (a) Comunidade public → troque por comunidade forte/SNMPv3. (b) Sem allowed-address → restrinja addresses ao IP do NMS. (c) SNMP alcançável da internet/rede não isolada → exponha SNMP só na rede de gerência isolada, nunca em interface pública. SNMP aberto entrega um mapa completo (topologia, versões, tráfego) ao atacante.\n2. O graphing nativo não guarda histórico longo nem faz projeção — mostra o presente/recente de um equipamento. Para responder “quando satura?” você precisa de um NMS externo (SNMP) que retém séries temporais longas e permite ver a tendência de crescimento e projetar a saturação. Histórico + correlação = capacidade de planejamento.\n3. Monitore sinal/CCQ/SNR do rádio (Capítulo 31) via SNMP, olhando a tendência de degradação ao longo de dias/semanas — uma queda gradual de SNR avisa antes da falha total. O polling é adequado porque essas métricas mudam devagar e a amostragem periódica captura a tendência. Limite: eventos rápidos (micro-quedas entre polls) podem escapar do intervalo de polling — para esses, log/trap complementam.\n4. Log responde “o que aconteceu e quando” (um evento discreto): uma adjacência OSPF que caiu às 21h58 — só o log conta. SNMP responde “qual o valor/estado ao longo do tempo”: o tráfego do enlace subiu de 60% para 95% em três semanas — só a métrica revela. Log = eventos; SNMP = tendências. Operação madura usa os dois.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#resumo",
+    "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#resumo",
+    "title": "64  SNMP, graphing e The Dude",
+    "section": "64.7 Resumo",
+    "text": "64.7 Resumo\n\nSNMP (OIDs/MIBs, comunidade/v3, polling) é a base de todo gráfico de rede; o RouterOS expõe, o NMS externo (Zabbix/LibreNMS) coleta, guarda e alerta;\nSegurança: SNMPv3 ou comunidade restrita + allowed-address, somente leitura, nunca na internet — SNMP aberto é um mapa para o atacante;\nGraphing nativo serve para olhar um equipamento; NMS externo é obrigatório para parque (histórico, tendência, alerta);\nThe Dude: mapa do parque, disponibilidade e alerta — NMS completo para provedores menores;\nMeça o que você agiria a respeito: tráfego, CPU/memória, temperatura, sinal de rádio (Capítulo 31), saúde de serviços.\n\nLog e métricas dão a visão de conjunto. Falta a lupa — enxergar o tráfego e a CPU em tempo real, pacote a pacote, no momento do problema. O Capítulo 65 cobre Torch, packet sniffer e profile.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#bibliografia-do-capítulo",
+    "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#bibliografia-do-capítulo",
+    "title": "64  SNMP, graphing e The Dude",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: SNMP, Graphing e The Dude do RouterOS (MikroTik, 2026);\nSNMP, MIBs e monitoramento de redes: (Tanenbaum; Feamster; Wetherall, 2021);\nMonitoramento no v7 na prática: (Discher, 2016);\nNMS e observabilidade em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/03-torch-sniffer-profile.html",
+    "href": "volumes/v13-monitoramento/03-torch-sniffer-profile.html",
+    "title": "65  Torch, packet sniffer e profile",
+    "section": "",
+    "text": "65.1 Torch: quem está usando a banda agora\nLog (Capítulo 63) e SNMP (Capítulo 64) dão a visão histórica e de conjunto. Mas quando o problema é agora — “o link está lotado neste instante”, “este cliente não conecta”, “a CPU disparou” — você precisa de lupas em tempo real. O RouterOS traz três: Torch (quem usa a banda), packet sniffer (o que há nos pacotes) e profile (o que come a CPU). Este capítulo ensina a apontar cada lupa para a pergunta certa — a habilidade que separa o diagnóstico rápido do “reinicia e torce”.\nO Torch é o analisador de tráfego em tempo real: escolha uma interface e ele mostra, ao vivo, os fluxos que passam — origem, destino, protocolo, porta e taxa (bps). É a resposta imediata para “o enlace está lotado, quem está puxando?”.\nNo WinBox, o Torch é interativo (ordena por taxa, filtra por protocolo/porta em tempo real). Em segundos você vê que “80% do tráfego é um IP fazendo download na porta 443” ou “há um flood de UDP para um destino” — informação acionável na hora.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>65</span>  <span class='chapter-title'>Torch, packet sniffer e profile</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#torch-quem-está-usando-a-banda-agora",
+    "href": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#torch-quem-está-usando-a-banda-agora",
+    "title": "65  Torch, packet sniffer e profile",
+    "section": "",
+    "text": "# Torch na interface de trânsito, agrupando por IP de origem\n/tool torch interface=ether1-wan src-address=0.0.0.0/0 \\\n    port=any protocol=any\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\nCada lupa responde a uma pergunta. Diagnóstico eficiente é apontar a ferramenta certa: Torch para tráfego, sniffer para conteúdo de pacote, profile para CPU. Errar a lupa é perder tempo.\n\n\nFigura 65.1",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>65</span>  <span class='chapter-title'>Torch, packet sniffer e profile</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#packet-sniffer-o-que-há-dentro-dos-pacotes",
+    "href": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#packet-sniffer-o-que-há-dentro-dos-pacotes",
+    "title": "65  Torch, packet sniffer e profile",
+    "section": "65.2 Packet sniffer: o que há dentro dos pacotes",
+    "text": "65.2 Packet sniffer: o que há dentro dos pacotes\nQuando o problema é “por que este pacote não passa?” ou “o que exatamente está sendo trocado?”, o Torch (que vê fluxos) não basta — você precisa ver os pacotes. O packet sniffer captura o tráfego e permite analisá-lo:\n# capturar tráfego de/para um IP específico, para um arquivo\n/tool sniffer set filter-ip-address=100.64.0.10/32 file-name=diag.pcap\n/tool sniffer start\n# ... reproduza o problema ...\n/tool sniffer stop\nO arquivo .pcap gerado pode ser exportado e aberto no Wireshark — a análise profunda (handshakes TCP, retransmissões, DHCP/PPPoE negociando, PMTUD) mora lá. Para diagnósticos rápidos, o /tool sniffer quick mostra pacotes ao vivo no terminal.\n\n\n\n\n\n\nAviso\n\n\n\nO sniffer captura conteúdo real do tráfego dos clientes — dados sensíveis. Use com filtro estreito (o IP/porta do problema, não “tudo”), pelo tempo mínimo, e trate o .pcap como material confidencial (apague depois, não versione). Capturar tráfego alheio sem necessidade e sem cuidado é problema de privacidade e legal, não só técnico. Além disso, sniffar tudo num roteador movimentado pesa na CPU.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>65</span>  <span class='chapter-title'>Torch, packet sniffer e profile</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#profile-o-que-está-consumindo-a-cpu",
+    "href": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#profile-o-que-está-consumindo-a-cpu",
+    "title": "65  Torch, packet sniffer e profile",
+    "section": "65.3 Profile: o que está consumindo a CPU",
+    "text": "65.3 Profile: o que está consumindo a CPU\n“O roteador está lento, a CPU em 100% — por quê?” O profile responde: ele mostra, em tempo real, qual processo/função está consumindo o processador:\n/tool profile\nA saída lista categorias — firewall, routing, encrypting (túneis!), queue, networking, management, unclassified — com o percentual de CPU de cada. Isso transforma “a CPU está alta” em “o firewall está comendo 70% da CPU” ou “o encrypting disparou” (um túnel IPsec sob carga). Sem o profile, você chuta; com ele, você sabe onde olhar.\nCasos típicos que o profile revela:\n\nfirewall alto: regras mal ordenadas, conntrack estourado, um ataque; revise o Volume 3;\nencrypting alto: IPsec/WireGuard (Volume 10) sob mais carga que o hardware aguenta;\nrouting/ospf alto: flapping/recálculo (o desafio do Capítulo 43);\nqueue alto: filas complexas demais (Volume 7).",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>65</span>  <span class='chapter-title'>Torch, packet sniffer e profile</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#escolhendo-a-lupa-certa",
+    "href": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#escolhendo-a-lupa-certa",
+    "title": "65  Torch, packet sniffer e profile",
+    "section": "65.4 Escolhendo a lupa certa",
+    "text": "65.4 Escolhendo a lupa certa\nA eficiência do diagnóstico está em mapear pergunta → ferramenta:\n\n\n\n\n\n\n\nPergunta\nFerramenta\n\n\n\n\nQuem está usando a banda / o link lotou?\nTorch\n\n\nPor que este pacote/conexão não passa?\npacket sniffer (→ Wireshark)\n\n\nPor que a CPU está alta / o roteador lento?\nprofile\n\n\nO que aconteceu e quando?\nlog (Capítulo 63)\n\n\nQual a tendência ao longo do tempo?\nSNMP/gráfico (Capítulo 64)\n\n\n\nEssas cinco cobrem quase todo diagnóstico de RouterOS. O erro comum é usar a lupa errada — abrir o sniffer para descobrir “quem usa a banda” (o Torch faz melhor e mais leve), ou olhar gráfico quando o problema é agora (Torch/profile).\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nDiagnóstico em tempo real é apontar a lupa certa para a pergunta certa: Torch para “quem usa a banda”, packet sniffer para “o que há no pacote” (exporte para o Wireshark), profile para “o que come a CPU”. Somadas ao log (o que aconteceu) e ao SNMP (a tendência), elas resolvem quase tudo. Duas responsabilidades: o sniffer captura dados sensíveis — filtro estreito, tempo mínimo, .pcap confidencial; e essas ferramentas custam CPU — não deixe rodando à toa num equipamento sob carga. Ferramenta certa, uso responsável, diagnóstico em minutos.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>65</span>  <span class='chapter-title'>Torch, packet sniffer e profile</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#laboratório",
+    "href": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#laboratório",
+    "title": "65  Torch, packet sniffer e profile",
+    "section": "65.5 🧪 Laboratório",
+    "text": "65.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nUm CHR (Capítulo 5) roteando tráfego entre dois hosts (lab-cli e lab-srv), com um gerador de tráfego (download, bandwidth-test, ou ping em volume) para você ter o que observar. Opcional: Wireshark na sua máquina para abrir o .pcap exportado.\n\n\n\n65.5.1 Comandos passo a passo\nPasso 1 — Torch em ação. Gere tráfego do lab-cli e observe no CHR:\n/tool torch interface=ether2 src-address=0.0.0.0/0 protocol=any port=any\nIdentifique o IP e a porta que dominam a taxa — “quem usa a banda”.\nPasso 2 — filtre o Torch. Repita filtrando por protocolo/porta (ex.: só tcp porta 443) e veja o Torch isolar aquele fluxo.\nPasso 3 — capture com o sniffer. Reproduza um “problema” (ex.: uma conexão específica) capturando só o IP envolvido:\n/tool sniffer set filter-ip-address=&lt;ip-cli&gt;/32 file-name=diag.pcap\n/tool sniffer start\n# gere o tráfego\n/tool sniffer stop\n/file print where name~\"diag\"\nExporte o .pcap e abra no Wireshark — veja o handshake TCP, os pacotes reais.\nPasso 4 — profile sob carga. Gere carga que estresse a CPU (muitas conexões, um túnel cifrado transferindo) e rode:\n/tool profile\nIdentifique qual categoria domina a CPU. Ligue/desligue um recurso (ex.: um firewall pesado) e veja o profile mudar.\nPasso 5 — a lupa errada. Tente descobrir “quem usa a banda” pelo sniffer e sinta como é mais trabalhoso e pesado que o Torch — a lição de escolher a ferramenta certa.\nPasso 6 — higiene. Apague o .pcap após a análise e confirme que o sniffer está parado (não deixe capturando).\n\n\n65.5.2 Verificação\n\nO Torch identifica o(s) fluxo(s) que dominam a interface;\nO sniffer gera um .pcap analisável no Wireshark;\nO profile aponta a categoria que consome a CPU;\nVocê percebeu, na prática, o custo de usar a lupa errada;\n.pcap apagado e sniffer parado (higiene).\n\n\n\n65.5.3 Desafios\n\nUm enlace de trânsito está saturado às 20h todo dia. Que ferramenta você usa no momento para achar o culpado, e que ferramenta usa para provar que é recorrente (todo dia às 20h)? Por que as duas?\nUm cliente PPPoE conecta mas “a internet não funciona”. Ping ao gateway passa, mas sites não abrem. Qual lupa revela se é MTU/PMTUD, e o que você procuraria no .pcap?\nA CPU do concentrador vive em 95% e ninguém sabe por quê. Descreva como o profile transforma esse mistério em ação, e cite duas categorias suspeitas e o que cada uma indicaria.\nUm técnico deixou o sniffer capturando todo o tráfego do concentrador por horas “para garantir”. Aponte os dois problemas (um técnico, um de privacidade/legal) e o procedimento correto.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. No momento: Torch na interface de trânsito às 20h mostra quem (IP/porta/protocolo) está puxando a banda — o culpado ao vivo. Recorrência: SNMP/gráfico (Capítulo 64) do tráfego da interface mostra o padrão diário (pico às 20h todo dia). Torch responde “quem agora”; o gráfico responde “quando e com que frequência”. As duas juntas: causa imediata + confirmação do padrão.\n2. O packet sniffer (→ Wireshark). Sinal de MTU/PMTUD: o handshake TCP completa, pacotes pequenos passam, mas os grandes (ou o ICMP Packet Too Big/fragmentação) somem — no .pcap você vê retransmissões dos segmentos grandes e ausência do ajuste de MSS. É o mesmo fantasma do PPPoE/túnel; a correção é o MSS clamp (Capítulo 52).\n3. O profile (/tool profile) lista o percentual de CPU por categoria, transformando “CPU alta” em “o quê” está consumindo. Suspeitas: firewall alto → regras/conntrack mal dimensionados ou ataque (revisar Volume 3); encrypting alto → túneis IPsec/WireGuard (Volume 10) além da capacidade do hardware. Com a categoria em mãos, você sabe onde agir em vez de chutar.\n4. (a) Técnico: sniffar todo o tráfego de um concentrador pesa na CPU e pode degradar justamente o serviço, além de gerar .pcap gigante. (b) Privacidade/legal: captura conteúdo real dos clientes (dados sensíveis) sem necessidade nem filtro — risco legal e de privacidade. Correto: filtro estreito (o IP/porta do problema), tempo mínimo, .pcap tratado como confidencial e apagado após a análise.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>65</span>  <span class='chapter-title'>Torch, packet sniffer e profile</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#resumo",
+    "href": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#resumo",
+    "title": "65  Torch, packet sniffer e profile",
+    "section": "65.6 Resumo",
+    "text": "65.6 Resumo\n\nTorch: quem usa a banda agora (fluxos por IP/porta/protocolo, em tempo real) — leve e direto;\nPacket sniffer: o que há dentro dos pacotes; capture com filtro estreito e analise no Wireshark (.pcap);\nProfile: qual processo consome a CPU (firewall, encrypting, routing, queue…) — transforma “CPU alta” em ação;\nEscolha a lupa pela pergunta: Torch (banda), sniffer (pacote), profile (CPU), log (evento), SNMP (tendência);\nResponsabilidade: sniffer captura dados sensíveis (filtro/tempo mínimos, confidencial) e as lupas custam CPU — não deixe rodando à toa.\n\nVocê já tem os cinco sentidos: log, métricas e as três lupas. Falta juntá-los num método — como ir da reclamação do cliente à causa raiz sem se perder. O Capítulo 66 fecha o volume com a metodologia.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>65</span>  <span class='chapter-title'>Torch, packet sniffer e profile</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#bibliografia-do-capítulo",
+    "href": "volumes/v13-monitoramento/03-torch-sniffer-profile.html#bibliografia-do-capítulo",
+    "title": "65  Torch, packet sniffer e profile",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: Torch, Packet Sniffer, Profiler do RouterOS (MikroTik, 2026);\nAnálise de tráfego e diagnóstico: (Tanenbaum; Feamster; Wetherall, 2021);\nFerramentas de diagnóstico no v7: (Discher, 2016);\nDiagnóstico em campo em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>65</span>  <span class='chapter-title'>Torch, packet sniffer e profile</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html",
+    "href": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html",
+    "title": "66  Metodologia de troubleshooting",
+    "section": "",
+    "text": "66.1 O método: da reclamação à causa raiz\nO Volume 13 deu os sentidos: log (Capítulo 63), métricas (Capítulo 64) e as lupas (Capítulo 65). Falta o mais importante: o método. Sem ele, mesmo com as melhores ferramentas, o operador tenta coisas ao acaso, reinicia na esperança, culpa a operadora — e o cliente segue sem internet. Com método, você vai da reclamação vaga (“tá lento”) à causa raiz (“o enlace do POP-3 está com MTU errado após a troca de rádio”) de forma sistemática e reproduzível. Este capítulo fecha o volume — e amarra o manual inteiro — com a metodologia que transforma ferramentas em diagnóstico.\nDiagnóstico bom segue passos, não palpites:",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>66</span>  <span class='chapter-title'>Metodologia de troubleshooting</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#o-método-da-reclamação-à-causa-raiz",
+    "href": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#o-método-da-reclamação-à-causa-raiz",
+    "title": "66  Metodologia de troubleshooting",
+    "section": "",
+    "text": "Defina o problema — traduza a reclamação vaga em algo testável. “Tá lento” vira “downloads de HTTPS travam para o cliente X, mas ping e páginas leves funcionam”. Metade dos diagnósticos se resolve aqui, só perguntando direito;\nReproduza e delimite — quando acontece? para quem? sempre ou às vezes? um cliente, um POP, todos? O escopo aponta a causa: um cliente ≠ um POP ≠ a rede toda;\nIsole por camadas — suba a pilha (adiante): o problema é físico, de enlace, de rede, de transporte ou de aplicação?\nFormule hipóteses e teste — divida para conquistar: cada teste deve eliminar metade das possibilidades;\nCorrija e confirme — aplique a correção e prove que resolveu (não só “parece que voltou”); documente para a próxima vez.\n\n\n\n\n\n\n\nDicaA pergunta que economiza horas\n\n\n\nAntes de tocar em qualquer coisa: “o que mudou?”. A esmagadora maioria das falhas surge depois de uma mudança — um upgrade, uma regra nova, uma troca de equipamento, uma alteração na operadora. /log, histórico de config e o “funcionava ontem” apontam o culpado mais rápido que qualquer ferramenta. Rede que “quebrou sozinha” quase sempre teve uma mudança que ninguém associou.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>66</span>  <span class='chapter-title'>Metodologia de troubleshooting</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#isolar-por-camadas-dividir-para-conquistar",
+    "href": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#isolar-por-camadas-dividir-para-conquistar",
+    "title": "66  Metodologia de troubleshooting",
+    "section": "66.2 Isolar por camadas: dividir para conquistar",
+    "text": "66.2 Isolar por camadas: dividir para conquistar\nO modelo em camadas é o mapa para localizar o problema. Suba do concreto ao abstrato e, em cada uma, faça a pergunta e o teste:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nSuba a pilha isolando: se a física está de pé (link up, sinal ok), suba ao enlace; se o IP e a rota estão certos (rede), suba ao transporte — e assim por diante. Cada camada confirmada elimina um andar inteiro de suspeitas.\n\n\nFigura 66.1\n\n\n\n\nFísica: a interface está running? o rádio tem sinal (Capítulo 31)? cabo/porta ok? — /interface, sinal;\nEnlace: VLAN certa, ARP resolvendo, MAC aprendido? — /ip arp, /interface bridge host;\nRede: o IP e a rota estão corretos? o ping/traceroute chega? — ping, traceroute, /ip route (o Volume 8 inteiro);\nTransporte: a porta está liberada (firewall)? NAT correto? conntrack? MTU/MSS? — sniffer, /ip firewall connection;\nAplicação: DNS resolve? o serviço remoto está no ar? — /resolve, teste ao serviço.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>66</span>  <span class='chapter-title'>Metodologia de troubleshooting</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#os-padrões-recorrentes-deste-manual",
+    "href": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#os-padrões-recorrentes-deste-manual",
+    "title": "66  Metodologia de troubleshooting",
+    "section": "66.3 Os padrões recorrentes deste manual",
+    "text": "66.3 Os padrões recorrentes deste manual\nDepois de milhares de diagnósticos, você percebe que os mesmos culpados reaparecem. Ter essa lista na cabeça te leva direto ao provável:\n\nMTU/MSS: “ping passa, tráfego grande trava” — PPPoE, túnel, OSPF, MPLS, IPv6/PMTUD. O fantasma nº 1 do manual (Capítulo 52);\nNext-hop / rota: rota aprendida mas inativa (iBGP sem IGP, Capítulo 44); default recursiva (Capítulo 56);\nAssimetria: ida por um caminho, volta por outro — custo ajustado em um só lado (Capítulo 42), confunde conntrack/firewall;\nConntrack/firewall: regra na ordem errada (first-match, Capítulo 16), conntrack estourado, invalid dropado cedo demais;\nHora/NTP: log inútil, certificado falhando, correlação impossível (Capítulo 63);\n“O que mudou”: upgrade, regra nova, troca de hardware.\n\nQuando o sintoma casa um padrão, teste o padrão primeiro — economiza horas.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>66</span>  <span class='chapter-title'>Metodologia de troubleshooting</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#confirmar-a-correção-e-não-se-enganar",
+    "href": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#confirmar-a-correção-e-não-se-enganar",
+    "title": "66  Metodologia de troubleshooting",
+    "section": "66.4 Confirmar a correção (e não se enganar)",
+    "text": "66.4 Confirmar a correção (e não se enganar)\nUm erro comum é declarar vitória cedo demais. “Reiniciei e voltou” não é diagnóstico — é adiar o problema (que volta). Depois de corrigir:\n\nProve que resolveu a causa, não o sintoma: reproduza o teste original e confirme;\nDocumente: o que era, o que causou, o que resolveu — vira base de conhecimento e acelera o próximo caso;\nVerifique efeitos colaterais: a correção não quebrou outra coisa?\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nFerramentas sem método são tentativa e erro. O método é: definir o problema (traduzir a reclamação), delimitar o escopo (um cliente? um POP? todos?), isolar por camadas (física → aplicação, cada uma eliminando um andar), testar hipóteses que dividem o espaço pela metade, e confirmar a causa (não o sintoma). Comece sempre por “o que mudou?” e tenha na cabeça os padrões recorrentes (MTU, next-hop, assimetria, conntrack, NTP) para ir direto ao provável. Diagnóstico é raciocínio disciplinado com as lupas certas — não sorte.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>66</span>  <span class='chapter-title'>Metodologia de troubleshooting</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#laboratório",
+    "href": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#laboratório",
+    "title": "66  Metodologia de troubleshooting",
+    "section": "66.5 🧪 Laboratório",
+    "text": "66.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nReaproveite qualquer topologia dos volumes anteriores (idealmente a de interligação de POPs, Capítulo 56, ou o BNG PPPoE) — o importante é ter uma rede funcional na qual um colega (ou você) injeta uma falha para outro diagnosticar com método. O laboratório é sobre processo, não sobre um comando novo.\n\n\n\n66.5.1 Comandos passo a passo\nPasso 1 — injete uma falha “às cegas”. Peça a alguém (ou sorteie) para quebrar uma coisa sem te dizer: MTU errado num túnel, custo OSPF num lado, regra de firewall dropando, DNS apontado errado, rota removida.\nPasso 2 — defina e delimite. Antes de qualquer comando, escreva: o que exatamente falha? para quem? sempre? Reproduza o sintoma (ping/traceroute/serviço) e anote o escopo.\nPasso 3 — pergunte “o que mudou”. Olhe /log, /system history (se disponível) e a config recente — busque a alteração.\nPasso 4 — suba as camadas. Física (/interface print) → enlace (/ip arp print) → rede (ping, traceroute, /ip route print) → transporte (/ip firewall connection, sniffer, teste de MTU com ping ... do-not-fragment) → aplicação (/resolve). Pare na camada onde o teste falha.\nPasso 5 — teste hipóteses. Em cada suspeita, faça um teste que elimina metade. Ex.: se ping pequeno passa e grande não → hipótese MTU → teste do-not-fragment em vários tamanhos → confirma/refuta.\nPasso 6 — corrija e confirme. Aplique a correção, reproduza o teste original e prove que voltou. Documente: falha, causa, correção. Compare com o “gabarito” de quem injetou.\n\n\n66.5.2 Verificação\n\nVocê definiu o problema em termos testáveis antes de agir;\nDelimitou o escopo (um cliente/POP/todos) e checou “o que mudou”;\nIsolou a camada da falha subindo a pilha;\nConfirmou a causa (não só o sintoma) e documentou.\n\n\n\n66.5.3 Desafios\n\nCliente reclama “internet lenta”. Escreva as três primeiras perguntas que transformam isso em problema testável, e o que cada resposta possível te diz sobre o escopo.\nPing ao gateway passa, traceroute para a internet morre no seu próprio roteador de borda, e outros clientes estão ok. Em que camada está o problema, qual a hipótese mais provável, e o teste que a confirma?\nUm enlace foi trocado de rádio ontem; hoje “sites grandes não abrem” para os clientes atrás dele, mas ping e navegação leve funcionam. Sem olhar nada, qual é sua primeira hipótese (e por quê), e como a confirma em um comando?\nVocê “resolveu” um problema reiniciando o concentrador e ele voltou. Duas horas depois, voltou a falhar. Explique por que reiniciar não é diagnóstico e descreva o que você deveria ter feito para achar a causa.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. (a) “Lento como? para fazer o quê?” — separa “abrir sites” de “download” de “jogo/latência” (aplicações diferentes, causas diferentes). (b) “Só você ou outros aparelhos/vizinhos também?” — delimita o escopo: um dispositivo, a casa, o POP, a rede. (c) “Desde quando? mudou algo?” — data e mudança apontam a causa. As respostas movem o diagnóstico de “lento” (intangível) para um problema com escopo e provável causa.\n2. Rede (camada 3), no seu roteador de borda. Como outros clientes estão ok e o traceroute morre no seu equipamento, a hipótese mais provável é uma rota/NAT/firewall afetando aquele cliente/origem — ou uma rota default/next-hop específica. Confirme com /ip route print (a rota para a internet existe e está ativa?), /ip firewall connection e um teste de NAT; se o traceroute para no borda, o pacote não está saindo — rota ou firewall.\n3. MTU/MSS. O padrão “trocou o rádio ontem” + “ping e leve funcionam, grande trava” grita MTU: o novo enlace tem MTU menor e o tráfego grande é descartado (PMTUD/MSS). Confirma em um comando: /ping &lt;destino&gt; size=1500 do-not-fragment — se falha e um tamanho menor passa, é MTU. Correção: MSS clamp / ajustar MTU (Capítulo 52). “O que mudou” + padrão recorrente = diagnóstico em segundos.\n4. Reiniciar mascara o sintoma limpando o estado (conntrack, sessões, memória) sem tocar na causa — que continua lá e volta a se manifestar. Você deveria ter: definido o problema, olhado o que mudou (/log), isolado a camada (a falha reaparece → capture o estado antes do próximo reboot: profile se era CPU, sniffer/torch se era tráfego, log se era evento), formulado hipótese e confirmado a causa. Reboot é último recurso operacional, não método de diagnóstico.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>66</span>  <span class='chapter-title'>Metodologia de troubleshooting</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#resumo",
+    "href": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#resumo",
+    "title": "66  Metodologia de troubleshooting",
+    "section": "66.6 Resumo",
+    "text": "66.6 Resumo\n\nMétodo &gt; palpite: definir (traduzir a reclamação), delimitar (escopo: cliente/POP/todos), isolar por camadas, testar hipóteses (dividir pela metade), confirmar a causa;\nComece sempre por “o que mudou?” — a maioria das falhas segue uma mudança;\nCamadas (física → enlace → rede → transporte → aplicação) localizam o problema; cada camada confirmada elimina um andar de suspeitas;\nTenha na cabeça os padrões recorrentes do manual: MTU/MSS, next-hop/rota, assimetria, conntrack/firewall, NTP — teste o padrão primeiro;\nConfirme a causa, não o sintoma; documente; reiniciar não é diagnóstico.\n\nFecha-se o Volume 13: a rede agora é enxergada (log, métricas) e diagnosticada com método (lupas + metodologia). Da visibilidade, o Volume 14 ataca a resiliência de verdade — alta disponibilidade: sobreviver a falhas de link e de equipamento sem o cliente perceber.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>66</span>  <span class='chapter-title'>Metodologia de troubleshooting</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#bibliografia-do-capítulo",
+    "href": "volumes/v13-monitoramento/04-metodologia-troubleshooting.html#bibliografia-do-capítulo",
+    "title": "66  Metodologia de troubleshooting",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: ferramentas de diagnóstico do RouterOS (MikroTik, 2026);\nMetodologia de troubleshooting e modelo em camadas: (Tanenbaum; Feamster; Wetherall, 2021);\nDiagnóstico no v7 na prática: (Discher, 2016);\nOperação e suporte em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 13 — Monitoramento e diagnóstico",
+      "<span class='chapter-number'>66</span>  <span class='chapter-title'>Metodologia de troubleshooting</span>"
     ]
   },
   {

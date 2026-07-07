@@ -647,12 +647,47 @@ div.csl-indent {
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-13" role="navigation" aria-expanded="false">
- <span class="menu-text">Apêndices</span></a>
+ <span class="menu-text">Volume 13 — Monitoramento e diagnóstico</span></a>
           <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-13" role="navigation" aria-expanded="false" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
       <ul id="quarto-sidebar-section-13" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v13-monitoramento/01-logs-syslog.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">63</span>&nbsp; <span class="chapter-title">Logs e syslog remoto</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v13-monitoramento/02-snmp-graphing-dude.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">64</span>&nbsp; <span class="chapter-title">SNMP, graphing e The Dude</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v13-monitoramento/03-torch-sniffer-profile.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">65</span>&nbsp; <span class="chapter-title">Torch, packet sniffer e profile</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../volumes/v13-monitoramento/04-metodologia-troubleshooting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">66</span>&nbsp; <span class="chapter-title">Metodologia de troubleshooting</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-14" role="navigation" aria-expanded="false">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-14" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-14" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../referencias.html" class="sidebar-item-text sidebar-link">
@@ -1096,7 +1131,7 @@ Figura&nbsp;48.1
 add name=coletor target=remote remote=10.99.0.20 remote-port=514
 /system logging
 add topics=info,account action=coletor</code></pre>
-<p>Se optar por <strong>logar conexões</strong> (CGNAT dinâmico), habilite o log da regra de NAT com parcimônia — e saiba que o destino <strong>tem</strong> de ser um coletor externo dimensionado (o Volume 13, <span class="quarto-unresolved-ref">?sec-logs</span>, trata de syslog centralizado):</p>
+<p>Se optar por <strong>logar conexões</strong> (CGNAT dinâmico), habilite o log da regra de NAT com parcimônia — e saiba que o destino <strong>tem</strong> de ser um coletor externo dimensionado (o Volume 13, <a href="../v13-monitoramento/01-logs-syslog.html" class="quarto-xref"><span>Capítulo 63</span></a>, trata de syslog centralizado):</p>
 <pre class="routeros"><code>/ip firewall nat set [find action=netmap] log=yes log-prefix="cgnat"</code></pre>
 <p>Para o desenho <strong>determinístico</strong>, você não liga log por conexão: guarda a <strong>tabela de alocação</strong> (um export das regras/NAT) e o <strong>accounting do RADIUS</strong> — versionados e retidos pelo prazo legal.</p>
 <div class="callout callout-style-default callout-important callout-titled">
@@ -1176,7 +1211,7 @@ add topics=info,account action=coletor</code></pre>
 <p><strong>1.</strong> Migrar para <strong>CGNAT determinístico</strong>: a tradução vira uma <strong>função estática</strong> (faixa de portas fixa por assinante), então você guarda só a <strong>tabela de alocação</strong> + o <strong>accounting</strong> (<code>100.64 → usuário</code>), não cada conexão. O volume cai ordens de grandeza porque você deixou de registrar <strong>eventos</strong> e passou a registrar <strong>regras</strong> — e a resposta legal continua completa porque a regra é suficiente para recalcular quem era quem.</p>
 <p><strong>2.</strong> (a) <strong>Tabela de alocação CGNAT</strong> vigente naquela data: a porta <code>5000</code> no IP <code>203.0.113.10</code> cai numa <strong>faixa</strong> atribuída a um <code>100.64.x.x</code>. (b) <strong>Accounting do RADIUS/PPPoE</strong> no instante <code>21:34</code>: qual <strong>usuário</strong> estava com aquele <code>100.64.x.x</code> (sessão Start/Stop cobrindo o horário). (c) <strong>Cadastro</strong>: usuário → contrato/pessoa. Os três encadeados dão o responsável, com hora sincronizada validando o instante.</p>
 <p><strong>3.</strong> Todos os registros daquele período têm o carimbo de tempo <strong>deslocado em +7 min</strong>, então uma requisição que aponta para um horário pode cair no assinante <strong>errado</strong> (se a alocação mudou nesse intervalo). Você <strong>documenta o desvio</strong> (o offset conhecido) para poder corrigir as consultas daquele período e <strong>conserta o NTP</strong>. Hora errada é grave porque o registro legal <strong>é</strong> uma afirmação temporal: sem hora confiável, ele não identifica ninguém com segurança.</p>
-<p><strong>4.</strong> (a) <strong>Volatilidade/espaço</strong>: a memória do roteador é pequena e alguns logs se perdem no reboot; não há como reter <strong>1 ano</strong>. (b) <strong>Risco e integridade</strong>: se o roteador é comprometido ou substituído, o registro vai junto — e um log que o próprio operador pode alterar tem valor probatório frágil. Desenho correto: <strong>syslog remoto</strong> para um coletor dedicado, com retenção pelo prazo, backup e acesso controlado (<span class="quarto-unresolved-ref">?sec-logs</span>).</p>
+<p><strong>4.</strong> (a) <strong>Volatilidade/espaço</strong>: a memória do roteador é pequena e alguns logs se perdem no reboot; não há como reter <strong>1 ano</strong>. (b) <strong>Risco e integridade</strong>: se o roteador é comprometido ou substituído, o registro vai junto — e um log que o próprio operador pode alterar tem valor probatório frágil. Desenho correto: <strong>syslog remoto</strong> para um coletor dedicado, com retenção pelo prazo, backup e acesso controlado (<a href="../v13-monitoramento/01-logs-syslog.html" class="quarto-xref"><span>Capítulo 63</span></a>).</p>
 </div>
 </div>
 </div>
