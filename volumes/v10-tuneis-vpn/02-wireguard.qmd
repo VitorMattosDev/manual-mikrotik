@@ -1,7 +1,302 @@
-# WireGuard
+# WireGuard {#sec-wireguard}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o modelo do **WireGuard**: interface + **par de chaves** por
+  ponta, **peers** com `allowed-address`, e por que ele é tão simples e
+  rápido;
+- Montar um túnel WireGuard **de gerência** (seu notebook → roteador
+  atrás de CGNAT) e um **site-to-site** entre dois POPs;
+- Entender **`allowed-address`** — o conceito central que decide
+  "que IPs vão por este peer" e é a fonte nº 1 de erro;
+- Usar **`persistent-keepalive`** para manter o túnel vivo através de
+  CGNAT/NAT e ler o *handshake* para diagnosticar;
+- Rotear e cifrar tráfego real pelo túnel, aplicando o **MSS clamp**
+  do @sec-panorama-tuneis.
 :::
+
+O @sec-panorama-tuneis elegeu o WireGuard como a escolha padrão moderna:
+cifrado por concepção, rápido (roda no kernel), e com uma configuração
+tão enxuta que cabe num cartão. Para o provedor, ele resolve dois
+problemas do dia a dia: **alcançar equipamentos atrás de CGNAT**
+(@sec-cgnat) para gerência, e **interligar POPs** com criptografia sem o
+peso do IPsec. Este capítulo monta os dois, do zero.
+
+## O modelo mental do WireGuard
+
+WireGuard é radicalmente simples comparado a IPsec. Só três ideias:
+
+1. **Interface**: você cria uma interface `wg` no roteador; ela tem um
+   **par de chaves** (privada + pública). A privada nunca sai; a pública
+   você entrega aos outros;
+2. **Peer**: para cada ponta remota, você adiciona um **peer** com a
+   **chave pública dela**, o **endereço/porta** onde alcançá-la (o
+   `endpoint`) e — o campo que tudo decide — o **`allowed-address`**;
+3. **Sem "fases", sem propostas, sem negociação de algoritmos**: as
+   chaves definem tudo. Ou os dois lados têm a chave pública um do outro
+   e conversam, ou não há túnel. Isso elimina 90% do que dá errado no
+   IPsec.
+
+```{.tikz}
+%%| filename: fig-wg-peers
+%%| alt: Dois roteadores com WireGuard. Cada um tem uma interface wg com par de chaves (privada e pública). O roteador A tem um peer configurado com a chave pública de B, seu endpoint e allowed-address; o roteador B tem o espelho com a chave pública de A. Uma seta cifrada liga os dois pela internet. Destaque no allowed-address de cada lado apontando para a rede do outro.
+\begin{tikzpicture}[
+  font=\small,
+  rt/.style={draw, rounded corners, align=center, minimum height=16mm, minimum width=34mm, inner sep=4pt},
+]
+\node[rt, fill=manualblue!12] (a) at (0,0) {POP-A\\\scriptsize wg: chave A\\\scriptsize peer: pub-B, allowed=10.0.2.0/24};
+\node[rt, fill=manualgreen!12] (b) at (7,0) {POP-B\\\scriptsize wg: chave B\\\scriptsize peer: pub-A, allowed=10.0.1.0/24};
+\draw[{Stealth}-{Stealth}, very thick, manualred] (a) -- node[above]{\scriptsize cifrado (UDP)} node[below]{\scriptsize internet} (b);
+\end{tikzpicture}
+```
+
+::: {#fig-wg-peers}
+Cada lado guarda a **chave pública** do outro e um `allowed-address` que
+diz "as redes que alcanço por este peer". A simetria é a chave: A conhece
+B e a rede de B; B conhece A e a rede de A. Sem terceiros, sem
+autoridade — só chaves.
+:::
+
+## allowed-address: o conceito que tudo decide
+
+`allowed-address` faz **dois** trabalhos, e confundi-los é o erro nº 1:
+
+- **Na saída** (roteamento): "quais destinos devem ser **enviados** por
+  este peer". É como uma rota — WireGuard manda para o peer os pacotes
+  cujo destino casa o `allowed-address`;
+- **Na entrada** (filtro): "quais *sources* eu **aceito** vindos deste
+  peer". Um pacote que chega pelo túnel com origem fora do
+  `allowed-address` é **descartado**.
+
+Regras práticas: para **site-to-site**, o `allowed-address` de cada peer
+é a **rede do outro lado** (`10.0.2.0/24` no peer que aponta para o
+POP-B). Para **acesso de gerência de um cliente roaming** (seu notebook),
+o peer no roteador tem `allowed-address` = o `/32` do notebook no túnel.
+Colocar `0.0.0.0/0` manda **todo** o tráfego pelo túnel (VPN "full
+tunnel") — poderoso, mas raramente o que você quer num site-to-site.
+
+## Montando: túnel de gerência
+
+Cenário: alcançar um roteador de POP atrás de CGNAT a partir do seu
+notebook. O roteador do POP **inicia** para um concentrador WireGuard
+com IP público (porque ele, atrás de CGNAT, não pode receber conexão) —
+ou, mais simples aqui, o notebook alcança um roteador com IP público e
+por ele chega aos demais.
+
+```routeros
+# no roteador (lado servidor): interface + porta
+/interface wireguard
+add name=wg-mgmt listen-port=13231
+# veja a chave pública gerada:
+/interface wireguard print
+
+# endereço do túnel
+/ip address add address=10.255.9.1/24 interface=wg-mgmt
+
+# o peer (seu notebook): chave pública dele + o /32 dele no túnel
+/interface wireguard peers
+add interface=wg-mgmt public-key="<pub-notebook>" \
+    allowed-address=10.255.9.10/32
+```
+
+No notebook (app WireGuard), o espelho: chave pública do roteador,
+`endpoint` = IP público:13231, `allowed-address` = `10.255.9.1/32` (ou a
+rede de gerência que você quer alcançar por ele).
+
+## Montando: site-to-site entre POPs
+
+```routeros
+# POP-A
+/interface wireguard add name=wg-ab listen-port=13231
+/ip address add address=10.255.0.1/30 interface=wg-ab
+/interface wireguard peers
+add interface=wg-ab public-key="<pub-B>" endpoint-address=<publico-B> \
+    endpoint-port=13231 allowed-address=10.0.2.0/24,10.255.0.2/32 \
+    persistent-keepalive=25s
+
+# POP-B (espelho)
+/interface wireguard add name=wg-ab listen-port=13231
+/ip address add address=10.255.0.2/30 interface=wg-ab
+/interface wireguard peers
+add interface=wg-ab public-key="<pub-A>" endpoint-address=<publico-A> \
+    endpoint-port=13231 allowed-address=10.0.1.0/24,10.255.0.1/32 \
+    persistent-keepalive=25s
+```
+
+Com o túnel de pé, uma **rota** manda o tráfego da rede remota pela
+interface `wg-ab` (ou o próprio `allowed-address` já cuida do
+encaminhamento). E, como todo túnel, **aplique o MSS clamp**
+(@sec-panorama-tuneis) para não travar o TCP.
+
+## persistent-keepalive: mantendo vivo através do NAT
+
+WireGuard é **silencioso** — se ninguém fala, ele não manda nada, e o
+**mapeamento NAT/CGNAT** do caminho expira, "fechando" o túnel de fora
+para dentro. O **`persistent-keepalive=25s`** faz o peer mandar um
+pequeno pacote a cada 25 s, mantendo o furo do NAT aberto. **Sempre**
+use keepalive no lado que está atrás de CGNAT/NAT — sem ele, o túnel
+"funciona e depois some".
+
+Diagnóstico: o campo de **último handshake** diz se o túnel está vivo:
+
+```routeros
+/interface wireguard peers print
+# procure "last-handshake" recente (segundos). "never" = chaves/endpoint/porta errados.
+```
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+WireGuard troca a complexidade do IPsec por **chaves e
+`allowed-address`**. Guarde três coisas: (1) cada lado tem a **chave
+pública** do outro — sem terceiros; (2) **`allowed-address` é rota E
+filtro** — é ele que decide "o que vai por este peer" e "o que aceito
+dele", e é onde 90% dos erros moram; (3) atrás de CGNAT, use
+**`persistent-keepalive`** ou o túnel expira. Acerte esses três, aplique
+o **MSS clamp**, e o WireGuard é o túnel mais fácil e rápido do
+RouterOS.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Dois CHRs (@sec-lab-chr) como dois POPs: **lab-a** (LAN `10.0.1.0/24`,
+"público" alcançável) e **lab-b** (LAN `10.0.2.0/24`). Um host em cada
+LAN para testar tráfego fim a fim. Opcional: um terceiro CHR
+"notebook" para o cenário de gerência.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — interfaces e chaves.** Em cada POP:
+
+```routeros
+/interface wireguard add name=wg-ab listen-port=13231
+/interface wireguard print
+```
+
+Anote a **chave pública** de cada lado (você vai trocá-las).
+
+**Passo 2 — endereços do túnel.**
+
+```routeros
+# lab-a
+/ip address add address=10.255.0.1/30 interface=wg-ab
+# lab-b
+/ip address add address=10.255.0.2/30 interface=wg-ab
+```
+
+**Passo 3 — peers cruzados.** No lab-a, adicione o peer com a **pública
+do lab-b**; no lab-b, com a **pública do lab-a** (veja os blocos de
+site-to-site acima), cada um com `allowed-address` = rede do outro +
+`/32` do túnel remoto, e `persistent-keepalive=25s`.
+
+**Passo 4 — handshake.** Em qualquer lado:
+
+```routeros
+/interface wireguard peers print
+```
+
+`last-handshake` deve mostrar poucos segundos. Se `never`, revise:
+chave pública trocada certo? endpoint/porta corretos? firewall
+liberando o UDP 13231?
+
+**Passo 5 — tráfego fim a fim + MSS clamp.** Do host em `10.0.1.x`,
+pingue o host em `10.0.2.x`. Depois aplique o clamp e teste uma
+transferência maior:
+
+```routeros
+/ip firewall mangle
+add chain=forward protocol=tcp tcp-flags=syn out-interface=wg-ab \
+    action=change-mss new-mss=clamp-to-pmtu
+```
+
+**Passo 6 — prove o keepalive.** Remova o `persistent-keepalive` do lado
+"atrás de NAT", gere silêncio e observe o handshake **envelhecer** até o
+túnel parar de responder de fora; recoloque e veja reviver.
+
+### Verificação
+
+1. `last-handshake` recente nos dois lados;
+2. Ping fim a fim entre as LANs `10.0.1.0/24` ↔ `10.0.2.0/24`;
+3. `allowed-address` correto (a rede do outro lado) em cada peer;
+4. Sem keepalive, o túnel atrás de NAT expira; com ele, permanece.
+
+### Desafios
+
+1. O handshake acontece (`last-handshake` recente), mas os hosts das
+   LANs **não** se pingam. As chaves estão certas. Qual campo do peer
+   está errado, e por que ele afeta o **encaminhamento** e não o
+   handshake?
+2. Você quer que **todo** o tráfego de internet de um cliente roaming
+   saia cifrado pelo túnel (full tunnel). Que `allowed-address` isso
+   exige no lado do cliente, e que cuidado extra de NAT/rota no lado do
+   servidor?
+3. O túnel de gerência para um roteador atrás de CGNAT sobe, funciona
+   por uns minutos e "some" quando ninguém usa. Qual parâmetro faltou e
+   por que o CGNAT causa exatamente esse sintoma?
+4. Por que o WireGuard dispensa a negociação de "fases" e propostas de
+   algoritmo do IPsec (@sec-ipsec), e o que isso implica para
+   interoperar com um firewall de outro fabricante que só fala IPsec?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O **`allowed-address`** está incompleto ou errado. O handshake só
+depende das **chaves** e do endpoint; o **tráfego** só é encaminhado
+para o peer se o destino casar o `allowed-address` — e só é aceito na
+volta se a origem casar. Se o `allowed-address` não inclui a rede da LAN
+remota (`10.0.2.0/24`), os pings são descartados apesar do túnel vivo.
+Corrija incluindo a rede do outro lado em cada peer.
+
+**2.** No cliente, `allowed-address=0.0.0.0/0` (manda tudo pelo túnel).
+No **servidor**, é preciso: (a) uma **rota**/`allowed-address` que aceite
+o `/32` do cliente e (b) **NAT (masquerade)** na saída para a internet,
+senão o tráfego do cliente sai com IP do túnel e não retorna. É
+essencialmente transformar o servidor WireGuard num gateway NAT para o
+cliente.
+
+**3.** Faltou **`persistent-keepalive`**. WireGuard não envia nada quando
+está ocioso; o CGNAT, sem tráfego, **expira o mapeamento** de porta e
+fecha o caminho de fora para dentro. O keepalive (25 s) mantém o
+mapeamento vivo. É o sintoma clássico "funciona e some" de túnel atrás
+de NAT.
+
+**4.** WireGuard usa um conjunto **fixo** e moderno de algoritmos e
+autentica só por **chaves públicas** — não há o que negociar, o que o
+torna simples e rápido. A contrapartida: ele **não interopera** com
+IPsec. Para conversar com um firewall de terceiro que só fala IPsec,
+você usa **IPsec** (@sec-ipsec), justamente pela padronização/negociação
+que o WireGuard abre mão.
+:::
+
+## Resumo
+
+- WireGuard = **interface + par de chaves** por ponta e **peers** com a
+  **chave pública** do outro lado; sem fases nem negociação — as chaves
+  definem tudo;
+- **`allowed-address`** é **rota e filtro**: define o que vai por cada
+  peer e o que se aceita dele — a fonte nº 1 de erro (inclua a **rede do
+  outro lado**);
+- **`persistent-keepalive=25s`** mantém o túnel vivo através de
+  **CGNAT/NAT** — sem ele, "funciona e some";
+- Diagnóstico pelo **`last-handshake`** (recente = vivo; `never` =
+  chave/endpoint/porta/firewall);
+- Como todo túnel, aplique **MSS clamp** (@sec-panorama-tuneis) para o
+  TCP não travar.
+
+WireGuard cobre a maioria dos casos modernos — mas quando você precisa
+**interoperar** com equipamento de outro fabricante, o padrão universal
+é outro. O @sec-ipsec monta o IPsec IKEv2.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *WireGuard* do RouterOS [@mikrotik-docs];
+- Criptografia de túnel e troca de chaves: [@tanenbaum-redes];
+- WireGuard no v7 na prática: [@discher-rosv7];
+- VPN de gerência em provedores: [@burgess-mikrotik].
