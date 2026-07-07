@@ -1,7 +1,296 @@
-# Logs e syslog remoto
+# Logs e syslog remoto {#sec-logs}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Entender o modelo de log do RouterOS: **topics** (o que) e **actions**
+  (para onde), e como combiná-los em **regras de logging**;
+- Ler o log local, filtrar por topic e reconhecer os eventos que
+  importam (queda de link, login, falha de DHCP/OSPF/PPPoE);
+- Configurar **syslog remoto** para um coletor central e entender por que
+  o log **não pode** morar só na caixa (volátil, pequeno, some no
+  incidente);
+- Projetar a **centralização de logs** do parque (um coletor, retenção,
+  correlação) e integrá-la aos requisitos legais (@sec-cgnat-logging);
+- Evitar os erros comuns: log volumoso demais, sem NTP, sem retenção,
+  sem separar o ruído do sinal.
 :::
+
+Os volumes anteriores construíram e automatizaram a rede. Agora ela
+precisa ser **enxergada**. O primeiro sentido do operador é o **log**:
+o registro do que aconteceu — quem logou, qual link caiu, qual
+adjacência OSPF quebrou, quando. Bem configurado, o log é a diferença
+entre "o cliente reclamou às 22h e não sei por quê" e "o enlace do POP-3
+caiu às 21h58, veja aqui". Este capítulo abre o Volume 13 dominando o
+log local e, crucialmente, sua **centralização** — porque log que fica só
+na caixa não serve para operar um parque.
+
+## O modelo: topics e actions
+
+O RouterOS separa **o que** registrar de **para onde** mandar:
+
+- **Topics**: categorias do evento — `system`, `firewall`, `dhcp`,
+  `ospf`, `pppoe`, `wireless`, `error`, `warning`, `info`, `account`,
+  etc. Um evento pode ter **vários** topics;
+- **Actions**: destinos — `memory` (buffer volátil), `disk` (arquivo),
+  `remote` (syslog para outro host), `email`. Cada action tem seus
+  parâmetros;
+- **Regras de logging** (`/system logging`): casam **topics → action**.
+  "Mande tudo de `error` e `warning` para o coletor remoto"; "guarde
+  `account` em disco".
+
+```routeros
+/system logging
+add topics=error,warning,critical action=remote
+add topics=account action=disk
+add topics=ospf action=memory
+```
+
+```{.tikz}
+%%| filename: fig-logging
+%%| alt: Modelo de logging do RouterOS. À esquerda, eventos classificados por topics (system, firewall, dhcp, ospf, pppoe, error, warning). No centro, regras de logging que casam topics com actions. À direita, os destinos: memory (volátil), disk (arquivo), remote (syslog para coletor externo), email. Setas mostram um mesmo evento podendo ir para múltiplos destinos conforme as regras.
+\begin{tikzpicture}[
+  font=\small,
+  b/.style={draw, rounded corners, align=center, minimum height=8mm, font=\scriptsize, inner sep=3pt},
+]
+\node[b, fill=manualyellow!20, minimum width=26mm] (top) at (0,0) {topics\\(o que aconteceu)};
+\node[b, fill=manualblue!15, minimum width=24mm] (rule) at (3.8,0) {regras\\topics$\to$action};
+\node[b, fill=manualgray!20] (mem) at (7.6,1.4) {memory};
+\node[b, fill=manualgray!20] (disk) at (7.6,0.4) {disk};
+\node[b, fill=manualgreen!18] (rem) at (7.6,-0.6) {remote (syslog)};
+\node[b, fill=manualgray!20] (mail) at (7.6,-1.6) {email};
+\draw[-{Stealth}] (top) -- (rule);
+\draw[-{Stealth}] (rule) -- (mem); \draw[-{Stealth}] (rule) -- (disk);
+\draw[-{Stealth}, very thick, manualgreen!60!black] (rule) -- (rem); \draw[-{Stealth}] (rule) -- (mail);
+\end{tikzpicture}
+```
+
+::: {#fig-logging}
+Um evento é classificado por **topics** e, pelas **regras**, encaminhado
+a uma ou mais **actions**. O destino que importa para operar um parque é
+o **remote** (syslog): tira o log da caixa e o centraliza.
+:::
+
+## Lendo o log local
+
+```routeros
+/log print
+/log print where topics~"ospf"
+/log print where topics~"error"
+/log print follow    # acompanha em tempo real (como tail -f)
+```
+
+O `follow` é o seu "tail" ao vivo — indispensável ao diagnosticar um
+problema em andamento. Filtrar por topic separa o sinal do ruído: quando
+um enlace instabiliza, `where topics~"ospf"` mostra as adjacências
+subindo e caindo sem a poluição do resto.
+
+## Por que o log não pode morar só na caixa
+
+O log local do RouterOS tem três limitações fatais para operação:
+
+1. **Volátil**: o buffer `memory` **some no reboot** — e o reboot muitas
+   vezes é justamente o evento que você queria investigar;
+2. **Pequeno**: cabe pouca coisa; eventos antigos são sobrescritos em
+   horas num roteador movimentado;
+3. **Vai junto no incidente**: se a caixa é comprometida, roubada ou
+   pifa, o log vai com ela — e um log que o próprio invasor pode apagar
+   tem pouco valor.
+
+A solução é o **syslog remoto**: enviar os logs, em tempo real, para um
+**coletor central** que os guarda com retenção e segurança.
+
+## Configurando syslog remoto
+
+```routeros
+# 1) NTP primeiro — log sem hora certa é inútil (a mesma lição do CGNAT)
+/system ntp client set enabled=yes servers=a.ntp.br,b.ntp.br
+
+# 2) a action remote apontando para o coletor
+/system logging action
+add name=coletor target=remote remote=10.99.0.20 remote-port=514 \
+    src-address=10.99.0.1
+
+# 3) o que mandar para lá (comece por error/warning/critical + o que operar)
+/system logging
+add topics=error,warning,critical action=coletor
+add topics=account action=coletor
+```
+
+Do lado do **coletor** (um servidor com `rsyslog`/`syslog-ng`, ou o
+próprio *The Dude*, @sec-snmp-dude), você recebe, indexa e retém os logs
+de **todo** o parque num só lugar. É lá que se **correlaciona**: "às
+21h58, três POPs reportaram queda de OSPF ao mesmo tempo" — padrão
+invisível olhando caixa por caixa.
+
+::: {.callout-warning}
+Log demais é tão ruim quanto log de menos. Mandar **`debug`** ou
+**`topics=!`** (tudo) de centenas de roteadores para o coletor o afoga e
+esconde o que importa. Comece com **`error,warning,critical`** + os
+topics que você **opera** (`account` para o legal, `ospf`/`pppoe` para a
+rede) e só ligue `debug` **temporariamente**, no equipamento específico,
+enquanto investiga. Sinal, não volume.
+:::
+
+## Centralização, retenção e o elo legal
+
+A centralização de logs não é só conveniência — conecta com o
+**@sec-cgnat-logging**: o accounting de CGNAT e as associações
+`100.64 → assinante` vivem no fluxo de log, e a lei exige **retenção**.
+O coletor central é onde isso se materializa: hora sincronizada (NTP),
+retenção pelo prazo, acesso controlado, backup. Um desenho de log de
+provedor tem três camadas:
+
+- **Operacional**: error/warning/critical + topics de rede → diagnóstico
+  do dia a dia;
+- **Legal**: `account`/accounting → retenção pelo prazo, sob sigilo
+  (@sec-cgnat-logging);
+- **Segurança**: logins, mudanças de config → auditoria de quem fez o
+  quê.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Log é o primeiro sentido do operador — mas só serve **centralizado**. O
+modelo é simples (**topics** = o que, **actions** = para onde), e a
+decisão que importa é uma: **mandar para um coletor remoto** por syslog,
+porque o log local é **volátil, pequeno e some no incidente**. Some a
+isso **NTP** (hora certa, senão o log não vale) e **disciplina de
+volume** (error/warning + o que você opera, não `debug` de tudo). O
+coletor central é onde você **correlaciona** o parque e cumpre a
+**retenção legal** (@sec-cgnat-logging). Sem centralização, você tem
+logs; não tem visibilidade.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Dois CHRs (@sec-lab-chr): **lab-rt** (gera os logs) e **lab-log** (o
+coletor — outro CHR recebendo por `remote`, ou um host Linux com
+`rsyslog` em `10.99.0.20`). Provoque eventos (queda de interface, login)
+para vê-los fluir até o coletor.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — hora certa.** No lab-rt e no coletor:
+
+```routeros
+/system ntp client set enabled=yes servers=a.ntp.br
+/system clock print
+```
+
+**Passo 2 — leia o log local e filtre.**
+
+```routeros
+/log print where topics~"system"
+/log print follow
+```
+
+Em outra sessão, desabilite/reabilite uma interface e veja o evento
+aparecer ao vivo.
+
+**Passo 3 — syslog remoto.** No lab-rt:
+
+```routeros
+/system logging action add name=coletor target=remote remote=10.99.0.20
+/system logging add topics=error,warning,critical action=coletor
+/system logging add topics=info action=coletor
+```
+
+**Passo 4 — prove a chegada.** No coletor (se CHR, `/log print`; se
+Linux, o arquivo do rsyslog). Gere um evento no lab-rt (login, queda de
+interface) e confirme que aparece **no coletor**, com a hora certa.
+
+**Passo 5 — separe sinal de ruído.** Ligue `topics=ospf,debug`
+temporariamente e observe o **volume** explodir; desligue e volte ao
+conjunto enxuto. Sinta na prática por que "logar tudo" não escala.
+
+**Passo 6 — simule o incidente.** Reinicie o lab-rt e confirme que o log
+`memory` **local sumiu**, mas o que foi para o **coletor permanece** — a
+razão de existir do syslog remoto.
+
+### Verificação
+
+1. NTP sincronizado; eventos com hora correta;
+2. `/log print follow` mostra eventos ao vivo; filtro por topic funciona;
+3. Eventos chegam ao **coletor remoto**;
+4. Após reboot, o log local some mas o do coletor permanece.
+
+### Desafios
+
+1. Após um reboot inesperado de um roteador de POP, você quer saber o que
+   causou — mas o `/log print` está vazio (só eventos após o boot).
+   Explique por que, e o que teria preservado a evidência.
+2. O coletor central está recebendo **gigabytes/hora** e ninguém acha
+   mais nada útil. Qual é o erro de configuração provável e como você
+   reduz o volume sem perder o que importa para operar e para a lei?
+3. Três POPs reportaram "queda de OSPF" quase no mesmo instante. Olhando
+   caixa por caixa você não percebeu o padrão; no coletor, sim. Que
+   propriedade do log centralizado tornou isso visível, e por que a hora
+   certa (NTP) foi essencial?
+4. Relacione a centralização de logs deste capítulo com a obrigação de
+   **retenção** do @sec-cgnat-logging: que topic/fluxo precisa ser
+   retido, por quanto tempo, e por que o coletor (não o roteador) é o
+   lugar certo.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O log `memory` é **volátil** — o reboot o apaga, e o próprio
+reboot é o que você queria investigar. Preservaria a evidência ter
+**syslog remoto** (o evento pré-reboot já estaria no coletor) e/ou logar
+topics críticos em **disk**. Log local não sobrevive ao evento mais
+importante.
+
+**2.** Provavelmente estão mandando **`debug`/tudo** de muitos
+roteadores para o coletor. Reduza para **`error,warning,critical`** + os
+topics que você realmente opera (`account`, `ospf`, `pppoe`), e ligue
+`debug` só **temporariamente e no equipamento específico** durante a
+investigação. Volume alto **esconde** o sinal e ainda pressiona
+armazenamento/retenção legal.
+
+**3.** A **correlação temporal entre fontes**: o coletor junta os logs de
+todos os POPs numa linha do tempo única, então três quedas simultâneas
+"saltam aos olhos" — invisível quando você olha um roteador de cada vez.
+A **hora certa (NTP)** foi essencial porque a correlação depende de
+timestamps confiáveis: relógios dessincronizados espalhariam os eventos e
+esconderiam a simultaneidade.
+
+**4.** O fluxo de **`account`/accounting** (associações `100.64 →
+assinante`, sessões PPPoE, alocações CGNAT) precisa ser retido pelo prazo
+legal (~1 ano, @sec-cgnat-logging), sob sigilo. O **coletor** é o lugar
+certo porque o roteador é volátil, pequeno e adulterável — a retenção,
+integridade e controle de acesso exigidos pela lei só existem num
+repositório central dedicado.
+:::
+
+## Resumo
+
+- Modelo de log: **topics** (o que) + **actions** (para onde), casados
+  por **regras de logging**;
+- Leia local com `/log print` (`where topics~`, `follow`), mas o log
+  local é **volátil, pequeno e some no incidente**;
+- A decisão-chave é **syslog remoto** para um **coletor central** — onde
+  se **correlaciona** o parque e se cumpre a **retenção legal**
+  (@sec-cgnat-logging);
+- **NTP** é pré-requisito (hora certa) e **disciplina de volume** é
+  essencial (error/warning + o que se opera, `debug` só temporário);
+- Três camadas de log: **operacional**, **legal** (`account`) e
+  **segurança** (logins/mudanças).
+
+Log conta o que **já** aconteceu, em texto. Falta enxergar **tendências**
+e **estado** — gráficos de tráfego, CPU, uso ao longo do tempo, e um mapa
+do parque. O @sec-snmp-dude cobre SNMP, graphing e The Dude.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *Log* e *System/Logging* do RouterOS
+  [@mikrotik-docs];
+- Syslog, correlação e observabilidade: [@tanenbaum-redes];
+- Logging no v7 na prática: [@discher-rosv7];
+- Centralização de logs em provedores: [@burgess-mikrotik].
