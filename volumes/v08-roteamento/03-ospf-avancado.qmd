@@ -1,7 +1,350 @@
-# OSPF avançado
+# OSPF avançado: áreas, autenticação e filtros {#sec-ospf-avancado}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar por que uma **única área** deixa de escalar e como partir a
+  rede em **múltiplas áreas** com um ABR (*Area Border Router*);
+- Escolher o **tipo de área** certo — normal, **stub**, **NSSA** — para
+  encolher a tabela dos roteadores de ponta;
+- Proteger os enlaces internos com **autenticação** OSPF e conter
+  *flapping* com temporizadores de SPF/LSA;
+- Modelar o tráfego com **custo** e **cost referência**, e filtrar o que
+  entra/sai do OSPF com *routing filters* do v7;
+- Reconhecer e evitar os erros clássicos de projeto multiárea (área
+  desconexa do backbone, redistribuição em excesso, sumário mal-feito).
 :::
+
+O @sec-ospf-basico deixou a rede rodando OSPF com **tudo na área 0** —
+o certo enquanto são poucos POPs. Mas o desafio 4 daquele capítulo já
+avisou: 40 roteadores numa área única viram um mapa gigante que todos
+recalculam a cada flap, e o ruído de um POP vira problema de todos.
+Este capítulo resolve isso com o instrumento que o OSPF foi feito para
+usar: **áreas**. De quebra, fecha as brechas que uma rede de produção
+não pode ter — autenticação e filtros.
+
+## Por que múltiplas áreas
+
+Numa área, cada roteador guarda o **grafo completo** e roda Dijkstra
+sobre ele. O custo cresce com o tamanho: mais LSAs para inundar, mais
+memória para o mapa, mais CPU a cada mudança. A solução do OSPF é
+**hierarquia**: dividir a rede em áreas que só trocam entre si um
+**resumo**, não a topologia inteira.
+
+O roteador que fica na fronteira de duas áreas é o **ABR** (*Area
+Border Router*). Ele participa das duas, guarda o mapa detalhado de
+cada uma e **anuncia para uma área apenas os prefixos da outra** (LSAs
+tipo 3, *summary*) — não a topologia crua. Assim, um flap dentro da
+área 2 gera recálculo **só na área 2**; para a área 0, o ABR continua
+anunciando o mesmo prefixo resumido, estável. A falha fica **confinada**.
+
+A regra inviolável: **toda área não-backbone precisa tocar a área 0**.
+O backbone é o centro da estrela; áreas não conversam entre si direto,
+sempre via área 0. Uma área que perde contato com a 0 fica isolada
+(resolve-se com *virtual-link*, um remendo que o bom projeto evita).
+
+```{.tikz}
+%%| filename: fig-ospf-areas
+%%| alt: Rede OSPF dividida em três áreas. No centro, a área 0 (backbone) com dois roteadores de core. À esquerda, a área 1 (POPs de fibra) ligada ao backbone por um ABR. À direita, a área 2 (POPs de rádio) ligada por outro ABR. Cada ABR fica na fronteira, participando da área 0 e da sua área lateral, e resume os prefixos de um lado para o outro.
+\begin{tikzpicture}[
+  font=\small,
+  core/.style={draw, circle, fill=manualblue!20, minimum size=11mm, align=center, inner sep=1pt},
+  abr/.style={draw, circle, fill=manualyellow!40, minimum size=11mm, align=center, inner sep=1pt},
+  leaf/.style={draw, circle, fill=manualgray!20, minimum size=9mm, align=center, inner sep=1pt},
+]
+% backbone
+\node[core] (c1) at (0,1)  {core1};
+\node[core] (c2) at (0,-1) {core2};
+\draw[thick] (c1) -- (c2);
+\node[manualblue!60!black] at (0,2.1) {\scriptsize \textbf{área 0} (backbone)};
+% ABRs
+\node[abr] (abrL) at (-2.6,0) {ABR\\oeste};
+\node[abr] (abrR) at (2.6,0)  {ABR\\leste};
+\draw[thick] (abrL) -- (c1); \draw[thick] (abrL) -- (c2);
+\draw[thick] (abrR) -- (c1); \draw[thick] (abrR) -- (c2);
+% area 1
+\node[leaf] (a1a) at (-5,0.9)  {POP-f1};
+\node[leaf] (a1b) at (-5,-0.9) {POP-f2};
+\draw[thick] (abrL) -- (a1a); \draw[thick] (abrL) -- (a1b); \draw[thick] (a1a) -- (a1b);
+\node[manualgray!60!black] at (-5,2.1) {\scriptsize \textbf{área 1} (fibra)};
+% area 2
+\node[leaf] (a2a) at (5,0.9)  {POP-r1};
+\node[leaf] (a2b) at (5,-0.9) {POP-r2};
+\draw[thick] (abrR) -- (a2a); \draw[thick] (abrR) -- (a2b); \draw[thick] (a2a) -- (a2b);
+\node[manualgray!60!black] at (5,2.1) {\scriptsize \textbf{área 2} (rádio, stub)};
+\end{tikzpicture}
+```
+
+::: {#fig-ospf-areas}
+Cada área é um domínio de inundação próprio. O ABR fica na fronteira,
+participa da área 0 **e** da sua área lateral, e resume os prefixos de
+um lado para o outro. Um flap na área 2 não faz a área 1 recalcular
+nada — o ABR leste continua anunciando o mesmo resumo.
+:::
+
+## Tipos de área: encolhendo a tabela da ponta
+
+Um POP de rádio na ponta da rede não precisa conhecer **cada** prefixo
+externo do provedor; ele só precisa saber "para sair, vá pelo ABR". O
+OSPF oferece tipos de área que trocam detalhe por simplicidade:
+
+- **Normal**: recebe tudo — prefixos internos (tipo 1/2), sumários de
+  outras áreas (tipo 3) e rotas externas redistribuídas (tipo 5);
+- **Stub**: o ABR **bloqueia as externas (tipo 5)** e injeta no lugar
+  uma **rota padrão**. O POP para de ver as centenas de rotas de BGP
+  redistribuídas e usa `0.0.0.0/0 → ABR`. Tabela menor, CPU menor;
+- **NSSA** (*Not-So-Stubby Area*): como a stub, mas **permite originar**
+  externas localmente (tipo 7, convertidas em tipo 5 pelo ABR). É a
+  escolha quando a área de ponta **também** tem redistribuição própria
+  (ex.: rotas estáticas de um cliente ali).
+
+Regra prática de provedor: **áreas de acesso/ponta como `stub`** (ou
+NSSA se precisarem redistribuir algo local); **backbone e áreas de
+trânsito como normais**. Menos LSA na ponta = convergência e memória
+melhores nos equipamentos mais fracos.
+
+```routeros
+# no ABR e em todos os roteadores da área: o tipo precisa BATER nos dois lados
+/routing ospf area
+add name=acesso-radio area-id=0.0.0.2 instance=isp type=stub
+```
+
+::: {.callout-warning}
+O `type` da área tem de ser **idêntico em todos os roteadores da
+área** — se um acha que é `stub` e o vizinho acha que é `normal`, a
+adjacência **não forma** (o bit E do Hello diverge). É o mesmo tipo de
+armadilha do MTU no capítulo anterior: divergência silenciosa que só
+aparece no `neighbor print`.
+:::
+
+## Autenticação: OSPF de produção não roda "no escuro"
+
+O @sec-ospf-basico mostrou o ataque: sem autenticação, qualquer um no
+segmento injeta LSAs e sequestra tráfego. Em produção, **todo enlace
+interno autentica**. O v7 configura no `interface-template`:
+
+```routeros
+/routing ospf interface-template
+set [find area=backbone] auth=md5 auth-id=1 auth-key="Fibr@-P0P-2026"
+```
+
+- `auth=md5` (HMAC-MD5) é o mínimo aceitável; prefira quando o hardware
+  suportar chaves mais fortes. **Nunca** `auth=none` num enlace que sai
+  do rack;
+- a chave e o `auth-id` precisam **bater nos dois lados** — de novo, a
+  regra de ouro do OSPF é *simetria*. Chave diferente = adjacência que
+  não fecha.
+
+## Contendo o flapping: temporizadores de SPF e LSA
+
+Um enlace que "pisca" gera uma enxurrada de LSAs; cada um dispara um
+SPF. Os temporizadores **amortecem** essa rajada, espaçando os
+recálculos em vez de fazer um por evento:
+
+```routeros
+/routing ospf instance
+set isp in-filter-chain=ospf-in \
+    metric-connected=20 \
+    routing-table=main
+# temporizadores de SPF/LSA moram no instance (throttle exponencial):
+# valor inicial pequeno (reage rápido); teto maior (não recalcula em looping)
+```
+
+A ideia: o primeiro evento reage quase de imediato (bom para
+convergência); eventos em sequência aumentam o intervalo
+exponencialmente até um teto (bom para conter flapping). Combinado com
+**áreas** (que já confinam o flap), a rede fica estável mesmo com um
+enlace ruim num canto.
+
+## Filtrando o que entra e sai do OSPF
+
+O v7 unificou a filtragem em **routing filters** — cadeias de regras
+(iguais em espírito ao firewall) referenciadas por
+`in-filter-chain`/`out-filter-chain`. Dois usos típicos:
+
+```routeros
+# NÃO redistribua rotas de gestão/loopbacks de terceiros para dentro do OSPF
+/routing filter rule
+add chain=ospf-out rule="if (dst in 100.64.100.0/22) { accept }"
+add chain=ospf-out rule="if (dst in 10.255.0.0/24) { accept }"
+add chain=ospf-out rule="reject"
+
+# NÃO aceite uma rota-padrão vinda de onde não deveria (anti-sequestro)
+/routing filter rule
+add chain=ospf-in rule="if (dst==0.0.0.0/0 && ospf-type==external) { reject }"
+add chain=ospf-in rule="accept"
+```
+
+Filtrar na **saída** (redistribuição) evita vazar o que não é para
+rotear; filtrar na **entrada** protege contra rota indevida (defesa em
+profundidade, mesmo com autenticação). O tema volta aprofundado no
+BGP (@sec-bgp-filtros), onde os filtros são a peça central.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+**Áreas trocam escala por hierarquia**: o ABR resume uma área para a
+outra, e com isso um flap deixa de ser global — vira local. Some a isso
+**stub/NSSA** (encolhe a tabela da ponta), **autenticação** (fecha o
+sequestro de rota) e **temporizadores + filtros** (contêm ruído e
+vazamento), e você tem um OSPF de provedor de verdade. O erro capital é
+o oposto de tudo isso: **uma área só, sem auth, redistribuindo tudo** —
+funciona no lab, colapsa em campo. E lembre da regra que não se dobra:
+**toda área toca a área 0**.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Estenda o trio do @sec-ospf-basico para **quatro** CHRs (@sec-lab-chr):
+lab-r1 e lab-r2 formam o **backbone (área 0)**; lab-r1 é **ABR** para a
+**área 1** (`0.0.0.1`), onde vive lab-r3; lab-r2 é **ABR** para a
+**área 2** (`0.0.0.2`), onde vive lab-r4. Reaproveite os loopbacks
+`10.255.0.x/32` e enlaces PtP `/30` do capítulo anterior, criando as
+duas novas redes internas (r1–r3 e r2–r4) no VirtualBox.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — declare as áreas nos ABRs.** No lab-r1 (backbone + área 1):
+
+```routeros
+/routing ospf area
+add name=backbone area-id=0.0.0.0 instance=isp
+add name=area1     area-id=0.0.0.1 instance=isp
+/routing ospf interface-template
+add area=backbone networks=172.16.9.0/30 type=ptp auth=md5 auth-id=1 auth-key="lab-backbone"
+add area=area1     networks=172.16.9.12/30 type=ptp auth=md5 auth-id=1 auth-key="lab-area1"
+```
+
+No lab-r2, análogo: `backbone` + `area2` (`0.0.0.2`). Nos roteadores de
+ponta (r3, r4), só a sua área lateral.
+
+**Passo 2 — torne a área 2 uma `stub`.** No lab-r2 **e** no lab-r4:
+
+```routeros
+/routing ospf area set [find name=area2] type=stub
+```
+
+**Passo 3 — veja as adjacências e o tipo das rotas.** Em qualquer nó:
+
+```routeros
+/routing ospf neighbor print
+/ip route print where ospf
+```
+
+Nos roteadores da área 1 (normal), as rotas da área 2 aparecem como
+**inter-area** (tipo 3). No lab-r4 (área stub), confirme que **não há**
+externas e que existe uma **rota padrão** aprendida via OSPF apontando
+para o ABR.
+
+**Passo 4 — prove o confinamento do flap.** No lab-r3 (área 1), suba e
+derrube o loopback repetidamente:
+
+```routeros
+/interface disable lo ; :delay 1s ; /interface enable lo
+```
+
+Observe (com `/routing ospf lsa print` e o log) que os roteadores da
+**área 2 não recalculam** — o ABR lab-r2 continua anunciando o mesmo
+resumo. O ruído da área 1 ficou na área 1.
+
+**Passo 5 — teste a autenticação.** Troque a `auth-key` de **um** lado
+do enlace de backbone e veja a adjacência cair:
+
+```routeros
+/routing ospf interface-template set [find area=backbone] auth-key="errada"
+/routing ospf neighbor print
+```
+
+A adjacência some. Restaure a chave e ela volta — a prova de que o
+enlace só fala com quem tem a chave.
+
+### Verificação
+
+1. `neighbor print` mostra `Full` no backbone e em cada área lateral;
+2. Roteador da área normal enxerga prefixos da outra área como
+   inter-area; roteador da área stub vê **rota padrão** e nenhuma
+   externa;
+3. Flap na área 1 **não** dispara SPF na área 2;
+4. Chave de autenticação divergente derruba a adjacência.
+
+### Desafios
+
+1. Você criou a `area3` (`0.0.0.3`) num POP novo, mas ela só tem enlace
+   para outra área lateral (a `area1`), **não** para a área 0. As rotas
+   não propagam. Explique por quê e liste as duas saídas — a "certa"
+   (reprojeto físico/lógico) e o remendo (`virtual-link`), com o custo
+   de cada uma.
+2. Um cliente corporativo na sua área stub precisa **originar** algumas
+   rotas estáticas para dentro do OSPF. A área stub não deixa. Que tipo
+   de área resolve isso sem abrir mão do resto dos benefícios, e por
+   quê?
+3. Depois de tornar uma área `stub`, **metade** dos roteadores dela
+   perdeu a adjacência. Qual é a causa mais provável (pense no bit E do
+   Hello) e como você confirma?
+4. Sua rede tem 200 prefixos de cliente redistribuídos no OSPF e a CPU
+   dos POPs de ponta vive alta. Descreva **duas** mudanças de projeto —
+   uma no tipo de área, outra em filtros/sumarização — que derrubam a
+   carga sem perder alcançabilidade.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Toda área não-backbone precisa de **contiguidade com a área 0**;
+a `area3` tocando só a `area1` fica órfã — o OSPF não roteia área↔área
+sem passar pela 0. Saída certa: dar à `area3` um enlace (físico ou
+lógico) até um ABR do backbone, ou reclassificá-la como parte de uma
+área existente. Remendo: um **`virtual-link`** através da `area1`
+(que vira *transit area*), tunelando a `area3` até a 0 — funciona, mas
+é frágil, depende da `area1` estar sempre de pé e complica o
+diagnóstico. Prefira sempre o reprojeto.
+
+**2.** **NSSA**. Ela mantém o bloqueio das externas *vindas de fora*
+(tabela enxuta como a stub), mas permite **originar** externas locais
+como LSA tipo 7, que o ABR converte em tipo 5 para o resto da rede.
+É exatamente o caso "área de ponta que também redistribui algo próprio".
+
+**3.** O **`type` da área não bate** em todos os roteadores: os que
+você marcou como `stub` têm o bit E=0 no Hello; os que ficaram
+`normal` têm E=1 — e Hello com E divergente **não forma adjacência**.
+Confirme com `/routing ospf area print` em cada nó (todos têm de dizer
+`type=stub`) e com o `neighbor print` mostrando quem caiu.
+
+**4.** (a) Transformar as áreas de ponta em **stub/NSSA**: o ABR troca
+os 200 prefixos por uma **rota padrão**, e a tabela do POP despenca.
+(b) **Sumarizar** no ABR: em vez de vazar 200 rotas específicas,
+anunciar o **agregado** (ex.: um `/16` que cobre os pools) com um
+*routing filter* na redistribuição — menos LSA, menos SPF, mesma
+alcançabilidade. As duas se somam.
+:::
+
+## Resumo
+
+- **Múltiplas áreas** trocam escala por hierarquia: o **ABR** resume
+  uma área para a outra e **confina** flaps — mudança dentro de uma
+  área não faz as outras recalcular;
+- **Regra inviolável**: toda área não-backbone toca a **área 0**;
+- **Tipos de área** encolhem a tabela da ponta: **stub** (sem
+  externas, injeta rota padrão), **NSSA** (stub que *pode* originar
+  externas locais); o `type` tem de ser **idêntico** em toda a área;
+- **Autenticação** (`auth=md5`, chave simétrica) fecha o sequestro de
+  rota; **temporizadores de SPF/LSA** amortecem flapping;
+- **Routing filters** (`in`/`out-filter-chain`) evitam vazar e evitam
+  aceitar rota indevida — e **sumarizar** no ABR derruba a carga.
+
+Com OSPF interno sólido, falta o protocolo que conversa com o **mundo
+de fora**: o BGP. O próximo capítulo (@sec-bgp-basico) abre a conexão
+com a operadora e o IX.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *OSPF* (áreas, NSSA, autenticação) do
+  RouterOS v7 [@mikrotik-docs];
+- Hierarquia de áreas, LSAs e SPF: [@tanenbaum-redes];
+- Configuração v7 na prática: [@discher-rosv7];
+- Projeto OSPF em provedores: [@burgess-mikrotik].
