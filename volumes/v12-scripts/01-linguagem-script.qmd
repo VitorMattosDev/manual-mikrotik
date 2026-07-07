@@ -1,7 +1,345 @@
-# Linguagem de script do RouterOS
+# Linguagem de script do RouterOS {#sec-linguagem-script}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Escrever scripts no RouterOS: **variáveis** (`:local`/`:global`),
+  **tipos**, **condicionais** (`:if`) e **loops** (`:foreach`/`:for`);
+- Entender a peça central do RouterOS script: percorrer e **agir sobre
+  itens** de menus (`/interface`, `/ip address`) com `find`, `[]` e
+  `do`;
+- Capturar saída de comandos, **parsear** valores e montar mensagens
+  (log, e-mail) com interpolação;
+- Criar **funções** reutilizáveis (via `:global`) e tratar erros com
+  `:do { } on-error={ }`;
+- Escrever scripts **idempotentes e seguros** — que podem rodar de novo
+  sem duplicar nem quebrar a configuração.
 :::
+
+Até aqui, cada configuração foi **manual**. Funciona para um roteador;
+não escala para um parque de centenas. A **linguagem de script** do
+RouterOS transforma tarefas repetitivas em código: verificar links,
+aplicar mudanças em massa, reagir a eventos, gerar relatórios. Não é uma
+linguagem "de programador" — é enxuta e cheia de peculiaridades — mas
+domina-se o essencial rápido, e o retorno é enorme: o que você faria em
+200 roteadores à mão, um script faz em segundos. Este capítulo é a base;
+os próximos automatizam (@sec-scheduler) e provisionam em massa
+(@sec-api-provisionamento).
+
+## Variáveis e tipos
+
+Toda variável é declarada com **escopo**:
+
+- **`:local`** — vive só dentro do script/bloco atual (o padrão que você
+  deve usar);
+- **`:global`** — persiste entre scripts e sessões (use com parcimônia;
+  é como uma variável global de verdade — poderosa e perigosa).
+
+```routeros
+:local nome "borda-pop1"
+:local contador 0
+:local ativo true
+:local rede 192.168.1.0/24
+```
+
+O RouterOS **infere o tipo** pelo valor: `num`, `str`, `bool`, `ip`,
+`ip-prefix`, `time`, `array`, e outros. Tipos importam — comparar um
+`str` "10" com um `num` 10 dá resultado inesperado. Converta quando
+necessário (`[:tonum $x]`, `[:tostr $x]`).
+
+::: {.callout-warning}
+A sintaxe do RouterOS script é **exigente e sem perdão**: `:set x 5`
+(não `x = 5`), o `$` **só** para **ler** a variável (`:put $x`), espaços
+ao redor de operadores importam, e `{ }` de blocos têm regras próprias.
+Erros de sintaxe costumam falhar em silêncio ou com mensagens crípticas.
+**Teste incrementalmente** — linha a linha no terminal antes de montar o
+script inteiro.
+:::
+
+## Condicionais e a estrutura do controle
+
+```routeros
+:local sinal -65
+:if ($sinal < -70) do={
+    :log warning "Sinal fraco: $sinal dBm"
+} else={
+    :log info "Sinal ok: $sinal dBm"
+}
+```
+
+Note a interpolação: dentro de `"..."`, `$sinal` é **substituído** pelo
+valor. É assim que se montam mensagens de log e e-mail.
+
+## Loops e a operação sobre itens de menu
+
+O coração do RouterOS script é **agir sobre os itens** de um menu. Duas
+peças fazem isso: **`find`** (retorna os itens que casam um critério) e
+**`:foreach`** (percorre e age). Exemplo: desabilitar todas as
+interfaces cujo comentário contém "teste":
+
+```routeros
+:foreach i in=[/interface find where comment~"teste"] do={
+    /interface disable $i
+    :log info "desabilitada: $[/interface get $i name]"
+}
+```
+
+- `[/interface find where ...]` retorna um **array** de referências
+  internas;
+- `/interface get $i name` **lê** um campo daquele item;
+- `/interface disable $i` **age** sobre ele.
+
+Esse padrão — `find` → `foreach` → `get`/`set`/ação — é 80% dos scripts
+úteis de RouterOS. O `:for` numérico também existe para contagens:
+
+```routeros
+:for n from=1 to=5 do={ :log info "iteracao $n" }
+```
+
+```{.tikz}
+%%| filename: fig-script-loop
+%%| alt: Fluxo do padrão central de script no RouterOS. Um comando find retorna um array de itens que casam um critério; um foreach percorre cada item; para cada um, o script lê campos com get, decide com if, e age com set ou disable. Setas mostram o ciclo find, foreach, get/decide, agir, repetindo até o fim do array.
+\begin{tikzpicture}[
+  font=\small, node distance=8mm,
+  b/.style={draw, rounded corners, fill=manualblue!12, align=center, minimum height=9mm, minimum width=30mm, font=\scriptsize},
+]
+\node[b, fill=manualyellow!20] (find) {find where ...\\(array de itens)};
+\node[b, below=of find] (fe) {:foreach item};
+\node[b, below=of fe] (get) {get campo / :if decide};
+\node[b, below=of get, fill=manualgreen!15] (act) {set / disable / log (agir)};
+\draw[-{Stealth}] (find) -- (fe);
+\draw[-{Stealth}] (fe) -- (get);
+\draw[-{Stealth}] (get) -- (act);
+\draw[-{Stealth}] (act.east) to[bend right=60] node[right]{\scriptsize próximo item} (fe.east);
+\end{tikzpicture}
+```
+
+::: {#fig-script-loop}
+O padrão que resolve a maioria dos scripts: **`find`** seleciona os
+itens, **`:foreach`** percorre, **`get`/`:if`** decidem, e **`set`/ação**
+agem. Domine este ciclo e você automatiza quase tudo no RouterOS.
+:::
+
+## Capturando saída e parseando
+
+Comandos entre `[ ]` retornam valor. Combinado com `:tonum`, `:pick`
+(fatiar string) e os arrays, você extrai o que precisa:
+
+```routeros
+# quantos clientes PPPoE ativos?
+:local n [:len [/interface pppoe-server active find]]
+:log info "Sessoes PPPoE ativas: $n"
+
+# ler um campo e comparar
+:local up [/interface get ether1 running]
+:if ($up = false) do={ :log error "ether1 caiu!" }
+```
+
+## Funções reutilizáveis
+
+Funções são criadas como `:global` contendo um bloco, e aceitam
+parâmetros nomeados:
+
+```routeros
+# define uma função de notificação
+:global notificar do={
+    :log warning "[ALERTA] $mensagem"
+    # (aqui poderia disparar e-mail/telegram)
+}
+
+# usa em qualquer script
+$notificar mensagem="link de tránsito degradado"
+```
+
+Isso permite centralizar lógica (notificação, verificação) e reusá-la —
+a base de scripts de operação organizados.
+
+## Tratamento de erro e idempotência
+
+Um script de produção **não pode** derrubar o roteador ao encontrar um
+erro. Envolva o que pode falhar:
+
+```routeros
+:do {
+    /ip address add address=10.0.0.1/24 interface=ether2
+} on-error={
+    :log warning "endereco ja existe ou interface invalida"
+}
+```
+
+E, crucialmente, torne os scripts **idempotentes** — seguros para rodar
+de novo. Em vez de `add` cego (que duplica), **verifique antes**:
+
+```routeros
+:if ([:len [/ip address find where address="10.0.0.1/24"]] = 0) do={
+    /ip address add address=10.0.0.1/24 interface=ether2
+}
+```
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+O RouterOS script gira em torno de **agir sobre itens de menu**: o ciclo
+**`find` → `:foreach` → `get`/`:if` → `set`/ação** resolve a maioria das
+tarefas reais. Sobre isso, duas disciplinas que separam script de
+brinquedo de script de produção: **idempotência** (verifique antes de
+`add`, para poder rodar de novo sem duplicar) e **tratamento de erro**
+(`:do {} on-error={}`, para não derrubar o roteador). A sintaxe é
+exigente — teste incrementalmente. Dominado o ciclo, automação, agenda
+(@sec-scheduler) e provisionamento em massa (@sec-api-provisionamento)
+viram aplicação direta.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Um CHR (@sec-lab-chr) com algumas interfaces e endereços configurados —
+o suficiente para percorrer, ler e agir. Todo o laboratório roda no
+terminal (`/system script` para salvar, ou colando direto). **Não** é
+preciso topologia complexa: o foco é a linguagem.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — variáveis e tipos.** No terminal:
+
+```routeros
+:local x 10
+:local y "10"
+:put ($x = 10)
+:put ($x = $y)
+```
+
+Observe: comparar `num` com `str` **não** dá igual — a lição de tipos.
+
+**Passo 2 — o ciclo find/foreach.** Liste e aja sobre interfaces:
+
+```routeros
+:foreach i in=[/interface find] do={
+    :put "$[/interface get $i name] running=$[/interface get $i running]"
+}
+```
+
+**Passo 3 — condicional útil.** Alerte sobre interface caída:
+
+```routeros
+:foreach i in=[/interface find where !running] do={
+    :log warning "interface caida: $[/interface get $i name]"
+}
+```
+
+**Passo 4 — idempotência.** Rode este bloco **duas vezes** e confirme
+que o endereço **não** duplica:
+
+```routeros
+:if ([:len [/ip address find where address="10.9.9.1/24"]] = 0) do={
+    /ip address add address=10.9.9.1/24 interface=ether1
+    :log info "endereco adicionado"
+} else={ :log info "endereco ja existe, nada a fazer" }
+```
+
+**Passo 5 — função reutilizável.** Defina `$notificar` (bloco acima) e
+chame-a de dois scripts diferentes; veja as mensagens no log.
+
+**Passo 6 — salve como script nomeado.**
+
+```routeros
+/system script add name=checa-links source={
+    :foreach i in=[/interface find where !running] do={
+        :log warning "caiu: $[/interface get $i name]"
+    }
+}
+/system script run checa-links
+```
+
+### Verificação
+
+1. Comparação `num` vs `str` mostra a diferença de tipos;
+2. O ciclo `find/foreach` percorre e lê campos das interfaces;
+3. O bloco idempotente **não** duplica o endereço ao rodar de novo;
+4. A função `$notificar` funciona chamada de scripts distintos;
+5. O script nomeado roda por `/system script run`.
+
+### Desafios
+
+1. Um colega escreveu um script com `add` cego que rodou no scheduler a
+   cada 5 min por um dia — e agora há centenas de regras/endereços
+   duplicados. Explique o erro e reescreva o trecho de forma
+   **idempotente**.
+2. Um script trava o processamento e o roteador fica estranho quando uma
+   interface esperada não existe. Qual construção evita isso, e como
+   você a aplicaria ao `add` de um endereço numa interface que **pode**
+   não estar lá?
+3. Você precisa desabilitar **todas** as regras de firewall com o
+   comentário "temporario" e logar quantas foram. Escreva o script
+   usando o ciclo `find/foreach` + contador.
+4. Por que usar `:global` para tudo é perigoso, e quando ele é
+   **realmente** a escolha certa? Dê um exemplo de cada.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O erro é **não verificar antes de adicionar**: `add` sempre cria,
+então rodar de novo duplica. Idempotente:
+```routeros
+:if ([:len [/ip firewall address-list find where list="bloqueados" address="1.2.3.4"]] = 0) do={
+    /ip firewall address-list add list=bloqueados address=1.2.3.4
+}
+```
+A regra: **`find` primeiro, `add` só se não existir** (ou `set` se
+existir). Limpeza dos duplicados: um `foreach` removendo os excedentes.
+
+**2.** **`:do { } on-error={ }`**: envolve a operação que pode falhar, de
+modo que o erro seja tratado (logado) em vez de abortar o script.
+```routeros
+:do { /ip address add address=10.0.0.1/24 interface=ether9 } \
+  on-error={ :log warning "ether9 inexistente ou endereco duplicado" }
+```
+Melhor ainda, combinar com verificação de existência da interface antes.
+
+**3.**
+```routeros
+:local c 0
+:foreach r in=[/ip firewall filter find where comment="temporario"] do={
+    /ip firewall filter disable $r
+    :set c ($c + 1)
+}
+:log info "regras temporarias desabilitadas: $c"
+```
+
+**4.** `:global` **persiste** entre scripts e sessões: usado à toa, vira
+estado escondido que outro script sobrescreve, causando bugs difíceis de
+achar (ação à distância). Perigoso: `:global i` num loop que colide com
+outro script. **Certo**: quando você **quer** compartilhar
+deliberadamente — uma **função** reutilizável (`:global notificar`) ou
+uma configuração lida por vários scripts. Regra: `:local` por padrão,
+`:global` só com intenção explícita.
+:::
+
+## Resumo
+
+- Variáveis com **escopo** (`:local` padrão, `:global` com parcimônia);
+  o RouterOS **infere tipos** — e comparar tipos diferentes engana;
+- O ciclo central: **`find` → `:foreach` → `get`/`:if` → `set`/ação** —
+  resolve a maioria dos scripts (agir sobre itens de menu);
+- Capture saída com `[ ]`, parseie com `:len`/`:tonum`/`:pick`,
+  interpole em `"...$var..."` para log/mensagens;
+- **Funções** via `:global do={}` centralizam e reusam lógica;
+- Produção exige **idempotência** (verifique antes de `add`) e
+  **tratamento de erro** (`:do {} on-error={}`) — e teste
+  incrementalmente, a sintaxe é exigente.
+
+Sabendo escrever scripts, o próximo passo é fazê-los rodar **sozinhos** —
+no horário certo, em reação a um evento, guardando backups. O
+@sec-scheduler cobre scheduler, netwatch e backups automáticos.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *Scripting* do RouterOS [@mikrotik-docs];
+- Lógica de programação e automação: [@tanenbaum-redes];
+- Scripts no v7 na prática: [@discher-rosv7];
+- Automação de parque em provedores: [@burgess-mikrotik].
