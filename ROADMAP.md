@@ -105,7 +105,7 @@ Pré-requisitos: Vols. 3 e 6.*
 
 - [x] `volumes/v07-qos/01-fundamentos-qos-simple-queues.qmd` — Fundamentos de filas e simple queues: max-limit, target, ordem das filas.
 - [x] `volumes/v07-qos/02-burst-planos-velocidade.qmd` — Burst (limit-at, burst-limit/threshold/time) e desenho de planos de velocidade.
-- [ ] `volumes/v07-qos/03-mangle-queue-tree.qmd` — Marcação com mangle e queue tree: priorização por tipo de tráfego.
+- [x] `volumes/v07-qos/03-mangle-queue-tree.qmd` — Marcação com mangle e queue tree: priorização por tipo de tráfego.
 - [ ] `volumes/v07-qos/04-pcq-em-escala.qmd` — PCQ: controle de banda por assinante em escala; PCQ + PPPoE.
 
 ## Volume 8 — Roteamento

@@ -1,7 +1,358 @@
-# Mangle e queue tree
+# Mangle e queue tree: priorizando por tipo de tráfego {#sec-queue-tree}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Marcar tráfego com **mangle** usando o padrão de dois passos
+  (connection-mark → packet-mark) sem desperdiçar CPU;
+- Explicar o que a **queue tree** faz que a simple queue não faz — e o
+  que ela *não* faz (limitar por cliente nos dois sentidos numa regra
+  só);
+- Construir uma árvore HTB com classes por tipo de tráfego (VoIP,
+  jogos/interativo, navegação, resto) usando `priority` e `limit-at`;
+- Escolher o ponto de pendura certo (`parent=interface` vs
+  `global`) e entender onde cada um enxerga o tráfego;
+- Combinar as duas camadas do provedor: plano por assinante (simple
+  queue/PPPoE) + prioridade por tipo (queue tree no agregado).
 :::
+
+Os capítulos anteriores trataram todos os pacotes de um cliente como
+iguais: 50M é 50M, seja chamada de voz ou torrent. Mas quando a fila
+enche, **a ordem de saída importa**: o pacote de VoIP que espera 60 ms
+atrás de um torrent vira chiado; o torrent que espera 60 ms não vira
+nada. Priorizar exige duas ferramentas trabalhando juntas: o
+**mangle** (@sec-mangle-raw) para *classificar* — "este pacote é VoIP"
+— e a **queue tree** para *executar* — "VoIP sai primeiro".
+
+## Marcar barato: o padrão connection-mark → packet-mark
+
+O mangle marca pacotes, mas inspecionar **cada pacote** contra listas
+de portas/endereços custa CPU — e o concentrador já vive de CPU
+contada (@sec-concentrador-bng). O padrão eficiente usa o connection
+tracking (@sec-conntrack) a favor: classifique **a conexão uma vez**,
+e herde a marca em todos os pacotes dela:
+
+```routeros
+/ip firewall mangle
+# 1) classificar a CONEXAO (só pacotes novos chegam aqui)
+add chain=prerouting connection-state=new protocol=udp dst-port=5060,10000-20000 \
+    action=mark-connection new-connection-mark=conn-voip passthrough=yes \
+    comment="SIP + RTP tipico"
+add chain=prerouting connection-state=new protocol=udp dst-port=53 \
+    action=mark-connection new-connection-mark=conn-interativo passthrough=yes \
+    comment="DNS"
+add chain=prerouting connection-state=new protocol=tcp dst-port=80,443 \
+    connection-bytes=0-2000000 action=mark-connection \
+    new-connection-mark=conn-navegacao passthrough=yes \
+    comment="web ate 2 MB (paginas)"
+
+# 2) converter marca de conexao em marca de PACOTE (barato: so le a marca)
+add chain=prerouting connection-mark=conn-voip action=mark-packet \
+    new-packet-mark=pkt-voip passthrough=no
+add chain=prerouting connection-mark=conn-interativo action=mark-packet \
+    new-packet-mark=pkt-interativo passthrough=no
+add chain=prerouting connection-mark=conn-navegacao action=mark-packet \
+    new-packet-mark=pkt-navegacao passthrough=no
+add chain=prerouting action=mark-packet new-packet-mark=pkt-resto \
+    passthrough=no comment="tudo que nao casou acima"
+```
+
+Três detalhes que separam isso de uma configuração ingênua:
+
+- **`connection-state=new`** nas regras de classificação: só o
+  primeiro pacote da conexão paga a inspeção de portas; os milhões
+  seguintes casam direto pela `connection-mark` (uma leitura de
+  memória);
+- **`passthrough=yes`** na marcação de conexão (o pacote continua para
+  as regras seguintes) e **`passthrough=no`** na de pacote (marcou,
+  saiu — não desce o resto da lista à toa);
+- **`connection-bytes=0-2000000`** na navegação: os primeiros 2 MB de
+  uma conexão web são "página abrindo" (prioridade); além disso é
+  download grande — a conexão *deixa* de casar e cai para `pkt-resto`.
+  Classificação por **comportamento**, não só por porta.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+O mangle com dois passos é a **triagem do pronto-socorro**: o
+enfermeiro avalia o paciente **uma vez** na chegada e prende a
+pulseira colorida (connection-mark); dali em diante, ninguém reavalia
+— todo atendente decide pela cor da pulseira (packet-mark). A queue
+tree é a sala de espera que **chama pela cor**: vermelho passa na
+frente, verde espera. Sem triagem, cada balcão teria que refazer o
+diagnóstico; sem a chamada por cor, a triagem seria enfeite.
+:::
+
+## Queue tree: o HTB exposto
+
+A **queue tree** é o motor HTB sem o açúcar da simple queue: você
+pendura classes numa interface (ou num ponto global) e cada classe
+casa pacotes **pela packet-mark**. O que muda em relação à simple
+queue:
+
+| | Simple queue | Queue tree |
+|---|---|---|
+| Casa tráfego por | target (IP/interface) | **packet-mark** (mangle) |
+| Sentidos | os dois numa regra | **um** por árvore (a da interface de saída) |
+| Hierarquia | parent opcional | é a essência (HTB puro) |
+| Prioridade | entre filhas do mesmo pai | idem — e é o motivo de usá-la |
+| Ordem de avaliação | primeira-que-casa | todas as classes-folha que casarem a marca |
+
+: Simple queue × queue tree {#tbl-simple-vs-tree}
+
+A árvore para o **sentido download** (saindo pela interface dos
+clientes) do nosso POP:
+
+```routeros
+/queue tree
+add name=down-total parent=vlan101-clientes max-limit=90M \
+    comment="teto fisico do enlace de download"
+add name=down-voip parent=down-total packet-mark=pkt-voip \
+    priority=1 limit-at=10M max-limit=20M
+add name=down-interativo parent=down-total packet-mark=pkt-interativo \
+    priority=2 limit-at=5M max-limit=20M
+add name=down-navegacao parent=down-total packet-mark=pkt-navegacao \
+    priority=4 limit-at=30M max-limit=90M
+add name=down-resto parent=down-total packet-mark=pkt-resto \
+    priority=8 limit-at=10M max-limit=90M
+```
+
+E a espelho para upload (`parent=ether1`, a WAN — cada sentido tem sua
+árvore, pendurada na interface por onde **sai**). A leitura do HTB:
+
+- Com folga no `down-total`, todo mundo flui — prioridade é invisível
+  na abundância;
+- Sob saturação, cada classe recebe seu **`limit-at`** primeiro
+  (garantias, como no @sec-burst-planos); a sobra é distribuída **por
+  ordem de `priority`** (1 = primeiro): VoIP enche até 20M antes de a
+  navegação ver um bit da sobra;
+- `pkt-resto` com `priority=8` não morre de fome: o `limit-at=10M` é
+  o seu piso — prioridade decide a *sobra*, garantia decide o *mínimo*.
+
+```{.tikz}
+%%| filename: fig-queue-tree-htb
+%%| alt: Árvore HTB de download. A raiz down-total de 90 megabits pendura na interface dos clientes. Dela saem quatro classes-folha: VoIP com prioridade 1, interativo com prioridade 2, navegação com prioridade 4 e resto com prioridade 8, cada uma com sua garantia limit-at. Os pacotes entram nas folhas conforme a packet-mark do mangle.
+\begin{tikzpicture}[
+  font=\small,
+  classe/.style={draw, rounded corners, align=center, inner sep=4pt},
+]
+\node[classe, fill=manualblue!20, minimum width=40mm] (root) at (0,2.2)
+  {\textbf{down-total} — 90M\\ \scriptsize parent=vlan101-clientes};
+\node[classe, fill=manualred!20]    (voip) at (-4.9,0) {\textbf{voip}\\ \scriptsize prio 1 · 10M--20M};
+\node[classe, fill=manualyellow!30] (int)  at (-1.7,0) {\textbf{interativo}\\ \scriptsize prio 2 · 5M--20M};
+\node[classe, fill=manualgreen!20]  (nav)  at (1.7,0)  {\textbf{navegação}\\ \scriptsize prio 4 · 30M--90M};
+\node[classe, fill=manualgray!25]   (rest) at (4.9,0)  {\textbf{resto}\\ \scriptsize prio 8 · 10M--90M};
+\foreach \c in {voip,int,nav,rest} \draw (root.south) -- (\c.north);
+% pacotes entrando
+\foreach \c/\m in {voip/pkt-voip, int/pkt-interativo, nav/pkt-navegacao, rest/pkt-resto} {
+  \draw[-{Stealth}, manualgray] ([yshift=-7mm]\c.south) -- (\c.south)
+    node[midway, right, manualgray] {\tiny \m};
+}
+\node[manualgray, align=center] at (0,-1.7)
+  {\scriptsize sob saturação: cada folha recebe o \texttt{limit-at};\\
+   \scriptsize a sobra vai por ordem de \texttt{priority} (1 primeiro)};
+\end{tikzpicture}
+```
+
+::: {#fig-queue-tree-htb}
+A árvore de download: a raiz encarna o enlace (90M) e as folhas casam
+as packet-marks do mangle. Garantia (`limit-at`) define o mínimo de
+cada classe; `priority` define quem fica com a sobra — VoIP primeiro,
+resto por último.
+:::
+
+### Onde pendurar: interface ou global
+
+`parent=<interface>` enfileira o que **sai** por ela — é o normal e o
+que o hardware agradece. `parent=global` captura em um ponto único
+todo tráfego (antes da decisão de interface), útil quando o mesmo
+tráfego pode sair por várias interfaces — ao custo de enfileirar
+também o que não precisaria. Regra prática: comece pela interface; vá
+a global só com motivo (e o @sec-pcq-escala traz um).
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Prioridade é **quem sofre menos quando falta** — não "quem ganha mais
+banda". A arquitetura completa tem papéis separados: o **mangle
+classifica** (uma vez por conexão, barato), a **queue tree executa**
+(garantia + prioridade sob o teto físico), e o **plano por assinante
+continua nas filas do PPPoE** — as duas camadas convivem: a simple
+queue do plano decide *quanto* cada cliente pode usar; a queue tree do
+agregado decide *o que sai primeiro* quando o enlace do POP satura.
+Priorizar sem classificar é chute; classificar sem hierarquia é
+enfeite.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+`lab-r1` (nosso roteador de QoS) entre `lab-r2` e `lab-r3`
+(@sec-lab-chr): lab-r2 na `lab-a` (172.16.1.2) e lab-r3 na `lab-b`
+(ether3 do lab-r1, ex.: 172.16.2.3/24) — assim o tráfego r2↔r3
+**atravessa** o lab-r1, que enfileira na interface de saída.
+`bandwidth-server` habilitado em r2 e r3. Vamos gerar duas classes de
+tráfego: UDP "VoIP" (porta destino no range RTP) e TCP "resto", e ver
+a prioridade decidir sob saturação.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — mangle no lab-r1.** Versão reduzida do padrão de dois
+passos (só voip e resto):
+
+```routeros
+/ip firewall mangle
+add chain=prerouting connection-state=new protocol=udp \
+    dst-port=10000-20000 action=mark-connection \
+    new-connection-mark=conn-voip passthrough=yes
+add chain=prerouting connection-mark=conn-voip action=mark-packet \
+    new-packet-mark=pkt-voip passthrough=no
+add chain=prerouting action=mark-packet new-packet-mark=pkt-resto \
+    passthrough=no
+```
+
+**Passo 2 — a árvore, com gargalo apertado de propósito** (10M para a
+saturação ser fácil), na interface para a `lab-b`:
+
+```routeros
+/queue tree
+add name=down-total parent=ether3 max-limit=10M
+add name=down-voip parent=down-total packet-mark=pkt-voip \
+    priority=1 limit-at=2M max-limit=10M
+add name=down-resto parent=down-total packet-mark=pkt-resto \
+    priority=8 limit-at=1M max-limit=10M
+```
+
+**Passo 3 — sature com "resto".** Do lab-r3, um teste TCP longo contra
+o lab-r2 (`direction=receive duration=120s`) — o download atravessa o
+lab-r1 e satura os 10M. Confirme no lab-r1:
+
+```routeros
+/queue tree print stats
+```
+
+`down-resto` com `rate≈9.9M`, `queued-packets` alto; `down-voip`
+zerada.
+
+**Passo 4 — o VoIP fura a fila.** Com o teste TCP ainda rodando,
+dispare do lab-r3 um segundo teste, agora UDP na faixa marcada
+(simula o fluxo RTP):
+
+```routeros
+/tool bandwidth-test address=172.16.1.2 protocol=udp direction=receive \
+    local-udp-tx-size=200 remote-udp-tx-size=200 \
+    user=vitor password=Lab!Segura2026
+```
+
+No `print stats`: `down-voip` sobe na hora (o UDP flui), e
+`down-resto` **cede** exatamente o que o VoIP pediu — a soma cravada
+nos 10M do pai. Pare o UDP: o resto reocupa em segundos.
+
+**Passo 5 — prove que era a prioridade.** Inverta
+(`set down-voip priority=8` e `set down-resto priority=1`) e repita o
+Passo 4: agora é o "VoIP" que espera na fila (rate baixo, drops) — o
+tráfego é o mesmo; a política mudou. Restaure ao final.
+
+### Verificação
+
+1. `/queue tree print stats` mostra os contadores subindo nas classes
+   certas (marcas do mangle funcionando — se tudo cai em `pkt-resto`,
+   revise portas/ordem das regras);
+2. Sob saturação, a chegada do tráfego prioritário **desloca** o resto
+   sem estourar o teto do pai;
+3. Com prioridades invertidas, o comportamento inverte — mesma carga,
+   política oposta;
+4. `queued-packets` alto no resto e baixo no voip durante a disputa —
+   a latência foi para quem aguenta.
+
+### Desafios
+
+1. As regras de classificação do Passo 1 usam
+   `connection-state=new`, mas a regra de `mark-packet` roda para
+   **todo** pacote. Um colega propõe "economizar" marcando pacote
+   também só em `new`. O que quebraria?
+2. Um provedor marcou VoIP por `dst-port=5060` apenas (SIP) e reclama
+   que "a priorização não funciona: as chamadas continuam picotando
+   sob carga". As chamadas *sinalizam* mas o áudio pica. O que ele
+   esqueceu de classificar, e por que a chamada "completa" mesmo assim?
+3. Na árvore do POP (`down-total=90M`), a classe `down-resto` tem
+   `limit-at=10M`. Durante um ataque de download em massa
+   (resto saturado), usuários reclamam que "até o DNS demora". O
+   `down-interativo` tem `limit-at=5M priority=2`. Use a mecânica
+   HTB para explicar por que o DNS **não deveria** estar sofrendo — e
+   o que investigar se sofre (dica: a marca está certa?).
+4. Queue tree numa interface **bridge** (o cenário do CPE do cliente,
+   @sec-bridge-offload) tem uma pegadinha famosa: o tráfego
+   encaminhado em L2 com hardware offload nem passa pelo CPU. O que é
+   preciso aceitar (ou perder) para enfileirar ali — e por que no
+   concentrador PPPoE esse problema não existe?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** A marca de **pacote** não é persistente — cada pacote nasce sem
+ela e precisa ser marcado individualmente (é a marca de **conexão**
+que persiste no conntrack). Marcando pacote só em `new`, apenas o
+primeiro pacote de cada conexão entraria na classe certa; todos os
+demais cairiam em `pkt-resto` — a árvore veria 99,9% do tráfego como
+resto. A economia real já está feita: a regra de pacote casa por
+`connection-mark` (leitura barata), não por portas.
+
+**2.** Esqueceu o **RTP** — o áudio. SIP (5060) é só a sinalização:
+convite, toque, desligar; a mídia viaja em UDP de portas altas
+negociadas na própria sinalização (tipicamente 10000–20000, ou a faixa
+que o PABX/operadora usar). A chamada completa porque a sinalização
+está priorizada e é levíssima; o áudio pica porque compete como
+`pkt-resto`. Classificar VoIP = SIP **e** a faixa RTP (como no texto).
+
+**3.** Pela mecânica, impossível o interativo passar fome: seu
+`limit-at=5M` é servido **antes** de qualquer sobra ir ao resto, e
+DNS mal usa kilobits. Se o DNS sofre, o mais provável é que os pacotes
+**não estão na classe** `down-interativo`: consultas indo a um
+resolver externo por TCP/853 (DoT) ou 443 (DoH) não casam com
+`udp/53` — e caem no resto saturado. `print stats` (classe interativa
+zerada?) + `/ip firewall mangle print stats` confirmam. Moral:
+priorização erra silenciosamente quando a **classificação** envelhece.
+
+**4.** Para a queue tree ver o tráfego da bridge, ele precisa subir ao
+CPU: `use-ip-firewall=yes` nas configurações da bridge (e aceitar a
+perda do **hardware offload** — todo o encaminhamento vira software,
+@sec-bridge-offload). O custo pode ser proibitivo num switch. No
+concentrador PPPoE o problema não existe porque o tráfego de cada
+assinante **já** termina túneis no CPU (é roteado, não switchado) —
+mais uma razão estrutural para o QoS de provedor morar no BNG.
+:::
+
+## Resumo
+
+- **Mangle classifica, queue tree executa**: o padrão de dois passos
+  (mark-connection em `new` → mark-packet por connection-mark) marca
+  com custo mínimo de CPU; `passthrough` calibrado evita passeios
+  inúteis pela lista;
+- **Queue tree** = HTB puro na interface de **saída** (uma árvore por
+  sentido), casando pacotes por packet-mark; sob o teto do pai, cada
+  classe recebe seu `limit-at` e a sobra segue a `priority` (1
+  primeiro);
+- Prioridade decide **quem espera quando falta** — garantias decidem o
+  mínimo de cada classe; resto com garantia não morre de fome;
+- Classificação envelhece (portas mudam, DoH existe, RTP não é SIP):
+  audite `print stats` — classe zerada é sintoma de marca errada;
+- As duas camadas do provedor convivem: fila por assinante no
+  concentrador (plano) + árvore por tipo no agregado (prioridade).
+
+Falta escalar: uma fila **por cliente**, para milhares de clientes,
+sem criar milhares de filas à mão — o **PCQ**, no próximo e último
+capítulo do volume (@sec-pcq-escala).
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *Mangle*, *Queue Trees* e *HTB*
+  [@mikrotik-docs];
+- Disciplinas de fila e priorização: [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- QoS em provedores MikroTik: [@burgess-mikrotik].
