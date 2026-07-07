@@ -1,7 +1,268 @@
-# GRE, EoIP, L2TP/SSTP e ZeroTier
+# GRE, EoIP, L2TP/SSTP e ZeroTier {#sec-gre-eoip}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Montar **GRE** para transportar roteamento (OSPF/BGP) entre POPs e
+  **cifrá-lo** com IPsec — o desenho recomendado do @sec-ipsec;
+- Usar **EoIP** para estender **camada 2** (uma bridge/VLAN) entre
+  sites, e saber quando isso é bom (e quando é perigoso);
+- Configurar **L2TP/IPsec** e **SSTP** para **acesso remoto** —
+  incluindo o SSTP rodando em TCP/443 para furar firewalls;
+- Entender **ZeroTier** como malha gerenciada que atravessa CGNAT/NAT
+  sem IP público em nenhum lado;
+- Escolher, entre todos, a ferramenta certa para "transportar
+  roteamento", "esticar L2" e "acesso remoto" — e respeitar o MTU.
 :::
+
+WireGuard (@sec-wireguard) e IPsec (@sec-ipsec) cifram **camada 3**. Mas
+o provedor tem necessidades que eles não cobrem sozinhos: **transportar
+um protocolo de roteamento** por uma interface, **estender uma LAN** de
+um POP a outro (camada 2), dar **acesso remoto** a quem só tem um cliente
+VPN comum, ou conectar caixas que **não têm IP público**. Este capítulo
+reúne os túneis que resolvem esses casos — cada um com seu nicho.
+
+## GRE: a interface para transportar roteamento
+
+O **GRE** (*Generic Routing Encapsulation*) encapsula IP dentro de IP e,
+crucialmente, **cria uma interface** de túnel ponto a ponto. Isso é o que
+faltava no IPsec policy-based: com uma interface, você roda **OSPF/BGP
+por cima** (@sec-ospf-basico). O GRE **não cifra** — então o par de
+produção é **GRE + IPsec**.
+
+```routeros
+# POP-A: interface GRE ponto a ponto
+/interface gre
+add name=gre-ab remote-address=<publico-B> local-address=<publico-A>
+/ip address add address=10.255.1.1/30 interface=gre-ab
+
+# cifrar o GRE com IPsec (o campo ipsec-secret liga os dois)
+/interface gre set gre-ab ipsec-secret="Ch@ve-GRE-2026"
+```
+
+O `ipsec-secret` faz o RouterOS montar **automaticamente** a policy
+IPsec que protege esse GRE — a forma mais limpa de ter "GRE cifrado".
+Com a interface `gre-ab` de pé, o OSPF a trata como qualquer enlace PtP
+(`type=ptp`). É o alicerce do @sec-interligacao-pops.
+
+## EoIP: esticar a camada 2 entre sites
+
+O **EoIP** (*Ethernet over IP*, proprietário MikroTik) transporta
+**quadros Ethernet** — camada 2 — dentro de IP. O resultado: dois sites
+distantes ficam no **mesmo domínio de broadcast**, como se um cabo
+ligasse as bridges. Útil para levar uma VLAN de gerência a um POP remoto,
+ou unir dois pontos que precisam de L2 comum.
+
+```routeros
+# EoIP e adição à bridge (os dois lados na mesma bridge = mesma L2)
+/interface eoip
+add name=eoip-ab remote-address=<publico-B> tunnel-id=100 ipsec-secret="Ch@ve-EoIP"
+/interface bridge port add bridge=br-gerencia interface=eoip-ab
+```
+
+::: {.callout-warning}
+Estender camada 2 é **poderoso e perigoso**. Você une domínios de
+broadcast: uma tempestade de broadcast, um loop de STP ou um DHCP rogue
+em um POP **contamina o outro**. Use EoIP com parcimônia, sempre com
+**STP** ativo, e prefira **rotear** (L3) a **esticar** (L2) sempre que
+possível. L2 estendido é a última opção, não a primeira.
+:::
+
+## L2TP e SSTP: acesso remoto
+
+Para dar **acesso remoto** a um técnico ou a um cliente com cliente VPN
+padrão (Windows, celular), dois protocolos servem:
+
+- **L2TP/IPsec**: L2TP puro **não cifra**; na prática usa-se sempre
+  **L2TP sobre IPsec**. Amplamente suportado por sistemas operacionais,
+  bom para "VPN de acesso" clássica;
+- **SSTP**: roda sobre **TLS em TCP/443** — logo, **atravessa quase
+  qualquer firewall/proxy** (parece HTTPS). É a escolha quando o técnico
+  está numa rede hostil que bloqueia UDP e portas de VPN. Precisa de
+  **certificado** no servidor.
+
+```routeros
+# servidor L2TP com IPsec (use-ipsec) e pool para os clientes
+/interface l2tp-server server set enabled=yes use-ipsec=yes ipsec-secret="Ch@ve-L2TP"
+/ppp secret add name=tecnico1 service=l2tp password="senha-forte" profile=default
+
+# servidor SSTP (TCP/443) — exige certificado
+/interface sstp-server server set enabled=yes certificate=cert-sstp port=443
+```
+
+Note o reuso do que você já sabe: L2TP e SSTP são **serviços PPP**
+(@sec-pppoe-server) — usam `ppp secret`/profiles/pools exatamente como o
+PPPoE, e podem autenticar por **RADIUS** (@sec-radius-userman). Acesso
+remoto é PPPoE "pela internet".
+
+## ZeroTier: malha que atravessa NAT
+
+E quando **nenhum** dos lados tem IP público — os dois atrás de CGNAT?
+Os túneis anteriores precisam de alguém "alcançável" para iniciar. O
+**ZeroTier** resolve com uma **malha gerenciada na nuvem**: os nós se
+registram num controlador (ZeroTier Central), que os ajuda a **furar o
+NAT** dos dois lados (hole punching) e a formar uma rede virtual L2/L3.
+Ideal para gerência de CPEs e roteadores sem IP público.
+
+```routeros
+# habilitar ZeroTier e juntar-se a uma rede (ID vem do painel ZeroTier)
+/zerotier set zt1 comment="malha de gerencia"
+/zerotier interface add network=<network-id> instance=zt1
+```
+
+O trade-off: você depende de um **serviço externo** (o controlador na
+nuvem) e de uma conta ZeroTier. Para gerência, costuma valer; para
+tráfego crítico de produção, prefira túneis que você controla ponta a
+ponta.
+
+## Escolhendo entre eles
+
+| Necessidade | Escolha | Por quê |
+|---|---|---|
+| Rodar OSPF/BGP cifrado entre POPs | **GRE + IPsec** | Interface + criptografia |
+| Esticar VLAN/L2 entre sites | **EoIP (+IPsec)** | Transporta Ethernet |
+| Acesso remoto de técnico/cliente | **L2TP/IPsec** ou **SSTP** | Cliente VPN padrão; SSTP fura firewall |
+| Ambos os lados atrás de CGNAT | **ZeroTier** | Malha na nuvem fura o NAT |
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Estes túneis preenchem os nichos que WireGuard/IPsec sozinhos não cobrem:
+**GRE** dá a **interface** para roteamento dinâmico (cifre com IPsec);
+**EoIP** estende **camada 2** (com o risco de unir domínios de
+broadcast — use com cuidado); **L2TP/SSTP** dão **acesso remoto** com
+cliente padrão (SSTP fura firewall em 443); **ZeroTier** conecta quem
+**não tem IP público**. A regra de escolha é sempre a mesma do
+@sec-panorama-tuneis: **que camada** e **cifra ou não** — e, em todos,
+respeite o **MTU/MSS**.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Dois CHRs (@sec-lab-chr) como POPs (**lab-a**, **lab-b**) com IPs
+"públicos" alcançáveis e uma LAN interna cada. Um terceiro CHR
+**lab-tec** simula o "técnico remoto" para o acesso L2TP/SSTP. O foco é
+GRE+IPsec (transportar roteamento) e um serviço de acesso remoto.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — GRE cifrado entre os POPs.** No lab-a (e espelho no lab-b):
+
+```routeros
+/interface gre add name=gre-ab remote-address=<publico-b> ipsec-secret="lab-gre"
+/ip address add address=10.255.1.1/30 interface=gre-ab
+```
+
+No lab-b: `10.255.1.2/30` e `remote-address=<publico-a>`.
+
+**Passo 2 — OSPF sobre o GRE.** Rode OSPF (@sec-ospf-basico) na interface
+`gre-ab` dos dois lados (`type=ptp`) e confirme a adjacência `Full` — o
+roteamento dinâmico viajando cifrado.
+
+```routeros
+/routing ospf interface-template add interfaces=gre-ab area=backbone type=ptp
+/routing ospf neighbor print
+```
+
+**Passo 3 — prove que está cifrado.** Verifique que o IPsec subiu
+automaticamente com o GRE:
+
+```routeros
+/ip ipsec active-peers print
+```
+
+**Passo 4 — acesso remoto SSTP.** No lab-a, habilite o SSTP-server (com
+um certificado autoassinado para o lab) e crie um usuário; no lab-tec,
+conecte como cliente SSTP e alcance a LAN do POP.
+
+```routeros
+/interface sstp-server server set enabled=yes certificate=cert-lab
+/ppp secret add name=tecnico service=sstp password="lab-forte"
+```
+
+**Passo 5 — MSS clamp.** Aplique o clamp (@sec-panorama-tuneis) nas
+interfaces de túnel e teste uma transferência maior entre as LANs.
+
+### Verificação
+
+1. GRE de pé, com **IPsec ativo** (cifrado) — `active-peers` mostra a SA;
+2. OSPF forma adjacência `Full` **sobre** o GRE (roteamento dinâmico
+   cifrado);
+3. O técnico remoto conecta por SSTP e alcança a LAN do POP;
+4. Com MSS clamp, transferências grandes não travam.
+
+### Desafios
+
+1. Você montou o GRE e o OSPF formou adjacência, mas quer garantir que
+   ninguém no caminho leia o tráfego. Como confirma que o GRE está
+   **realmente** cifrado, e o que aconteceria sem o `ipsec-secret`?
+2. Um técnico esticou por **EoIP** a VLAN de gerência de dois POPs e,
+   dias depois, um loop em um POP derrubou a gerência **dos dois**.
+   Explique o mecanismo e duas medidas que teriam contido o estrago.
+3. Um cliente corporativo em viagem precisa de VPN, mas a rede do hotel
+   bloqueia UDP e portas de VPN — só deixa passar navegação web. Qual
+   protocolo deste capítulo funciona, e por quê?
+4. Você precisa gerenciar 200 CPEs, **todos** atrás de CGNAT, sem IP
+   público em nenhum. Qual solução do capítulo se aplica, qual é o
+   trade-off que você aceita, e por que os túneis "clássicos" não
+   servem aqui?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Confirme com `/ip ipsec active-peers print` e `installed-sa` — se
+há SA ativa para os endpoints do GRE e os contadores sobem, o tráfego vai
+cifrado. **Sem** o `ipsec-secret`, o GRE transporta tudo **em claro**:
+qualquer um no caminho (a operadora de trânsito, um atacante no meio)
+lê o conteúdo, incluindo os pacotes OSPF. GRE puro **não** protege nada.
+
+**2.** EoIP uniu os **domínios de broadcast** dos dois POPs; um loop de
+camada 2 num POP gera tempestade de broadcast que atravessa o túnel e
+satura a gerência **do outro** também. Contenção: (a) **STP** ativo na
+bridge (detecta e bloqueia o loop); (b) limitar/segmentar o que trafega
+no L2 estendido (ou, melhor, **rotear** em vez de esticar). L2 estendido
+propaga falhas — por isso é a última opção.
+
+**3.** **SSTP**: roda sobre **TLS em TCP/443**, indistinguível de HTTPS.
+Como o hotel libera navegação web (443), o SSTP passa onde L2TP/IPsec
+(UDP 500/4500) e WireGuard (UDP) são bloqueados. É a razão de existir do
+SSTP: atravessar firewalls restritivos.
+
+**4.** **ZeroTier**: forma uma malha gerenciada na nuvem que **fura o
+NAT** dos dois lados via hole punching, então funciona mesmo com todos os
+CPEs atrás de CGNAT sem IP público. Trade-off aceito: **dependência de um
+serviço externo** (o controlador ZeroTier) e de uma conta. Os túneis
+clássicos (WireGuard peer fixo, IPsec, GRE, SSTP) precisam que **um**
+lado seja alcançável de fora — o que não existe quando ambos estão atrás
+de CGNAT.
+:::
+
+## Resumo
+
+- **GRE** cria **interface** para roteamento dinâmico entre POPs; **não
+  cifra** — use **GRE + IPsec** (`ipsec-secret`), o desenho recomendado;
+- **EoIP** estende **camada 2** (mesmo domínio de broadcast) — poderoso
+  e **perigoso**: STP obrigatório, prefira rotear a esticar;
+- **L2TP/IPsec** e **SSTP** dão **acesso remoto** com cliente VPN padrão
+  (reusam PPP/RADIUS); **SSTP** em TCP/443 **fura firewalls**;
+- **ZeroTier** conecta caixas **sem IP público** (ambos atrás de CGNAT),
+  ao custo de depender de um controlador na nuvem;
+- Escolha por camada + criptografia, e **respeite o MTU/MSS** em todos.
+
+Com o arsenal completo de túneis, o volume fecha aplicando tudo ao
+problema real do provedor: **interligar POPs** de forma resiliente e
+cifrada, com roteamento dinâmico por cima. É o @sec-interligacao-pops.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *GRE, EoIP, L2TP, SSTP, ZeroTier* do RouterOS
+  [@mikrotik-docs];
+- Encapsulamento L2/L3 e VPN de acesso: [@tanenbaum-redes];
+- Túneis no v7 na prática: [@discher-rosv7];
+- Interligação e acesso remoto em provedores: [@burgess-mikrotik].
