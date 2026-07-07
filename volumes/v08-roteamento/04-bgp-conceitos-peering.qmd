@@ -1,7 +1,338 @@
-# BGP: conceitos e peering
+# BGP: conceitos e peering {#sec-bgp-basico}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que é um **AS** (Sistema Autônomo), o que é ASN público e
+  por que o BGP é o protocolo que **cola a internet**;
+- Distinguir **eBGP** (com a operadora/IX) de **iBGP** (dentro do seu
+  AS) e saber por que os dois existem;
+- Entender o **processo de decisão** do BGP (o caminho mais curto em
+  ASNs não é o único critério) e os atributos que você mais usa:
+  `local-pref`, AS-path, `MED`;
+- Configurar uma sessão BGP no RouterOS **v7** (`connection`,
+  `template`) e anunciar seu bloco com segurança;
+- Ler o estado de uma sessão (`/routing bgp session print`) e
+  diagnosticar por que ela **não sobe** ou **não troca prefixos**.
 :::
+
+Até agora a rede olhava só para dentro: OSPF distribui o que **é seu**.
+Mas para o provedor existir na internet ele precisa **anunciar seus
+prefixos ao mundo** e **aprender o caminho para todos os outros** —
+isso é trabalho do **BGP** (*Border Gateway Protocol*), o protocolo de
+roteamento **entre** organizações. Enquanto o OSPF pergunta "qual o
+menor caminho *dentro* da minha rede?", o BGP pergunta "por qual
+**vizinho** eu alcanço aquele destino lá fora, e qual política eu
+aplico a essa escolha?".
+
+## AS, ASN e a lógica do BGP
+
+A internet é um conjunto de **Sistemas Autônomos** (AS): cada operadora,
+provedor ou grande empresa é um AS, identificado por um **ASN** (número
+de 32 bits, atribuído pelo registro regional — no Brasil, o
+**NIC.br/LACNIC**). Seu provedor, para rodar BGP de verdade, precisa de
+**ASN próprio e bloco IP próprio** (PI — *provider independent*).
+
+O BGP não pensa em "custo de enlace" como o OSPF. Ele pensa em
+**caminhos de AS** (*AS-path*): "para chegar no prefixo X, o caminho
+passa pelos AS 65010 → 65001 → destino". A partir daí, aplica
+**política** — e é aí que mora a arte. O BGP é um protocolo de
+*policy*, não de métrica.
+
+```{.tikz}
+%%| filename: fig-bgp-as
+%%| alt: Três sistemas autônomos. No centro, o AS do provedor (AS 65010) com dois roteadores de borda ligados por iBGP. À esquerda, a operadora de trânsito (AS 65001) conectada por eBGP. À direita, um IX com outro provedor (AS 65020), também por eBGP. Setas mostram o provedor anunciando seu bloco para os dois vizinhos.
+\begin{tikzpicture}[
+  font=\small,
+  rt/.style={draw, circle, fill=manualblue!20, minimum size=10mm, align=center, inner sep=1pt},
+  ext/.style={draw, circle, fill=manualgray!25, minimum size=11mm, align=center, inner sep=1pt},
+]
+\node[rt] (b1) at (0,1.1)  {borda1};
+\node[rt] (b2) at (0,-1.1) {borda2};
+\draw[thick, manualgreen!60!black] (b1) -- node[right]{\scriptsize iBGP} (b2);
+\draw[dashed, manualblue!60!black, rounded corners] (-1,-2) rectangle (1,2);
+\node[manualblue!60!black] at (0,2.35) {\scriptsize AS 65010 — seu provedor};
+% transito
+\node[ext] (op) at (-4,0) {operadora\\AS 65001};
+\draw[thick] (op) -- node[above, sloped]{\scriptsize eBGP} (b1);
+% IX
+\node[ext] (ix) at (4,0) {provedor\\AS 65020};
+\draw[thick] (ix) -- node[above, sloped]{\scriptsize eBGP (IX)} (b2);
+% anuncio
+\draw[-{Stealth}, destaque, manualred] (-1,1.4) to[bend left=20] (op.east);
+\draw[-{Stealth}, destaque, manualred] (1,-1.4) to[bend right=20] (ix.west);
+\node[manualred] at (0,-2.7) {\scriptsize seu bloco anunciado aos dois vizinhos};
+\end{tikzpicture}
+```
+
+::: {#fig-bgp-as}
+O provedor (AS 65010) fala **eBGP** com dois vizinhos externos — uma
+operadora de trânsito e um par no IX — e **iBGP** entre seus próprios
+roteadores de borda, para que os dois concordem sobre o que aprenderam
+de fora. Anunciar o próprio bloco aos vizinhos é o que coloca o
+provedor "no mapa" da internet.
+:::
+
+## eBGP e iBGP: dois sabores, um protocolo
+
+- **eBGP** (*external*): sessão entre **ASNs diferentes** — você e a
+  operadora, você e um par no IX. É por aqui que entra a *default* (ou a
+  tabela cheia) e por onde sai o seu anúncio. TTL curto (vizinho
+  diretamente conectado, em geral);
+- **iBGP** (*internal*): sessão entre roteadores do **mesmo AS**. Serve
+  para os seus roteadores de borda **combinarem** o que cada um aprendeu
+  do mundo externo. Regra crucial: o que um roteador aprende por iBGP
+  ele **não repassa** a outro peer iBGP (prevenção de loop) — por isso
+  iBGP clássico exige **malha completa** (*full mesh*) ou um
+  **route-reflector** quando a rede cresce.
+
+Uma sutileza que derruba iniciantes: o iBGP **não instala** rota se o
+*next-hop* não for alcançável pela IGP. É por isso que **OSPF e BGP
+trabalham juntos**: o OSPF (capítulo anterior) leva os loopbacks e
+enlaces internos, e o iBGP roda **sobre** esses loopbacks. OSPF é o
+esqueleto; BGP é a pele que toca o mundo.
+
+## Como o BGP decide
+
+Quando o BGP conhece **vários** caminhos para o mesmo prefixo, ele
+escolhe **um** por uma lista ordenada de critérios. Os que você
+realmente ajusta no dia a dia:
+
+1. **`local-preference`** (maior vence): política **de saída** —
+   "prefiro sair pela operadora A". Vale só dentro do seu AS;
+2. **AS-path mais curto** (menos ASNs): o desempate "natural" do BGP;
+3. **origem / MED**: o **MED** sugere ao vizinho por qual dos **seus**
+   enlaces ele deveria **entrar** — uma dica, que o outro lado pode
+   ignorar;
+4. **eBGP sobre iBGP**, depois menor custo IGP até o next-hop, e por fim
+   critérios de desempate (menor router-id).
+
+Para influenciar o tráfego **que sai**, você mexe em `local-pref`
+(dentro de casa). Para influenciar o que **entra**, você trabalha o
+**AS-path prepend** e communities (@sec-bgp-filtros) — porque a decisão
+final de entrada é do **outro** AS, não sua.
+
+## Configurando BGP no RouterOS v7
+
+O v7 reescreveu o BGP: some o `instance`, entram **`connection`**
+(a sessão) e **`template`** (parâmetros reutilizáveis). Uma sessão de
+trânsito eBGP:
+
+```routeros
+# template com o essencial do NOSSO lado
+/routing bgp template
+add name=t-transito as=65010 router-id=10.255.0.1 \
+    output.network=203.0.113.0/24 \
+    address-families=ip
+
+# a rede que vamos anunciar precisa existir como rota (agregado/estática)
+/ip route add dst-address=203.0.113.0/24 type=blackhole comment="agregado anunciado ao BGP"
+
+# a sessão eBGP com a operadora
+/routing bgp connection
+add name=operadora template=t-transito \
+    remote.address=198.51.100.1 remote.as=65001 \
+    local.role=ebgp
+```
+
+- `as=65010`: **seu** ASN. `remote.as=65001`: o da operadora —
+  diferente, logo **eBGP**;
+- `output.network=203.0.113.0/24`: o bloco que você anuncia. A rota
+  **blackhole** correspondente garante que o prefixo exista na tabela
+  (o BGP só anuncia o que ele tem) — o truque padrão do
+  @sec-rotas-estaticas;
+- **jamais** anuncie sem filtro de saída em produção: o
+  @sec-bgp-filtros trata disso. Aqui, o mínimo para a sessão subir.
+
+Para **iBGP** entre suas bordas, `remote.as` é o **seu próprio** ASN e
+o `remote.address` é o **loopback** do par (alcançado via OSPF):
+
+```routeros
+/routing bgp connection
+add name=ibgp-borda2 template=t-transito \
+    remote.address=10.255.0.2 remote.as=65010 \
+    local.role=ibgp local.address=10.255.0.1
+```
+
+## Lendo e diagnosticando a sessão
+
+```routeros
+/routing bgp session print
+/ip route print where bgp
+```
+
+O estado que você quer é **`established`**. Se travar, o diagnóstico
+segue um roteiro curto:
+
+- **`connect`/`active` sem subir**: problema de **transporte** — não há
+  rota/alcance TCP/179 até o peer (firewall bloqueando, next-hop iBGP
+  sem OSPF), ou o `remote.address` está errado;
+- **sobe e cai (`idle`↔`established`)**: `remote.as` divergente, ou
+  temporizadores/`multihop` mal-configurados;
+- **`established` mas sem prefixos**: **filtro** barrando (in/out), ou
+  você não declarou `output.network`, ou o next-hop dos prefixos
+  recebidos é inalcançável (o clássico iBGP sem IGP).
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+BGP não é "OSPF do mundo externo" — é **política sobre caminhos de AS**.
+Ele cola ASNs, e você controla o tráfego com atributos, não com custo:
+`local-pref` para o que **sai**, prepend/communities para influenciar o
+que **entra**. Duas dependências que, se ignoradas, geram horas de
+diagnóstico: **iBGP precisa da IGP** (OSPF) para resolver next-hops, e
+**anúncio sem filtro é acidente esperando acontecer** (vazar prefixo
+alheio já tirou provedores do ar). O BGP dá poder; o próximo capítulo
+dá a disciplina.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Três CHRs (@sec-lab-chr) simulando ASNs distintos: **lab-r1** = seu
+provedor (**AS 65010**), com bloco `203.0.113.0/24`; **lab-r2** =
+operadora de trânsito (**AS 65001**), com um bloco `198.18.0.0/24`
+para fingir "a internet"; **lab-r3** = seu **segundo roteador de
+borda** (também AS 65010), para o iBGP. r1–r2 por eBGP; r1–r3 por
+iBGP sobre loopbacks (rodando OSPF, como no @sec-ospf-basico).
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — eBGP com a "operadora".** No lab-r1:
+
+```routeros
+/ip route add dst-address=203.0.113.0/24 type=blackhole
+/routing bgp connection
+add name=operadora as=65010 router-id=10.255.0.1 \
+    remote.address=<ip-r2> remote.as=65001 local.role=ebgp \
+    output.network=203.0.113.0/24 address-families=ip
+```
+
+No lab-r2, o espelho: `as=65001`, `remote.as=65010`, anunciando
+`198.18.0.0/24`.
+
+**Passo 2 — a sessão sobe?** No lab-r1:
+
+```routeros
+/routing bgp session print
+```
+
+Espere `established`. Se ficar em `active`, cheque alcance TCP/179
+(firewall) e o `remote.address`.
+
+**Passo 3 — trocaram prefixos?** Em cada lado:
+
+```routeros
+/ip route print where bgp
+```
+
+O lab-r1 deve ter aprendido `198.18.0.0/24` (via BGP, distância 20) e o
+lab-r2 deve ter aprendido `203.0.113.0/24`. Confirme com um ping
+entre os blocos.
+
+**Passo 4 — iBGP entre suas bordas.** Garanta OSPF de pé entre r1 e r3
+(loopbacks `10.255.0.1` e `.3` alcançáveis). No lab-r1:
+
+```routeros
+/routing bgp connection
+add name=ibgp-r3 as=65010 remote.address=10.255.0.3 remote.as=65010 \
+    local.role=ibgp local.address=10.255.0.1 address-families=ip
+```
+
+Espelhe em r3. Confirme que o lab-r3 **aprendeu** o `198.18.0.0/24` que
+veio da operadora **através** do r1 — a prova de que o iBGP propagou o
+externo por dentro do AS.
+
+**Passo 5 — quebre o next-hop de propósito.** No lab-r3, desligue o
+OSPF por um instante e veja a rota iBGP virar **inativa** (next-hop
+inalcançável). Religue o OSPF e ela reativa — a dependência OSPF↔iBGP ao
+vivo.
+
+### Verificação
+
+1. `session print` mostra `established` na sessão eBGP e na iBGP;
+2. lab-r1 aprende o bloco da operadora e vice-versa; ping cruzado passa;
+3. lab-r3 aprende o prefixo externo **via iBGP** (sem falar com a
+   operadora diretamente);
+4. Derrubar a IGP torna a rota iBGP inativa; restaurá-la reativa.
+
+### Desafios
+
+1. Sua sessão eBGP fica em `active` e nunca sobe. `ping` para o peer
+   funciona. Liste, em ordem de probabilidade, as causas e o comando
+   que confirma cada uma (pense na porta 179 e no `remote.as`).
+2. A sessão iBGP está `established`, mas o lab-r3 mostra o prefixo
+   externo como rota **inativa**. Ele não aprendeu errado — está tudo
+   "certo" no BGP. Qual é a peça que falta e por quê?
+3. Você tem **dois** links de trânsito (duas operadoras) e quer que
+   **todo o tráfego de saída** prefira a operadora A, deixando a B como
+   reserva. Qual atributo você ajusta, em que sentido, e por que ele
+   (e não o AS-path) é a ferramenta certa?
+4. Um estagiário anunciou, sem filtro de saída, **toda a tabela** que o
+   roteador tinha — incluindo prefixos da própria operadora aprendidos
+   por BGP. Descreva o estrago (você virou "trânsito" involuntário) e a
+   regra de ouro de filtro de saída que o teria evitado.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) **TCP/179 bloqueado** — o `ping` (ICMP) passa, mas o firewall
+pode barrar a 179; confirme com o contador da regra de firewall. (b)
+**`remote.as` divergente** — o que você configurou não bate com o ASN
+real do peer; confira com o outro lado. (c) `router-id`/`local.address`
+ausente ou conflitante. O `session print` costuma trazer a pista no
+campo de estado/último erro.
+
+**2.** O **next-hop é inalcançável pela IGP**. O iBGP passou o prefixo,
+mas manteve o next-hop original (o IP da operadora, do outro AS), que o
+lab-r3 não sabe alcançar por OSPF. Solução: **`next-hop-self`** no r1
+(reescreve o next-hop para o próprio loopback, que a IGP conhece) — a
+prática padrão em bordas iBGP.
+
+**3.** **`local-preference`**, aumentando-o nas rotas aprendidas da
+operadora A (maior local-pref vence, e ele é avaliado **antes** do
+AS-path na decisão). O AS-path não serve aqui porque é um atributo que
+influencia sobretudo o tráfego de **entrada** e depende do que os
+outros ASNs fazem; `local-pref` é **interno** e decide o que **sai** —
+exatamente o que o enunciado pede.
+
+**4.** Ao reanunciar prefixos aprendidos de A para B (e vice-versa),
+você se ofereceu como **trânsito grátis** entre as duas operadoras: o
+tráfego delas passaria a atravessar sua rede, estourando seus links e,
+pior, podendo desviar tráfego de terceiros (vazamento de rota, um
+incidente sério e público). Regra de ouro: **filtro de saída explícito
+que só anuncia os SEUS prefixos** (e, no IX, os de seus clientes) —
+`reject` para todo o resto. É o tema do @sec-bgp-filtros.
+:::
+
+## Resumo
+
+- **BGP** cola ASNs: cada provedor é um **AS** (ASN + bloco próprios) e
+  o BGP escolhe **caminhos de AS** aplicando **política**, não custo de
+  enlace;
+- **eBGP** fala com outro AS (operadora, IX); **iBGP** alinha seus
+  próprios roteadores — e **depende da IGP** (OSPF) para resolver
+  next-hops (`next-hop-self` na borda);
+- **Decisão**: `local-pref` (o que **sai**), AS-path, MED (dica de
+  entrada) — para o que **entra**, trabalha-se prepend/communities;
+- No **v7**: `template` + `connection` (`local.role=ebgp|ibgp`);
+  anuncie via `output.network` com a rota (blackhole) correspondente;
+- Diagnóstico: `session print` (`established`), estados `active` =
+  transporte/ASN, sem prefixos = filtro ou next-hop inalcançável.
+
+Uma sessão que sobe é só o começo: sem **filtros**, BGP é perigoso. O
+próximo capítulo (@sec-bgp-filtros) transforma o peering em política de
+verdade — o que anunciar, o que aceitar, e como não virar trânsito de
+ninguém.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *BGP* do RouterOS v7 [@mikrotik-docs];
+- Roteamento interdomínio, AS-path e política: [@tanenbaum-redes];
+- BGP no v7 na prática: [@discher-rosv7];
+- BGP em provedores: [@burgess-mikrotik].
