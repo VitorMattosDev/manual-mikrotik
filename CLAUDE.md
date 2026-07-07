@@ -109,6 +109,29 @@ Convenções de código RouterOS:
 - Um capítulo por sessão; `/clear` entre capítulos; `/compact` a ~80% de
   contexto.
 
+### Pipeline por capítulo e por volume
+
+Por **capítulo** (numeração dos commits é GLOBAL, contínua entre volumes):
+
+1. `Read` do stub → `Write` do capítulo (anatomia do gabarito);
+2. `quarto render volumes/<vol>/<cap>.qmd --to html` — WARNs de crossref
+   para capítulos ainda não escritos são aceitáveis; erro de TikZ/fence não;
+3. Marcar `[x]` no ROADMAP.md e `git commit -m "cap NN: <título>"`.
+
+Ao **abrir volume novo**: adicionar o bloco `part:` no `_quarto.yml` e criar
+stubs "Em construção" para TODOS os capítulos do volume (o render completo
+precisa ficar verde).
+
+Ao **fechar volume** (último capítulo commitado):
+
+1. `quarto render` completo (HTML + PDF) — os WARNs de crossref do volume
+   devem ter sumido (exceto âncoras prometidas a volumes futuros);
+2. `git push origin main` — dispara o deploy do Pages;
+3. **Verificar o deploy**: `gh run list --workflow=publish.yml --limit 1`
+   até `completed/success`, depois conferir que o site respondeu
+   (`curl -s -o /dev/null -w "%{http_code}" https://vitormattosdev.github.io/manual-mikrotik/`
+   → 200). Só então abrir o volume seguinte.
+
 ## Commits
 
 - Formato: `cap NN: <título curto>` (ex.: `cap 03: licenças e RouterBOOT`);
