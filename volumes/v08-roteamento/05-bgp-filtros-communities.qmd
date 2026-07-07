@@ -1,7 +1,366 @@
-# BGP: filtros e communities
+# BGP: filtros, communities e segurança {#sec-bgp-filtros}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Escrever **routing filters** do v7 para BGP: cadeias `in`/`out`,
+  ordem das regras, `accept`/`reject` e ações que **modificam**
+  atributos;
+- Construir o **filtro de saída mínimo seguro** (anuncie só o que é
+  seu) e o **filtro de entrada** (não aceite bogons nem prefixo seu de
+  volta);
+- Usar **communities** para marcar rotas e disparar políticas (blackhole
+  na operadora, no-export, seleção de saída);
+- Fazer **AS-path prepend** para influenciar o tráfego de **entrada** e
+  balancear dois trânsitos;
+- Entender, em nível conceitual, **RPKI/ROA** e por que a validação de
+  origem virou obrigatória.
 :::
+
+O @sec-bgp-basico subiu as sessões e já cravou o aviso: **BGP sem
+filtro é perigoso**. Anunciar demais transforma você em trânsito de
+graça; aceitar demais deixa qualquer vizinho sequestrar destinos. Este
+capítulo é sobre **política** — a parte do BGP que realmente importa em
+produção. No v7, tudo passa pelos **routing filters**, e é neles que se
+constrói um provedor que não sai no noticiário por vazamento de rota.
+
+## Routing filters: firewall de rotas
+
+Um *routing filter* é uma **cadeia** de regras avaliadas em ordem, do
+topo para baixo, com a mesma lógica *first-match* do firewall
+(@sec-chains-firewall): a primeira regra que casa e decide (`accept`/`reject`)
+encerra. Cada `connection` referencia uma cadeia de entrada
+(`input.filter`) e/ou de saída (`output.filter`).
+
+```routeros
+/routing filter rule
+add chain=bgp-out-transito rule="if (dst==203.0.113.0/24) { accept }"
+add chain=bgp-out-transito rule="reject"
+```
+
+A gramática das regras é uma minilinguagem: condições (`if (...)`),
+ações entre chaves e `accept`/`reject`/`return`. Você casa por prefixo
+(`dst in 100.64.0.0/10`), por AS-path, por community, e **modifica**
+atributos antes de aceitar:
+
+```routeros
+add chain=bgp-in-transito \
+    rule="if (dst in 0.0.0.0/0) { set bgp-local-pref 200; accept }"
+```
+
+::: {.callout-warning}
+Toda cadeia de filtro **precisa terminar** com uma política explícita.
+Uma cadeia sem `reject` final tem comportamento de *default* que varia e
+já causou vazamentos. Regra de ouro: **última linha sempre `reject`
+(ou `accept`) consciente** — nunca deixe a decisão ao acaso.
+:::
+
+## O filtro de saída mínimo seguro
+
+Este é **o** filtro que todo provedor precisa ter antes de ligar um
+eBGP em produção. A regra é simples de dizer e crítica de cumprir:
+**anuncie apenas os seus próprios prefixos** (e, se você é trânsito de
+clientes, os deles) — `reject` para todo o resto.
+
+```routeros
+/routing filter rule
+# só os prefixos que são MEUS (o bloco PI do provedor)
+add chain=bgp-out rule="if (dst==203.0.113.0/24) { accept }"
+add chain=bgp-out rule="if (dst==2001:db8:aaaa::/32) { accept }"
+# tudo mais: NÃO anuncie (nada de reanunciar o que aprendi de trânsito!)
+add chain=bgp-out rule="reject"
+```
+
+Sem esse `reject`, um prefixo aprendido da operadora A poderia ser
+reanunciado para a operadora B — e você vira **trânsito involuntário**,
+o incidente descrito no capítulo anterior. O filtro de saída explícito é
+a **cinta de segurança** do BGP.
+
+## O filtro de entrada: bogons e o próprio bloco
+
+Na entrada, três higienes valem para qualquer sessão eBGP:
+
+1. **Rejeitar bogons** — prefixos que **nunca** deveriam vir de fora:
+   RFC1918 (`10/8`, `172.16/12`, `192.168/16`), `100.64/10` (CGNAT),
+   default de quem não deveria mandá-la, prefixos muito específicos
+   (mais longos que `/24` em IPv4);
+2. **Rejeitar o seu próprio bloco de volta** — se alguém te anuncia o
+   `203.0.113.0/24`, é erro ou ataque;
+3. **Marcar o que entra** com `local-pref` conforme a política (trânsito
+   com pref menor que peering no IX, por exemplo).
+
+```routeros
+/routing filter rule
+add chain=bgp-in rule="if (dst in 10.0.0.0/8)     { reject }"
+add chain=bgp-in rule="if (dst in 172.16.0.0/12)  { reject }"
+add chain=bgp-in rule="if (dst in 192.168.0.0/16) { reject }"
+add chain=bgp-in rule="if (dst in 100.64.0.0/10)  { reject }"
+add chain=bgp-in rule="if (dst==203.0.113.0/24)   { reject }"
+add chain=bgp-in rule="if (dst-len > 24)          { reject }"
+add chain=bgp-in rule="accept"
+```
+
+## Communities: etiquetas que disparam política
+
+Uma **community** é uma etiqueta (`ASN:valor`) que você prende numa rota
+para **sinalizar intenção**. Dois papéis:
+
+- **Você marca** para organizar sua própria política (ex.: `65010:100`
+  = "aprendi no IX", `65010:200` = "aprendi de trânsito") e depois
+  decide por community nos filtros;
+- **A operadora publica** communities que **você usa** para pedir ações
+  a ela: a mais famosa é a **blackhole community** (RFC 7999,
+  `65535:666`), que diz "descarte tudo para este /32" — a defesa padrão
+  contra DDoS: você anuncia o IP atacado com a community de blackhole e
+  a operadora **dropa o ataque na borda dela**, antes de chegar no seu
+  link.
+
+```routeros
+# marcar na entrada
+add chain=bgp-in-ix rule="set bgp-communities 65010:100; accept"
+
+# pedir blackhole de um /32 sob ataque para a operadora
+/ip route add dst-address=203.0.113.66/32 type=blackhole
+add chain=bgp-out rule="if (dst==203.0.113.66/32) { set bgp-communities 65535:666; accept }"
+```
+
+`no-export` é outra community bem útil: marca uma rota para **não sair**
+do AS vizinho (fica no peering, não vaza adiante).
+
+## AS-path prepend: influenciando o tráfego de entrada
+
+Você controla o que **sai** com `local-pref`. Mas o tráfego que **entra**
+é decidido pelos **outros** ASNs — e o AS-path é a alavanca. Ao
+**repetir seu próprio ASN** no anúncio de um dos links (prepend), você
+o faz parecer "mais distante", e os outros passam a preferir o outro
+link para chegar até você:
+
+```routeros
+# anunciar pela operadora B com o AS-path alongado -> entrada prefere A
+add chain=bgp-out-opB \
+    rule="if (dst==203.0.113.0/24) { set bgp-path-prepend 2; accept }"
+```
+
+`bgp-path-prepend 2` acrescenta seu ASN duas vezes. É a ferramenta de
+engenharia de tráfego de **entrada** mais simples — grosseira, mas
+funciona, e é o que se usa para tirar carga de um link cheio.
+
+```{.tikz}
+%%| filename: fig-bgp-prepend
+%%| alt: Fluxo de decisão de um routing filter de saída no BGP. Uma rota entra na cadeia de saída; primeira regra testa se é o próprio bloco e aceita; se não, próxima regra testa se está marcada para blackhole e ajusta a community; a última regra rejeita tudo o mais. Do lado, prepend alonga o AS-path para desviar tráfego de entrada.
+\begin{tikzpicture}[
+  font=\small, node distance=6mm,
+  box/.style={draw, rounded corners, fill=manualblue!12, minimum width=42mm, minimum height=9mm, align=center},
+  dec/.style={draw, diamond, aspect=2, fill=manualyellow!30, align=center, inner sep=1pt},
+]
+\node[box] (in) {rota entra na cadeia\\\scriptsize bgp-out};
+\node[dec, below=of in] (meu) {é o MEU\\\scriptsize bloco?};
+\node[box, right=18mm of meu, fill=manualgreen!18] (acc) {accept\\\scriptsize (anuncia)};
+\node[dec, below=of meu] (bh) {marcado p/\\\scriptsize blackhole?};
+\node[box, right=18mm of bh, fill=manualgreen!18] (com) {set community\\\scriptsize 65535:666; accept};
+\node[box, below=of bh, fill=manualred!18] (rej) {reject\\\scriptsize (não anuncia)};
+\draw[-{Stealth}] (in) -- (meu);
+\draw[-{Stealth}] (meu) -- node[above]{\scriptsize sim} (acc);
+\draw[-{Stealth}] (meu) -- node[right]{\scriptsize não} (bh);
+\draw[-{Stealth}] (bh) -- node[above]{\scriptsize sim} (com);
+\draw[-{Stealth}] (bh) -- node[right]{\scriptsize não} (rej);
+\end{tikzpicture}
+```
+
+::: {#fig-bgp-prepend}
+Um filtro de saída lido de cima para baixo: aceita o próprio bloco,
+trata o caso especial (blackhole com community) e **rejeita todo o
+resto**. É a estrutura que impede o vazamento de rota — a decisão nunca
+"escapa" para um default implícito.
+:::
+
+## RPKI e ROA: validação de origem (conceitual)
+
+Filtro de prefixo protege você; **RPKI** protege a internet de você (e
+de erros alheios). Um **ROA** (*Route Origin Authorization*) é um
+registro assinado que diz "o prefixo P só pode ser originado pelo AS N".
+Roteadores com **validação RPKI** classificam anúncios recebidos como
+`valid`, `invalid` ou `unknown`, e a boa prática é **rejeitar os
+`invalid`** — barrando sequestros de rota por origem incorreta (o
+famoso caso em que um AS anuncia prefixo alheio, por erro ou ataque, e
+desvia tráfego global).
+
+No RouterOS v7 há suporte a RPKI (sessão com um *validator* e uso do
+resultado nos filtros). O detalhe operacional foge do escopo aqui; o
+que você **precisa** levar: **crie o ROA do seu bloco** no sistema do
+LACNIC/NIC.br e **rejeite invalids** nas suas sessões. É barato e evita
+que seu prefixo seja sequestrado — e que você aceite o sequestro de
+outro.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+O poder do BGP é político, e a política mora nos **filtros**. Três
+peças salvam o provedor: **saída = só o que é meu** (`reject` no fim, a
+cinta de segurança contra vazamento); **entrada = higiene** (bogons,
+seu bloco de volta, `dst-len` grande — fora); e **RPKI** (crie o ROA,
+rejeite invalids). Communities e prepend são o ajuste fino — blackhole
+contra DDoS, prepend para balancear entrada. Quem liga eBGP sem o filtro
+de saída mínimo não configurou BGP: armou uma bomba de vazamento.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Reaproveite a topologia do @sec-bgp-basico: **lab-r1** (AS 65010, seu
+provedor, bloco `203.0.113.0/24`) em eBGP com **lab-r2** (AS 65001,
+operadora). Adicione um **terceiro** vizinho eBGP em lab-r1 simulando
+uma **segunda operadora** — **lab-r3** (AS 65002) — para exercitar
+seleção de saída e prepend.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — o filtro de saída mínimo.** No lab-r1, crie a cadeia e
+prenda-a nas duas sessões de trânsito:
+
+```routeros
+/routing filter rule
+add chain=bgp-out rule="if (dst==203.0.113.0/24) { accept }"
+add chain=bgp-out rule="reject"
+/routing bgp connection set [find name=operadora] output.filter=bgp-out
+```
+
+**Passo 2 — prove que o vazamento parou.** Antes do filtro, anuncie de
+propósito uma rota extra (`add dst-address=198.18.0.0/24 type=blackhole`)
+e veja que ela **não** aparece mais no `advertisements` para o vizinho
+depois do `reject`:
+
+```routeros
+/routing bgp advertisements print where peer=operadora
+```
+
+Só o `203.0.113.0/24` deve sair. O `198.18.0.0/24` foi barrado.
+
+**Passo 3 — filtro de entrada com bogons.** Aplique a cadeia `bgp-in`
+(bogons + seu bloco de volta) na sessão. No lab-r2, tente anunciar
+`192.168.50.0/24` e `203.0.113.0/24` de volta:
+
+```routeros
+/routing bgp connection set [find name=operadora] input.filter=bgp-in
+/ip route print where bgp
+```
+
+Nenhum dos dois deve entrar na tabela do lab-r1.
+
+**Passo 4 — community de blackhole.** Coloque um `/32` sob "ataque" em
+blackhole e marque-o para a operadora:
+
+```routeros
+/ip route add dst-address=203.0.113.66/32 type=blackhole
+/routing filter rule
+add chain=bgp-out place-before=0 \
+    rule="if (dst==203.0.113.66/32) { set bgp-communities 65535:666; accept }"
+```
+
+Confirme no `advertisements` que o `/32` sai **com** a community.
+
+**Passo 5 — prepend na segunda operadora.** Na sessão com lab-r3
+(AS 65002), alongue o AS-path do seu anúncio e compare o AS-path visto
+pelos vizinhos:
+
+```routeros
+/routing filter rule
+add chain=bgp-out-r3 rule="if (dst==203.0.113.0/24) { set bgp-path-prepend 2; accept }"
+```
+
+No lab-r3, `/ip route print detail where bgp` deve mostrar o
+`203.0.113.0/24` com o AS 65010 **repetido** — logo, ele preferirá
+chegar até você pela operadora lab-r2.
+
+### Verificação
+
+1. Após o filtro de saída, só o seu bloco é anunciado; a rota extra
+   some do `advertisements`;
+2. Bogons e o próprio bloco de volta **não** entram pela sessão;
+3. O `/32` de blackhole sai com a community `65535:666`;
+4. O anúncio via segunda operadora mostra AS-path com prepend.
+
+### Desafios
+
+1. Você aplicou o filtro de saída, mas esqueceu o `reject` final da
+   cadeia. O que acontece com um prefixo que **não casa** nenhuma regra,
+   e por que isso pode virar um vazamento? Escreva a linha que faltou.
+2. Um cliente seu (que você faz trânsito) precisa que **você** anuncie o
+   bloco `/24` dele para suas operadoras. Como o filtro de saída muda, e
+   que cuidado de **segurança** (validação) você toma antes de anunciar
+   prefixo de terceiro?
+3. Sob DDoS volumétrico de 20 Gbps num único IP, seu link de 10 Gbps
+   satura e **derruba todos** os clientes. Explique passo a passo como a
+   **blackhole community** resolve, onde o tráfego é descartado, e qual é
+   o "preço" dessa mitigação (o que acontece com o IP atacado).
+4. Você quer que o tráfego de **entrada** prefira a operadora A, mas
+   `local-pref` não muda nada no vizinho. Explique por que `local-pref`
+   é a ferramenta errada aqui e qual atributo faz o serviço — e por que
+   ele é, ainda assim, apenas uma "sugestão forte".
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Sem `reject` final, o prefixo que não casa cai no comportamento
+*default* da cadeia — que não é garantidamente "negar". Na prática, uma
+cadeia incompleta pode **aceitar** o que deveria barrar, reanunciando
+rota aprendida de trânsito e causando vazamento. A linha que faltou:
+`add chain=bgp-out rule="reject"` como **última** regra.
+
+**2.** O filtro de saída ganha uma regra `accept` para o `/24` do
+cliente (antes do `reject`). **Antes** de anunciar, valide que o bloco é
+**mesmo** do cliente e que ele autorizou você a originá-lo: cheque o
+**ROA/RPKI** (o ROA deve permitir seu AS ou o dele conforme o desenho) e
+os registros de rota (IRR). Anunciar prefixo de terceiro sem essa
+validação é como assinar em nome dos outros — e é assim que sequestros
+acidentais acontecem.
+
+**3.** Você cria uma rota `/32` para o IP atacado e a anuncia à
+operadora **com a community `65535:666`** (blackhole). A operadora, ao
+receber, instala um descarte para esse `/32` **na borda dela** — o
+tráfego de ataque é jogado fora **antes** de entrar no seu link, que
+volta a respirar. O preço: aquele IP específico fica **inacessível**
+(você sacrifica um endereço para salvar todos os outros clientes). É
+mitigação de contenção, não de continuidade do serviço atacado.
+
+**4.** `local-pref` só existe **dentro** do seu AS — ele nunca sai nos
+anúncios, então o vizinho jamais o vê. Para influenciar **entrada**, a
+alavanca é o **AS-path prepend** (alongar o caminho pelo link que você
+quer despriorizar) e/ou communities de *traffic engineering* que a
+operadora publique. Ainda assim é só uma "sugestão forte": a decisão
+final é do outro AS, que pode ter política própria (local-pref dele)
+que ignore seu prepend.
+:::
+
+## Resumo
+
+- **Routing filters** (v7) são o firewall de rotas: cadeias *first-match*
+  com `accept`/`reject` e ações que **modificam** atributos; **sempre**
+  termine com política explícita;
+- **Filtro de saída mínimo**: anuncie **só o que é seu**, `reject` no
+  resto — a cinta de segurança contra vazamento/trânsito involuntário;
+- **Filtro de entrada**: barre **bogons**, seu bloco de volta e
+  prefixos longos demais; marque `local-pref` por política;
+- **Communities** sinalizam intenção: `65535:666` (blackhole anti-DDoS),
+  `no-export`, tags próprias; **prepend** influencia o tráfego de
+  **entrada**;
+- **RPKI/ROA**: crie o ROA do seu bloco e **rejeite invalids** — origem
+  validada barra sequestro de rota.
+
+Roteamento dinâmico dominado — do enlace interno ao peering global. O
+próximo capítulo (@sec-vrf) fecha o volume com **VRF** e as boas
+práticas de tabelas de roteamento no v7, o alicerce para separar
+serviços (gerência, clientes, trânsito) numa mesma caixa.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *Routing filters*, *BGP* e *RPKI* do RouterOS v7
+  [@mikrotik-docs];
+- Política de roteamento e communities: [@tanenbaum-redes];
+- Filtros e segurança BGP no v7: [@discher-rosv7];
+- Boas práticas de peering em provedores: [@burgess-mikrotik].
