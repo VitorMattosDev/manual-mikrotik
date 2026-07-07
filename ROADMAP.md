@@ -155,9 +155,9 @@ Pré-requisitos: Vols. 8 e 10.*
 *Objetivo: automatizar operação e provisionamento.
 Pré-requisitos: Vol. 2 (Vol. 3 recomendado).*
 
-- [ ] `volumes/v12-scripts/01-linguagem-script.qmd` — Linguagem de script do RouterOS: variáveis, condicionais, loops, funções, parsing.
-- [ ] `volumes/v12-scripts/02-scheduler-netwatch-backups.qmd` — Scheduler, netwatch e backups automáticos (e-mail/FTP/fetch).
-- [ ] `volumes/v12-scripts/03-api-provisionamento.qmd` — API (binária e REST) e provisionamento em massa de equipamentos.
+- [x] `volumes/v12-scripts/01-linguagem-script.qmd` — Linguagem de script do RouterOS: variáveis, condicionais, loops, funções, parsing.
+- [x] `volumes/v12-scripts/02-scheduler-netwatch-backups.qmd` — Scheduler, netwatch e backups automáticos (e-mail/FTP/fetch).
+- [x] `volumes/v12-scripts/03-api-provisionamento.qmd` — API (binária e REST) e provisionamento em massa de equipamentos.
 
 ## Volume 13 — Monitoramento e diagnóstico
 *Objetivo: enxergar a rede e diagnosticar com método.

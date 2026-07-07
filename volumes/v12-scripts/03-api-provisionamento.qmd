@@ -1,7 +1,314 @@
-# API e provisionamento em massa
+# API e provisionamento em massa {#sec-api-provisionamento}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Distinguir as formas de automação **externa** do RouterOS: **API
+  binária**, **REST API** (v7) e **SSH scripting**, e quando usar cada
+  uma;
+- Habilitar a **REST API** com segurança e fazer chamadas
+  (GET/PUT/POST/PATCH/DELETE) para ler e alterar configuração;
+- Estruturar **provisionamento em massa**: um sistema central que
+  configura centenas de equipamentos a partir de um modelo (*template*);
+- Entender a **segurança** da automação em escala: usuário dedicado,
+  `allowed-address`, TLS, e o risco de credenciais em scripts;
+- Escolher entre configurar **na caixa** (script local, @sec-scheduler) e
+  **de fora** (API), e integrar com o sistema de gestão do provedor.
 :::
+
+Os capítulos anteriores automatizaram **dentro** de um roteador. Mas o
+provedor tem **centenas** deles, e configurá-los um a um — mesmo com
+scripts locais — não escala nem se integra ao sistema de gestão (o ERP
+que cadastra clientes, emite boletos, provisiona planos). A resposta é a
+**automação externa**: um sistema central que **fala** com os roteadores
+por uma interface programável (**API**) e os configura em massa, a partir
+de modelos. Este capítulo fecha o Volume 12 conectando o RouterOS ao
+mundo dos sistemas — e à operação de verdade.
+
+## As três formas de falar com o RouterOS de fora
+
+| Forma | Transporte | Quando usar |
+|---|---|---|
+| **API binária** | porta 8728 (8729 TLS) | Alto volume, bibliotecas maduras (Python `librouteros`, PHP); protocolo próprio |
+| **REST API** (v7) | HTTP(S), porta 80/443 | Integração moderna, JSON, fácil de qualquer linguagem/ferramenta |
+| **SSH scripting** | SSH (22) | Rodar comandos/scripts pontuais, sem serviço extra; bom para automação simples |
+
+A **REST API** do v7 é a novidade que muda o jogo: fala **JSON sobre
+HTTPS**, então qualquer linguagem (Python, Go, até `curl`) integra sem
+biblioteca especial. A **API binária** ainda vale para alto volume e onde
+já há bibliotecas consolidadas. **SSH** é o canivete para o pontual.
+
+## Habilitando a REST API com segurança
+
+A REST API roda sobre o serviço **www-ssl** (nunca sobre HTTP puro em
+produção — credenciais em claro!):
+
+```routeros
+# certificado + www-ssl (a REST API vive aqui)
+/ip service set www-ssl certificate=cert-api disabled=no address=10.99.0.0/24
+/ip service set www disabled=yes   # desligue o HTTP puro
+
+# usuário DEDICADO para automação, com acesso restrito
+/user add name=api-prov group=write \
+    address=10.99.0.10 comment="sistema de provisionamento"
+```
+
+::: {.callout-warning}
+Automação em escala **multiplica** o custo de um erro de segurança: uma
+credencial de API vazada abre **todos** os roteadores de uma vez. Regras
+inegociáveis: **TLS sempre** (www-ssl, api-ssl), **usuário dedicado**
+com o **mínimo** de privilégio, **`allowed-address`** limitando de onde a
+API aceita conexão (só o IP do sistema de gestão), e **nunca** hardcode
+de senha em scripts versionados. Trate a credencial de provisionamento
+como a chave do reino — porque é.
+:::
+
+## Fazendo chamadas REST
+
+A REST API espelha a estrutura de menus do RouterOS. O caminho da URL é o
+menu; o método HTTP é a ação:
+
+```bash
+# LER endereços IP (GET)
+curl -sk -u api-prov:senha \
+  https://10.99.0.1/rest/ip/address
+
+# ADICIONAR um endereço (PUT com JSON)
+curl -sk -u api-prov:senha -X PUT \
+  https://10.99.0.1/rest/ip/address \
+  -H "Content-Type: application/json" \
+  -d '{"address":"192.168.50.1/24","interface":"ether2"}'
+
+# ALTERAR um item existente (PATCH pelo .id)
+curl -sk -u api-prov:senha -X PATCH \
+  https://10.99.0.1/rest/ip/address/*A \
+  -d '{"disabled":"true"}'
+
+# executar comando (POST em /rest/<caminho>/<comando>)
+curl -sk -u api-prov:senha -X POST \
+  https://10.99.0.1/rest/system/reboot
+```
+
+O mapeamento é direto: `/ip address` vira `/rest/ip/address`,
+`/interface print` vira `GET /rest/interface`, e assim por diante. Isso
+torna a REST API previsível — se você sabe o CLI, sabe a URL.
+
+## Provisionamento em massa: o padrão template
+
+Configurar 300 CPEs à mão é inviável; o padrão é **template +
+parâmetros**. O sistema central guarda um **modelo** de configuração e,
+para cada equipamento, **preenche** os valores específicos (IP, VLAN,
+identidade, secret) e aplica via API:
+
+```{.tikz}
+%%| filename: fig-provisionamento
+%%| alt: Arquitetura de provisionamento em massa. À esquerda, o sistema de gestão do provedor (ERP) com um banco de dados de clientes e um template de configuração. No centro, um orquestrador que combina template + dados do cliente e chama a API. À direita, centenas de roteadores/CPEs recebendo cada um sua configuração via REST API sobre TLS. Setas mostram o fluxo template mais dados até cada equipamento.
+\begin{tikzpicture}[
+  font=\small,
+  b/.style={draw, rounded corners, align=center, minimum height=12mm, inner sep=4pt},
+]
+\node[b, fill=manualblue!12] (erp) at (0,0) {ERP / gestão\\\scriptsize clientes + template};
+\node[b, fill=manualyellow!20] (orq) at (4,0) {orquestrador\\\scriptsize template + dados\\\scriptsize $\to$ API};
+\node[b, fill=manualgreen!12] (rt1) at (8,1.1) {CPE 1};
+\node[b, fill=manualgreen!12] (rt2) at (8,0) {CPE 2};
+\node[b, fill=manualgreen!12] (rtn) at (8,-1.1) {CPE ...n};
+\draw[-{Stealth}, thick] (erp) -- (orq);
+\draw[-{Stealth}, thick] (orq) -- node[above, sloped]{\scriptsize REST/TLS} (rt1);
+\draw[-{Stealth}, thick] (orq) -- (rt2);
+\draw[-{Stealth}, thick] (orq) -- (rtn);
+\end{tikzpicture}
+```
+
+::: {#fig-provisionamento}
+O provisionamento em massa combina um **template** único com os **dados**
+de cada cliente (do ERP) e aplica via **API sobre TLS** a centenas de
+equipamentos. Mudou o padrão? Ajusta-se o template e reaplica — a
+configuração vira **código**, não trabalho manual repetido.
+:::
+
+Na prática, muitos provedores usam sistemas prontos (o próprio
+**RADIUS/User Manager** do @sec-radius-userman já provisiona parâmetros
+de sessão; sistemas de gestão como SGP, IXC, etc. falam com o MikroTik),
+mas o **conceito** é o mesmo: **modelo + dados → API → equipamento**. E
+**idempotência** (@sec-linguagem-script) segue essencial — reaplicar o
+template não pode duplicar nem quebrar o que já existe.
+
+## Na caixa ou de fora?
+
+Uma decisão recorrente: automatizar **dentro** do roteador (scripts +
+scheduler/netwatch, @sec-scheduler) ou **de fora** (API)?
+
+- **Na caixa**: bom para lógica **local** e autônoma — failover,
+  autolimpeza, verificação de saúde. Não depende de conectividade com um
+  central; roda mesmo isolado;
+- **De fora (API)**: bom para o que precisa de **visão de conjunto** e
+  **integração** — provisionar cliente novo, aplicar mudança em massa,
+  puxar dados para o monitoramento (Volume 13). O sistema central é a
+  fonte da verdade.
+
+O provedor maduro usa **os dois**: scripts locais para autonomia,
+API/central para orquestração e integração com a gestão.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Escala se resolve **de fora**: um sistema central fala com os roteadores
+por **API** (REST no v7 — JSON sobre HTTPS, a mais fácil de integrar) e
+aplica **template + dados** a centenas de equipamentos. Duas coisas não
+se negociam. **Segurança**: TLS, usuário dedicado de privilégio mínimo,
+`allowed-address`, zero senha hardcoded — porque uma credencial vazada
+abre o parque inteiro. **Idempotência**: reaplicar o modelo não pode
+duplicar nem quebrar. Configuração vira **código**; a operação, um
+sistema — não um humano repetindo cliques.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Um CHR (@sec-lab-chr) como o roteador a provisionar (**lab-rt**) e uma
+máquina de "gestão" (seu host, com `curl`/Python) na mesma rede de
+gerência `10.99.0.0/24`. Gere um certificado no lab-rt para o www-ssl.
+O foco é exercitar a REST API com segurança — ler, criar e alterar
+configuração de fora.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — certificado e www-ssl.** No lab-rt:
+
+```routeros
+/certificate add name=cert-api common-name=lab-rt
+/certificate sign cert-api
+/ip service set www-ssl certificate=cert-api disabled=no address=10.99.0.0/24
+/ip service set www disabled=yes
+```
+
+**Passo 2 — usuário dedicado restrito.**
+
+```routeros
+/user add name=api-prov password="Api-Forte-2026" group=write address=10.99.0.10
+```
+
+**Passo 3 — leia pela REST API.** Da máquina de gestão:
+
+```bash
+curl -sk -u api-prov:Api-Forte-2026 https://10.99.0.1/rest/system/resource
+curl -sk -u api-prov:Api-Forte-2026 https://10.99.0.1/rest/ip/address
+```
+
+Você recebe **JSON** com os dados — configuração legível por qualquer
+linguagem.
+
+**Passo 4 — crie e altere.** Adicione um endereço e depois desabilite-o:
+
+```bash
+curl -sk -u api-prov:Api-Forte-2026 -X PUT https://10.99.0.1/rest/ip/address \
+  -H "Content-Type: application/json" \
+  -d '{"address":"192.168.77.1/24","interface":"ether2"}'
+```
+
+Confirme no lab-rt (`/ip address print`) que apareceu — configuração
+aplicada **de fora**.
+
+**Passo 5 — idempotência via API.** Antes de criar, **consulte** se já
+existe (GET com filtro) e só faça o PUT se não houver — o mesmo princípio
+do @sec-linguagem-script, agora do lado do orquestrador.
+
+**Passo 6 — trave a segurança.** Tente acessar a API de um IP **fora**
+do `allowed-address`/`address` configurado e confirme que é **recusado**.
+Verifique que o HTTP puro (porta 80) está desligado.
+
+### Verificação
+
+1. A REST API responde JSON sobre **HTTPS** (www-ssl), com HTTP puro
+   desligado;
+2. GET lê configuração; PUT/PATCH criam e alteram itens de fora;
+3. O acesso é recusado de IP fora do permitido (usuário/serviço
+   restrito);
+4. A lógica idempotente evita duplicar ao reaplicar.
+
+### Desafios
+
+1. Um provedor expôs a API binária (8728) na internet, sem TLS e sem
+   `allowed-address`, e teve o parque comprometido. Aponte **três** erros
+   e a configuração correta para cada um.
+2. Você precisa provisionar 300 CPEs idênticos, mudando só IP de
+   gerência, VLAN e identidade por equipamento. Descreva a arquitetura
+   (template + dados + API) e onde a **idempotência** entra ao reaplicar.
+3. Quando você escolheria **script local + scheduler** (@sec-scheduler)
+   em vez de **API central**, e vice-versa? Dê um exemplo de tarefa para
+   cada e justifique pela dependência de conectividade.
+4. Um script de provisionamento guarda a senha de admin em texto no
+   repositório git da empresa. Explique o risco concreto e duas formas
+   de eliminá-lo sem perder a automação.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** (a) **API na internet** → exponha só na rede de gerência com
+`address=`/`allowed-address` (e, idealmente, atrás de VPN, Volume 10).
+(b) **Sem TLS** (8728) → use **api-ssl (8729)** ou a REST sobre
+**www-ssl**; credenciais nunca em claro. (c) **Sem usuário dedicado/
+privilégio mínimo** → crie um usuário só para API, grupo restrito, com
+`address` do sistema de gestão. Some a isso senha forte e monitoramento
+de acesso.
+
+**2.** **Template + dados + API**: o ERP guarda, por CPE, os três valores
+variáveis (IP de gerência, VLAN, identidade); um orquestrador combina o
+**template** com esses dados e aplica via **REST/TLS** a cada
+equipamento. **Idempotência** entra ao reaplicar: cada passo consulta
+(GET) se o item já existe e só cria/ajusta o que difere — assim rodar o
+provisionamento de novo (correção, nova versão do template) **não**
+duplica endereços/VLANs nem derruba o que já estava certo.
+
+**3.** **Local + scheduler**: para lógica **autônoma** que deve funcionar
+mesmo sem contato com o central — failover por netwatch, autolimpeza,
+verificação de saúde. Roda no equipamento isolado. **API central**: para
+o que precisa de **visão de conjunto/integração** — provisionar cliente
+novo, mudança em massa, coleta para monitoramento. Depende de
+conectividade com o central. Exemplo: failover é local (não pode
+depender da nuvem); cadastrar um cliente novo é central (nasce no ERP).
+
+**4.** Senha de admin em git = qualquer um com acesso ao repositório (ou
+a um vazamento dele) tem **acesso total** ao parque, e o histórico do git
+**guarda** a senha mesmo depois de removida. Soluções: (a) **cofre de
+segredos** (variável de ambiente/secret manager) — o script lê a
+credencial em runtime, nunca a versiona; (b) **usuário de API dedicado**
+com privilégio mínimo e `allowed-address`, rotacionado periodicamente, de
+modo que mesmo um vazamento tenha alcance limitado e revogável. Nunca
+credencial em texto no código.
+:::
+
+## Resumo
+
+- Automação **externa** tem três formas: **API binária** (alto volume,
+  bibliotecas), **REST API v7** (JSON/HTTPS, fácil de integrar) e **SSH**
+  (pontual);
+- A **REST API** espelha os menus (`/ip address` → `/rest/ip/address`);
+  método HTTP = ação (GET/PUT/PATCH/DELETE/POST);
+- **Provisionamento em massa** = **template + dados (ERP) → API →
+  equipamento**; configuração vira **código**, com **idempotência**
+  essencial;
+- **Segurança inegociável**: TLS, usuário dedicado de privilégio mínimo,
+  `allowed-address`, zero senha hardcoded — credencial vazada abre o
+  parque;
+- **Na caixa vs. de fora**: scripts locais para autonomia (failover),
+  API central para orquestração/integração — o provedor maduro usa os
+  dois.
+
+Fecha-se o Volume 12: da linguagem de script à automação reativa e ao
+provisionamento em escala. A rede se configura e se defende com código.
+Falta **enxergá-la** — logs, gráficos, tráfego em tempo real,
+diagnóstico com método. É o **Volume 13**, monitoramento e diagnóstico.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *REST API*, *API* e *Services* do RouterOS
+  [@mikrotik-docs];
+- Integração de sistemas e automação em escala: [@tanenbaum-redes];
+- API e provisionamento no v7: [@discher-rosv7];
+- Integração com sistemas de gestão de provedor: [@burgess-mikrotik].
