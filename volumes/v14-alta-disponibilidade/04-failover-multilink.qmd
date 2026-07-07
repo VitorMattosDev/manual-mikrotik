@@ -1,7 +1,283 @@
-# Failover multi-link na prática
+# Failover multi-link na prática {#sec-failover}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Projetar um **failover multi-link** que detecta a queda **real** de um
+  trânsito — não só "a interface está up";
+- Usar **recursive routing** (rota via um alvo remoto, resolvido por
+  outra rota) para failover confiável sem depender do estado da interface;
+- Combinar **distância administrativa** (rota flutuante,
+  @sec-rotas-estaticas), **check-gateway** e **netwatch/scripts** em uma
+  solução completa;
+- Evitar os falsos positivos e negativos: link "up" com caminho morto,
+  gateway que responde mas internet caída, flapping;
+- Fechar o Volume 14 com um **desenho de resiliência** que junta VRRP,
+  bonding, ECMP/PCC e failover.
 :::
+
+Os capítulos anteriores deram as peças: gateway redundante (@sec-vrrp),
+portas agregadas (@sec-bonding), caminhos balanceados (@sec-ecmp-pcc).
+Este as **integra** no cenário mais crítico do provedor: **failover de
+trânsito** — quando o link primário para a internet cai, o secundário
+assume **automaticamente**, e volta quando o primário se recupera. O
+diabo mora na **detecção**: a maioria dos failovers falha não por
+configurar mal a rota reserva, mas por **não perceber** que o primário
+morreu. Este capítulo resolve a detecção de verdade.
+
+## O problema da detecção: "up" não é "funcionando"
+
+A rota flutuante do @sec-rotas-estaticas dá a base: uma default primária
+(distância 1) e uma reserva (distância 2). Mas **quando** a primária deve
+sair da tabela? Se você depende só do **estado da interface**, cai numa
+armadilha: a interface para a operadora fica **up** (portadora presente,
+o cabo/fibra está lá), mas o **caminho além dela está morto** — o
+equipamento da operadora travou, o upstream dela caiu, uma rota sumiu do
+lado de lá. A interface diz "up", o tráfego vai para o buraco, e o
+failover **nunca dispara**.
+
+A detecção precisa ser **fim a fim**: confirmar que um alvo **do outro
+lado** (na internet) está alcançável **por aquele link**. Três
+ferramentas fazem isso, em ordem de robustez.
+
+```{.tikz}
+%%| filename: fig-failover
+%%| alt: Detecção de failover fim a fim. Um roteador com link primário e secundário para a internet. A interface do primário está up, mas o caminho além da operadora está morto. Um ping recorrente a um alvo confiável na internet (por exemplo 8.8.8.8) forçado a sair pelo primário detecta que o alvo não responde, mesmo com a interface up, e dispara o failover para o secundário. Setas mostram o teste fim a fim e a troca de rota.
+\begin{tikzpicture}[
+  font=\small,
+  b/.style={draw, rounded corners, align=center, minimum height=10mm, font=\scriptsize, inner sep=3pt},
+]
+\node[b, fill=manualblue!15, minimum height=16mm] (rt) at (0,0) {roteador};
+\node[b, fill=manualgreen!15] (p) at (3.6,1.1) {primário\\\scriptsize up, mas morto};
+\node[b, fill=manualyellow!22] (s) at (3.6,-1.1) {secundário};
+\node[b, fill=manualgray!20] (alvo) at (7.4,0) {alvo\\\scriptsize 8.8.8.8};
+\draw[-{Stealth}, thick, manualred] (rt) -- node[above, sloped]{\scriptsize ping por primário: falha} (p);
+\draw[-{Stealth}, thick, manualgreen!60!black] (rt) -- node[below, sloped]{\scriptsize failover} (s);
+\draw[-, dashed] (p) -- (alvo);
+\draw[-{Stealth}] (s) -- (alvo);
+\node[align=center, manualred] at (2,-2.4) {\scriptsize detecção fim a fim > estado da interface};
+\end{tikzpicture}
+```
+
+::: {#fig-failover}
+A interface do primário está **up**, mas o caminho além está morto. Só um
+teste **fim a fim** (pingar um alvo na internet **forçado** a sair pelo
+primário) detecta isso e dispara o failover. Confiar no "up" da interface
+é o erro que faz o failover não funcionar.
+:::
+
+## Recursive routing: o failover confiável
+
+A técnica mais robusta é o **recursive routing**. A ideia: a rota default
+primária não aponta direto para o gateway — ela aponta para um **alvo
+remoto** (ex.: `8.8.8.8`), e esse alvo só é alcançável por uma **rota
+específica** que sai pelo primário com `check-gateway`. Se o alvo para de
+responder **por aquele caminho**, a rota específica cai, a default
+recursiva perde resolução e **some** — e a reserva assume.
+
+```routeros
+# 1) rota específica para o "alvo sentinela" SÓ pelo primário, com check-gateway
+/ip route add dst-address=8.8.8.8/32 gateway=<gw-primario> \
+    scope=10 check-gateway=ping
+
+# 2) default primária RECURSIVA: resolve via o alvo (target-scope alcança a rota acima)
+/ip route add dst-address=0.0.0.0/0 gateway=8.8.8.8 \
+    target-scope=11 distance=1 comment="primario recursivo"
+
+# 3) default reserva pelo secundário (distância maior)
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-secundario> distance=2
+```
+
+O mecanismo: a default primária (distância 1) só é **válida** enquanto
+`8.8.8.8` for alcançável pelo primário (a rota `/32` com check-gateway).
+Cai o caminho fim a fim → a `/32` some → a default recursiva fica sem
+next-hop → **a reserva (distância 2) assume**. E tudo **volta** sozinho
+quando o primário se recupera. É failover que reage ao **caminho real**,
+não ao estado da porta.
+
+## Combinando as ferramentas
+
+Na prática, você compõe:
+
+- **Rota flutuante** (distâncias 1 e 2, @sec-rotas-estaticas): a
+  estrutura primário/reserva;
+- **Recursive routing** ou **check-gateway**: a detecção
+  (recursivo = fim a fim, o mais robusto; check-gateway simples = só o
+  gateway imediato);
+- **Netwatch + script** (@sec-scheduler): para lógica extra na transição
+  (trocar NAT, notificar o NOC, ajustar VRRP) — o `down-script`/`up-script`;
+- **Múltiplos alvos** para não depender de um só (se `8.8.8.8` cai, seu
+  failover não pode disparar por engano) — pingue mais de um alvo
+  confiável.
+
+## O desenho de resiliência do provedor
+
+Fechando o volume, as peças se somam num desenho de HA de ponta a ponta:
+
+- **Gateway redundante** (VRRP, @sec-vrrp): a LAN sobrevive à queda de um
+  roteador;
+- **Enlaces agregados** (bonding, @sec-bonding): a conexão entre
+  equipamentos sobrevive à queda de um cabo e soma banda;
+- **Múltiplos trânsitos** (ECMP/PCC, @sec-ecmp-pcc): usa os dois links e
+  balanceia;
+- **Failover fim a fim** (este capítulo): a saída para a internet troca
+  automaticamente na queda **real**;
+- **BGP** (@sec-bgp-peering) quando há ASN próprio: resiliência de
+  roteamento de verdade, controle de entrada e saída.
+
+Cada camada cobre um tipo de falha; juntas, o provedor sobrevive a
+quedas de link **e** de equipamento sem o cliente perceber — o objetivo
+do volume.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Failover falha na **detecção**, não na rota reserva: a interface fica
+**up** enquanto o caminho além dela está **morto**, e o tráfego vai para
+o buraco. A solução é **detecção fim a fim** — o **recursive routing**
+amarra a default primária à alcançabilidade de um **alvo remoto** por
+aquele link (com `check-gateway`), de modo que a rota **some** quando o
+caminho real cai e a reserva assume — voltando sozinha na recuperação.
+Combine rota flutuante + recursivo + netwatch, use **múltiplos alvos**, e
+some às camadas do volume (VRRP, bonding, ECMP/PCC, BGP). HA de verdade é
+reagir ao **caminho**, não ao estado da porta.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Quatro CHRs (@sec-lab-chr): **lab-rt** (dois links), **lab-opA**
+(primário) e **lab-opB** (secundário), e **lab-net** (a "internet" atrás
+das duas operadoras, com um alvo sentinela `8.8.8.8` simulado). O truque
+do lab: você vai derrubar o **caminho além** da operadora A (não a
+interface do lab-rt) para provar a detecção fim a fim.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — rota flutuante ingênua.** Comece com o básico:
+
+```routeros
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-A> distance=1
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-B> distance=2
+```
+
+**Passo 2 — prove a falha da detecção ingênua.** Derrube o caminho
+**além** de A (desligue o uplink de lab-opA, mantendo a interface
+lab-rt↔lab-opA up). Observe: o lab-rt **continua** mandando pela default
+primária (distância 1) — a internet caiu e o failover **não** disparou. O
+problema em carne e osso.
+
+**Passo 3 — recursive routing.** Substitua pela solução recursiva:
+
+```routeros
+/ip route add dst-address=8.8.8.8/32 gateway=<gw-A> scope=10 check-gateway=ping
+/ip route add dst-address=0.0.0.0/0 gateway=8.8.8.8 target-scope=11 distance=1
+/ip route add dst-address=0.0.0.0/0 gateway=<gw-B> distance=2
+```
+
+**Passo 4 — prove o failover fim a fim.** Derrube de novo o caminho além
+de A. Agora: a `/32` para `8.8.8.8` perde o `check-gateway`, some; a
+default recursiva fica sem next-hop; a reserva (distância 2) **assume**.
+O cliente segue navegando por B. Confirme com `/ip route print` e
+traceroute.
+
+**Passo 5 — recuperação automática.** Restaure o caminho de A. A `/32`
+volta, a default recursiva revive, e o tráfego **retorna** ao primário —
+sem intervenção.
+
+**Passo 6 — script na transição.** Adicione netwatch/`down-script` para
+notificar (log) e, se usar NAT por link, ajustar o masquerade na troca.
+
+### Verificação
+
+1. A rota flutuante ingênua **não** detecta a queda do caminho além
+   (interface up);
+2. O recursive routing **detecta** e faz failover fim a fim para o
+   secundário;
+3. A recuperação do primário **retorna** o tráfego automaticamente;
+4. (Opcional) o script de transição loga/ajusta NAT.
+
+### Desafios
+
+1. Seu failover baseado em `check-gateway` do gateway imediato **não**
+   disparou quando o upstream da operadora caiu (o gateway dela respondia
+   ping, mas a internet estava fora). Explique por que, e como o
+   recursive routing com alvo remoto corrige.
+2. Você usou `8.8.8.8` como único alvo sentinela. Um dia o `8.8.8.8`
+   ficou instável e seu failover **disparou sem motivo** (o trânsito
+   estava bom). Qual foi o erro e como torná-lo robusto?
+3. O failover funciona, mas na volta do primário as conexões ativas
+   caem por um instante. Relacione com o balanceamento do @sec-ecmp-pcc:
+   o que move só conexões novas e por que isso importa aqui também?
+4. Monte, em uma frase cada, como VRRP, bonding, ECMP/PCC e failover
+   recursivo cobrem **tipos de falha diferentes** — e por que um provedor
+   sério usa os quatro.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O `check-gateway` testava só o **gateway imediato** da operadora,
+que continuava vivo (respondia ping) mesmo com o **upstream dela** caído
+— então a rota primária permaneceu válida e o failover não disparou. O
+**recursive routing** corrige porque amarra a default a um **alvo remoto
+na internet** (além da operadora): se esse alvo não é alcançável pelo
+primário, o caminho **real** está morto, e a rota some. Detecção fim a
+fim vê o que o gateway imediato esconde.
+
+**2.** Depender de **um único alvo** torna seu failover refém da saúde
+**daquele** alvo — se ele oscila, você faz failover à toa. Torne robusto
+**pingando múltiplos alvos confiáveis** (ex.: dois ou três IPs estáveis
+de provedores distintos) e só considere o link morto se **todos**
+falharem por aquele caminho. Assim, a instabilidade de um alvo isolado
+não engana a detecção.
+
+**3.** Na volta do primário, o tráfego **muda de link** e, se o NAT
+remarcar as conexões estabelecidas (novo IP de origem), elas caem — o
+mesmo problema do @sec-ecmp-pcc. O que evita: **mover só conexões novas**
+na transição (manter as estabelecidas no link em que nasceram) e/ou
+desligar a **preempção** imediata (deixar o primário reassumir de forma
+suave). Estabilidade de conexão vale tanto no balanceamento quanto no
+failover.
+
+**4.** **VRRP**: sobrevive à queda de **um roteador** (gateway
+redundante). **Bonding**: sobrevive à queda de **um cabo/porta** entre
+equipamentos e soma banda (camada 2). **ECMP/PCC**: **usa e balanceia**
+múltiplos links de trânsito (camada 3). **Failover recursivo**: troca a
+saída na **queda real** de um trânsito e volta sozinho. Cada um cobre uma
+falha distinta (equipamento, cabo, uso/balance, caminho fim a fim); juntos
+dão HA de ponta a ponta — por isso o provedor sério usa os quatro.
+:::
+
+## Resumo
+
+- Failover falha na **detecção**, não na rota reserva: interface **up**
+  com **caminho morto** engana quem confia no estado da porta;
+- **Recursive routing** dá detecção **fim a fim**: a default primária
+  depende da alcançabilidade de um **alvo remoto** pelo link (com
+  `check-gateway`) — cai o caminho, a rota some, a reserva assume, e
+  **volta** sozinha;
+- Componha **rota flutuante** (distâncias) + **recursivo/check-gateway**
+  + **netwatch/script** + **múltiplos alvos** (não dependa de um só);
+- No failover/retorno, mova só conexões **novas** (estabilidade,
+  @sec-ecmp-pcc);
+- **Desenho de HA**: VRRP (equipamento) + bonding (cabo) + ECMP/PCC
+  (balance) + failover recursivo (caminho) + BGP (roteamento real) —
+  cada camada, um tipo de falha.
+
+Fecha-se o Volume 14: a rede do provedor agora **sobrevive** a falhas de
+link e de equipamento sem o cliente perceber. Falta o capítulo que junta
+**tudo** — dos quatorze volumes — no desenho e na operação de um provedor
+real. É o **Volume 15**, operação de ISP de ponta a ponta.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *Routing (recursive, check-gateway)*, *Netwatch*
+  do RouterOS [@mikrotik-docs];
+- Detecção de falha e failover: [@tanenbaum-redes];
+- Failover multi-link no v7: [@discher-rosv7];
+- Resiliência de trânsito em provedores: [@burgess-mikrotik].

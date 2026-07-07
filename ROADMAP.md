@@ -172,10 +172,10 @@ Pré-requisitos: Vol. 3.*
 *Objetivo: sobreviver a falhas de link e de equipamento.
 Pré-requisitos: Vol. 8.*
 
-- [ ] `volumes/v14-alta-disponibilidade/01-vrrp.qmd` — VRRP: gateway redundante, prioridades, preempção.
-- [ ] `volumes/v14-alta-disponibilidade/02-bonding.qmd` — Bonding: agregação de links (LACP, balance-xor) entre equipamentos.
-- [ ] `volumes/v14-alta-disponibilidade/03-ecmp-pcc.qmd` — ECMP e load balancing PCC: múltiplos links de trânsito.
-- [ ] `volumes/v14-alta-disponibilidade/04-failover-multilink.qmd` — Failover multi-link na prática: recursive routing, detecção real de queda.
+- [x] `volumes/v14-alta-disponibilidade/01-vrrp.qmd` — VRRP: gateway redundante, prioridades, preempção.
+- [x] `volumes/v14-alta-disponibilidade/02-bonding.qmd` — Bonding: agregação de links (LACP, balance-xor) entre equipamentos.
+- [x] `volumes/v14-alta-disponibilidade/03-ecmp-pcc.qmd` — ECMP e load balancing PCC: múltiplos links de trânsito.
+- [x] `volumes/v14-alta-disponibilidade/04-failover-multilink.qmd` — Failover multi-link na prática: recursive routing, detecção real de queda.
 
 ## Volume 15 — Operação de ISP de ponta a ponta
 *Objetivo: integrar tudo no desenho e na operação de um provedor real.
