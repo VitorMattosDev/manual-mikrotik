@@ -1,7 +1,264 @@
-# Bonding: agregação de links
+# Bonding: agregação de links {#sec-bonding}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar o que o **bonding** entrega: **somar a banda** de vários
+  enlaces **e/ou** ter **redundância** de cabo/porta entre equipamentos;
+- Escolher o **modo** certo: **802.3ad (LACP)**, **balance-xor**,
+  **active-backup** e o que cada um exige do outro lado;
+- Entender por que agregar links **não** dá "soma linear" para um único
+  fluxo — o papel do **hashing** na distribuição;
+- Configurar um bond LACP entre dois roteadores/switch e verificar a
+  agregação e o failover de um membro;
+- Reconhecer os limites e erros: modo divergente entre os lados, esperar
+  4 Gbps num único download, e bonding vs. ECMP (@sec-ecmp-pcc).
 :::
+
+O @sec-vrrp protegeu contra a queda de um **equipamento**. Mas entre dois
+equipamentos há **cabos e portas** que também falham — e um único enlace
+tem um teto de banda. O **bonding** (*link aggregation*) resolve os dois:
+junta **vários enlaces físicos** numa **interface lógica** que **soma a
+capacidade** e **sobrevive** à perda de um membro. É como transformar
+quatro cabos de 1 Gbps entre o switch e o roteador do POP num troco de 4
+Gbps que continua funcionando se um cabo cair.
+
+## O que o bonding entrega (e o que não entrega)
+
+Um bond agrupa N interfaces físicas numa só interface lógica. Dois
+benefícios, conforme o modo:
+
+- **Mais banda agregada**: o tráfego é distribuído entre os membros — a
+  **capacidade total** cresce;
+- **Redundância**: se um membro (cabo/porta/SFP) cai, os outros seguem —
+  o bond permanece up.
+
+O **porém** fundamental, que confunde todo mundo: agregar 4×1 Gbps
+**não** faz um **único fluxo** (um download, uma sessão TCP) atingir 4
+Gbps. O tráfego é distribuído por **hashing** (por MAC, IP ou porta), e
+cada fluxo é "grudado" em **um** membro para não desordenar os pacotes.
+Você soma a banda **entre muitos fluxos** (muitos clientes), não dentro
+de um só. Quatro cabos de 1 Gbps = 4 Gbps para **o conjunto**, ~1 Gbps
+para **cada** conexão individual.
+
+```{.tikz}
+%%| filename: fig-bonding
+%%| alt: Bonding agregando quatro enlaces físicos entre dois equipamentos numa interface lógica. À esquerda, roteador; à direita, switch; entre eles, quatro cabos formando um bond. Vários fluxos de clientes são distribuídos por hashing entre os quatro membros, cada fluxo grudado em um membro. Uma nota indica soma da capacidade entre fluxos, e que um único fluxo usa só um membro.
+\begin{tikzpicture}[
+  font=\small,
+  eq/.style={draw, rounded corners, fill=manualblue!15, align=center, minimum height=20mm, minimum width=20mm, font=\scriptsize},
+]
+\node[eq] (rt) at (0,0) {roteador};
+\node[eq] (sw) at (6,0) {switch};
+\foreach \y/\c in {1.2/manualgreen!60!black, 0.4/manualblue!60!black, -0.4/manualred, -1.2/manualyellow!70!black} {
+  \draw[thick, \c] (rt.east) ++(0,\y) -- ++(6,0);
+}
+\node[align=center] at (3,2) {\scriptsize bond (4 membros)};
+\node[align=center, manualred] at (3,-2.2) {\scriptsize soma \textbf{entre fluxos}; 1 fluxo = 1 membro (hashing)};
+\end{tikzpicture}
+```
+
+::: {#fig-bonding}
+Quatro enlaces agregados: muitos fluxos se espalham pelos membros
+(capacidade somada), mas **cada** fluxo individual trafega por **um**
+membro. Bonding escala o **agregado**, não o fluxo único — a fonte nº 1
+de expectativa frustrada.
+:::
+
+## Os modos: LACP, balance-xor, active-backup
+
+- **802.3ad (LACP)**: o padrão de mercado. Os dois lados **negociam** a
+  agregação dinamicamente (o LACP detecta membros saudáveis e os agrupa).
+  Exige que o **outro lado também fale LACP** (switch gerenciável,
+  configurado em *port-channel*/*LAG*). Preferível sempre que possível;
+- **balance-xor**: distribui por hashing **sem** negociação — estático.
+  Funciona quando o outro lado não faz LACP, mas ambos precisam estar
+  configurados de forma compatível;
+- **active-backup**: **sem** soma de banda — só **redundância**. Um
+  membro ativo, os outros em espera; se o ativo cai, outro assume. Não
+  exige nada especial do outro lado; bom para redundância pura de caminho.
+
+A escolha: **LACP** para agregar banda + redundância com um switch
+gerenciável; **active-backup** para redundância simples de cabo/porta
+sem exigência do outro lado; **balance-xor** como meio-termo estático.
+
+## Configurando um bond LACP
+
+```routeros
+# agrega ether3 e ether4 num bond LACP
+/interface bonding
+add name=bond-uplink slaves=ether3,ether4 mode=802.3ad \
+    transmit-hash-policy=layer-2-and-3 lacp-rate=1sec
+
+# use o bond como uma interface normal (endereço, bridge, etc.)
+/ip address add address=10.0.0.1/30 interface=bond-uplink
+```
+
+- `mode=802.3ad` (LACP) — o outro lado (switch) precisa ter o
+  *port-channel* correspondente;
+- `transmit-hash-policy` define **como** os fluxos são distribuídos
+  (`layer-2-and-3` = por MAC+IP; `layer-3-and-4` inclui porta, melhor
+  distribuição). Escolha conforme a diversidade do tráfego;
+- `lacp-rate=1sec` = detecção mais rápida de membro caído.
+
+## Verificação e failover
+
+```routeros
+/interface bonding monitor bond-uplink
+```
+
+Mostra o estado de cada membro (LACP negociado, ativo). Para testar o
+failover, derrube **um** membro (desconecte um cabo) e confirme que o
+bond **permanece up** com banda reduzida — a redundância em ação. Some ao
+tráfego real e observe pelo Torch (@sec-torch-sniffer) como os fluxos se
+distribuem entre os membros.
+
+::: {.callout-warning}
+**Modo divergente entre os lados** é o erro nº 1: um lado em LACP e o
+outro em balance-xor (ou em port-channel estático) causa loops, flapping
+ou um bond que "sobe mas não passa tráfego direito". Os **dois lados**
+precisam concordar no modo. E não prometa "4 Gbps de download" ao vender
+um bond de 4×1 Gbps — um único fluxo continua limitado a **um** membro; a
+expectativa errada gera reclamação legítima.
+:::
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Bonding junta enlaces físicos numa interface lógica para **somar
+capacidade** e **sobreviver** à queda de um cabo/porta — mas a soma é
+**entre fluxos**, não dentro de um: o hashing gruda cada conexão num
+membro, então um download único não vê a banda agregada. Escolha o modo
+pelo objetivo e pelo outro lado: **LACP** (negociado, com switch
+gerenciável) para agregar + redundar; **active-backup** para redundância
+pura sem exigência. Os **dois lados** têm de concordar no modo, sob pena
+de loop/flapping. Bonding é HA e capacidade **na camada 2, entre dois
+equipamentos** — diferente do ECMP (camada 3, entre caminhos), o próximo
+capítulo.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Dois CHRs (@sec-lab-chr) ligados por **duas** redes internas (simulando
+dois cabos) — **lab-a** e **lab-b** — para formar um bond entre eles. Um
+host de cada lado gera tráfego para observar distribuição e failover.
+(Em CHR, LACP entre dois roteadores funciona; num cenário real, o outro
+lado costuma ser um switch com LAG.)
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — crie o bond nos dois lados.** No lab-a:
+
+```routeros
+/interface bonding add name=bond1 slaves=ether2,ether3 mode=802.3ad \
+    transmit-hash-policy=layer-3-and-4 lacp-rate=1sec
+/ip address add address=10.0.0.1/30 interface=bond1
+```
+
+No lab-b, idêntico com `10.0.0.2/30` e o **mesmo modo**.
+
+**Passo 2 — verifique a negociação.**
+
+```routeros
+/interface bonding monitor bond1
+```
+
+Confirme que os dois membros negociaram LACP e estão ativos.
+
+**Passo 3 — tráfego e distribuição.** Gere **vários** fluxos (de hosts/
+portas diferentes) através do bond e observe no Torch como se espalham
+pelos membros. Depois gere **um único** fluxo grande e note que ele usa
+**um** membro só — a lição do hashing.
+
+**Passo 4 — failover de membro.** Desconecte **um** dos cabos (desabilite
+uma rede interna) e confirme que o bond **segue up** (com metade da
+banda). Reconecte e veja o membro voltar.
+
+**Passo 5 — modo divergente (erro proposital).** Mude **um** lado para
+`balance-xor` e observe os problemas (bond instável/tráfego errático);
+volte os dois para o mesmo modo. Sinta por que os lados têm de concordar.
+
+### Verificação
+
+1. Os dois membros negociam LACP e o `monitor` os mostra ativos;
+2. Múltiplos fluxos se distribuem; um único fluxo usa um membro só;
+3. Derrubar um membro mantém o bond up com banda reduzida;
+4. Modo divergente entre os lados quebra o bond.
+
+### Desafios
+
+1. Você vendeu um "link de 2 Gbps" agregando 2×1 Gbps e o cliente
+   reclama que o teste de velocidade dá só ~1 Gbps. Ele **não** está
+   errado sobre o teste. Explique o que aconteceu e o que o bond
+   realmente entrega — e como você deveria ter descrito o produto.
+2. Um bond LACP "sobe" mas o tráfego fica errático e há flapping. Qual é
+   a causa mais provável no **outro lado** e como confirma?
+3. Você quer **só redundância** de dois enlaces entre um roteador e um
+   equipamento que **não fala LACP**, sem precisar somar banda. Qual modo
+   usa e por que ele é o certo aqui?
+4. Diferencie **bonding** de **ECMP** (@sec-ecmp-pcc) quanto à camada e
+   ao que agregam. Dê um cenário para cada um.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** O teste de velocidade abre (tipicamente) **um único fluxo**, que o
+bond gruda em **um** membro por causa do hashing — logo, ~1 Gbps. O bond
+de 2×1 Gbps entrega **2 Gbps de agregado** (entre muitos fluxos/clientes),
+não 2 Gbps para uma conexão. Você deveria ter descrito como "2 Gbps de
+capacidade agregada" (com redundância), deixando claro que um **fluxo
+único** fica limitado a 1 Gbps. Para um único fluxo mais rápido, seria
+preciso um enlace físico maior, não agregação.
+
+**2.** O **outro lado não está configurado para LACP compatível** — porta
+não incluída no *port-channel*/LAG, ou em modo estático incompatível.
+Isso causa negociação instável, loops e flapping. Confirme com
+`/interface bonding monitor` (LACP não negociado/parcial) e na
+configuração do switch (o LAG existe e inclui as portas certas, no mesmo
+modo).
+
+**3.** **active-backup**: dá redundância (um ativo, outro em espera; troca
+na falha) **sem** exigir nada especial do outro lado (não negocia LACP,
+não precisa de LAG). Como o objetivo é só sobreviver à queda de um enlace
+— não somar banda — active-backup é o modo certo e o mais simples de
+interoperar.
+
+**4.** **Bonding** age na **camada 2**, agregando **enlaces físicos entre
+dois equipamentos** numa interface lógica (soma de portas/cabos). **ECMP**
+age na **camada 3**, distribuindo tráfego entre **múltiplos caminhos/
+rotas de mesmo custo** (roteadores diferentes, links de trânsito
+distintos). Cenário bonding: 4 cabos entre o switch e o roteador do POP.
+Cenário ECMP (@sec-ecmp-pcc): dois links de trânsito de operadoras
+diferentes balanceando saída para a internet.
+:::
+
+## Resumo
+
+- **Bonding** agrega enlaces físicos numa interface lógica: **soma
+  capacidade** e **redunda** cabo/porta entre dois equipamentos;
+- A soma é **entre fluxos** (hashing gruda cada conexão a um membro) —
+  **um único fluxo não** atinge a banda agregada;
+- Modos: **802.3ad (LACP)** negociado (exige LACP do outro lado, melhor
+  opção), **balance-xor** estático, **active-backup** (só redundância,
+  sem exigência);
+- **Os dois lados** têm de concordar no modo (senão loop/flapping);
+  escolha o `transmit-hash-policy` pela diversidade do tráfego;
+- Bonding é HA/capacidade na **camada 2, entre dois equipamentos** —
+  distinto do **ECMP** (camada 3, entre caminhos).
+
+Bonding agrega **portas** entre equipamentos vizinhos. Falta agregar e
+balancear **caminhos** de camada 3 — múltiplos links de trânsito para a
+internet. O @sec-ecmp-pcc cobre ECMP e o load balancing PCC.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *Bonding* do RouterOS [@mikrotik-docs];
+- Agregação de enlaces (LACP/802.3ad): [@tanenbaum-redes];
+- Bonding no v7 na prática: [@discher-rosv7];
+- Redundância de enlace em provedores: [@burgess-mikrotik].
