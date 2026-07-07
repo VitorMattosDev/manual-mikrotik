@@ -117,7 +117,13 @@ book:
         - volumes/v11-mpls/02-vpls.qmd
         - volumes/v11-mpls/03-traffic-engineering.qmd
 
-    # (Volumes 12–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
+    - part: "Volume 12 — Scripts e automação"
+      chapters:
+        - volumes/v12-scripts/01-linguagem-script.qmd
+        - volumes/v12-scripts/02-scheduler-netwatch-backups.qmd
+        - volumes/v12-scripts/03-api-provisionamento.qmd
+
+    # (Volumes 13–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
 
   appendices:
     - referencias.qmd

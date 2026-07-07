@@ -1,0 +1,7 @@
+# Linguagem de script do RouterOS
+
+::: {.callout-note}
+## Em construção
+Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
+acompanhar o progresso.
+:::
