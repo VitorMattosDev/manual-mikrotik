@@ -123,7 +123,14 @@ book:
         - volumes/v12-scripts/02-scheduler-netwatch-backups.qmd
         - volumes/v12-scripts/03-api-provisionamento.qmd
 
-    # (Volumes 13–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
+    - part: "Volume 13 — Monitoramento e diagnóstico"
+      chapters:
+        - volumes/v13-monitoramento/01-logs-syslog.qmd
+        - volumes/v13-monitoramento/02-snmp-graphing-dude.qmd
+        - volumes/v13-monitoramento/03-torch-sniffer-profile.qmd
+        - volumes/v13-monitoramento/04-metodologia-troubleshooting.qmd
+
+    # (Volumes 14–15: ver ROADMAP.md; adicionar os blocos part: aqui ao chegar.)
 
   appendices:
     - referencias.qmd
