@@ -1,7 +1,291 @@
-# Scheduler, netwatch e backups automáticos
+# Scheduler, netwatch e backups automáticos {#sec-scheduler}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Agendar scripts com o **scheduler** (por horário, intervalo ou no
+  boot) e entender `start-time`/`interval`;
+- Reagir a **eventos de rede** com o **netwatch** (host up/down,
+  disparando scripts de `on-up`/`on-down`);
+- Automatizar **backups** — binário e `export` — e enviá-los para fora
+  por **e-mail** e **`fetch`** (FTP/HTTP);
+- Combinar as três peças em rotinas reais de provedor: failover por
+  netwatch, backup diário externo, verificação periódica;
+- Escrever automações **seguras** (idempotentes, com log e limites) que
+  não viram um tiro no pé.
 :::
+
+O @sec-linguagem-script deu a linguagem; falta fazer os scripts rodarem
+**sozinhos**. Três ferramentas transformam código em **operação
+autônoma**: o **scheduler** (rodar no tempo certo), o **netwatch**
+(rodar quando algo cai ou volta) e os **backups automáticos** (guardar a
+configuração fora da caixa, sem depender de você lembrar). Juntas, elas
+são a diferença entre um provedor que **reage** a problemas de madrugada
+e um que **se defende** sozinho — e sempre tem backup quando precisa.
+
+## Scheduler: rodar no tempo certo
+
+O **scheduler** dispara scripts por horário ou intervalo:
+
+```routeros
+# todo dia às 03:00 — backup noturno
+/system scheduler
+add name=backup-diario start-time=03:00:00 interval=1d \
+    on-event="/system script run backup-externo"
+
+# a cada 5 minutos — verificação de links
+/system scheduler
+add name=checa-links interval=5m on-event="/system script run checa-links"
+
+# no boot — reaplica algo após reinício
+/system scheduler
+add name=pos-boot start-time=startup on-event="/system script run ajustes-boot"
+```
+
+- `interval=1d`/`5m`/`1h` — período de repetição;
+- `start-time=03:00:00` — horário fixo; `start-time=startup` — roda no
+  boot;
+- `on-event` — o que executar (chame um script nomeado, não cole lógica
+  gigante inline).
+
+::: {.callout-warning}
+Scheduler + script **não idempotente** = desastre em escala de tempo: um
+`add` cego rodando a cada 5 min gera milhares de duplicatas por dia
+(@sec-linguagem-script). **Antes** de agendar, garanta que o script pode
+rodar **infinitas vezes** sem estragar nada. E **sempre logue** o que a
+automação faz — automação silenciosa que falha é a pior de diagnosticar.
+:::
+
+## Netwatch: reagir a eventos de rede
+
+O **netwatch** monitora um host (ping/TCP/HTTP) e dispara scripts quando
+ele **cai** (`on-down`) ou **volta** (`on-up`). É a base de failover
+caseiro e de alertas:
+
+```routeros
+# monitorar o gateway de trânsito; agir na queda e na volta
+/tool netwatch
+add host=198.51.100.1 interval=10s timeout=1s \
+    down-script="/system script run transito-caiu" \
+    up-script="/system script run transito-voltou"
+```
+
+Um uso clássico é **failover de rota** (complementar ao `check-gateway`
+do @sec-rotas-estaticas): quando o trânsito primário cai, o `down-script`
+ativa a rota reserva; quando volta, o `up-script` a restaura. O netwatch
+detecta **alcançabilidade fim a fim** (o host lá longe), não só "o link
+está up" — mais confiável que olhar a interface.
+
+```{.tikz}
+%%| filename: fig-netwatch
+%%| alt: Fluxo do netwatch monitorando um host. O netwatch faz ping periódico ao host alvo. Enquanto responde, estado UP. Quando para de responder, transição para DOWN dispara o down-script (ex.: ativar rota reserva, enviar alerta). Quando volta a responder, transição para UP dispara o up-script (restaurar). Setas mostram o ciclo de estados e os disparos.
+\begin{tikzpicture}[
+  font=\small,
+  s/.style={draw, rounded corners, align=center, minimum height=10mm, minimum width=22mm, font=\scriptsize},
+]
+\node[s, fill=manualgreen!18] (up) at (0,0) {estado UP\\(responde)};
+\node[s, fill=manualred!18] (down) at (5,0) {estado DOWN\\(sem resposta)};
+\draw[-{Stealth}, thick] (up) to[bend left=25] node[above]{\scriptsize timeout $\to$ down-script} (down);
+\draw[-{Stealth}, thick] (down) to[bend left=25] node[below]{\scriptsize volta $\to$ up-script} (up);
+\node[align=center, manualblue!60!black] at (2.5,-1.6) {\scriptsize detecta alcançabilidade fim a fim, não só ``link up''};
+\end{tikzpicture}
+```
+
+::: {#fig-netwatch}
+O netwatch acompanha a **alcançabilidade** de um host e dispara scripts
+nas transições. É a peça reativa da automação: failover, alerta,
+autorrecuperação — tudo pendurado no `up-script`/`down-script`.
+:::
+
+## Backups automáticos: binário, export e envio externo
+
+Há **dois** tipos de backup (você viu no Volume 1):
+
+- **Backup binário** (`/system backup save`): imagem completa, restaura
+  idêntico **na mesma versão/hardware** — bom para recuperação rápida;
+- **Export** (`/export`): texto legível dos comandos, **portável** e
+  versionável (ideal para git/auditoria) — mas não guarda senhas por
+  padrão.
+
+O ponto crítico: o backup **não pode morar só na caixa** (se ela pifa, o
+backup vai junto). Automatize o **envio para fora**:
+
+```routeros
+# script backup-externo: gera e envia por e-mail
+/system script add name=backup-externo source={
+    :local nome ("bkp-" . [/system identity get name] . "-" . \
+        [:pick [/system clock get date] 0 11])
+    /system backup save name=$nome
+    /export file=$nome
+    # enviar por e-mail (configurar /tool e-mail antes)
+    /tool e-mail send to="noc@provedor.net" subject="Backup $nome" \
+        file="$nome.backup"
+}
+```
+
+Alternativas de envio: **`/tool fetch`** para um servidor FTP/HTTP
+central (`upload=yes`), ou copiar via script para um repositório. O
+Volume 15 (@sec-hardening-operacional) integra isso à rotina de parque.
+Combine com o scheduler (bloco `backup-diario` acima) e você tem backup
+diário externo **sem depender de memória humana**.
+
+## Juntando tudo: uma rotina de provedor
+
+As três peças se combinam em automações reais:
+
+- **Backup diário externo**: scheduler `03:00` → `backup-externo` →
+  e-mail/FTP;
+- **Failover de trânsito**: netwatch no gateway → `down-script` ativa
+  reserva, `up-script` restaura (com log e, idealmente, alerta);
+- **Sentinela de saúde**: scheduler `5m` → script que checa links, CPU,
+  temperatura e **notifica** (a função `$notificar` do
+  @sec-linguagem-script) só quando há problema;
+- **Autolimpeza**: scheduler diário removendo address-lists expiradas,
+  logs antigos, etc.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Automação no RouterOS são **três gatilhos**: **tempo** (scheduler),
+**evento de rede** (netwatch) e a garantia que a operação exige — o
+**backup externo automático**. O netwatch reage a **alcançabilidade fim a
+fim** (mais confiável que "link up") e o backup só serve se sair da
+caixa. Duas regras acima de tudo: automação agendada **exige scripts
+idempotentes** (senão o tempo multiplica o erro) e **tudo loga** (uma
+automação silenciosa que falha é pior que não ter automação). Faça a
+rede se defender sozinha — e ter backup quando não conseguir.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Dois CHRs (@sec-lab-chr): **lab-rt** (onde rodam scheduler/netwatch/
+backup) e **lab-alvo** (o host que o netwatch monitora, para você poder
+derrubá-lo e ver a reação). Opcional: um servidor FTP/HTTP simples para
+o envio de backup, ou apenas o log/e-mail simulado.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — script idempotente de verificação.** Reuse o `checa-links`
+do @sec-linguagem-script (logando interfaces caídas).
+
+**Passo 2 — agende-o.**
+
+```routeros
+/system scheduler add name=checa interval=1m on-event="/system script run checa-links"
+```
+
+Observe o log a cada minuto. Confirme que rodar repetido **não** causa
+efeito colateral (idempotência).
+
+**Passo 3 — netwatch reagindo.** Monitore o lab-alvo:
+
+```routeros
+/system script add name=alvo-caiu source={ :log warning "ALVO CAIU" }
+/system script add name=alvo-voltou source={ :log info "ALVO VOLTOU" }
+/tool netwatch add host=<ip-lab-alvo> interval=5s \
+    down-script="/system script run alvo-caiu" \
+    up-script="/system script run alvo-voltou"
+```
+
+**Passo 4 — provoque a transição.** Desligue a interface do lab-alvo (ou
+o CHR) e veja o `down-script` disparar; religue e veja o `up-script`. A
+automação reativa ao vivo.
+
+**Passo 5 — backup automático.** Crie o script `backup-externo` (gere
+`backup` + `export`) e agende-o. Se tiver FTP, use `/tool fetch
+upload=yes` para enviá-lo; senão, confirme que os arquivos foram gerados
+(`/file print`) e simule o envio.
+
+**Passo 6 — failover por netwatch (opcional).** Faça o `down-script`
+ativar uma rota reserva e o `up-script` restaurá-la; derrube o alvo e
+confirme a troca de caminho.
+
+### Verificação
+
+1. O scheduler dispara o script no intervalo, sem efeito colateral;
+2. O netwatch dispara `down`/`up` nas transições do alvo;
+3. O backup é gerado (binário + export) e enviado/salvo fora da caixa;
+4. (Opcional) o failover por netwatch troca a rota na queda e restaura.
+
+### Desafios
+
+1. Um script de backup agendado enche o disco do roteador em duas
+   semanas. O envio externo funciona. Qual passo faltou na automação, e
+   como você o adiciona sem apagar o backup do dia?
+2. Um netwatch com `interval=1s timeout=1s` num link de rádio com jitter
+   fica **oscilando** (up/down/up), disparando os scripts o tempo todo.
+   Explique o problema e como estabilizar sem perder a detecção real de
+   queda.
+3. O failover por netwatch ativou a rota reserva, mas quando o primário
+   voltou o tráfego **não** retornou a ele. O que faltou no `up-script`,
+   e por que confiar só no `down-script` é meio failover?
+4. Por que o netwatch (host remoto) costuma ser **mais confiável** para
+   failover do que olhar só o estado da interface local? Dê um cenário
+   em que a interface está "up" mas o caminho está morto.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Faltou a **rotação/limpeza** dos arquivos antigos. O backup é
+gerado e enviado, mas as cópias locais se acumulam. Adicione ao script
+uma limpeza dos backups locais com mais de N dias:
+```routeros
+:foreach f in=[/file find where name~"bkp-" && creation-time<([/system clock get date] - 7d)] do={ /file remove $f }
+```
+(ajuste a comparação de data à sua versão). Assim o disco não enche e o
+backup do dia permanece.
+
+**2.** `timeout` curto demais num link com jitter marca "down" a cada
+atraso momentâneo — **flapping**. Estabilize aumentando o `timeout` e o
+`interval` (ex.: `interval=10s timeout=3s`) e/ou exigindo várias falhas
+seguidas antes de agir (lógica de contador no script). Você troca um
+pouco de tempo de detecção por **estabilidade** — um flap não pode
+disparar failover.
+
+**3.** Faltou o `up-script` **restaurar** o estado primário (reativar a
+rota primária / desativar a reserva). Só o `down-script` faz **metade**:
+detecta a queda e desvia, mas sem o retorno automático você fica preso na
+reserva (pior caminho) até intervir à mão. Failover completo = **desviar
+na queda E voltar na recuperação**, ambos automáticos e com log.
+
+**4.** A interface pode estar **up** (portadora presente) enquanto o
+**caminho** além dela está morto — o equipamento do outro lado travou, o
+upstream da operadora caiu, uma rota sumiu. Olhar só a interface não vê
+isso. O netwatch pinga um **host remoto** (ex.: o gateway da operadora ou
+um IP na internet): se ele não responde, o caminho está realmente
+quebrado, ainda que sua interface diga "up". Detecção fim a fim > estado
+de link.
+:::
+
+## Resumo
+
+- **Scheduler** roda scripts por **horário/intervalo/boot**
+  (`start-time`, `interval`, `on-event`);
+- **Netwatch** reage a **eventos de rede** (`down-script`/`up-script`),
+  detectando **alcançabilidade fim a fim** — base de failover e alerta;
+- **Backups automáticos**: **binário** (recuperação) + **export**
+  (portável/versionável), **enviados para fora** (e-mail/`fetch`) — nunca
+  só na caixa;
+- Combine as três em rotinas: backup diário externo, failover por
+  netwatch (desviar **e** voltar), sentinela de saúde, autolimpeza;
+- Regras de ouro: **idempotência** (o tempo multiplica erros) e **log em
+  tudo** — automação silenciosa que falha é a pior.
+
+Scheduler e netwatch automatizam **um** roteador. Falta o salto de
+escala: configurar e provisionar **centenas** de uma vez. O
+@sec-api-provisionamento cobre a API (binária e REST) e o
+provisionamento em massa.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *Scheduler*, *Netwatch*, *Backup*, *E-mail*,
+  *Fetch* do RouterOS [@mikrotik-docs];
+- Automação reativa e monitoramento: [@tanenbaum-redes];
+- Rotinas de operação no v7: [@discher-rosv7];
+- Automação de parque em provedores: [@burgess-mikrotik].
