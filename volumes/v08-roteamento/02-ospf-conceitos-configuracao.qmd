@@ -1,7 +1,377 @@
-# OSPF: conceitos e configuração
+# OSPF: conceitos e configuração {#sec-ospf-basico}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Explicar por que um protocolo de estado de enlace (**link-state**)
+  substitui com vantagem as rotas estáticas quando a rede tem malha;
+- Descrever o ciclo do OSPF: descoberta de vizinhos (Hello),
+  sincronização do banco de dados (LSAs) e cálculo de menor caminho
+  (Dijkstra) sobre o **custo**;
+- Entender **áreas**, o papel da área 0 (backbone) e por que existem
+  DR/BDR em redes multiacesso;
+- Configurar OSPFv2 no RouterOS **v7** (a tríade
+  `instance` → `area` → `interface-template`) e ler
+  `neighbor`/`lsa`;
+- Redistribuir rotas (conectadas, estáticas) e ajustar **custo** para
+  moldar o caminho — sem criar caminhos assimétricos.
 :::
+
+O @sec-rotas-estaticas terminou com um incômodo: cada enlace novo são
+várias tabelas para editar à mão, e um link que cai não avisa ninguém.
+Numa rede com **malha** — dois POPs, um anel de fibra, o rádio de
+contingência — isso não escala nem sobrevive a falhas. O **OSPF**
+(*Open Shortest Path First*) resolve os dois: os roteadores trocam a
+topologia entre si, cada um calcula sozinho o melhor caminho, e quando
+algo muda **a rede reconverge sem intervenção**. É o protocolo de
+roteamento interno padrão de qualquer provedor.
+
+## Link-state: cada roteador tem o mapa inteiro
+
+Há duas famílias de protocolos internos. Os **distance-vector** (RIP)
+dizem ao vizinho "sei chegar em X a N saltos" — cada um confia na
+palavra do outro, e mudanças se propagam de boca em boca (lento, sujeito
+a loops). Os **link-state** (OSPF) fazem o oposto: cada roteador
+anuncia **apenas seus próprios enlaces** (a quem está diretamente
+conectado e com que custo), e esses anúncios — **LSAs** (*Link-State
+Advertisements*) — são inundados intactos por toda a área. Resultado:
+**todo roteador monta o mesmo mapa completo** da rede e roda o
+algoritmo de Dijkstra sobre ele para achar o menor caminho até cada
+destino.
+
+A diferença prática: no link-state ninguém "acredita" em rota de
+terceiro — todos veem a topologia e calculam. Convergência rápida,
+sem loops de contagem ao infinito, ao custo de mais CPU/memória (o
+mapa) e de disciplina de projeto (áreas).
+
+```{.tikz}
+%%| filename: fig-ospf-topologia
+%%| alt: Topologia OSPF do provedor. Três roteadores — POP central, POP rural e borda — formam um triângulo de enlaces com custos diferentes. Cada enlace tem um custo; o caminho do POP rural até a borda pode ir direto (custo alto) ou passar pelo POP central (soma de dois custos menores). O OSPF escolhe o de menor custo total.
+\begin{tikzpicture}[
+  font=\small,
+  rt/.style={draw, circle, fill=manualblue!20, minimum size=13mm, align=center, inner sep=1pt},
+]
+\node[rt] (central) at (0,2.4)   {POP\\central};
+\node[rt] (rural)   at (-3.2,-1.4) {POP\\rural};
+\node[rt] (borda)   at (3.2,-1.4)  {borda};
+% enlaces
+\draw[thick] (central) -- node[above left]{\scriptsize custo 10 (fibra)} (rural);
+\draw[thick] (central) -- node[above right]{\scriptsize custo 10 (fibra)} (borda);
+\draw[thick, manualred] (rural) -- node[below]{\scriptsize custo 50 (rádio)} (borda);
+% caminho escolhido
+\draw[-{Stealth}, destaque, manualgreen!60!black]
+  (rural.north east) to[bend left=12] node[midway, sloped, above]{\scriptsize} (central.south west);
+\node[manualgreen!60!black, align=center, anchor=west] at (-1.2,0.3)
+  {\scriptsize rural$\to$borda:\\ \scriptsize via central = 20\\ \scriptsize direto = 50\\ \scriptsize \textbf{vence o 20}};
+\end{tikzpicture}
+```
+
+::: {#fig-ospf-topologia}
+OSPF escolhe por **custo somado**, não por número de saltos: o caminho
+POP rural → borda via POP central (10+10=20) vence o enlace direto de
+rádio (50), embora tenha um salto a mais. Ajustar custos é como você
+molda o tráfego.
+:::
+
+## Vizinhança, custo e áreas
+
+**Adjacências.** OSPF só troca LSAs com vizinhos com quem formou
+**adjacência** — e para isso os pacotes Hello dos dois lados precisam
+concordar em: mesma área, mesmos temporizadores (hello/dead), mesma
+sub-rede, autenticação compatível. Hello divergente = vizinho que
+"aparece e some" — o bug de campo nº 1 do OSPF.
+
+**Custo.** O peso de cada enlace. No RouterOS o custo padrão deriva da
+referência de banda; o que importa é a regra: **caminho vence pela
+menor soma de custos**. Você ajusta custo para preferir a fibra e
+deixar o rádio como reserva (como na figura) — mas com cuidado: mexer
+no custo de **um lado** cria caminho assimétrico (ida pela fibra, volta
+pelo rádio), fonte de dor de cabeça diagnóstica.
+
+**DR/BDR.** Numa rede multiacesso (vários roteadores num mesmo
+segmento L2, ex.: um switch no POP), se todos formassem adjacência com
+todos seriam N² relações. OSPF elege um **DR** (*Designated Router*) e
+um **BDR** (backup): todos falam com o DR, que redistribui — reduz a
+N. Em enlaces ponto a ponto (a maioria no provedor: um PtP de rádio,
+um túnel) **não há DR** — são só dois, adjacência direta.
+
+**Áreas.** OSPF divide a rede em **áreas** para não inundar LSAs pelo
+mundo todo. A **área 0** é o *backbone* — obrigatória, e toda outra
+área precisa tocá-la. Numa rede pequena (nossos poucos POPs), **tudo
+na área 0** é o certo; áreas adicionais são assunto do próximo
+capítulo (@sec-ospf-avancado), quando a rede cresce a ponto de o mapa
+único pesar.
+
+::: {.callout-tip}
+## Analogia para guardar
+
+Rotas estáticas são cada motorista decorando um trajeto fixo: mudou
+uma rua, todos se perdem até você reensinar um a um. OSPF é o **app de
+trânsito** que todos usam: cada carro reporta as ruas que **ele** vê
+(os LSAs), o app monta o mapa completo da cidade e cada um calcula sua
+própria melhor rota (Dijkstra). Fechou uma via? Os relatos se espalham
+em segundos e todos recalculam sozinhos. O custo do enlace é o "tempo
+estimado" de cada rua — e é isso, não a distância em quarteirões, que
+o app minimiza.
+:::
+
+## Configurando OSPFv2 no RouterOS v7
+
+O v7 reorganizou o OSPF (quem vem do v6 estranha). São três objetos:
+
+```routeros
+# 1) a instância: o "processo" OSPF e seu router-id (identidade única!)
+/routing ospf instance
+add name=isp-ospf router-id=10.255.0.1
+
+# 2) a área: aqui, só o backbone
+/routing ospf area
+add name=backbone area-id=0.0.0.0 instance=isp-ospf
+
+# 3) em quais interfaces falar OSPF (e como) — via template por rede
+/routing ospf interface-template
+add area=backbone networks=172.16.9.0/30 interfaces=ether2 \
+    comment="enlace PtP para o POP rural"
+add area=backbone networks=172.16.9.4/30 interfaces=ether3 \
+    comment="enlace PtP para a borda"
+```
+
+- **`router-id`**: a identidade do roteador no OSPF — único no domínio,
+  convenção usar um IP de *loopback* (uma `/32` numa bridge sem portas,
+  sempre no ar mesmo se uma interface física cair). Router-id
+  duplicado = adjacências instáveis e LSAs em guerra;
+- **`interface-template`**: casa interfaces por `networks` (as
+  sub-redes que participam) e/ou `interfaces`; é onde se define custo,
+  tipo (`ptp` desliga a eleição de DR num enlace ponto a ponto),
+  temporizadores e autenticação.
+
+Anunciar as redes conectadas dos clientes (LANs, pools) sem colocar
+OSPF **nas interfaces dos clientes** (não queremos vizinhança com
+assinante!): use um template passivo ou redistribuição:
+
+```routeros
+/routing ospf instance
+set isp-ospf redistribute=connected out-filter-chain=ospf-out
+
+/routing filter rule
+add chain=ospf-out rule="if (dst==100.64.100.0/22) { accept }"
+add chain=ospf-out rule="reject"
+```
+
+Assim o backbone aprende o agregado dos pools (@sec-rotas-estaticas)
+sem expor o OSPF ao lado do cliente. Filtros de redistribuição são o
+tema do @sec-bgp-filtros — aqui, o mínimo para não vazar tudo.
+
+## Lendo o OSPF
+
+```routeros
+/routing ospf neighbor print
+/routing ospf lsa print
+/ip route print where ospf
+```
+
+```
+# neighbor print
+ 0 instance=isp-ospf router-id=10.255.0.2 address=172.16.9.2
+   state="Full" ...
+```
+
+O estado que você quer é **`Full`**: adjacência completa, bancos
+sincronizados. Estados travados contam a história: **`Init`/`2-Way`**
+(vê o Hello mas não fecha — cheque área/timers/autenticação);
+**`ExStart`/`Exchange`** preso (quase sempre **MTU divergente** entre
+os lados — OSPF exige MTU igual). Rota OSPF na tabela aparece com flag
+`Do` (dynamic/ospf) e **distância 110** (@tbl-distancias) — daí a
+estática de distância 1 vencê-la, como você já sabia.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+OSPF entrega **um mapa idêntico a todos os roteadores** e deixa cada um
+calcular o menor caminho por **custo somado** — é isso que dá
+convergência rápida e sem loops que a estática nunca terá. Mas o preço
+é disciplina: `router-id` único, temporizadores e MTU iguais entre
+vizinhos, custos ajustados nos **dois** sentidos e OSPF **jamais** na
+interface do cliente. A tríade v7 (instance → area → template) só
+funciona bem quando esses fundamentos estão de pé; o resto do volume
+constrói sobre eles.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+O trio em triângulo (@sec-lab-chr) — a topologia da
+@fig-ospf-topologia: lab-r1 = POP central, lab-r2 = POP rural,
+lab-r3 = borda. Enlaces PtP `/30`: r1–r2 em `172.16.9.0/30`, r1–r3 em
+`172.16.9.4/30`, r2–r3 em `172.16.9.8/30` (crie a terceira interface/
+rede interna no VirtualBox fechando o triângulo). Cada roteador com um
+loopback `/32` para router-id: r1=10.255.0.1, r2=.2, r3=.3.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — loopback e router-id.** Em cada roteador (exemplo r1):
+
+```routeros
+/interface bridge add name=lo
+/ip address add address=10.255.0.1 interface=lo
+```
+
+**Passo 2 — a tríade OSPF em cada um.** No lab-r1 (POP central,
+tocando os dois enlaces):
+
+```routeros
+/routing ospf instance add name=isp router-id=10.255.0.1
+/routing ospf area add name=backbone area-id=0.0.0.0 instance=isp
+/routing ospf interface-template \
+    add area=backbone networks=172.16.9.0/30,172.16.9.4/30,10.255.0.1/32 \
+    type=ptp
+```
+
+Réplica análoga em r2 (redes `172.16.9.0/30`, `172.16.9.8/30`,
+`10.255.0.2/32`) e r3 (`172.16.9.4/30`, `172.16.9.8/30`,
+`10.255.0.3/32`), cada um com seu router-id.
+
+**Passo 3 — veja a vizinhança nascer.** No lab-r1:
+
+```routeros
+/routing ospf neighbor print
+```
+
+Espere `state=Full` com r2 **e** r3. Se travar em `ExStart`, é MTU —
+confira `/interface ethernet print` (iguale os MTUs). Se ficar em
+`Init`, revise área/timers.
+
+**Passo 4 — o mapa se formou.** Em qualquer roteador:
+
+```routeros
+/ip route print where ospf
+```
+
+O lab-r2 (rural) aprendeu sozinho a chegar na rede de r3 (borda) —
+**sem uma linha de rota estática**. Confirme o caminho:
+
+```routeros
+/tool traceroute 10.255.0.3
+```
+
+**Passo 5 — molde o caminho pelo custo.** Hoje r2→r3 pode ir direto
+(um enlace) ou via r1. Encareça o enlace direto r2–r3 nos **dois**
+lados (r2 e r3), simulando "rádio caro":
+
+```routeros
+/routing ospf interface-template set [find networks~"172.16.9.8"] cost=50
+```
+
+Refaça o traceroute de r2 para r3: agora passa por **r1** (custo
+10+10=20 < 50) — a @fig-ospf-topologia ao vivo. Mude o custo em **um só
+lado** e observe a assimetria (ida por um caminho, volta por outro) no
+traceroute dos dois sentidos.
+
+**Passo 6 — reconvergência.** Com o tráfego indo r2→r1→r3, derrube o
+enlace r1–r3 (desconecte o cabo no VirtualBox). Em segundos, o
+traceroute de r2 para r3 passa a usar o enlace direto (custo 50, agora
+o único vivo) — a rede se curou sozinha. Religue e ela volta ao ótimo.
+
+### Verificação
+
+1. `neighbor print` mostra `Full` em todas as adjacências esperadas;
+2. Cada roteador tem, sem rota estática, caminho para os loopbacks dos
+   outros dois;
+3. Encarecer o enlace direto (dois lados) desviou o tráfego pelo POP
+   central; um lado só criou assimetria visível no traceroute;
+4. A queda de um enlace reconvergeu automaticamente em segundos.
+
+### Desafios
+
+1. Dois roteadores veem o Hello um do outro (`neighbor` aparece) mas
+   nunca passam de `2-Way` num enlace ponto a ponto. Liste as três
+   causas mais prováveis e o comando que confirma cada uma.
+2. Você configurou tudo certo, mas as adjacências ficam **presas em
+   `Exchange`** e caem. `ping` entre os roteadores funciona com
+   pacotes pequenos e falha com `size=1500 do-not-fragment`. Nomeie a
+   causa e a correção — e por que o OSPF é tão sensível a isso quando
+   o ping "normal" funcionava.
+3. Por que colocar OSPF na interface **do cliente** (LAN/PPPoE) é um
+   erro de segurança **e** de estabilidade? Descreva o que um cliente
+   mal-intencionado (ou um roteador doméstico "espancado") poderia
+   fazer, e a diretiva de template que anuncia a rede sem formar
+   adjacência ali.
+4. Sua rede tem 40 roteadores numa única área 0. Tudo funciona, até
+   que um enlace instável em um POP começa a "piscar" (flapping) e a
+   CPU de **todos** os 40 sobe em ondas. Explique o mecanismo
+   (LSA → SPF) e antecipe qual recurso do próximo capítulo
+   (@sec-ospf-avancado) contém o estrago.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Preso em `2-Way` num PtP indica que não avançou para
+adjacência plena. Causas: (a) **áreas diferentes** nos dois lados
+(`/routing ospf interface-template print` — o `area`); (b)
+**temporizadores** hello/dead divergentes (mesmo comando, campos de
+timer); (c) **autenticação** só de um lado ou com chave diferente. Em
+rede multiacesso, `2-Way` também é o estado *normal* entre dois
+não-DR — mas num PtP (`type=ptp`) deve ir a `Full`.
+
+**2.** **MTU divergente** entre as interfaces. O OSPF, na fase
+`Exchange`, troca o Database Description e exige que o MTU anunciado
+bata; além disso os LSAs grandes precisam trafegar inteiros. O ping
+pequeno funciona porque cabe em qualquer MTU; o `size=1500 df` falha
+no enlace de MTU menor — o mesmo diagnóstico do PPPoE
+(@sec-pppoe-fundamentos). Correção: igualar o MTU dos dois lados (ou,
+em último caso, `mtu-ignore` no template — trata o sintoma, não a
+causa).
+
+**3.** Segurança: OSPF sem autenticação aceita LSAs de qualquer
+vizinho — um cliente injeta uma rota `0.0.0.0/0` mais atraente e
+**sequestra o tráfego** do POP (ataque clássico). Estabilidade: cada
+roteador doméstico ruidoso vira uma adjacência que sobe e cai,
+disparando recálculos. A diretiva certa: template **passivo**
+(`passive` / sem formar adjacência) na interface do cliente, ou
+redistribuição `connected` filtrada — anuncia-se a *rede*, nunca se
+fala OSPF *com* o cliente. E autenticação obrigatória nos enlaces
+internos.
+
+**4.** Cada flap gera novos LSAs, inundados por toda a área 0; cada
+LSA novo obriga **todos** os 40 roteadores a rodar Dijkstra (SPF) sobre
+o mapa inteiro — ondas de CPU sincronizadas. Numa área única, não há
+barreira: o ruído local é problema global. O @sec-ospf-avancado contém
+o estrago com **áreas** (o flap fica confinado à sua área; para o resto
+da rede, um ABR resume a área como um prefixo estável) e com
+temporizadores de SPF/LSA que amortecem o flapping.
+:::
+
+## Resumo
+
+- **Link-state (OSPF)**: cada roteador anuncia só seus enlaces (LSAs),
+  todos montam o **mesmo mapa** e calculam o menor caminho por **custo
+  somado** (Dijkstra) — convergência rápida, sem loops, ao custo de
+  CPU/memória e disciplina;
+- Fundamentos que fazem ou quebram: **`router-id` único** (use
+  loopback), Hello/timers/**MTU** iguais entre vizinhos, `type=ptp`
+  em enlaces ponto a ponto (sem DR), **tudo na área 0** enquanto a
+  rede é pequena;
+- No **v7**: `instance` → `area` → `interface-template`; redes de
+  cliente entram por **redistribuição filtrada** ou template passivo —
+  **nunca** OSPF na interface do assinante;
+- Diagnóstico: `neighbor print` (quer `Full`; `2-Way` = área/timers,
+  `Exchange` preso = **MTU**), `lsa print`, `route where ospf`
+  (distância 110);
+- Custo molda o caminho — sempre nos **dois** sentidos, sob risco de
+  assimetria.
+
+Uma área só não escala para dezenas de roteadores nem confina falhas.
+O próximo capítulo (@sec-ospf-avancado) parte a rede em áreas, autentica
+os enlaces e refina custos e filtros.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *OSPF* do RouterOS v7 [@mikrotik-docs];
+- Roteamento link-state, Dijkstra e OSPF: [@tanenbaum-redes];
+- RouterOS v7 na prática: [@discher-rosv7];
+- OSPF em provedores: [@burgess-mikrotik].
