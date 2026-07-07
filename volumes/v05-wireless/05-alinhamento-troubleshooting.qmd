@@ -1,7 +1,347 @@
-# Alinhamento e troubleshooting
+# Alinhamento e troubleshooting de enlaces {#sec-alinhamento}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Alinhar uma antena diretiva com método — usando `align`, o
+  *beep* de sinal e a registration table como instrumentos;
+- Reconhecer (e não cair em) um **lóbulo lateral** durante o
+  alinhamento;
+- Usar as ferramentas de diagnóstico do RouterOS: `scan`,
+  `frequency-usage`, `snooper` e o histórico da registration table;
+- Diagnosticar os quatro vilões clássicos de enlace degradado —
+  desalinhamento, interferência, obstrução de Fresnel e hardware/cabo —
+  distinguindo-os pela **assinatura** de cada um nos indicadores;
+- Conduzir um troubleshooting ordenado, da leitura remota à visita
+  técnica, sem trocar peças por adivinhação.
 :::
+
+O @sec-ptmp-rural terminou com uma política de aceite: sinal melhor que
+-65 dBm, simétrico, SNR ≥ 25 dB, CCQ ≥ 90%. Este capítulo ensina a
+**alcançar** esses números no telhado — e a **recuperá-los** quando um
+enlace que funcionava começa a degradar. É o capítulo mais "de campo"
+do volume: métodos, instrumentos e assinaturas de defeito.
+
+## Alinhar é maximizar, não "achar"
+
+Uma antena diretiva concentra energia num **lóbulo principal** estreito
+— mas o diagrama de radiação (@sec-fundamentos-radio) também tem
+**lóbulos laterais**: direções secundárias onde a antena ainda ganha
+alguns dB. Eis a armadilha do instalador apressado: girando a antena, o
+sinal sobe de -85 para -74 dBm e ele para — só que -74 dBm era um
+lóbulo lateral, e o principal daria -58 dBm alguns graus adiante.
+
+```{.tikz}
+%%| filename: fig-lobulos-alinhamento
+%%| alt: Curva do sinal recebido em função do ângulo de rotação da antena. A curva mostra dois picos menores, os lóbulos laterais em torno de -74 dBm, e um pico central bem mais alto, o lóbulo principal em -58 dBm. Uma anotação indica o erro de parar o alinhamento no primeiro pico encontrado.
+\begin{tikzpicture}[font=\small]
+  % eixos
+  \draw[eixo, -{Stealth}] (-4.4,0) -- (4.6,0) node[right] {ângulo};
+  \draw[eixo, -{Stealth}] (-4.4,0) -- (-4.4,3.4) node[above] {sinal};
+  % réguas de referência
+  \draw[auxiliar] (-4.4,2.9) node[left] {-58} -- (4.4,2.9);
+  \draw[auxiliar] (-4.4,1.3) node[left] {-74} -- (4.4,1.3);
+  % curva: lóbulo lateral, principal, lateral
+  \draw[curva, manualblue]
+    (-4.2,0.15)
+    .. controls (-3.6,0.2) and (-3.4,1.25) .. (-3.0,1.3)
+    .. controls (-2.6,1.25) and (-2.4,0.3) .. (-1.9,0.35)
+    .. controls (-1.2,0.5) and (-0.8,2.9) .. (0,2.9)
+    .. controls (0.8,2.9) and (1.2,0.5) .. (1.9,0.35)
+    .. controls (2.4,0.3) and (2.6,1.25) .. (3.0,1.3)
+    .. controls (3.4,1.25) and (3.6,0.2) .. (4.2,0.15);
+  % marcações
+  \node[ponto, fill=manualred] at (-3.0,1.3) {};
+  \node[above, manualred, align=center] at (-3.0,1.45) {lóbulo lateral\\(``parece bom'')};
+  \node[ponto, fill=manualgreen] at (0,2.9) {};
+  \node[above, manualgreen] at (0,3.0) {lóbulo principal};
+  \draw[-{Stealth}, destaque, manualred] (-3.0,0.9) to[bend right=25]
+    node[below, align=center, midway] {continuar girando\\até o pico real} (-0.35,2.5);
+\end{tikzpicture}
+```
+
+::: {#fig-lobulos-alinhamento}
+O sinal em função do ângulo da antena: os lóbulos laterais formam picos
+falsos ~15 dB abaixo do principal. O método correto varre **todo** o
+arco, anota o melhor valor e só então retorna a ele — nunca para no
+primeiro pico.
+:::
+
+### O método (vale para PtP e CPE)
+
+1. **Aponte no grosso** pela geografia: bússola/aplicativo de mapa, ou
+   mire um marco visível (a torre, morro conhecido). Isso coloca você
+   perto do lóbulo principal;
+2. **Trave um eixo e varra o outro, devagar** (azimute primeiro, depois
+   elevação). Velocidade: a leitura de sinal atualiza ~1×/s — gire 2–3°
+   e espere a leitura assentar;
+3. **Varra o arco inteiro** anotando o pico real — não pare no primeiro
+   máximo (@fig-lobulos-alinhamento);
+4. Volte ao pico, **aperte o eixo, e repita no outro eixo**. Aperto de
+   parafuso desloca a antena: confira a leitura *depois* de apertar;
+5. Valide contra a política de aceite: sinal, **simetria** (rx e tx),
+   SNR, CCQ e taxa — os cinco, não só o primeiro.
+
+O RouterOS ajuda com o modo de alinhamento, que emite *beeps* no
+compartimento do rádio (frequência do beep sobe com o sinal — mãos
+livres no mastro):
+
+```routeros
+/interface wireless align
+set active-mode=yes audio-monitor=CC:2D:E0:00:00:01 filter-mac=CC:2D:E0:00:00:01
+monitor wlan1
+```
+
+E na estação, o monitor contínuo (que você já conhece do
+@sec-wireless-routeros) durante a varredura:
+
+```routeros
+/interface wireless registration-table print interval=1
+```
+
+::: {.callout-tip}
+## Analogia para guardar
+
+Alinhar antena é sintonizar rádio AM antigo no escuro: girando o
+botão, você passa por estações fracas (lóbulos laterais) antes de achar
+a forte (principal). Quem para na primeira estação audível ouve chiado
+para sempre. O método é o mesmo: varre a faixa **toda**, decora onde
+tocou mais alto e volta lá.
+:::
+
+## A caixa de ferramentas de diagnóstico
+
+Quatro instrumentos do RouterOS, cada um respondendo a uma pergunta:
+
+| Ferramenta | Pergunta que responde | Cuidado |
+|---|---|---|
+| `scan` | "que redes existem neste canal/banda?" | **derruba o enlace** durante a varredura |
+| `frequency-usage` | "quais frequências estão ocupadas, e quanto?" | também interrompe o serviço |
+| `snooper` | "quem está ocupando o ar, por SSID/estação?" | idem — use em janela de manutenção |
+| `registration-table` | "como está *o meu* enlace agora?" | passivo, não interrompe nada |
+
+: Ferramentas de diagnóstico wireless {#tbl-ferramentas-diagnostico}
+
+::: {.callout-warning}
+`scan`, `frequency-usage` e `snooper` colocam o rádio em modo de
+varredura: **todos os clientes do setor caem** enquanto rodam. Em
+produção, use dentro de janela de manutenção ou num rádio de teste
+dedicado — nunca "só um scan rapidinho" no setor cheio às 20h.
+:::
+
+Exemplos de leitura:
+
+```routeros
+/interface wireless frequency-usage wlan1 duration=30s
+```
+
+```
+FREQ    USAGE
+5500    12.5%
+5520     3.1%
+5580    67.4%
+5660     8.9%
+```
+
+A frequência 5580 está 67% ocupada — se o seu setor está nela, achou o
+vilão; migre para 5520 (após conferir com `scan` quem é o ocupante).
+
+```routeros
+/interface wireless scan wlan1 duration=20s
+```
+
+```
+FLAGS  ADDRESS            SSID             CHANNEL          SIG  NF   SNR
+AP     D4:CA:6D:99:88:77  outro-provedor   5580/20/an       -66  -110 44
+AP     CC:2D:E0:BB:22:33  isp-rural-setor-b 5660/20/an      -71  -110 39
+```
+
+## As quatro assinaturas de enlace degradado
+
+O ouro do troubleshooting é saber que **cada causa deixa uma impressão
+digital diferente** nos indicadores:
+
+| Assinatura | Sinal | SNR | CCQ | Padrão temporal | Vilão provável |
+|---|---|---|---|---|---|
+| Sinal caiu nos dois lados, piso de ruído normal | ↓↓ | ↓ | ↓ | após vento/tempestade; degrada de vez | **desalinhamento** (antena girou) |
+| Sinal normal, ruído subiu, CCQ despenca | = | ↓↓ | ↓↓ | horários certos (ex.: 18–23h) | **interferência** (novo AP vizinho) |
+| Sinal caiu aos poucos ao longo de meses | ↓ (lento) | ↓ | ↓ | sazonal/progressivo | **Fresnel** (árvore cresceu, @sec-fundamentos-radio) |
+| Sinal **assimétrico** ou instável, quedas secas | ↕ errático | ↕ | ↕ | aleatório, piora com chuva | **hardware/cabo** (conector, RF, fonte) |
+
+: Assinaturas de degradação e seus vilões {#tbl-assinaturas}
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Não existe "o enlace está ruim" — existe **desalinhamento**,
+**interferência**, **obstrução** ou **hardware**, e cada um assina os
+indicadores de um jeito (@tbl-assinaturas). Antes de subir no telhado,
+leia a assinatura: *o que* mudou (sinal? ruído? simetria?), *quando*
+mudou (de vez? por horário? aos poucos?) e *dos dois lados ou de um
+só*. Três perguntas separam a visita técnica certeira da troca de
+peças por adivinhação.
+:::
+
+O interrogatório remoto, em ordem:
+
+1. **Sinal mudou?** Compare com a leitura de aceite da instalação
+   (você guardou, certo? O Volume 13 automatiza esse histórico);
+2. **Simétrico?** `signal-strength` ≈ `tx-signal-strength`? Assimetria
+   forte = problema de **um** lado (potência, cabo, LNA queimado);
+3. **SNR acompanhou o sinal?** Sinal igual + SNR pior = ruído novo =
+   interferência; sinal e SNR caindo juntos = enlace (alinhamento ou
+   obstrução);
+4. **Padrão no tempo?** Por horário = interferência (ou saturação de
+   tráfego — confira antes!); pós-tempestade = mecânico; progressivo =
+   vegetação;
+5. Só então: `frequency-usage`/`scan` em janela de manutenção, e
+   visita com a @fig-lobulos-alinhamento na cabeça.
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Este é um **laboratório de diagnóstico**: sem rádio no CHR, o
+exercício é ler cenários reais e apontar o vilão — exatamente a
+habilidade que o plantão exige. Com hardware físico (qualquer par
+wireless dos capítulos anteriores), reproduza os passos 1–2 de verdade;
+os passos 3–5 são casos clínicos em texto. Topologia de referência:
+@sec-lab-chr.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — (bancada) monte o "alinhamento de mesa".** Com o enlace do
+@sec-wireless-routeros ativo, rode na estação:
+
+```routeros
+/interface wireless registration-table print interval=1
+```
+
+Gire lentamente a antena (ou o roteador) e observe o sinal responder a
+cada segundo. Procure de propósito um "falso pico": posições diferentes
+com sinal parecido — a versão de mesa dos lóbulos laterais.
+
+**Passo 2 — (bancada) meça o ambiente.**
+
+```routeros
+/interface wireless frequency-usage wlan1 duration=30s
+/interface wireless scan wlan1 duration=20s
+```
+
+Anote as frequências mais ocupadas da sua vizinhança e confira com o
+`scan` quem são os ocupantes. Note que o enlace **caiu** durante as
+varreduras — a lição do callout-warning em carne própria.
+
+**Passo 3 — caso clínico A.** Enlace PtP de 8 km, funcionava com
+-59/-60 dBm. Após um temporal: -78 dBm/-79 dBm, SNR de 20 dB, piso de
+ruído inalterado (-110 dBm), CCQ 61%. Aponte o vilão e o plano.
+
+**Passo 4 — caso clínico B.** CPE rural: sinal -62 dBm estável o dia
+todo, mas das 19h às 23h o SNR cai de 34 dB para 14 dB e o CCQ para
+55%. `frequency-usage` (madrugada, em manutenção) mostra 5500 com 8%;
+às 20h, 71%. Vilão e plano.
+
+**Passo 5 — caso clínico C.** PtP: `signal-strength=-58dBm`,
+`tx-signal-strength=-81dBm`. Chove, os dois pioram 10 dB e o lado
+fraco derruba o enlace. Vilão e plano.
+
+### Verificação
+
+1. No Passo 1 você encontrou pelo menos um falso pico e o pico real —
+   e o pico real permaneceu após apertar/soltar o suporte;
+2. No Passo 2 o enlace caiu durante o `scan` (confirme pelo `uptime`
+   zerado na registration table) — você **viu** o custo da ferramenta;
+3. Nos casos A–C, você apontou o vilão citando a linha correspondente
+   da @tbl-assinaturas — antes de ler as soluções.
+
+### Desafios
+
+1. Resolva os casos clínicos A, B e C (Passos 3–5) por escrito: vilão,
+   evidência que o denuncia e plano de ação em ordem.
+2. Um instalador alinhou um LHG e reportou -67 dBm "aprovado". Dez
+   minutos de varredura teriam achado -55 dBm. Usando a
+   @fig-lobulos-alinhamento, explique o que provavelmente aconteceu e
+   escreva a instrução de UMA frase que você colocaria no procedimento
+   de instalação para impedir isso.
+3. Por que a política de aceite exige **simetria** entre
+   `signal-strength` e `tx-signal-strength`, e não apenas um bom valor
+   de recepção? Dê um defeito concreto que só a assimetria revela.
+4. Seu setor está na frequência 5580 — a mesma que o `scan` mostrou
+   ocupada por `outro-provedor` com sinal -66 dBm. Antes de migrar de
+   frequência, que conversa (humana) pode resolver melhor que qualquer
+   comando? O que propor?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** **Caso A**: queda simétrica e abrupta pós-temporal, ruído
+inalterado — assinatura de **desalinhamento mecânico** (vento girou uma
+antena). Plano: visita ao lado com suporte mais suspeito, realinhar
+pelo método completo, apertar e re-medir. **Caso B**: sinal estável,
+SNR desabando por horário, frequência 67%+ ocupada no pico —
+**interferência** de um transmissor ativo à noite. Plano: `scan` para
+identificar, migrar o setor para frequência limpa (5520) em janela de
+manutenção, re-testar às 20h. **Caso C**: assimetria de 23 dB é
+**hardware do lado fraco** — o transmissor de um lado (ou a recepção do
+outro) está comprometido: conector mal crimpado, pigtail, umidade;
+chuva piorando aponta infiltração. Plano: inspecionar
+conectores/vedação do lado que transmite fraco, trocar cabo/rádio em
+bancada, e só realinhar depois de sanar o hardware.
+
+**2.** Ele parou no primeiro pico — um lóbulo lateral ~12 dB abaixo do
+principal (exatamente o ponto vermelho da figura). Instrução de uma
+frase: "Varra o arco completo de azimute e elevação anotando o melhor
+valor e retorne a ele; só aceite a instalação se nenhuma outra posição
+do arco superar a leitura final."
+
+**3.** Recepção boa prova só metade do enlace: `signal-strength` é o
+que **eu ouço**; `tx-signal-strength` é o que **o outro lado me ouve**.
+Um amplificador de transmissão degradado, um conector ruim no caminho
+de TX ou potências mal configuradas produzem exatamente rx ótimo + tx
+péssimo — download bom, upload péssimo (o cenário do desafio 2 do
+@sec-wireless-routeros). Só a comparação dos dois lados pega defeitos
+unidirecionais.
+
+**4.** Coordenação de espectro entre provedores: vocês dois perdem com
+a sobreposição (o TDMA de cada um enxerga o outro como ruído). Propor
+divisão do espectro local — cada um com suas frequências fixas
+documentadas, potência mínima necessária e, idealmente, um canal de
+contato para mudanças futuras. Uma planilha compartilhada de
+frequências por torre resolve o que meses de "guerra de potência" só
+pioram — subir potência contra interferência eleva o piso de ruído de
+todos (@sec-fundamentos-radio).
+:::
+
+## Resumo
+
+- Alinhamento é **método**: apontar no grosso, varrer o arco inteiro
+  eixo a eixo, desconfiar de picos precoces (lóbulos laterais,
+  @fig-lobulos-alinhamento), apertar e re-conferir, validar pelos
+  cinco indicadores;
+- Instrumentos: `align`/beep e `registration-table print interval=1`
+  para alinhar; `scan`, `frequency-usage` e `snooper` para investigar o
+  espectro — **os três interrompem o serviço**;
+- Cada vilão tem assinatura (@tbl-assinaturas): desalinhamento (queda
+  abrupta simétrica, ruído normal), interferência (SNR cai com sinal
+  estável, padrão por horário), Fresnel (degradação lenta e
+  progressiva), hardware (assimetria e comportamento errático);
+- Interrogatório remoto antes da visita: o que mudou, quando mudou, de
+  que lado — e leitura de aceite arquivada vale ouro (o Volume 13
+  automatiza esse histórico).
+
+Com enlaces montados, protegidos e alinhados, falta o último capítulo
+do volume: o WiFi **dentro** da casa do cliente, com CAPsMAN e o pacote
+`wifi` moderno (@sec-capsman).
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seções *Wireless — Scan, Frequency Usage,
+  Snooper, Align* [@mikrotik-docs];
+- Propagação e antenas (lóbulos, diagrama de radiação):
+  [@tanenbaum-redes];
+- Wireless no RouterOS v7: [@discher-rosv7];
+- Operação de campo com MikroTik: [@burgess-mikrotik].
