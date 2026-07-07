@@ -1,7 +1,315 @@
-# IPv6 no RouterOS: fundamentos
+# IPv6 no RouterOS: fundamentos {#sec-ipv6-fundamentos}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Ler e escrever **endereços IPv6** (notação, abreviação, prefixos) e
+  distinguir os tipos que importam: **GUA**, **link-local (`fe80::`)**,
+  **ULA** e multicast;
+- Entender o que **substitui** o ARP e o DHCP "obrigatório" do IPv4:
+  **ND** (*Neighbor Discovery*), **RA** (*Router Advertisement*) e
+  **SLAAC**;
+- Habilitar IPv6 no RouterOS, endereçar interfaces e anunciar prefixo
+  para a LAN com **RA**;
+- Planejar o **endereçamento do provedor** com os blocos certos
+  (`/32` do provedor → `/48` por POP → `/56` ou `/64` por cliente);
+- Diagnosticar IPv6 com `/ipv6 neighbor`, `/ipv6 route` e `ping`
+  link-local — e evitar as pegadinhas de quem "pensa em IPv4".
 :::
+
+O CGNAT (@sec-cgnat) é um remendo genial para um problema real: **não
+há IPv4 suficiente**. O **IPv6** é a solução que torna o remendo
+desnecessário — são **340 undecilhões** de endereços, o bastante para
+dar a **cada casa** um bloco maior que a internet IPv4 inteira. Não é
+"IPv4 com mais dígitos": muda o jeito de endereçar, de descobrir
+vizinhos e de configurar hosts. Este capítulo estabelece o fundamento;
+os próximos entregam IPv6 ao assinante (@sec-dhcpv6-pd) e o protegem
+(@sec-firewall-ipv6).
+
+## Lendo um endereço IPv6
+
+Um endereço IPv6 tem **128 bits**, escritos em **8 grupos** de 4 dígitos
+hexadecimais separados por `:`:
+
+```
+2001:0db8:0000:0000:0000:0000:0000:0001
+```
+
+Duas regras de abreviação tornam isso administrável:
+
+- **Zeros à esquerda** de cada grupo somem: `0db8` → `db8`, `0000` → `0`;
+- **Uma** sequência de grupos zero vira `::` (só uma vez por endereço):
+
+```
+2001:db8::1
+```
+
+O **prefixo** é o análogo da máscara: `2001:db8:abcd::/48` significa "os
+primeiros 48 bits identificam a rede". Um fato que organiza toda a
+cabeça em IPv6: **a rede de um segmento é quase sempre um `/64`** — os
+64 bits de rede + 64 bits de host são o padrão, e o SLAAC depende disso.
+
+## Os tipos de endereço que importam
+
+- **GUA** (*Global Unicast*, `2000::/3`): o endereço **público e
+  roteável**, o equivalente ao IP público do IPv4 — mas aqui **cada
+  host** tem um. É o que o provedor delega ao cliente;
+- **Link-local** (`fe80::/10`): existe **em toda** interface IPv6,
+  automaticamente, e só vale **naquele enlace** (não roteia). É o que ND,
+  RA e os protocolos de roteamento usam para conversar entre vizinhos —
+  você vai vê-lo o tempo todo;
+- **ULA** (*Unique Local*, `fc00::/7`, na prática `fd00::/8`): o
+  "privado" do IPv6, para comunicação interna que não deve sair. Útil,
+  mas **não** substitui GUA (o objetivo do IPv6 é dar público a todos);
+- **Multicast** (`ff00::/8`): substitui o broadcast do IPv4 (que **não
+  existe** em IPv6). ND e RA são multicast.
+
+::: {.callout-tip}
+## Pegadinha de quem pensa em IPv4
+
+Não existe **broadcast** nem **NAT** "de casa" no IPv6 bem-feito. O
+instinto de "esconder tudo atrás de um IP" não se aplica: cada
+dispositivo é **roteável de ponta a ponta**. Isso devolve
+funcionalidade (o que o CGNAT quebrava volta a funcionar), mas
+**transfere a segurança para o firewall** — sem o NAT servindo de
+"muro acidental", o @sec-firewall-ipv6 vira obrigatório, não opcional.
+:::
+
+## ND, RA e SLAAC: como o host se configura sozinho
+
+No IPv4, um host precisava de **ARP** (achar o MAC do vizinho) e, em
+geral, de **DHCP** (pegar IP/gateway/DNS). O IPv6 reorganiza isso com o
+**ND** (*Neighbor Discovery*, sobre ICMPv6):
+
+- **NS/NA** (*Neighbor Solicitation/Advertisement*): substitui o ARP —
+  descobre o endereço de enlace do vizinho;
+- **RS/RA** (*Router Solicitation/Advertisement*): o host pergunta "quem
+  é o roteador?"; o roteador responde com um **RA** anunciando o
+  **prefixo** do segmento, o gateway (ele mesmo) e flags de como o host
+  deve se endereçar;
+- **SLAAC** (*Stateless Address Autoconfiguration*): com o prefixo `/64`
+  do RA, o host **monta seu próprio endereço** (prefixo + identificador
+  de interface) **sem** DHCP. É por isso que um `/64` por segmento não é
+  luxo — é requisito do SLAAC.
+
+```{.tikz}
+%%| filename: fig-ipv6-ra
+%%| alt: Sequência de autoconfiguração IPv6. Um host novo envia Router Solicitation em multicast; o roteador responde com Router Advertisement contendo o prefixo /64 e o gateway; o host então usa SLAAC para formar seu próprio endereço global combinando o prefixo com seu identificador de interface. Setas numeradas mostram os três passos.
+\begin{tikzpicture}[
+  font=\small,
+  n/.style={draw, rounded corners, fill=manualblue!15, align=center, minimum height=10mm, inner sep=4pt},
+]
+\node[n] (host) at (0,0) {host novo};
+\node[n] (rt) at (6,0) {roteador\\\scriptsize (RA)};
+\draw[-{Stealth}, thick] (host) to[bend left=25] node[above]{\scriptsize 1. RS (quem é o roteador?)} (rt);
+\draw[-{Stealth}, thick, manualgreen!60!black] (rt) to[bend left=25] node[below]{\scriptsize 2. RA: prefixo /64 + gateway} (host);
+\node[align=center, manualred] at (0,-1.9) {\scriptsize 3. SLAAC:\\\scriptsize prefixo + ID de interface\\\scriptsize = endereço próprio};
+\end{tikzpicture}
+```
+
+::: {#fig-ipv6-ra}
+Sem DHCP: o host pede (RS), o roteador anuncia o prefixo `/64` (RA) e o
+host **forma o próprio endereço** (SLAAC). O provedor controla o
+endereçamento da LAN do cliente **pelo RA** — o que ele anuncia é o que
+a casa usa.
+:::
+
+## Habilitando IPv6 no RouterOS
+
+O pacote **`ipv6`** precisa estar **ativo** (no v7 costuma vir junto,
+mas confirme):
+
+```routeros
+/ipv6 settings set disable-ipv6=no forward=yes
+```
+
+Endereçar uma interface e anunciar o prefixo para a LAN:
+
+```routeros
+# endereço na interface de upstream (recebido do trânsito/PPPoE)
+/ipv6 address add address=2001:db8:0:1::1/64 interface=ether1-wan advertise=no
+
+# LAN do cliente: endereço + RA com SLAAC
+/ipv6 address add address=2001:db8:abcd:10::1/64 interface=bridge-lan advertise=yes
+```
+
+O `advertise=yes` faz o roteador **emitir RA** naquele segmento — é o
+que dispara o SLAAC nos hosts. Detalhes do RA (DNS via RA, lifetime,
+flags managed/other) moram em `/ipv6 nd`:
+
+```routeros
+/ipv6 nd set [find interface=bridge-lan] ra-interval=3s-10m
+```
+
+## Planejando o endereçamento do provedor
+
+IPv6 é abundante — mas abundância sem plano vira bagunça. A hierarquia
+consagrada:
+
+- O provedor recebe um **`/32`** (ou `/29`, `/36`...) do LACNIC/NIC.br;
+- Cada **POP/região** recebe um **`/48`** (65 mil `/64` — folga enorme);
+- Cada **cliente** recebe um **`/56`** (256 redes `/64` — sobra para a
+  casa inteira) ou, no mínimo, um **`/64`**;
+- Cada **segmento/LAN** é um **`/64`** (nunca menor — SLAAC exige).
+
+Repare: você **delega prefixo**, não um endereço. É a mudança mental do
+IPv6 — o assinante ganha uma **rede**, não um IP. O @sec-dhcpv6-pd mostra
+como entregar esse `/56` automaticamente pelo PPPoE.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+IPv6 não é "IPv4 grande" — é outro modelo: **cada host é roteável**, o
+**link-local (`fe80::`)** faz a plumbing entre vizinhos, e o host se
+autoconfigura por **RA + SLAAC** (o roteador anuncia o `/64`, o host
+forma o endereço). O provedor pensa em **prefixos delegados**
+(`/32→/48→/56→/64`), não em IPs avulsos. E a consequência de segurança é
+imediata: sem NAT fazendo de muro, **o firewall (@sec-firewall-ipv6)
+passa a ser a única proteção** da LAN do cliente. Fim a fim de volta —
+com responsabilidade.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Dois CHRs (@sec-lab-chr): **lab-rt** = roteador do provedor, com um
+`/48` fictício `2001:db8:abcd::/48`; **lab-host** = "cliente" no mesmo
+segmento, sem endereço configurado (vai pegar por SLAAC). Uma rede
+interna liga os dois.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — ligar o IPv6 e ver o link-local.** No lab-rt:
+
+```routeros
+/ipv6 settings set disable-ipv6=no forward=yes
+/ipv6 address print
+```
+
+Note que já existe um endereço `fe80::/10` **automático** na interface —
+o link-local, sem você configurar nada.
+
+**Passo 2 — endereçar a LAN e anunciar RA.** No lab-rt:
+
+```routeros
+/ipv6 address add address=2001:db8:abcd:10::1/64 interface=ether2 advertise=yes
+```
+
+**Passo 3 — SLAAC em ação.** No lab-host, ligue o IPv6 e veja o endereço
+**global** aparecer sozinho:
+
+```routeros
+/ipv6 settings set disable-ipv6=no
+/ipv6 address print
+```
+
+Deve surgir um `2001:db8:abcd:10:...` formado por SLAAC — **sem** DHCP,
+só a partir do RA do lab-rt.
+
+**Passo 4 — vizinhança e rota.** No lab-rt:
+
+```routeros
+/ipv6 neighbor print
+/ipv6 route print
+```
+
+O `neighbor` mostra o host (o "ARP do IPv6"); a rota do `/64` da LAN
+está conectada.
+
+**Passo 5 — ping fim a fim.** Do lab-host, pingue o GUA do lab-rt e o
+**link-local** (note a sintaxe com a interface):
+
+```routeros
+/ping 2001:db8:abcd:10::1
+/ping fe80::1%ether2
+```
+
+O ping ao link-local **exige** dizer a interface (`%ether2`) — porque
+`fe80::` é ambíguo entre enlaces. Essa é a pegadinha nº 1 do IPv6 na
+prática.
+
+### Verificação
+
+1. Link-local `fe80::` aparece automaticamente ao ligar o IPv6;
+2. O host recebe um GUA por **SLAAC** a partir do RA (sem DHCP);
+3. `/ipv6 neighbor` lista o vizinho; a rota do `/64` está conectada;
+4. Ping fim a fim funciona; ping link-local exige `%interface`.
+
+### Desafios
+
+1. Você anunciou um `/48` como prefixo de RA de um segmento e o SLAAC
+   **não** configurou os hosts. Qual é o erro conceitual, e qual é o
+   único tamanho de prefixo que faz SLAAC funcionar? Por quê?
+2. Um colega quer "esconder" a LAN IPv6 do cliente atrás de NAT, como
+   fazia no IPv4. Explique por que isso **desperdiça** o IPv6 e cria
+   problema em vez de resolver — e o que substitui o "muro" do NAT.
+3. Do roteador, o ping para `2001:db8:...` de um vizinho funciona, mas
+   o ping para o `fe80::...` dele dá "no route to host". O que falta no
+   comando, e por que o link-local é diferente?
+4. Planeje o endereçamento de um provedor com 3 POPs, cada um com até
+   500 clientes residenciais. Partindo de um `/32`, que prefixo cada POP
+   e cada cliente recebem, e por que sobra tanto espaço?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** SLAAC **exige um `/64`** por segmento: o host forma o endereço
+combinando os **64 bits de prefixo** anunciados com um **identificador
+de interface de 64 bits**. Se você anuncia um `/48` (ou qualquer coisa
+diferente de `/64`), a conta não fecha e o host não se autoconfigura. Um
+segmento IPv6 é, por convenção e por requisito do SLAAC, **sempre um
+`/64`** — o `/48`/`/56` é para **delegar** (dividir em muitos `/64`),
+não para um único enlace.
+
+**2.** No IPv6 há endereço público de sobra para **cada** dispositivo;
+usar NAT joga fora justamente o benefício (fim a fim) e reintroduz a
+complexidade que o IPv6 elimina. O NAT do IPv4 servia de "muro
+acidental" só por efeito colateral — no IPv6, essa função é **explícita
+e correta** no **firewall** (@sec-firewall-ipv6): você bloqueia o que
+entra e libera o que sai, com regras, em vez de depender de tradução de
+endereço.
+
+**3.** Falta dizer **a interface de saída**: `ping fe80::...%etherX`. O
+link-local só é válido **naquele enlace** e o mesmo `fe80::` pode existir
+em várias interfaces — sem o `%interface`, o roteador não sabe por onde
+mandar. GUA não precisa disso porque é globalmente único e roteável.
+
+**4.** Do `/32`, cada **POP** recebe um `/48` (o `/32` comporta 65.536
+`/48`, então 3 é trivial). Dentro de um POP, cada **cliente** recebe um
+`/56` (um `/48` tem 256 `/56`... apertado para 500 clientes — na prática
+dá-se `/56` de um `/44`/`/40` por POP, ou `/60`/`/64` por cliente
+residencial). Mesmo com `/64` por cliente, um `/48` acomoda 65.536
+clientes. Sobra tanto porque o espaço é **projetado para hierarquia
+folgada**: agregação limpa (uma rota por POP) vale mais que economia de
+bits.
+:::
+
+## Resumo
+
+- IPv6 tem **128 bits**: abrevia zeros e usa `::` uma vez; o segmento é
+  quase sempre um **`/64`** (requisito do SLAAC);
+- Tipos-chave: **GUA** (público roteável, um por host), **link-local
+  `fe80::`** (só no enlace, usado por ND/RA/roteamento), **ULA**
+  (privado), **multicast** (substitui o broadcast);
+- Host se configura por **ND + RA + SLAAC**: o roteador anuncia o `/64`
+  (`advertise=yes`), o host **forma** seu endereço sem DHCP;
+- Provedor **delega prefixos**: `/32 → /48` (POP) `→ /56` (cliente) `→
+  /64` (segmento) — rede, não IP avulso;
+- Sem NAT de muro, o **firewall (@sec-firewall-ipv6)** é a única
+  proteção — e o ping link-local **exige** `%interface`.
+
+O fundamento está de pé. Falta o que o cliente realmente recebe: um
+**prefixo delegado automaticamente** pelo PPPoE, em **dual stack** com o
+IPv4. É o @sec-dhcpv6-pd.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: seção *IPv6* do RouterOS [@mikrotik-docs];
+- Endereçamento IPv6, ND e SLAAC: [@tanenbaum-redes];
+- IPv6 no v7 na prática: [@discher-rosv7];
+- Planejamento IPv6 em provedores: [@burgess-mikrotik].
