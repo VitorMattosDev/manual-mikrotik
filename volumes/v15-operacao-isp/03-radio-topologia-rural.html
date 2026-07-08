@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>55&nbsp; GRE, EoIP, L2TP/SSTP e ZeroTier – Manual de MikroTik</title>
+<title>73&nbsp; Topologia rádio rural completa – Manual de MikroTik</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -53,8 +53,8 @@ div.csl-indent {
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<link href="../../volumes/v10-tuneis-vpn/05-interligacao-pops.html" rel="next">
-<link href="../../volumes/v10-tuneis-vpn/03-ipsec.html" rel="prev">
+<link href="../../volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html" rel="next">
+<link href="../../volumes/v15-operacao-isp/02-fibra-olt-bng.html" rel="prev">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/popper.min.js"></script>
@@ -105,7 +105,7 @@ div.csl-indent {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/01-panorama-tuneis.html">Volume 10 — Túneis e VPN</a></li><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v15-operacao-isp/01-desenho-rede-provedor.html">Volume 15 — Operação de ISP de ponta a ponta</a></li><li class="breadcrumb-item"><a href="../../volumes/v15-operacao-isp/03-radio-topologia-rural.html"><span class="chapter-number">73</span>&nbsp; <span class="chapter-title">Topologia rádio rural completa</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
@@ -547,13 +547,13 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="false">
  <span class="menu-text">Volume 10 — Túneis e VPN</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="false" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-10" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-10" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../volumes/v10-tuneis-vpn/01-panorama-tuneis.html" class="sidebar-item-text sidebar-link">
@@ -574,7 +574,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html" class="sidebar-item-text sidebar-link active">
+  <a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></span></a>
   </div>
 </li>
@@ -716,13 +716,13 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-15" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-15" role="navigation" aria-expanded="true">
  <span class="menu-text">Volume 15 — Operação de ISP de ponta a ponta</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-15" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-15" role="navigation" aria-expanded="true" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-15" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-15" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../volumes/v15-operacao-isp/01-desenho-rede-provedor.html" class="sidebar-item-text sidebar-link">
@@ -737,7 +737,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v15-operacao-isp/03-radio-topologia-rural.html" class="sidebar-item-text sidebar-link">
+  <a href="../../volumes/v15-operacao-isp/03-radio-topologia-rural.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">73</span>&nbsp; <span class="chapter-title">Topologia rádio rural completa</span></span></a>
   </div>
 </li>
@@ -782,28 +782,28 @@ div.csl-indent {
     <h2 id="toc-title">Índice</h2>
    
   <ul>
-  <li><a href="#gre-a-interface-para-transportar-roteamento" id="toc-gre-a-interface-para-transportar-roteamento" class="nav-link active" data-scroll-target="#gre-a-interface-para-transportar-roteamento"><span class="header-section-number">55.1</span> GRE: a interface para transportar roteamento</a></li>
-  <li><a href="#eoip-esticar-a-camada-2-entre-sites" id="toc-eoip-esticar-a-camada-2-entre-sites" class="nav-link" data-scroll-target="#eoip-esticar-a-camada-2-entre-sites"><span class="header-section-number">55.2</span> EoIP: esticar a camada 2 entre sites</a></li>
-  <li><a href="#l2tp-e-sstp-acesso-remoto" id="toc-l2tp-e-sstp-acesso-remoto" class="nav-link" data-scroll-target="#l2tp-e-sstp-acesso-remoto"><span class="header-section-number">55.3</span> L2TP e SSTP: acesso remoto</a></li>
-  <li><a href="#zerotier-malha-que-atravessa-nat" id="toc-zerotier-malha-que-atravessa-nat" class="nav-link" data-scroll-target="#zerotier-malha-que-atravessa-nat"><span class="header-section-number">55.4</span> ZeroTier: malha que atravessa NAT</a></li>
-  <li><a href="#escolhendo-entre-eles" id="toc-escolhendo-entre-eles" class="nav-link" data-scroll-target="#escolhendo-entre-eles"><span class="header-section-number">55.5</span> Escolhendo entre eles</a></li>
-  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">55.6</span> 🧪 Laboratório</a>
+  <li><a href="#a-anatomia-de-uma-rede-de-rádio-rural" id="toc-a-anatomia-de-uma-rede-de-rádio-rural" class="nav-link active" data-scroll-target="#a-anatomia-de-uma-rede-de-rádio-rural"><span class="header-section-number">73.1</span> A anatomia de uma rede de rádio rural</a></li>
+  <li><a href="#backhaul-a-espinha-da-rede" id="toc-backhaul-a-espinha-da-rede" class="nav-link" data-scroll-target="#backhaul-a-espinha-da-rede"><span class="header-section-number">73.2</span> Backhaul: a espinha da rede</a></li>
+  <li><a href="#repetidoras-alcance-ao-custo-de-saltos" id="toc-repetidoras-alcance-ao-custo-de-saltos" class="nav-link" data-scroll-target="#repetidoras-alcance-ao-custo-de-saltos"><span class="header-section-number">73.3</span> Repetidoras: alcance ao custo de saltos</a></li>
+  <li><a href="#pops-solares-energia-onde-não-há-rede" id="toc-pops-solares-energia-onde-não-há-rede" class="nav-link" data-scroll-target="#pops-solares-energia-onde-não-há-rede"><span class="header-section-number">73.4</span> POPs solares: energia onde não há rede</a></li>
+  <li><a href="#integrando-ao-desenho-geral" id="toc-integrando-ao-desenho-geral" class="nav-link" data-scroll-target="#integrando-ao-desenho-geral"><span class="header-section-number">73.5</span> Integrando ao desenho geral</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">73.6</span> 🧪 Laboratório</a>
   <ul class="collapse">
-  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">55.6.1</span> Comandos passo a passo</a></li>
-  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">55.6.2</span> Verificação</a></li>
-  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">55.6.3</span> Desafios</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">73.6.1</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">73.6.2</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">73.6.3</span> Desafios</a></li>
   </ul></li>
-  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">55.7</span> Resumo</a></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">73.7</span> Resumo</a></li>
   <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v15-operacao-isp/03-radio-topologia-rural.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/01-panorama-tuneis.html">Volume 10 — Túneis e VPN</a></li><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v15-operacao-isp/01-desenho-rede-provedor.html">Volume 15 — Operação de ISP de ponta a ponta</a></li><li class="breadcrumb-item"><a href="../../volumes/v15-operacao-isp/03-radio-topologia-rural.html"><span class="chapter-number">73</span>&nbsp; <span class="chapter-title">Topologia rádio rural completa</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span id="sec-gre-eoip" class="quarto-section-identifier"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></span></h1>
+<h1 class="title"><span id="sec-radio-rural" class="quarto-section-identifier"><span class="chapter-number">73</span>&nbsp; <span class="chapter-title">Topologia rádio rural completa</span></span></h1>
 </div>
 
 
@@ -832,34 +832,367 @@ div.csl-indent {
 <div class="callout-body-container callout-body">
 <p>Ao final deste capítulo, você será capaz de:</p>
 <ul>
-<li>Montar <strong>GRE</strong> para transportar roteamento (OSPF/BGP) entre POPs e <strong>cifrá-lo</strong> com IPsec — o desenho recomendado do <a href="03-ipsec.html" class="quarto-xref"><span>Capítulo 54</span></a>;</li>
-<li>Usar <strong>EoIP</strong> para estender <strong>camada 2</strong> (uma bridge/VLAN) entre sites, e saber quando isso é bom (e quando é perigoso);</li>
-<li>Configurar <strong>L2TP/IPsec</strong> e <strong>SSTP</strong> para <strong>acesso remoto</strong> — incluindo o SSTP rodando em TCP/443 para furar firewalls;</li>
-<li>Entender <strong>ZeroTier</strong> como malha gerenciada que atravessa CGNAT/NAT sem IP público em nenhum lado;</li>
-<li>Escolher, entre todos, a ferramenta certa para “transportar roteamento”, “esticar L2” e “acesso remoto” — e respeitar o MTU.</li>
+<li>Desenhar a topologia de um provedor <strong>rádio rural</strong>: backhaul PtP, repetidoras, torres/POPs de acesso PtMP e o cliente;</li>
+<li>Planejar <strong>backhaul</strong> (enlaces PtP de alta capacidade) e <strong>cadeias de repetidoras</strong> para levar a rede além do alcance da fibra;</li>
+<li>Projetar <strong>POPs solares</strong> (energia, autonomia, gerência remota) para locais sem rede elétrica confiável;</li>
+<li>Integrar a rede de rádio ao desenho geral (<a href="01-desenho-rede-provedor.html" class="quarto-xref"><span>Capítulo 71</span></a>): onde entram BNG, roteamento, HA e gerência OOB;</li>
+<li>Reconhecer as restrições do rádio (banda compartilhada, meteorologia, energia) e projetá-las desde o início.</li>
 </ul>
 </div>
 </div>
-<p>WireGuard (<a href="02-wireguard.html" class="quarto-xref"><span>Capítulo 53</span></a>) e IPsec (<a href="03-ipsec.html" class="quarto-xref"><span>Capítulo 54</span></a>) cifram <strong>camada 3</strong>. Mas o provedor tem necessidades que eles não cobrem sozinhos: <strong>transportar um protocolo de roteamento</strong> por uma interface, <strong>estender uma LAN</strong> de um POP a outro (camada 2), dar <strong>acesso remoto</strong> a quem só tem um cliente VPN comum, ou conectar caixas que <strong>não têm IP público</strong>. Este capítulo reúne os túneis que resolvem esses casos — cada um com seu nicho.</p>
-<section id="gre-a-interface-para-transportar-roteamento" class="level2" data-number="55.1">
-<h2 data-number="55.1" class="anchored" data-anchor-id="gre-a-interface-para-transportar-roteamento"><span class="header-section-number">55.1</span> GRE: a interface para transportar roteamento</h2>
-<p>O <strong>GRE</strong> (<em>Generic Routing Encapsulation</em>) encapsula IP dentro de IP e, crucialmente, <strong>cria uma interface</strong> de túnel ponto a ponto. Isso é o que faltava no IPsec policy-based: com uma interface, você roda <strong>OSPF/BGP por cima</strong> (<a href="../v08-roteamento/02-ospf-conceitos-configuracao.html" class="quarto-xref"><span>Capítulo 42</span></a>). O GRE <strong>não cifra</strong> — então o par de produção é <strong>GRE + IPsec</strong>.</p>
-<pre class="routeros"><code># POP-A: interface GRE ponto a ponto
-/interface gre
-add name=gre-ab remote-address=&lt;publico-B&gt; local-address=&lt;publico-A&gt;
-/ip address add address=10.255.1.1/30 interface=gre-ab
-
-# cifrar o GRE com IPsec (o campo ipsec-secret liga os dois)
-/interface gre set gre-ab ipsec-secret="Ch@ve-GRE-2026"</code></pre>
-<p>O <code>ipsec-secret</code> faz o RouterOS montar <strong>automaticamente</strong> a policy IPsec que protege esse GRE — a forma mais limpa de ter “GRE cifrado”. Com a interface <code>gre-ab</code> de pé, o OSPF a trata como qualquer enlace PtP (<code>type=ptp</code>). É o alicerce do <a href="05-interligacao-pops.html" class="quarto-xref"><span>Capítulo 56</span></a>.</p>
+<p>A fibra (<a href="02-fibra-olt-bng.html" class="quarto-xref"><span>Capítulo 72</span></a>) domina a cidade; o <strong>rádio</strong> domina o <strong>campo</strong>, onde puxar fibra é caro ou impossível. O provedor rural brasileiro nasceu do rádio e vive dele — e sua topologia é uma arte própria: <strong>backhaul</strong> de longa distância, <strong>repetidoras</strong> cruzando morros, <strong>POPs solares</strong> no meio do nada, e <strong>PtMP</strong> entregando o cliente. Este capítulo junta o Volume 5 (wireless) com o desenho de rede (<a href="01-desenho-rede-provedor.html" class="quarto-xref"><span>Capítulo 71</span></a>) numa topologia rural completa — o provedor que leva internet onde mais ninguém leva.</p>
+<section id="a-anatomia-de-uma-rede-de-rádio-rural" class="level2" data-number="73.1">
+<h2 data-number="73.1" class="anchored" data-anchor-id="a-anatomia-de-uma-rede-de-rádio-rural"><span class="header-section-number">73.1</span> A anatomia de uma rede de rádio rural</h2>
+<p>Da saída do trânsito até a casa do sítio, o caminho típico:</p>
+<ul>
+<li><strong>POP central</strong> (na cidade/sede): onde chega o trânsito/fibra e ficam o core e o BNG;</li>
+<li><strong>Backhaul PtP</strong>: enlaces ponto a ponto de <strong>alta capacidade</strong> (5 GHz licenciado ou não, 60 GHz, ou licenciado) que levam a banda do POP central às torres distantes. É a “espinha” da rede rural (<a href="../v05-wireless/03-ptp-nstreme-nv2.html" class="quarto-xref"><span>Capítulo 29</span></a>);</li>
+<li><strong>Repetidoras</strong>: torres intermediárias que <strong>reencaminham</strong> o sinal quando não há visada direta (morro no caminho) — cada salto some latência e é ponto de falha;</li>
+<li><strong>POP/torre de acesso</strong>: onde ficam os setoriais <strong>PtMP</strong>
+<ol class="example" type="1">
+<li>que servem os clientes daquela região;</li>
+</ol></li>
+<li><strong>Cliente</strong>: uma antena (LHG/SXT) apontada para o setorial, e o CPE em casa.</li>
+</ul>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="328.162062pt" height="74.099228pt" viewbox="-68.014948 -68.014943 328.162062 74.099228">
+<defs>
+<path id="tz_fig_radio_rural_g0-16" d="M1.436613-3.075467L.411457-2.998755V-2.747696C.850809-2.747696 .913574-2.705853 .913574-2.364134V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.415691-.027895 1.66675-.020922 1.910834 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.54396V-3.075467Z"></path>
+<path id="tz_fig_radio_rural_g0-19" d="M1.799253-3.528767C2.343213-3.926276 2.768618-4.219178 2.901121-4.323786C3.012702-4.400498 3.075467-4.449315 3.075467-4.581818S2.956912-4.867746 2.789539-4.867746C2.677958-4.867746 2.622167-4.804981 2.552428-4.728269L1.638854-3.710087L1.799253-3.528767Z"></path>
+<path id="tz_fig_radio_rural_g0-40" d="M2.475716-5.230386C1.150685-4.29589 .801993-2.817435 .801993-1.750436C.801993-.767123 1.094894 .760149 2.475716 1.736488C2.531507 1.736488 2.615193 1.736488 2.615193 1.652802C2.615193 1.610959 2.594271 1.597011 2.545455 1.548194C1.617933 .711333 1.276214-.474222 1.276214-1.743462C1.276214-3.626401 1.994521-4.546949 2.566376-5.063014C2.594271-5.090909 2.615193-5.111831 2.615193-5.1467C2.615193-5.230386 2.531507-5.230386 2.475716-5.230386Z"></path>
+<path id="tz_fig_radio_rural_g0-41" d="M.627646-5.230386C.578829-5.230386 .495143-5.230386 .495143-5.1467C.495143-5.111831 .516065-5.090909 .557908-5.042092C1.157659-4.491158 1.827148-3.549689 1.827148-1.750436C1.827148-.292902 1.373848 .808966 .620672 1.492403C.502117 1.610959 .495143 1.617933 .495143 1.652802S.516065 1.736488 .585803 1.736488C.669489 1.736488 1.332005 1.276214 1.792279 .404483C2.099128-.174346 2.30137-.927522 2.30137-1.743462C2.30137-2.726775 2.008468-4.254047 .627646-5.230386Z"></path>
+<path id="tz_fig_radio_rural_g0-43" d="M3.228892-1.57609H5.362889C5.453549-1.57609 5.620922-1.57609 5.620922-1.743462C5.620922-1.917808 5.460523-1.917808 5.362889-1.917808H3.228892V-4.05878C3.228892-4.14944 3.228892-4.316812 3.061519-4.316812C2.887173-4.316812 2.887173-4.156413 2.887173-4.05878V-1.917808H.746202C.655542-1.917808 .488169-1.917808 .488169-1.750436C.488169-1.57609 .648568-1.57609 .746202-1.57609H2.887173V.564882C2.887173 .655542 2.887173 .822914 3.054545 .822914C3.228892 .822914 3.228892 .662516 3.228892 .564882V-1.57609Z"></path>
+<path id="tz_fig_radio_rural_g0-49" d="M2.336239-4.435367C2.336239-4.623661 2.322291-4.630635 2.127024-4.630635C1.680697-4.191283 1.046077-4.184309 .760149-4.184309V-3.93325C.927522-3.93325 1.387796-3.93325 1.771357-4.128518V-.571856C1.771357-.341719 1.771357-.251059 1.073973-.251059H.808966V0C.934496-.006974 1.792279-.027895 2.050311-.027895C2.266501-.027895 3.145205-.006974 3.29863 0V-.251059H3.033624C2.336239-.251059 2.336239-.341719 2.336239-.571856V-4.435367Z"></path>
+<path id="tz_fig_radio_rural_g0-50" d="M3.521793-1.26924H3.284682C3.263761-1.115816 3.194022-.704359 3.103362-.63462C3.047572-.592777 2.510585-.592777 2.412951-.592777H1.129763C1.862017-1.241345 2.106102-1.436613 2.524533-1.764384C3.040598-2.175841 3.521793-2.608219 3.521793-3.270735C3.521793-4.11457 2.782565-4.630635 1.889913-4.630635C1.025156-4.630635 .439352-4.02391 .439352-3.382316C.439352-3.02665 .739228-2.991781 .808966-2.991781C.976339-2.991781 1.17858-3.110336 1.17858-3.361395C1.17858-3.486924 1.129763-3.731009 .767123-3.731009C.983313-4.226152 1.457534-4.379577 1.785305-4.379577C2.48269-4.379577 2.84533-3.835616 2.84533-3.270735C2.84533-2.66401 2.412951-2.182814 2.189788-1.931756L.509091-.27198C.439352-.209215 .439352-.195268 .439352 0H3.312578L3.521793-1.26924Z"></path>
+<path id="tz_fig_radio_rural_g0-51" d="M1.903861-2.329265C2.447821-2.329265 2.838356-1.952677 2.838356-1.206476C2.838356-.341719 2.336239-.083686 1.931756-.083686C1.652802-.083686 1.039103-.160399 .746202-.571856C1.073973-.585803 1.150685-.81594 1.150685-.962391C1.150685-1.185554 .983313-1.345953 .767123-1.345953C.571856-1.345953 .376588-1.227397 .376588-.941469C.376588-.285928 1.101868 .139477 1.945704 .139477C2.915068 .139477 3.584558-.509091 3.584558-1.206476C3.584558-1.750436 3.138232-2.294396 2.371108-2.454795C3.103362-2.719801 3.368369-3.242839 3.368369-3.668244C3.368369-4.219178 2.733748-4.630635 1.959651-4.630635S.592777-4.254047 .592777-3.696139C.592777-3.459029 .746202-3.326526 .955417-3.326526C1.171606-3.326526 1.311083-3.486924 1.311083-3.682192C1.311083-3.884433 1.171606-4.030884 .955417-4.044832C1.199502-4.351681 1.680697-4.428394 1.93873-4.428394C2.252553-4.428394 2.691905-4.274969 2.691905-3.668244C2.691905-3.375342 2.594271-3.054545 2.412951-2.838356C2.182814-2.57335 1.987547-2.559402 1.638854-2.538481C1.464508-2.524533 1.45056-2.524533 1.415691-2.517559C1.401743-2.517559 1.345953-2.503611 1.345953-2.426899C1.345953-2.329265 1.408717-2.329265 1.527273-2.329265H1.903861Z"></path>
+<path id="tz_fig_radio_rural_g0-66" d="M.418431-4.763138V-4.51208H.585803C1.12279-4.51208 1.136737-4.442341 1.136737-4.198257V-.564882C1.136737-.327771 1.12279-.251059 .585803-.251059H.418431V0H3.375342C4.358655 0 5.076961-.613699 5.076961-1.276214C5.076961-1.882939 4.463263-2.399004 3.612453-2.489664C4.29589-2.615193 4.867746-3.040598 4.867746-3.577584C4.867746-4.20523 4.135492-4.763138 3.166127-4.763138H.418431ZM1.750436-2.57335V-4.2401C1.750436-4.456289 1.75741-4.51208 2.085181-4.51208H3.11731C3.807721-4.51208 4.170361-4.016936 4.170361-3.577584C4.170361-3.082441 3.703113-2.57335 2.901121-2.57335H1.750436ZM2.085181-.251059C1.75741-.251059 1.750436-.306849 1.750436-.523039V-2.378082H3.235866C3.975093-2.378082 4.358655-1.778331 4.358655-1.290162C4.358655-.774097 3.898381-.251059 3.131258-.251059H2.085181Z"></path>
+<path id="tz_fig_radio_rural_g0-71" d="M5.195517-1.366874C5.195517-1.673724 5.265255-1.673724 5.732503-1.673724V-1.924782C5.683686-1.924782 5.174595-1.896887 4.832877-1.896887C4.463263-1.896887 3.93325-1.896887 3.57061-1.924782V-1.673724H3.835616C4.533001-1.673724 4.533001-1.583064 4.533001-1.352927V-.9066C4.533001-.753176 4.533001-.481196 4.135492-.285928C3.793773-.111582 3.403238-.111582 3.312578-.111582C2.524533-.111582 1.234371-.564882 1.234371-2.385056C1.234371-4.2401 2.559402-4.651557 3.249813-4.651557C3.926276-4.651557 4.763138-4.198257 4.944458-2.991781C4.958406-2.908095 5.021171-2.908095 5.069988-2.908095C5.195517-2.908095 5.195517-2.949938 5.195517-3.089415V-4.721295C5.195517-4.839851 5.195517-4.902615 5.097883-4.902615C5.069988-4.902615 5.035118-4.902615 4.979328-4.818929L4.609714-4.288917C4.267995-4.637609 3.772852-4.902615 3.159153-4.902615C1.708593-4.902615 .488169-3.779826 .488169-2.385056C.488169-1.004234 1.673724 .139477 3.180075 .139477C3.563636 .139477 4.337733 .069738 4.665504-.418431C4.78406-.237111 5.042092 0 5.111831 0C5.195517 0 5.195517-.076712 5.195517-.18132V-1.366874Z"></path>
+<path id="tz_fig_radio_rural_g0-77" d="M1.917808-4.609714C1.855044-4.763138 1.799253-4.763138 1.652802-4.763138H.432379V-4.51208H.599751C1.136737-4.51208 1.150685-4.442341 1.150685-4.198257V-.753176C1.150685-.564882 1.150685-.251059 .432379-.251059V0C.718306-.020922 .99726-.027895 1.283188-.027895S1.84807-.020922 2.133998 0V-.251059C1.415691-.251059 1.415691-.564882 1.415691-.753176V-4.428394L1.422665-4.435367L3.235866-.160399C3.270735-.076712 3.305604 0 3.410212 0C3.459029 0 3.521793-.020922 3.577584-.146451L5.41868-4.505106L5.425654-4.498132V-.564882C5.425654-.327771 5.411706-.251059 4.87472-.251059H4.707347V0C5.042092-.013948 5.432628-.027895 5.718555-.027895S6.395019-.013948 6.729763 0V-.251059H6.562391C6.025405-.251059 6.011457-.320797 6.011457-.564882V-4.198257C6.011457-4.435367 6.025405-4.51208 6.562391-4.51208H6.729763V-4.763138H5.516314C5.376837-4.763138 5.314072-4.763138 5.258281-4.623661L3.584558-.669489L1.917808-4.609714Z"></path>
+<path id="tz_fig_radio_rural_g0-78" d="M1.820174-4.658531C1.743462-4.756164 1.736488-4.763138 1.597011-4.763138H.390535V-4.51208H.599751C.899626-4.51208 1.073973-4.47721 1.108842-4.470237V-.753176C1.108842-.564882 1.108842-.251059 .390535-.251059V0C.676463-.020922 .955417-.027895 1.241345-.027895S1.806227-.020922 2.092154 0V-.251059C1.373848-.251059 1.373848-.564882 1.373848-.753176V-4.274969L4.470237-.104608C4.539975-.006974 4.546949 0 4.630635 0C4.763138 0 4.763138-.062765 4.763138-.195268V-4.009963C4.763138-4.198257 4.763138-4.51208 5.481445-4.51208V-4.763138C5.195517-4.742217 4.916563-4.735243 4.630635-4.735243S4.065753-4.742217 3.779826-4.763138V-4.51208C4.498132-4.51208 4.498132-4.198257 4.498132-4.009963V-1.053051L1.820174-4.658531Z"></path>
+<path id="tz_fig_radio_rural_g0-79" d="M5.620922-2.357161C5.620922-3.75193 4.47721-4.902615 3.054545-4.902615C1.624907-4.902615 .488169-3.75193 .488169-2.357161C.488169-.990286 1.624907 .139477 3.054545 .139477S5.620922-.990286 5.620922-2.357161ZM3.054545-.09066C2.238605-.09066 1.234371-.753176 1.234371-2.468742C1.234371-4.086675 2.259527-4.679452 3.054545-4.679452S4.87472-4.086675 4.87472-2.468742C4.87472-.753176 3.870486-.09066 3.054545-.09066Z"></path>
+<path id="tz_fig_radio_rural_g0-80" d="M1.785305-2.161893H3.054545C4.065753-2.161893 4.860772-2.747696 4.860772-3.452055C4.860772-4.142466 4.079701-4.763138 3.054545-4.763138H.404483V-4.51208H.571856C1.108842-4.51208 1.12279-4.442341 1.12279-4.198257V-.564882C1.12279-.327771 1.108842-.251059 .571856-.251059H.404483V0C.753176-.013948 1.199502-.027895 1.45056-.027895C1.708593-.027895 2.154919-.013948 2.503611 0V-.251059H2.336239C1.799253-.251059 1.785305-.320797 1.785305-.564882V-2.161893ZM2.880199-4.51208C4.044832-4.51208 4.11457-3.856538 4.11457-3.452055C4.11457-3.145205 4.11457-2.385056 2.880199-2.385056H1.75741V-4.2401C1.75741-4.456289 1.764384-4.51208 2.092154-4.51208H2.880199Z"></path>
+<path id="tz_fig_radio_rural_g0-94" d="M1.980573-4.839851L.941469-3.912329L1.094894-3.731009L1.980573-4.42142L2.866252-3.731009L3.019676-3.912329L1.980573-4.839851Z"></path>
+<path id="tz_fig_radio_rural_g0-97" d="M3.110336-1.868991C3.110336-2.238605 3.110336-2.503611 2.789539-2.761644C2.503611-2.998755 2.168867-3.110336 1.75741-3.110336C1.094894-3.110336 .627646-2.859278 .627646-2.433873C.627646-2.21071 .781071-2.092154 .962391-2.092154C1.150685-2.092154 1.290162-2.231631 1.290162-2.419925C1.290162-2.538481 1.234371-2.684932 1.046077-2.740722C1.297136-2.915068 1.701619-2.915068 1.743462-2.915068C2.133998-2.915068 2.559402-2.657036 2.559402-2.071233V-1.855044C2.175841-1.841096 1.715567-1.820174 1.206476-1.63188C.578829-1.401743 .383562-1.018182 .383562-.704359C.383562-.104608 1.108842 .069738 1.603985 .069738C2.161893 .069738 2.489664-.244085 2.636115-.516065C2.66401-.230137 2.852304 .034869 3.173101 .034869C3.187049 .034869 3.863512 .034869 3.863512-.627646V-1.011208H3.626401V-.63462C3.626401-.564882 3.626401-.230137 3.368369-.230137S3.110336-.557908 3.110336-.648568V-1.868991ZM2.559402-.983313C2.559402-.313823 1.973599-.125529 1.659776-.125529C1.30411-.125529 .969365-.36264 .969365-.704359C.969365-1.08792 1.30411-1.624907 2.559402-1.673724V-.983313Z"></path>
+<path id="tz_fig_radio_rural_g0-98" d="M1.387796-4.839851L.341719-4.763138V-4.51208C.81594-4.51208 .864757-4.456289 .864757-4.107597V0H1.101868L1.345953-.425405C1.610959-.076712 1.994521 .069738 2.364134 .069738C3.284682 .069738 4.072727-.620672 4.072727-1.506351C4.072727-2.357161 3.354421-3.075467 2.440847-3.075467C2.022416-3.075467 1.638854-2.908095 1.387796-2.657036V-4.839851ZM1.415691-2.336239C1.610959-2.657036 1.987547-2.880199 2.405978-2.880199C2.796513-2.880199 3.075467-2.657036 3.214944-2.447821C3.354421-2.245579 3.438107-1.973599 3.438107-1.513325C3.438107-1.352927 3.438107-.829888 3.152179-.502117C2.873225-.188294 2.531507-.125529 2.329265-.125529C1.771357-.125529 1.492403-.564882 1.415691-.711333V-2.336239Z"></path>
+<path id="tz_fig_radio_rural_g0-99" d="M2.712827-2.782565C2.587298-2.726775 2.517559-2.615193 2.517559-2.475716C2.517559-2.287422 2.650062-2.147945 2.84533-2.147945C3.033624-2.147945 3.180075-2.266501 3.180075-2.489664C3.180075-3.110336 2.21071-3.110336 2.015442-3.110336C.969365-3.110336 .320797-2.308344 .320797-1.506351C.320797-.627646 1.066999 .069738 1.980573 .069738C3.019676 .069738 3.263761-.753176 3.263761-.836862S3.173101-.920548 3.145205-.920548C3.054545-.920548 3.047572-.899626 3.012702-.801993C2.859278-.369614 2.489664-.153425 2.064259-.153425C1.583064-.153425 .955417-.509091 .955417-1.513325C.955417-2.399004 1.387796-2.887173 2.036364-2.887173C2.127024-2.887173 2.461768-2.887173 2.712827-2.782565Z"></path>
+<path id="tz_fig_radio_rural_g0-100" d="M2.48269-4.763138V-4.51208C2.949938-4.51208 3.005729-4.463263 3.005729-4.121544V-2.677958C2.747696-2.929016 2.412951-3.075467 2.02939-3.075467C1.101868-3.075467 .320797-2.378082 .320797-1.499377C.320797-.627646 1.060025 .069738 1.945704 .069738C2.517559 .069738 2.859278-.237111 2.977833-.36264V.069738L4.051806 0V-.251059C3.584558-.251059 3.528767-.299875 3.528767-.641594V-4.839851L2.48269-4.763138ZM2.977833-.732254C2.796513-.404483 2.440847-.125529 1.987547-.125529C1.597011-.125529 1.318057-.355666 1.17858-.557908C1.039103-.767123 .955417-1.046077 .955417-1.492403C.955417-1.652802 .955417-2.175841 1.241345-2.503611C1.520299-2.817435 1.862017-2.880199 2.064259-2.880199C2.399004-2.880199 2.698879-2.726775 2.894147-2.475716C2.977833-2.364134 2.977833-2.357161 2.977833-2.224658V-.732254Z"></path>
+<path id="tz_fig_radio_rural_g0-101" d="M3.068493-1.590037C3.214944-1.590037 3.263761-1.590037 3.263761-1.743462C3.263761-2.357161 2.922042-3.110336 1.882939-3.110336C.969365-3.110336 .27198-2.385056 .27198-1.527273C.27198-.641594 1.046077 .069738 1.973599 .069738C2.915068 .069738 3.263761-.683437 3.263761-.836862C3.263761-.864757 3.249813-.934496 3.145205-.934496C3.054545-.934496 3.040598-.892653 3.019676-.822914C2.803487-.258032 2.273474-.153425 2.022416-.153425C1.694645-.153425 1.380822-.299875 1.171606-.564882C.913574-.892653 .9066-1.318057 .9066-1.590037H3.068493ZM.913574-1.771357C.990286-2.75467 1.617933-2.915068 1.882939-2.915068C2.740722-2.915068 2.768618-1.945704 2.775592-1.771357H.913574Z"></path>
+<path id="tz_fig_radio_rural_g0-104" d="M3.591532-2.113076C3.591532-2.719801 3.291656-3.075467 2.545455-3.075467C1.924782-3.075467 1.583064-2.705853 1.429639-2.440847H1.422665V-4.839851L.376588-4.763138V-4.51208C.843836-4.51208 .899626-4.463263 .899626-4.121544V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-2.113076Z"></path>
+<path id="tz_fig_radio_rural_g0-105" d="M1.471482-4.302864C1.471482-4.505106 1.30411-4.700374 1.066999-4.700374C.857783-4.700374 .669489-4.533001 .669489-4.302864C.669489-4.051806 .871731-3.898381 1.066999-3.898381C1.290162-3.898381 1.471482-4.072727 1.471482-4.302864ZM.411457-2.998755V-2.747696C.850809-2.747696 .913574-2.705853 .913574-2.364134V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.415691-.027895 1.66675-.020922 1.910834 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.54396V-3.075467L.411457-2.998755Z"></path>
+<path id="tz_fig_radio_rural_g0-107" d="M2.252553-1.889913C3.110336-2.552428 3.340473-2.740722 3.821669-2.75467V-3.005729C3.675218-2.991781 3.493898-2.977833 3.347447-2.977833C3.068493-2.977833 2.789539-2.984807 2.510585-3.005729V-2.75467C2.601245-2.740722 2.636115-2.684932 2.636115-2.629141C2.636115-2.517559 2.503611-2.385056 2.419925-2.322291L1.387796-1.527273V-4.839851L.341719-4.763138V-4.51208C.808966-4.51208 .864757-4.463263 .864757-4.121544V-.550934C.864757-.251059 .795019-.251059 .341719-.251059V0C.599751-.020922 .857783-.027895 1.115816-.027895S1.63188-.020922 1.889913 0V-.251059C1.436613-.251059 1.366874-.251059 1.366874-.550934V-1.21345L1.868991-1.603985L2.629141-.662516C2.705853-.571856 2.789539-.467248 2.789539-.376588C2.789539-.265006 2.66401-.251059 2.594271-.251059V0C2.684932-.006974 3.180075-.027895 3.382316-.027895S3.7868-.013948 3.989041 0V-.251059C3.731009-.251059 3.577584-.27198 3.375342-.516065L2.252553-1.889913Z"></path>
+<path id="tz_fig_radio_rural_g0-108" d="M1.436613-4.839851L.390535-4.763138V-4.51208C.857783-4.51208 .913574-4.463263 .913574-4.121544V-.550934C.913574-.251059 .843836-.251059 .390535-.251059V0C.404483 0 .892653-.027895 1.171606-.027895C1.436613-.027895 1.694645-.020922 1.959651 0V-.251059C1.506351-.251059 1.436613-.251059 1.436613-.550934V-4.839851Z"></path>
+<path id="tz_fig_radio_rural_g0-110" d="M3.591532-2.113076C3.591532-2.719801 3.291656-3.075467 2.545455-3.075467C1.973599-3.075467 1.603985-2.761644 1.408717-2.399004H1.401743V-3.075467L.376588-2.998755V-2.747696C.843836-2.747696 .899626-2.698879 .899626-2.357161V-.550934C.899626-.251059 .829888-.251059 .376588-.251059V0C.390535 0 .878705-.027895 1.171606-.027895C1.429639-.027895 1.910834-.006974 1.973599 0V-.251059C1.520299-.251059 1.45056-.251059 1.45056-.550934V-1.806227C1.45056-2.538481 2.02939-2.880199 2.489664-2.880199C2.977833-2.880199 3.040598-2.496638 3.040598-2.140971V-.550934C3.040598-.251059 2.970859-.251059 2.517559-.251059V0C2.531507 0 3.019676-.027895 3.312578-.027895C3.57061-.027895 4.051806-.006974 4.11457 0V-.251059C3.66127-.251059 3.591532-.251059 3.591532-.550934V-2.113076Z"></path>
+<path id="tz_fig_radio_rural_g0-111" d="M3.689166-1.48543C3.689166-2.357161 2.942964-3.110336 1.980573-3.110336S.27198-2.357161 .27198-1.48543C.27198-.620672 1.039103 .069738 1.980573 .069738S3.689166-.620672 3.689166-1.48543ZM1.980573-.153425C1.72254-.153425 1.345953-.237111 1.115816-.578829C.927522-.864757 .9066-1.227397 .9066-1.548194C.9066-1.84807 .913574-2.259527 1.157659-2.559402C1.332005-2.761644 1.624907-2.915068 1.980573-2.915068C2.39203-2.915068 2.684932-2.719801 2.838356-2.503611C3.033624-2.231631 3.054545-1.882939 3.054545-1.548194S3.033624-.843836 2.831382-.557908C2.643088-.292902 2.322291-.153425 1.980573-.153425Z"></path>
+<path id="tz_fig_radio_rural_g0-112" d="M1.93873 1.101868C1.48543 1.101868 1.415691 1.101868 1.415691 .801993V-.334745C1.45056-.299875 1.778331 .069738 2.364134 .069738C3.284682 .069738 4.072727-.620672 4.072727-1.506351C4.072727-2.364134 3.361395-3.075467 2.475716-3.075467C2.078207-3.075467 1.673724-2.929016 1.387796-2.650062V-3.075467L.341719-2.998755V-2.747696C.829888-2.747696 .864757-2.712827 .864757-2.419925V.801993C.864757 1.101868 .795019 1.101868 .341719 1.101868V1.352927C.355666 1.352927 .843836 1.325031 1.136737 1.325031C1.39477 1.325031 1.875965 1.345953 1.93873 1.352927V1.101868ZM1.415691-2.322291C1.624907-2.670984 2.02939-2.852304 2.399004-2.852304C2.984807-2.852304 3.438107-2.238605 3.438107-1.506351C3.438107-.711333 2.915068-.125529 2.322291-.125529C1.708593-.125529 1.436613-.662516 1.415691-.704359V-2.322291Z"></path>
+<path id="tz_fig_radio_rural_g0-114" d="M1.387796-1.590037C1.387796-2.175841 1.659776-2.880199 2.322291-2.880199C2.259527-2.831382 2.203736-2.740722 2.203736-2.629141C2.203736-2.399004 2.385056-2.308344 2.517559-2.308344C2.684932-2.308344 2.838356-2.419925 2.838356-2.629141C2.838356-2.866252 2.615193-3.075467 2.287422-3.075467C1.93873-3.075467 1.555168-2.859278 1.345953-2.329265H1.338979V-3.075467L.341719-2.998755V-2.747696C.808966-2.747696 .864757-2.698879 .864757-2.357161V-.550934C.864757-.251059 .795019-.251059 .341719-.251059V0C.376588 0 .850809-.027895 1.136737-.027895C1.436613-.027895 1.743462-.013948 2.043337 0V-.251059H1.903861C1.387796-.251059 1.387796-.327771 1.387796-.564882V-1.590037Z"></path>
+<path id="tz_fig_radio_rural_g0-115" d="M2.643088-2.929016C2.643088-3.047572 2.643088-3.110336 2.545455-3.110336C2.510585-3.110336 2.496638-3.110336 2.405978-3.02665C2.39203-3.019676 2.322291-2.956912 2.280448-2.922042C2.071233-3.068493 1.806227-3.110336 1.548194-3.110336C.550934-3.110336 .313823-2.587298 .313823-2.238605C.313823-2.015442 .411457-1.834122 .578829-1.694645C.843836-1.464508 1.108842-1.415691 1.54122-1.345953C1.889913-1.283188 2.454795-1.185554 2.454795-.718306C2.454795-.446326 2.266501-.125529 1.597011-.125529S.683437-.564882 .557908-1.039103C.536986-1.129763 .530012-1.157659 .432379-1.157659C.313823-1.157659 .313823-1.108842 .313823-.969365V-.111582C.313823 .006974 .313823 .069738 .411457 .069738C.474222 .069738 .606725-.076712 .746202-.230137C1.053051 .055791 1.429639 .069738 1.597011 .069738C2.503611 .069738 2.838356-.418431 2.838356-.913574C2.838356-1.17858 2.719801-1.387796 2.538481-1.555168C2.273474-1.799253 1.952677-1.855044 1.708593-1.896887C1.150685-1.994521 .697385-2.078207 .697385-2.447821C.697385-2.670984 .885679-2.942964 1.548194-2.942964C2.357161-2.942964 2.39203-2.378082 2.405978-2.175841C2.412951-2.099128 2.496638-2.099128 2.524533-2.099128C2.643088-2.099128 2.643088-2.147945 2.643088-2.280448V-2.929016Z"></path>
+<path id="tz_fig_radio_rural_g0-116" d="M1.401743-2.75467H2.489664V-3.005729H1.401743V-4.288917H1.164633C1.157659-3.66127 .871731-2.970859 .202242-2.949938V-2.75467H.850809V-.871731C.850809-.09066 1.436613 .069738 1.827148 .069738C2.294396 .069738 2.615193-.327771 2.615193-.878705V-1.262267H2.378082V-.885679C2.378082-.411457 2.154919-.153425 1.882939-.153425C1.401743-.153425 1.401743-.739228 1.401743-.864757V-2.75467Z"></path>
+<path id="tz_fig_radio_rural_g0-117" d="M2.517559-2.998755V-2.747696C2.984807-2.747696 3.040598-2.698879 3.040598-2.357161V-1.164633C3.040598-.550934 2.643088-.125529 2.113076-.125529C1.478456-.125529 1.45056-.425405 1.45056-.781071V-3.075467L.376588-2.998755V-2.747696C.899626-2.747696 .899626-2.726775 .899626-2.106102V-1.060025C.899626-.578829 .899626 .069738 2.064259 .069738C2.217684 .069738 2.726775 .069738 3.061519-.516065H3.068493V.069738L4.11457 0V-.251059C3.647323-.251059 3.591532-.299875 3.591532-.641594V-3.075467L2.517559-2.998755Z"></path>
+</defs>
+<g id="tz_fig_radio_rural_page1">
+<g stroke-miterlimit="10" transform="translate(-43.209972,-30.965331)scale(0.996264,-0.996264)">
+<g fill="#000" stroke="#000">
+<g stroke-width="0.4">
+<g fill="#d8e9fa">
+<g fill="#d8e9fa">
+<path d="M20.698 18.49428H-20.698C-22.90717 18.49428-24.698 16.70345-24.698 14.49428V-14.49428C-24.698-16.70345-22.90717-18.49428-20.698-18.49428H20.698C22.90717-18.49428 24.698-16.70345 24.698-14.49428V14.49428C24.698 16.70345 22.90717 18.49428 20.698 18.49428ZM-24.698-18.49428"></path>
+</g>
+<g transform="translate(-21.698,-10.01387)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-43.209972,-30.965331)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-43.209972" y="-46.905556" href="#tz_fig_radio_rural_g0-80"></use>
+<use x="-37.855023" y="-46.905556" href="#tz_fig_radio_rural_g0-79"></use>
+<use x="-31.739039" y="-46.905556" href="#tz_fig_radio_rural_g0-80"></use>
+<use x="-23.699699" y="-46.905556" href="#tz_fig_radio_rural_g0-99"></use>
+<use x="-20.157408" y="-46.905556" href="#tz_fig_radio_rural_g0-101"></use>
+<use x="-16.615116" y="-46.905556" href="#tz_fig_radio_rural_g0-110"></use>
+<use x="-12.429409" y="-46.905556" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-9.316066" y="-46.905556" href="#tz_fig_radio_rural_g0-114"></use>
+<use x="-6.202722" y="-46.905556" href="#tz_fig_radio_rural_g0-97"></use>
+<use x="-2.231482" y="-46.905556" href="#tz_fig_radio_rural_g0-108"></use>
+<use x="-35.140212" y="-38.935444" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-32.026869" y="-38.935444" href="#tz_fig_radio_rural_g0-114"></use>
+<use x="-28.913526" y="-38.935444" href="#tz_fig_radio_rural_g0-94"></use>
+<use x="-28.913523" y="-38.935444" href="#tz_fig_radio_rural_g0-97"></use>
+<use x="-24.942283" y="-38.935444" href="#tz_fig_radio_rural_g0-110"></use>
+<use x="-20.542093" y="-38.935444" href="#tz_fig_radio_rural_g0-115"></use>
+<use x="-17.385853" y="-38.935444" href="#tz_fig_radio_rural_g0-105"></use>
+<use x="-15.130407" y="-38.935444" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-12.017064" y="-38.935444" href="#tz_fig_radio_rural_g0-111"></use>
+<use x="-40.542895" y="-30.965331" href="#tz_fig_radio_rural_g0-99"></use>
+<use x="-37.000603" y="-30.965331" href="#tz_fig_radio_rural_g0-111"></use>
+<use x="-33.029363" y="-30.965331" href="#tz_fig_radio_rural_g0-114"></use>
+<use x="-29.91602" y="-30.965331" href="#tz_fig_radio_rural_g0-101"></use>
+<use x="-26.373728" y="-30.965331" href="#tz_fig_radio_rural_g0-43"></use>
+<use x="-20.257744" y="-30.965331" href="#tz_fig_radio_rural_g0-66"></use>
+<use x="-14.688315" y="-30.965331" href="#tz_fig_radio_rural_g0-78"></use>
+<use x="-8.807549" y="-30.965331" href="#tz_fig_radio_rural_g0-71"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#ffe1cc">
+<g fill="#ffe1cc">
+<path d="M113.62465 35.566H79.85365C77.64449 35.566 75.85365 33.77516 75.85365 31.566V13.95854C75.85365 11.74937 77.64449 9.95854 79.85365 9.95854H113.62465C115.83382 9.95854 117.62465 11.74937 117.62465 13.95854V31.566C117.62465 33.77516 115.83382 35.566 113.62465 35.566ZM75.85365 9.95854"></path>
+</g>
+<g transform="translate(78.85365,21.01227)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-43.209972,-30.965331)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-43.209972" y="-30.965331" href="#tz_fig_radio_rural_g0-114"></use>
+<use x="-40.096629" y="-30.965331" href="#tz_fig_radio_rural_g0-101"></use>
+<use x="-36.554337" y="-30.965331" href="#tz_fig_radio_rural_g0-112"></use>
+<use x="-31.939681" y="-30.965331" href="#tz_fig_radio_rural_g0-101"></use>
+<use x="-28.397389" y="-30.965331" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-25.284046" y="-30.965331" href="#tz_fig_radio_rural_g0-105"></use>
+<use x="-23.028601" y="-30.965331" href="#tz_fig_radio_rural_g0-100"></use>
+<use x="-18.628411" y="-30.965331" href="#tz_fig_radio_rural_g0-111"></use>
+<use x="-14.657171" y="-30.965331" href="#tz_fig_radio_rural_g0-114"></use>
+<use x="-11.543828" y="-30.965331" href="#tz_fig_radio_rural_g0-97"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#ffddc6">
+<g fill="#ffddc6">
+<path d="M224.3721 17.07164H173.96631C171.75714 17.07164 169.96631 15.2808 169.96631 13.07164V-13.07164C169.96631-15.2808 171.75714-17.07164 173.96631-17.07164H224.3721C226.58127-17.07164 228.3721-15.2808 228.3721-13.07164V13.07164C228.3721 15.2808 226.58127 17.07164 224.3721 17.07164ZM169.96631-17.07164"></path>
+</g>
+<g transform="translate(172.96631,-10.39166)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-43.209972,-30.965331)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-37.529841" y="-46.905556" href="#tz_fig_radio_rural_g0-80"></use>
+<use x="-32.174893" y="-46.905556" href="#tz_fig_radio_rural_g0-79"></use>
+<use x="-26.058909" y="-46.905556" href="#tz_fig_radio_rural_g0-80"></use>
+<use x="-18.019569" y="-46.905556" href="#tz_fig_radio_rural_g0-97"></use>
+<use x="-14.048328" y="-46.905556" href="#tz_fig_radio_rural_g0-99"></use>
+<use x="-10.506036" y="-46.905556" href="#tz_fig_radio_rural_g0-101"></use>
+<use x="-6.963745" y="-46.905556" href="#tz_fig_radio_rural_g0-115"></use>
+<use x="-3.807504" y="-46.905556" href="#tz_fig_radio_rural_g0-115"></use>
+<use x="-.651263" y="-46.905556" href="#tz_fig_radio_rural_g0-111"></use>
+<use x="-28.452036" y="-38.935444" href="#tz_fig_radio_rural_g0-40"></use>
+<use x="-25.338693" y="-38.935444" href="#tz_fig_radio_rural_g0-115"></use>
+<use x="-22.182452" y="-38.935444" href="#tz_fig_radio_rural_g0-111"></use>
+<use x="-18.211212" y="-38.935444" href="#tz_fig_radio_rural_g0-108"></use>
+<use x="-15.955766" y="-38.935444" href="#tz_fig_radio_rural_g0-97"></use>
+<use x="-11.984526" y="-38.935444" href="#tz_fig_radio_rural_g0-114"></use>
+<use x="-8.871183" y="-38.935444" href="#tz_fig_radio_rural_g0-41"></use>
+<use x="-43.209972" y="-30.965331" href="#tz_fig_radio_rural_g0-115"></use>
+<use x="-40.053731" y="-30.965331" href="#tz_fig_radio_rural_g0-101"></use>
+<use x="-36.511439" y="-30.965331" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-33.398096" y="-30.965331" href="#tz_fig_radio_rural_g0-111"></use>
+<use x="-29.426856" y="-30.965331" href="#tz_fig_radio_rural_g0-114"></use>
+<use x="-26.313513" y="-30.965331" href="#tz_fig_radio_rural_g0-105"></use>
+<use x="-24.058067" y="-30.965331" href="#tz_fig_radio_rural_g0-97"></use>
+<use x="-20.086827" y="-30.965331" href="#tz_fig_radio_rural_g0-105"></use>
+<use x="-17.831381" y="-30.965331" href="#tz_fig_radio_rural_g0-115"></use>
+<use x="-11.990749" y="-30.965331" href="#tz_fig_radio_rural_g0-80"></use>
+<use x="-6.6358" y="-30.965331" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-3.522457" y="-30.965331" href="#tz_fig_radio_rural_g0-77"></use>
+<use x="3.645155" y="-30.965331" href="#tz_fig_radio_rural_g0-80"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="0.8">
+<g fill="#174d88" stroke="#174d88">
+<path d="M24.898 5.8575L71.63792 16.85916" fill="none"></path>
+<g transform="matrix(0.97334,0.22908,-0.22908,0.97334,69.2296,16.29236)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M5.4608 0L1.29181 1.57648L2.67429 0L1.29181-1.57648Z"></path>
+ </g>
+ </g>
+</g>
+<g transform="matrix(0.97334,0.22908,-0.22908,0.97334,26.25638,10.01254)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-43.209972,-30.965331)scale(-1,-1)">
+<g fill="#174d88">
+<g stroke="none">
+<g fill="#174d88">
+<use x="-43.209972" y="-30.965331" href="#tz_fig_radio_rural_g0-98"></use>
+<use x="-38.809783" y="-30.965331" href="#tz_fig_radio_rural_g0-97"></use>
+<use x="-34.838542" y="-30.965331" href="#tz_fig_radio_rural_g0-99"></use>
+<use x="-31.510732" y="-30.965331" href="#tz_fig_radio_rural_g0-107"></use>
+<use x="-27.325011" y="-30.965331" href="#tz_fig_radio_rural_g0-104"></use>
+<use x="-22.924822" y="-30.965331" href="#tz_fig_radio_rural_g0-97"></use>
+<use x="-18.953581" y="-30.965331" href="#tz_fig_radio_rural_g0-117"></use>
+<use x="-14.553392" y="-30.965331" href="#tz_fig_radio_rural_g0-108"></use>
+<use x="-9.613555" y="-30.965331" href="#tz_fig_radio_rural_g0-80"></use>
+<use x="-4.258606" y="-30.965331" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-1.145263" y="-30.965331" href="#tz_fig_radio_rural_g0-80"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g stroke-width="0.8">
+<g fill="#174d88" stroke="#174d88">
+<path d="M117.82465 18.07646L165.73918 7.42116" fill="none"></path>
+<g transform="matrix(0.9761,-0.21706,0.21706,0.9761,163.32402,7.95822)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M5.4608 0L1.29181 1.57648L2.67429 0L1.29181-1.57648Z"></path>
+ </g>
+ </g>
+</g>
+<g transform="matrix(0.9761,-0.21706,0.21706,0.9761,121.3757,21.11047)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-43.209972,-30.965331)scale(-1,-1)">
+<g fill="#174d88">
+<g stroke="none">
+<g fill="#174d88">
+<use x="-43.209972" y="-30.965331" href="#tz_fig_radio_rural_g0-98"></use>
+<use x="-38.809783" y="-30.965331" href="#tz_fig_radio_rural_g0-97"></use>
+<use x="-34.838542" y="-30.965331" href="#tz_fig_radio_rural_g0-99"></use>
+<use x="-31.510732" y="-30.965331" href="#tz_fig_radio_rural_g0-107"></use>
+<use x="-27.325011" y="-30.965331" href="#tz_fig_radio_rural_g0-104"></use>
+<use x="-22.924822" y="-30.965331" href="#tz_fig_radio_rural_g0-97"></use>
+<use x="-18.953581" y="-30.965331" href="#tz_fig_radio_rural_g0-117"></use>
+<use x="-14.553392" y="-30.965331" href="#tz_fig_radio_rural_g0-108"></use>
+<use x="-9.613555" y="-30.965331" href="#tz_fig_radio_rural_g0-80"></use>
+<use x="-4.258606" y="-30.965331" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-1.145263" y="-30.965331" href="#tz_fig_radio_rural_g0-80"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#e3f5dd">
+<g fill="#e3f5dd">
+<path d="M270.45065 19.91693H298.60421V36.98855H270.45065Z"></path>
+</g>
+<g transform="translate(273.78363,26.0222)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-43.209972,-30.965331)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-43.209972" y="-30.965331" href="#tz_fig_radio_rural_g0-115"></use>
+<use x="-40.911629" y="-30.965331" href="#tz_fig_radio_rural_g0-19"></use>
+<use x="-40.053728" y="-30.965331" href="#tz_fig_radio_rural_g0-16"></use>
+<use x="-37.798283" y="-30.965331" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-34.68494" y="-30.965331" href="#tz_fig_radio_rural_g0-105"></use>
+<use x="-32.429494" y="-30.965331" href="#tz_fig_radio_rural_g0-111"></use>
+<use x="-25.773862" y="-30.965331" href="#tz_fig_radio_rural_g0-49"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#e3f5dd">
+<g fill="#e3f5dd">
+<path d="M276.14111-8.53581H304.29467V8.53581H276.14111Z"></path>
+</g>
+<g transform="translate(279.47409,-2.43054)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-43.209972,-30.965331)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-43.209972" y="-30.965331" href="#tz_fig_radio_rural_g0-115"></use>
+<use x="-40.911629" y="-30.965331" href="#tz_fig_radio_rural_g0-19"></use>
+<use x="-40.053728" y="-30.965331" href="#tz_fig_radio_rural_g0-16"></use>
+<use x="-37.798283" y="-30.965331" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-34.68494" y="-30.965331" href="#tz_fig_radio_rural_g0-105"></use>
+<use x="-32.429494" y="-30.965331" href="#tz_fig_radio_rural_g0-111"></use>
+<use x="-25.773862" y="-30.965331" href="#tz_fig_radio_rural_g0-50"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g fill="#e3f5dd">
+<g fill="#e3f5dd">
+<path d="M270.45065-36.98856H298.60421V-19.91694H270.45065Z"></path>
+</g>
+<g transform="translate(273.78363,-30.88329)">
+<g stroke="none" transform="scale(-1.00375,1.00375)translate(-43.209972,-30.965331)scale(-1,-1)">
+<g fill="#000">
+<g stroke="none">
+<use x="-43.209972" y="-30.965331" href="#tz_fig_radio_rural_g0-115"></use>
+<use x="-40.911629" y="-30.965331" href="#tz_fig_radio_rural_g0-19"></use>
+<use x="-40.053728" y="-30.965331" href="#tz_fig_radio_rural_g0-16"></use>
+<use x="-37.798283" y="-30.965331" href="#tz_fig_radio_rural_g0-116"></use>
+<use x="-34.68494" y="-30.965331" href="#tz_fig_radio_rural_g0-105"></use>
+<use x="-32.429494" y="-30.965331" href="#tz_fig_radio_rural_g0-111"></use>
+<use x="-25.773862" y="-30.965331" href="#tz_fig_radio_rural_g0-51"></use>
+</g>
+</g>
+</g>
+</g>
+</g>
+<path d="M228.5721 9.79228L267.33354 22.72539" fill="none"></path>
+<g transform="matrix(0.94855,0.31648,-0.31648,0.94855,265.69766,22.17958)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
+ </g>
+ </g>
+</g>
+<path d="M228.5721 0H272.86575" fill="none"></path>
+<g transform="translate(271.14114,0.0)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
+ </g>
+ </g>
+</g>
+<path d="M228.5721-9.79228L267.33354-22.72539" fill="none"></path>
+<g transform="matrix(0.94855,-0.31648,0.31648,0.94855,265.69766,-22.17958)">
+<g stroke-dasharray="none" stroke-dashoffset="0.0">
+ <g stroke-linejoin="miter">
+ <path d="M4.2304 0L.64584 1.35075L1.8246 0L.64584-1.35075Z"></path>
+ </g>
+ </g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+<div id="fig-radio-rural" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-radio-rural-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<p>A cadeia rural: <strong>backhaul PtP</strong> de alta capacidade leva a banda do POP central às torres (via <strong>repetidoras</strong> quando não há visada), e no POP de acesso os <strong>setoriais PtMP</strong> servem os clientes. Cada salto de rádio é capacidade e ponto de falha a planejar.</p>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-radio-rural-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;73.1
+</figcaption>
+</figure>
+</div>
 </section>
-<section id="eoip-esticar-a-camada-2-entre-sites" class="level2" data-number="55.2">
-<h2 data-number="55.2" class="anchored" data-anchor-id="eoip-esticar-a-camada-2-entre-sites"><span class="header-section-number">55.2</span> EoIP: esticar a camada 2 entre sites</h2>
-<p>O <strong>EoIP</strong> (<em>Ethernet over IP</em>, proprietário MikroTik) transporta <strong>quadros Ethernet</strong> — camada 2 — dentro de IP. O resultado: dois sites distantes ficam no <strong>mesmo domínio de broadcast</strong>, como se um cabo ligasse as bridges. Útil para levar uma VLAN de gerência a um POP remoto, ou unir dois pontos que precisam de L2 comum.</p>
-<pre class="routeros"><code># EoIP e adição à bridge (os dois lados na mesma bridge = mesma L2)
-/interface eoip
-add name=eoip-ab remote-address=&lt;publico-B&gt; tunnel-id=100 ipsec-secret="Ch@ve-EoIP"
-/interface bridge port add bridge=br-gerencia interface=eoip-ab</code></pre>
+<section id="backhaul-a-espinha-da-rede" class="level2" data-number="73.2">
+<h2 data-number="73.2" class="anchored" data-anchor-id="backhaul-a-espinha-da-rede"><span class="header-section-number">73.2</span> Backhaul: a espinha da rede</h2>
+<p>O <strong>backhaul</strong> é o que diferencia um provedor rural que <strong>entrega velocidade</strong> de um que só “tem sinal”. São enlaces <strong>PtP dedicados</strong> de alta capacidade (<a href="../v05-wireless/03-ptp-nstreme-nv2.html" class="quarto-xref"><span>Capítulo 29</span></a>, Nstreme/NV2 ou 802.11ac/ax), com:</p>
+<ul>
+<li><strong>Visada limpa</strong> (linha de visão + zona de Fresnel, <a href="../v05-wireless/05-alinhamento-troubleshooting.html" class="quarto-xref"><span>Capítulo 31</span></a>) — o fundamento físico do rádio;</li>
+<li><strong>Capacidade dimensionada</strong> para <strong>agregar</strong> todo o tráfego das torres atrás dele — o backhaul carrega a soma dos clientes, não um só;</li>
+<li><strong>Redundância</strong> onde crítico: um segundo caminho (outra frequência, outra rota) para a torre não ficar ilhada se o enlace principal cai (HA, <a href="../v14-alta-disponibilidade/04-failover-multilink.html" class="quarto-xref"><span>Capítulo 70</span></a>);</li>
+<li><strong>Frequências planejadas</strong> para não interferir entre enlaces próximos (reuso, polarização).</li>
+</ul>
+<p>A regra: <strong>o backhaul nunca pode ser o gargalo</strong>. Um setorial cheio se resolve com mais setoriais; um backhaul cheio <strong>ilha</strong> uma região inteira.</p>
+</section>
+<section id="repetidoras-alcance-ao-custo-de-saltos" class="level2" data-number="73.3">
+<h2 data-number="73.3" class="anchored" data-anchor-id="repetidoras-alcance-ao-custo-de-saltos"><span class="header-section-number">73.3</span> Repetidoras: alcance ao custo de saltos</h2>
+<p>Quando um morro bloqueia a visada, a <strong>repetidora</strong> numa torre intermediária reencaminha o sinal. Cada repetidora <strong>estende o alcance</strong>, mas cobra:</p>
+<ul>
+<li><strong>Latência</strong>: cada salto de rádio adiciona atraso;</li>
+<li><strong>Capacidade</strong>: se a repetidora usa a <strong>mesma frequência</strong> para receber e retransmitir no mesmo meio, a banda <strong>cai pela metade</strong> (meio compartilhado) — use <strong>frequências/rádios separados</strong> por sentido;</li>
+<li><strong>Ponto de falha</strong>: cada repetidora é mais um equipamento (e mais uma fonte de energia) que pode falhar e <strong>ilhar</strong> tudo atrás dela.</li>
+</ul>
+<p>Minimize saltos: prefira <strong>torres mais altas</strong> e <strong>visadas diretas</strong> a cadeias longas de repetidoras. Cada salto evitado é latência e confiabilidade ganhas.</p>
+</section>
+<section id="pops-solares-energia-onde-não-há-rede" class="level2" data-number="73.4">
+<h2 data-number="73.4" class="anchored" data-anchor-id="pops-solares-energia-onde-não-há-rede"><span class="header-section-number">73.4</span> POPs solares: energia onde não há rede</h2>
+<p>No campo, muitas torres ficam <strong>longe da rede elétrica</strong> (ou com energia péssima). O <strong>POP solar</strong> resolve — e é um projeto de <strong>energia</strong> tanto quanto de rede:</p>
+<ul>
+<li><strong>Painéis + baterias</strong> dimensionados para a carga (rádios, switch, MikroTik) com <strong>autonomia</strong> para dias nublados (2–4 dias é comum);</li>
+<li><strong>Equipamentos de baixo consumo</strong> (MikroTik ajuda: RB/hEX consomem pouco) — cada watt economizado é bateria/painel a menos;</li>
+<li><strong>Gerência remota da energia</strong>: monitorar tensão da bateria (SNMP, <a href="../v13-monitoramento/02-snmp-graphing-dude.html" class="quarto-xref"><span>Capítulo 64</span></a>), alertar antes de desligar; a queda de um POP solar às vezes é <strong>bateria</strong>, não rádio;</li>
+<li><strong>Gerência fora de banda</strong> (<a href="01-desenho-rede-provedor.html" class="quarto-xref"><span>Capítulo 71</span></a>): alcançar o POP para diagnosticar mesmo com a produção instável.</li>
+</ul>
 <div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -870,71 +1203,19 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Estender camada 2 é <strong>poderoso e perigoso</strong>. Você une domínios de broadcast: uma tempestade de broadcast, um loop de STP ou um DHCP rogue em um POP <strong>contamina o outro</strong>. Use EoIP com parcimônia, sempre com <strong>STP</strong> ativo, e prefira <strong>rotear</strong> (L3) a <strong>esticar</strong> (L2) sempre que possível. L2 estendido é a última opção, não a primeira.</p>
+<p>No POP solar, <strong>energia é o ponto de falha nº 1</strong> — mais que o rádio. Dimensione a autonomia para o pior caso (sequência de dias nublados), monitore a <strong>tensão da bateria</strong> como métrica de primeira classe, e lembre: bateria degrada com o tempo. Um POP que “cai toda madrugada” com frequência não tem problema de rádio — tem bateria no fim da vida descarregando à noite.</p>
 </div>
 </div>
 </section>
-<section id="l2tp-e-sstp-acesso-remoto" class="level2" data-number="55.3">
-<h2 data-number="55.3" class="anchored" data-anchor-id="l2tp-e-sstp-acesso-remoto"><span class="header-section-number">55.3</span> L2TP e SSTP: acesso remoto</h2>
-<p>Para dar <strong>acesso remoto</strong> a um técnico ou a um cliente com cliente VPN padrão (Windows, celular), dois protocolos servem:</p>
+<section id="integrando-ao-desenho-geral" class="level2" data-number="73.5">
+<h2 data-number="73.5" class="anchored" data-anchor-id="integrando-ao-desenho-geral"><span class="header-section-number">73.5</span> Integrando ao desenho geral</h2>
+<p>A rede de rádio encaixa no desenho de três camadas (<a href="01-desenho-rede-provedor.html" class="quarto-xref"><span>Capítulo 71</span></a>):</p>
 <ul>
-<li><strong>L2TP/IPsec</strong>: L2TP puro <strong>não cifra</strong>; na prática usa-se sempre <strong>L2TP sobre IPsec</strong>. Amplamente suportado por sistemas operacionais, bom para “VPN de acesso” clássica;</li>
-<li><strong>SSTP</strong>: roda sobre <strong>TLS em TCP/443</strong> — logo, <strong>atravessa quase qualquer firewall/proxy</strong> (parece HTTPS). É a escolha quando o técnico está numa rede hostil que bloqueia UDP e portas de VPN. Precisa de <strong>certificado</strong> no servidor.</li>
+<li><strong>Acesso</strong>: os setoriais PtMP e os CPEs dos clientes;</li>
+<li><strong>Distribuição/backhaul</strong>: as torres e enlaces PtP que agregam e levam ao POP central; é onde pode viver um <strong>BNG</strong> regional (ou o tráfego sobe ao BNG central);</li>
+<li><strong>Roteamento</strong>: <strong>OSPF</strong> (<a href="../v08-roteamento/02-ospf-conceitos-configuracao.html" class="quarto-xref"><span>Capítulo 42</span></a>) entre POPs/torres, com <strong>custos</strong> refletindo a capacidade/preferência dos enlaces (fibra &lt; backhaul bom &lt; rádio de contingência) e <strong>failover</strong> (<a href="../v14-alta-disponibilidade/04-failover-multilink.html" class="quarto-xref"><span>Capítulo 70</span></a>) para caminhos alternativos;</li>
+<li><strong>Gerência OOB</strong>: crítica no rural — um técnico não vai até a torre no morro para um reboot; RoMON (<a href="04-hardening-operacional-migracao-v7.html" class="quarto-xref"><span>Capítulo 74</span></a>) e túneis de gerência salvam deslocamentos.</li>
 </ul>
-<pre class="routeros"><code># servidor L2TP com IPsec (use-ipsec) e pool para os clientes
-/interface l2tp-server server set enabled=yes use-ipsec=yes ipsec-secret="Ch@ve-L2TP"
-/ppp secret add name=tecnico1 service=l2tp password="senha-forte" profile=default
-
-# servidor SSTP (TCP/443) — exige certificado
-/interface sstp-server server set enabled=yes certificate=cert-sstp port=443</code></pre>
-<p>Note o reuso do que você já sabe: L2TP e SSTP são <strong>serviços PPP</strong> (<a href="../v06-pppoe/02-pppoe-server-profiles-pools.html" class="quarto-xref"><span>Capítulo 34</span></a>) — usam <code>ppp secret</code>/profiles/pools exatamente como o PPPoE, e podem autenticar por <strong>RADIUS</strong> (<a href="../v06-pppoe/03-radius-user-manager-gestao.html" class="quarto-xref"><span>Capítulo 35</span></a>). Acesso remoto é PPPoE “pela internet”.</p>
-</section>
-<section id="zerotier-malha-que-atravessa-nat" class="level2" data-number="55.4">
-<h2 data-number="55.4" class="anchored" data-anchor-id="zerotier-malha-que-atravessa-nat"><span class="header-section-number">55.4</span> ZeroTier: malha que atravessa NAT</h2>
-<p>E quando <strong>nenhum</strong> dos lados tem IP público — os dois atrás de CGNAT? Os túneis anteriores precisam de alguém “alcançável” para iniciar. O <strong>ZeroTier</strong> resolve com uma <strong>malha gerenciada na nuvem</strong>: os nós se registram num controlador (ZeroTier Central), que os ajuda a <strong>furar o NAT</strong> dos dois lados (hole punching) e a formar uma rede virtual L2/L3. Ideal para gerência de CPEs e roteadores sem IP público.</p>
-<pre class="routeros"><code># habilitar ZeroTier e juntar-se a uma rede (ID vem do painel ZeroTier)
-/zerotier set zt1 comment="malha de gerencia"
-/zerotier interface add network=&lt;network-id&gt; instance=zt1</code></pre>
-<p>O trade-off: você depende de um <strong>serviço externo</strong> (o controlador na nuvem) e de uma conta ZeroTier. Para gerência, costuma valer; para tráfego crítico de produção, prefira túneis que você controla ponta a ponta.</p>
-</section>
-<section id="escolhendo-entre-eles" class="level2" data-number="55.5">
-<h2 data-number="55.5" class="anchored" data-anchor-id="escolhendo-entre-eles"><span class="header-section-number">55.5</span> Escolhendo entre eles</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Necessidade</th>
-<th>Escolha</th>
-<th>Por quê</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Rodar OSPF/BGP cifrado entre POPs</td>
-<td><strong>GRE + IPsec</strong></td>
-<td>Interface + criptografia</td>
-</tr>
-<tr class="even">
-<td>Esticar VLAN/L2 entre sites</td>
-<td><strong>EoIP (+IPsec)</strong></td>
-<td>Transporta Ethernet</td>
-</tr>
-<tr class="odd">
-<td>Acesso remoto de técnico/cliente</td>
-<td><strong>L2TP/IPsec</strong> ou <strong>SSTP</strong></td>
-<td>Cliente VPN padrão; SSTP fura firewall</td>
-</tr>
-<tr class="even">
-<td>Ambos os lados atrás de CGNAT</td>
-<td><strong>ZeroTier</strong></td>
-<td>Malha na nuvem fura o NAT</td>
-</tr>
-</tbody>
-</table>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -945,12 +1226,12 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Estes túneis preenchem os nichos que WireGuard/IPsec sozinhos não cobrem: <strong>GRE</strong> dá a <strong>interface</strong> para roteamento dinâmico (cifre com IPsec); <strong>EoIP</strong> estende <strong>camada 2</strong> (com o risco de unir domínios de broadcast — use com cuidado); <strong>L2TP/SSTP</strong> dão <strong>acesso remoto</strong> com cliente padrão (SSTP fura firewall em 443); <strong>ZeroTier</strong> conecta quem <strong>não tem IP público</strong>. A regra de escolha é sempre a mesma do <a href="01-panorama-tuneis.html" class="quarto-xref"><span>Capítulo 52</span></a>: <strong>que camada</strong> e <strong>cifra ou não</strong> — e, em todos, respeite o <strong>MTU/MSS</strong>.</p>
+<p>A rede rural é uma <strong>cadeia de rádio</strong> — backhaul PtP (a espinha, que <strong>nunca</strong> pode ser gargalo), repetidoras (alcance ao custo de latência e saltos), setoriais PtMP (o acesso) — sobre <strong>POPs solares</strong> onde a <strong>energia é o ponto de falha nº 1</strong>. Projete de trás para frente: visada e capacidade do backhaul primeiro, saltos minimizados, energia dimensionada para o pior caso e <strong>monitorada</strong> (tensão de bateria como métrica de primeira classe). Integre ao desenho geral com <strong>OSPF por custo</strong>, <strong>failover</strong> e <strong>gerência fora de banda</strong> — porque no campo, ir até a torre custa caro. Rádio bem projetado leva internet onde a fibra nunca chegará.</p>
 </div>
 </div>
 </section>
-<section id="laboratório" class="level2" data-number="55.6">
-<h2 data-number="55.6" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">55.6</span> 🧪 Laboratório</h2>
+<section id="laboratório" class="level2" data-number="73.6">
+<h2 data-number="73.6" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">73.6</span> 🧪 Laboratório</h2>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -961,41 +1242,34 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Dois CHRs (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>) como POPs (<strong>lab-a</strong>, <strong>lab-b</strong>) com IPs “públicos” alcançáveis e uma LAN interna cada. Um terceiro CHR <strong>lab-tec</strong> simula o “técnico remoto” para o acesso L2TP/SSTP. O foco é GRE+IPsec (transportar roteamento) e um serviço de acesso remoto.</p>
+<p>Laboratório de <strong>projeto + integração</strong>: use CHRs para simular o <strong>roteamento</strong> da cadeia rural (POP central, repetidora, POP de acesso como roteadores em OSPF) — a parte de RF você já exercitou no Volume 5. <strong>lab-central</strong>, <strong>lab-repet</strong>, <strong>lab-acesso</strong> em linha, com OSPF e custos refletindo os enlaces; um <strong>lab-cliente</strong> no POP de acesso.</p>
 </div>
 </div>
-<section id="comandos-passo-a-passo" class="level3" data-number="55.6.1">
-<h3 data-number="55.6.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">55.6.1</span> Comandos passo a passo</h3>
-<p><strong>Passo 1 — GRE cifrado entre os POPs.</strong> No lab-a (e espelho no lab-b):</p>
-<pre class="routeros"><code>/interface gre add name=gre-ab remote-address=&lt;publico-b&gt; ipsec-secret="lab-gre"
-/ip address add address=10.255.1.1/30 interface=gre-ab</code></pre>
-<p>No lab-b: <code>10.255.1.2/30</code> e <code>remote-address=&lt;publico-a&gt;</code>.</p>
-<p><strong>Passo 2 — OSPF sobre o GRE.</strong> Rode OSPF (<a href="../v08-roteamento/02-ospf-conceitos-configuracao.html" class="quarto-xref"><span>Capítulo 42</span></a>) na interface <code>gre-ab</code> dos dois lados (<code>type=ptp</code>) e confirme a adjacência <code>Full</code> — o roteamento dinâmico viajando cifrado.</p>
-<pre class="routeros"><code>/routing ospf interface-template add interfaces=gre-ab area=backbone type=ptp
-/routing ospf neighbor print</code></pre>
-<p><strong>Passo 3 — prove que está cifrado.</strong> Verifique que o IPsec subiu automaticamente com o GRE:</p>
-<pre class="routeros"><code>/ip ipsec active-peers print</code></pre>
-<p><strong>Passo 4 — acesso remoto SSTP.</strong> No lab-a, habilite o SSTP-server (com um certificado autoassinado para o lab) e crie um usuário; no lab-tec, conecte como cliente SSTP e alcance a LAN do POP.</p>
-<pre class="routeros"><code>/interface sstp-server server set enabled=yes certificate=cert-lab
-/ppp secret add name=tecnico service=sstp password="lab-forte"</code></pre>
-<p><strong>Passo 5 — MSS clamp.</strong> Aplique o clamp (<a href="01-panorama-tuneis.html" class="quarto-xref"><span>Capítulo 52</span></a>) nas interfaces de túnel e teste uma transferência maior entre as LANs.</p>
+<section id="comandos-passo-a-passo" class="level3" data-number="73.6.1">
+<h3 data-number="73.6.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">73.6.1</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — a cadeia como roteamento.</strong> Monte lab-central — lab-repet — lab-acesso com enlaces <code>/30</code> e OSPF (<a href="../v08-roteamento/02-ospf-conceitos-configuracao.html" class="quarto-xref"><span>Capítulo 42</span></a>), loopbacks por nó. Confirme adjacências <code>Full</code> na cadeia.</p>
+<p><strong>Passo 2 — custos por qualidade de enlace.</strong> Ajuste os custos OSPF para refletir a realidade: o backhaul bom com custo baixo, um eventual enlace de contingência com custo alto (<a href="../v08-roteamento/02-ospf-conceitos-configuracao.html" class="quarto-xref"><span>Capítulo 42</span></a>). Um enlace de rádio pior = custo maior.</p>
+<p><strong>Passo 3 — failover de backhaul.</strong> Adicione um segundo caminho até o lab-acesso (outra “frequência”/rota) com custo maior e prove o <strong>failover</strong> (<a href="../v14-alta-disponibilidade/04-failover-multilink.html" class="quarto-xref"><span>Capítulo 70</span></a>): derrube o backhaul principal e veja a rede reconvergir pelo alternativo — a torre não fica ilhada.</p>
+<p><strong>Passo 4 — o cliente pela cadeia.</strong> Ligue o lab-cliente no lab-acesso e confirme que ele alcança a internet <strong>através</strong> de toda a cadeia, passando pela repetidora.</p>
+<p><strong>Passo 5 — gerência OOB (conceitual).</strong> Esboce como você alcançaria o lab-repet para diagnóstico <strong>se</strong> o backhaul principal caísse — um túnel de gerência ou RoMON (<a href="04-hardening-operacional-migracao-v7.html" class="quarto-xref"><span>Capítulo 74</span></a>) por um caminho independente.</p>
+<p><strong>Passo 6 — dimensione (exercício).</strong> Para um POP de acesso com 3 setoriais servindo 150 clientes de 50 Mbps (contenção 1:15), estime a capacidade que o <strong>backhaul</strong> precisa entregar no pico.</p>
 </section>
-<section id="verificação" class="level3" data-number="55.6.2">
-<h3 data-number="55.6.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">55.6.2</span> Verificação</h3>
+<section id="verificação" class="level3" data-number="73.6.2">
+<h3 data-number="73.6.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">73.6.2</span> Verificação</h3>
 <ol type="1">
-<li>GRE de pé, com <strong>IPsec ativo</strong> (cifrado) — <code>active-peers</code> mostra a SA;</li>
-<li>OSPF forma adjacência <code>Full</code> <strong>sobre</strong> o GRE (roteamento dinâmico cifrado);</li>
-<li>O técnico remoto conecta por SSTP e alcança a LAN do POP;</li>
-<li>Com MSS clamp, transferências grandes não travam.</li>
+<li>A cadeia rural forma OSPF <code>Full</code> e o cliente alcança a internet por ela;</li>
+<li>Os custos refletem a qualidade dos enlaces;</li>
+<li>O failover de backhaul evita ilhar a torre;</li>
+<li>Você tem um plano de gerência OOB e um dimensionamento de backhaul.</li>
 </ol>
 </section>
-<section id="desafios" class="level3" data-number="55.6.3">
-<h3 data-number="55.6.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">55.6.3</span> Desafios</h3>
+<section id="desafios" class="level3" data-number="73.6.3">
+<h3 data-number="73.6.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">73.6.3</span> Desafios</h3>
 <ol type="1">
-<li>Você montou o GRE e o OSPF formou adjacência, mas quer garantir que ninguém no caminho leia o tráfego. Como confirma que o GRE está <strong>realmente</strong> cifrado, e o que aconteceria sem o <code>ipsec-secret</code>?</li>
-<li>Um técnico esticou por <strong>EoIP</strong> a VLAN de gerência de dois POPs e, dias depois, um loop em um POP derrubou a gerência <strong>dos dois</strong>. Explique o mecanismo e duas medidas que teriam contido o estrago.</li>
-<li>Um cliente corporativo em viagem precisa de VPN, mas a rede do hotel bloqueia UDP e portas de VPN — só deixa passar navegação web. Qual protocolo deste capítulo funciona, e por quê?</li>
-<li>Você precisa gerenciar 200 CPEs, <strong>todos</strong> atrás de CGNAT, sem IP público em nenhum. Qual solução do capítulo se aplica, qual é o trade-off que você aceita, e por que os túneis “clássicos” não servem aqui?</li>
+<li>Uma região atrás de <strong>três repetidoras em série</strong> sofre com latência alta e queda de banda. Explique por que os saltos degradam os dois, e liste duas mudanças de projeto que reduzem o problema.</li>
+<li>Um POP de acesso “cai toda madrugada” por volta das 3h e volta ao amanhecer. O rádio está perfeito nos testes diurnos. Qual é a causa mais provável e como você <strong>confirma</strong> e <strong>corrige</strong>?</li>
+<li>O backhaul de uma torre está em 95% de uso no pico e a região atrás dela vive lenta. Adicionar mais setoriais no POP de acesso <strong>resolve</strong>? Justifique e diga o que realmente resolve.</li>
+<li>Por que a <strong>gerência fora de banda</strong> é ainda mais crítica no rádio rural do que na fibra urbana? Dê um cenário concreto de custo evitado.</li>
 </ol>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
@@ -1009,33 +1283,33 @@ Aviso
 </div>
 <div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p><strong>1.</strong> Confirme com <code>/ip ipsec active-peers print</code> e <code>installed-sa</code> — se há SA ativa para os endpoints do GRE e os contadores sobem, o tráfego vai cifrado. <strong>Sem</strong> o <code>ipsec-secret</code>, o GRE transporta tudo <strong>em claro</strong>: qualquer um no caminho (a operadora de trânsito, um atacante no meio) lê o conteúdo, incluindo os pacotes OSPF. GRE puro <strong>não</strong> protege nada.</p>
-<p><strong>2.</strong> EoIP uniu os <strong>domínios de broadcast</strong> dos dois POPs; um loop de camada 2 num POP gera tempestade de broadcast que atravessa o túnel e satura a gerência <strong>do outro</strong> também. Contenção: (a) <strong>STP</strong> ativo na bridge (detecta e bloqueia o loop); (b) limitar/segmentar o que trafega no L2 estendido (ou, melhor, <strong>rotear</strong> em vez de esticar). L2 estendido propaga falhas — por isso é a última opção.</p>
-<p><strong>3.</strong> <strong>SSTP</strong>: roda sobre <strong>TLS em TCP/443</strong>, indistinguível de HTTPS. Como o hotel libera navegação web (443), o SSTP passa onde L2TP/IPsec (UDP 500/4500) e WireGuard (UDP) são bloqueados. É a razão de existir do SSTP: atravessar firewalls restritivos.</p>
-<p><strong>4.</strong> <strong>ZeroTier</strong>: forma uma malha gerenciada na nuvem que <strong>fura o NAT</strong> dos dois lados via hole punching, então funciona mesmo com todos os CPEs atrás de CGNAT sem IP público. Trade-off aceito: <strong>dependência de um serviço externo</strong> (o controlador ZeroTier) e de uma conta. Os túneis clássicos (WireGuard peer fixo, IPsec, GRE, SSTP) precisam que <strong>um</strong> lado seja alcançável de fora — o que não existe quando ambos estão atrás de CGNAT.</p>
+<p><strong>1.</strong> Cada <strong>salto</strong> de rádio adiciona <strong>latência</strong> (processamento + propagação) e, se repetidoras usam o mesmo meio/frequência para receber e retransmitir, a <strong>banda cai</strong> (meio compartilhado, metade por salto). Três em série somam os dois efeitos. Mudanças: (a) <strong>reduzir saltos</strong> com torres mais altas / visada direta ao POP central; (b) usar <strong>frequências/rádios separados</strong> por sentido em cada repetidora (full duplex efetivo), evitando a divisão de banda.</p>
+<p><strong>2.</strong> <strong>Energia</strong> — bateria do POP solar no fim da vida (ou subdimensionada): à noite, sem sol, a bateria descarrega e o POP desliga na madrugada; ao amanhecer, o painel recarrega e ele volta. Confirme <strong>monitorando a tensão da bateria</strong> (SNMP, <a href="../v13-monitoramento/02-snmp-graphing-dude.html" class="quarto-xref"><span>Capítulo 64</span></a>) — verá a queda noturna. Corrija trocando/aumentando baterias e painéis, e dimensionando a autonomia para o pior caso. O rádio “perfeito de dia” confirma que o problema não é RF.</p>
+<p><strong>3.</strong> <strong>Não</strong> necessariamente — se o <strong>backhaul</strong> já está em 95%, mais setoriais no acesso só empurram <strong>mais tráfego</strong> para um backhaul saturado, piorando. Primeiro <strong>aumente a capacidade do backhaul</strong> (rádio melhor, mais frequência, segundo enlace agregado) — ele é a espinha e o gargalo real. Setoriais adicionais resolvem saturação <strong>de acesso</strong> (RF cheio no cliente), não de backhaul.</p>
+<p><strong>4.</strong> No rural, o equipamento fica em <strong>torres remotas</strong> (morros, sítios, POPs solares) — ir até lá custa <strong>horas de deslocamento</strong> e às vezes é inacessível à noite/na chuva. Se a gerência depende da produção e ela cai, você <strong>perde o acesso justo quando um técnico teria de viajar</strong>. Com <strong>OOB</strong> (RoMON/túnel por caminho independente), você diagnostica e às vezes resolve (reboot, ajuste) <strong>remotamente</strong> — evitando uma viagem de 100 km para reiniciar um rádio. Na fibra urbana o equipamento está perto; no rural, cada acesso remoto poupado é dinheiro e tempo reais.</p>
 </div>
 </div>
 </div>
 </section>
 </section>
-<section id="resumo" class="level2" data-number="55.7">
-<h2 data-number="55.7" class="anchored" data-anchor-id="resumo"><span class="header-section-number">55.7</span> Resumo</h2>
+<section id="resumo" class="level2" data-number="73.7">
+<h2 data-number="73.7" class="anchored" data-anchor-id="resumo"><span class="header-section-number">73.7</span> Resumo</h2>
 <ul>
-<li><strong>GRE</strong> cria <strong>interface</strong> para roteamento dinâmico entre POPs; <strong>não cifra</strong> — use <strong>GRE + IPsec</strong> (<code>ipsec-secret</code>), o desenho recomendado;</li>
-<li><strong>EoIP</strong> estende <strong>camada 2</strong> (mesmo domínio de broadcast) — poderoso e <strong>perigoso</strong>: STP obrigatório, prefira rotear a esticar;</li>
-<li><strong>L2TP/IPsec</strong> e <strong>SSTP</strong> dão <strong>acesso remoto</strong> com cliente VPN padrão (reusam PPP/RADIUS); <strong>SSTP</strong> em TCP/443 <strong>fura firewalls</strong>;</li>
-<li><strong>ZeroTier</strong> conecta caixas <strong>sem IP público</strong> (ambos atrás de CGNAT), ao custo de depender de um controlador na nuvem;</li>
-<li>Escolha por camada + criptografia, e <strong>respeite o MTU/MSS</strong> em todos.</li>
+<li>Rede rural = <strong>cadeia de rádio</strong>: <strong>backhaul PtP</strong> (a espinha — nunca o gargalo), <strong>repetidoras</strong> (alcance ao custo de latência/saltos/banda), <strong>setoriais PtMP</strong> (acesso) até o cliente;</li>
+<li><strong>Backhaul</strong> dimensionado para <strong>agregar</strong> toda a região, com visada limpa, frequências planejadas e <strong>redundância</strong> onde crítico;</li>
+<li><strong>Minimize saltos</strong> de repetidora (latência, banda, ponto de falha); frequências/rádios separados por sentido;</li>
+<li><strong>POPs solares</strong>: <strong>energia é o ponto de falha nº 1</strong> — autonomia para o pior caso e <strong>tensão de bateria monitorada</strong> como métrica de primeira classe;</li>
+<li>Integre com <strong>OSPF por custo</strong>, <strong>failover</strong> e <strong>gerência OOB</strong> (crítica no campo — evita viagens caras).</li>
 </ul>
-<p>Com o arsenal completo de túneis, o volume fecha aplicando tudo ao problema real do provedor: <strong>interligar POPs</strong> de forma resiliente e cifrada, com roteamento dinâmico por cima. É o <a href="05-interligacao-pops.html" class="quarto-xref"><span>Capítulo 56</span></a>.</p>
+<p>Fibra e rádio construídos, falta manter tudo isso <strong>seguro e atualizado</strong> em escala de parque — e migrar o legado v6 para o v7. O <a href="04-hardening-operacional-migracao-v7.html" class="quarto-xref"><span>Capítulo 74</span></a> cobre o hardening operacional e a migração.</p>
 </section>
 <section id="bibliografia-do-capítulo" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
 <ul>
-<li>Documentação oficial: <em>GRE, EoIP, L2TP, SSTP, ZeroTier</em> do RouterOS <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
-<li>Encapsulamento L2/L3 e VPN de acesso: <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
-<li>Túneis no v7 na prática: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
-<li>Interligação e acesso remoto em provedores: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
+<li>Documentação oficial: <em>Wireless</em>, <em>Nstreme/NV2</em> do RouterOS <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
+<li>Enlaces de rádio, backhaul e propagação: <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
+<li>Redes de rádio no v7: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
+<li>Provedores rurais na prática: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
 </ul>
 
 
@@ -1458,13 +1732,13 @@ TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Compu
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../../volumes/v10-tuneis-vpn/03-ipsec.html" class="pagination-link" aria-label="IPsec">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">54</span>&nbsp; <span class="chapter-title">IPsec</span></span>
+      <a href="../../volumes/v15-operacao-isp/02-fibra-olt-bng.html" class="pagination-link" aria-label="Topologia fibra: OLT e BNG">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">72</span>&nbsp; <span class="chapter-title">Topologia fibra: OLT e BNG</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../../volumes/v10-tuneis-vpn/05-interligacao-pops.html" class="pagination-link" aria-label="Interligação de POPs por túnel">
-        <span class="nav-page-text"><span class="chapter-number">56</span>&nbsp; <span class="chapter-title">Interligação de POPs por túnel</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html" class="pagination-link" aria-label="Hardening operacional e migração v6 para v7">
+        <span class="nav-page-text"><span class="chapter-number">74</span>&nbsp; <span class="chapter-title">Hardening operacional e migração v6 para v7</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
@@ -1473,4 +1747,4 @@ TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Compu
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v15-operacao-isp/03-radio-topologia-rural.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>

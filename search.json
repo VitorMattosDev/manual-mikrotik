@@ -5267,7 +5267,7 @@
     "href": "volumes/v12-scripts/02-scheduler-netwatch-backups.html#backups-automáticos-binário-export-e-envio-externo",
     "title": "61  Scheduler, netwatch e backups automáticos",
     "section": "61.3 Backups automáticos: binário, export e envio externo",
-    "text": "61.3 Backups automáticos: binário, export e envio externo\nHá dois tipos de backup (você viu no Volume 1):\n\nBackup binário (/system backup save): imagem completa, restaura idêntico na mesma versão/hardware — bom para recuperação rápida;\nExport (/export): texto legível dos comandos, portável e versionável (ideal para git/auditoria) — mas não guarda senhas por padrão.\n\nO ponto crítico: o backup não pode morar só na caixa (se ela pifa, o backup vai junto). Automatize o envio para fora:\n# script backup-externo: gera e envia por e-mail\n/system script add name=backup-externo source={\n    :local nome (\"bkp-\" . [/system identity get name] . \"-\" . \\\n        [:pick [/system clock get date] 0 11])\n    /system backup save name=$nome\n    /export file=$nome\n    # enviar por e-mail (configurar /tool e-mail antes)\n    /tool e-mail send to=\"noc@provedor.net\" subject=\"Backup $nome\" \\\n        file=\"$nome.backup\"\n}\nAlternativas de envio: /tool fetch para um servidor FTP/HTTP central (upload=yes), ou copiar via script para um repositório. O Volume 15 (?sec-hardening-operacional) integra isso à rotina de parque. Combine com o scheduler (bloco backup-diario acima) e você tem backup diário externo sem depender de memória humana.",
+    "text": "61.3 Backups automáticos: binário, export e envio externo\nHá dois tipos de backup (você viu no Volume 1):\n\nBackup binário (/system backup save): imagem completa, restaura idêntico na mesma versão/hardware — bom para recuperação rápida;\nExport (/export): texto legível dos comandos, portável e versionável (ideal para git/auditoria) — mas não guarda senhas por padrão.\n\nO ponto crítico: o backup não pode morar só na caixa (se ela pifa, o backup vai junto). Automatize o envio para fora:\n# script backup-externo: gera e envia por e-mail\n/system script add name=backup-externo source={\n    :local nome (\"bkp-\" . [/system identity get name] . \"-\" . \\\n        [:pick [/system clock get date] 0 11])\n    /system backup save name=$nome\n    /export file=$nome\n    # enviar por e-mail (configurar /tool e-mail antes)\n    /tool e-mail send to=\"noc@provedor.net\" subject=\"Backup $nome\" \\\n        file=\"$nome.backup\"\n}\nAlternativas de envio: /tool fetch para um servidor FTP/HTTP central (upload=yes), ou copiar via script para um repositório. O Volume 15 (Capítulo 74) integra isso à rotina de parque. Combine com o scheduler (bloco backup-diario acima) e você tem backup diário externo sem depender de memória humana.",
     "crumbs": [
       "Volume 12 — Scripts e automação",
       "<span class='chapter-number'>61</span>  <span class='chapter-title'>Scheduler, netwatch e backups automáticos</span>"
@@ -5564,7 +5564,7 @@
     "href": "volumes/v13-monitoramento/02-snmp-graphing-dude.html#the-dude-mapa-e-disponibilidade",
     "title": "64  SNMP, graphing e The Dude",
     "section": "64.4 The Dude: mapa e disponibilidade",
-    "text": "64.4 The Dude: mapa e disponibilidade\nO The Dude é a ferramenta de monitoramento da própria MikroTik: um servidor (roda como pacote no RouterOS ou em CHR dedicado) que descobre a rede, desenha um mapa com o estado (verde/vermelho), faz polling (SNMP, ping, serviços) e alerta quando algo cai. Para provedores menores, é um NMS completo e gratuito; para maiores, costuma conviver com Zabbix/LibreNMS.\nO Dude brilha em: mapa visual do parque (útil no NOC), checagem de disponibilidade (up/down com notificação) e integração natural com o RouterOS (RoMON, ?sec-hardening-operacional, para alcançar equipamentos sem IP de gerência direto).",
+    "text": "64.4 The Dude: mapa e disponibilidade\nO The Dude é a ferramenta de monitoramento da própria MikroTik: um servidor (roda como pacote no RouterOS ou em CHR dedicado) que descobre a rede, desenha um mapa com o estado (verde/vermelho), faz polling (SNMP, ping, serviços) e alerta quando algo cai. Para provedores menores, é um NMS completo e gratuito; para maiores, costuma conviver com Zabbix/LibreNMS.\nO Dude brilha em: mapa visual do parque (útil no NOC), checagem de disponibilidade (up/down com notificação) e integração natural com o RouterOS (RoMON, Capítulo 74, para alcançar equipamentos sem IP de gerência direto).",
     "crumbs": [
       "Volume 13 — Monitoramento e diagnóstico",
       "<span class='chapter-number'>64</span>  <span class='chapter-title'>SNMP, graphing e The Dude</span>"
@@ -6151,6 +6151,457 @@
     "crumbs": [
       "Volume 14 — Alta disponibilidade",
       "<span class='chapter-number'>70</span>  <span class='chapter-title'>Failover multi-link na prática</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html",
+    "href": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html",
+    "title": "71  Desenho de rede do provedor",
+    "section": "",
+    "text": "71.1 As três camadas: core, distribuição, acesso\nOs catorze volumes anteriores ensinaram tecnologias. Este volume final ensina a juntá-las no desenho e na operação de um provedor real. E tudo começa pelo desenho: sem uma arquitetura pensada, o provedor vira uma colcha de retalhos que ninguém entende, ninguém documenta, e que desmorona a cada crescimento. Um bom desenho é o que permite crescer sem refazer — adicionar um POP, um trânsito, mil clientes, sem quebrar o que já existe. Este capítulo é a planta baixa sobre a qual os próximos constroem fibra, rádio e a operação.\nRedes de provedor bem-feitas seguem um modelo hierárquico de três camadas, cada uma com um papel claro:\nA vantagem da separação: cada camada cresce e falha independentemente, e você sabe onde cada função vive. Misturar tudo num roteador só (o “tudo-em-um” que funciona com 50 clientes) é a dívida técnica que cobra caro aos 5.000.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>71</span>  <span class='chapter-title'>Desenho de rede do provedor</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#as-três-camadas-core-distribuição-acesso",
+    "href": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#as-três-camadas-core-distribuição-acesso",
+    "title": "71  Desenho de rede do provedor",
+    "section": "",
+    "text": "Core (núcleo): o backbone de alta capacidade que interliga os POPs e leva ao trânsito/IX. Prioridade: velocidade e estabilidade — aqui roda o BGP (Capítulo 44) com as operadoras e o MPLS\n\nse houver. O core não faz trabalho “sujo” (NAT, filtragem pesada); ele encaminha rápido;\n\nDistribuição: a camada intermediária que agrega o acesso e aplica política — roteamento interno (OSPF, Capítulo 42), CGNAT (Capítulo 47), concentração PPPoE/BNG (Capítulo 34), QoS (Volume 7). É onde o “inteligente” acontece;\nAcesso: o que toca o cliente — OLTs de fibra (Capítulo 72), rádios PtMP (Capítulo 73), CPEs. Prioridade: densidade e custo.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\nCada camada tem um papel: o core encaminha rápido (BGP/MPLS), a distribuição agrega e aplica política (OSPF/CGNAT/BNG/QoS), o acesso toca o cliente (fibra/rádio). Separar responsabilidades é o que deixa a rede crescer sem virar caos.\n\n\nFigura 71.1",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>71</span>  <span class='chapter-title'>Desenho de rede do provedor</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#plano-de-endereçamento-hierárquico",
+    "href": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#plano-de-endereçamento-hierárquico",
+    "title": "71  Desenho de rede do provedor",
+    "section": "71.2 Plano de endereçamento hierárquico",
+    "text": "71.2 Plano de endereçamento hierárquico\nEndereçamento é a espinha dorsal — mal planejado, vira um pesadelo de rotas específicas e exceções. Os princípios:\n\nLoopbacks (/32): um bloco dedicado (ex.: 10.255.0.0/24) para router-id de OSPF/BGP e sessões (Capítulo 46) — estáveis, agregáveis;\nEnlaces internos (/30 ou /31): um bloco por região, agregável por POP;\nIPv4 público: o bloco PI, anunciado por BGP; sub-alocado por função (servidores, CGNAT, clientes dedicados);\nCGNAT: 100.64.0.0/10 (Capítulo 47), fatiado por concentrador/POP;\nIPv6: o /32, delegado hierarquicamente — /48 por POP, /56 por cliente (Capítulo 49);\nGerência: um bloco RFC1918 isolado (ex.: 10.99.0.0/16), nunca roteado para clientes.\n\nA regra de ouro: agregação. Endereços contíguos por POP permitem anunciar uma rota resumida em vez de mil específicas — menos LSA, menos entrada de BGP, menos tudo. Endereçamento “salpicado” é o que entope tabelas e derruba a escala.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>71</span>  <span class='chapter-title'>Desenho de rede do provedor</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#gerência-fora-de-banda",
+    "href": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#gerência-fora-de-banda",
+    "title": "71  Desenho de rede do provedor",
+    "section": "71.3 Gerência fora de banda",
+    "text": "71.3 Gerência fora de banda\nO erro que cega o provedor num incidente: gerenciar os equipamentos pela mesma rede que caiu. Se você acessa o roteador do POP pela rede de produção e ela cai, você perde o acesso justo quando mais precisa. A solução é a gerência fora de banda (out-of-band, OOB): um caminho de gerência independente — um link dedicado, um túnel (WireGuard, Capítulo 53), 4G de backup, ou RoMON (Capítulo 74) — que alcança os equipamentos mesmo com a produção fora.\nElementos de uma boa gerência:\n\nRede de gerência isolada (VLAN/VRF própria, Capítulo 46), com firewall restrito (só o NOC alcança);\nCaminho OOB: túnel/4G/RoMON que não depende da produção;\nAcesso seguro: usuários dedicados, chaves, allowed-address\n\n— a gerência é o alvo nº 1 de ataque;\n\nMonitoramento e log (Volume 13) apontando para o coletor pela rede de gerência.\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nUm provedor que escala tem um desenho, não um amontoado: três camadas com papéis claros (core encaminha, distribuição aplica política, acesso toca o cliente), um endereçamento hierárquico e agregável (loopbacks, público, CGNAT, IPv6, gerência isolada — contíguos por POP, para anunciar rotas resumidas) e uma gerência fora de banda que sobrevive à queda da produção. Cada tecnologia dos volumes anteriores tem seu lugar nesse desenho. E o que amarra tudo: documentação — um desenho que só vive na cabeça de uma pessoa não é um desenho, é um risco.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>71</span>  <span class='chapter-title'>Desenho de rede do provedor</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#documentar-o-desenho-que-outros-operam",
+    "href": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#documentar-o-desenho-que-outros-operam",
+    "title": "71  Desenho de rede do provedor",
+    "section": "71.4 Documentar: o desenho que outros operam",
+    "text": "71.4 Documentar: o desenho que outros operam\nUm desenho não documentado não escala além de quem o criou. O mínimo:\n\nDiagrama de topologia (core/distribuição/acesso, POPs, enlaces);\nPlano de endereçamento (quem usa o quê, por POP e função);\nTabela de ASN/blocos/áreas OSPF/VLANs de serviço;\nRunbooks: como adicionar um POP, um cliente, um trânsito; como fazer failover manual; a quem escalar.\n\nDocumentação é o que transforma “a rede do fulano” em “a rede da empresa” — e o que os próximos capítulos assumem existir ao construir fibra, rádio e operação.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>71</span>  <span class='chapter-title'>Desenho de rede do provedor</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#laboratório",
+    "href": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#laboratório",
+    "title": "71  Desenho de rede do provedor",
+    "section": "71.5 🧪 Laboratório",
+    "text": "71.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nEste laboratório é de projeto, não de comandos: papel, um editor de diagrama, ou CHRs para esboçar. Você vai desenhar o provedor que os próximos capítulos implementam — a planta baixa. Reaproveite o que aprendeu em todos os volumes para posicionar cada peça.\n\n\n\n71.5.1 Comandos passo a passo\nPasso 1 — as três camadas. Desenhe um provedor fictício com: 1 core (2 roteadores para HA), 3 POPs de distribuição, e acesso misto (fibra + rádio). Marque, em cada camada, qual tecnologia roda ali.\nPasso 2 — endereçamento. Defina os blocos: loopbacks (10.255.0.0/24), gerência (10.99.0.0/16), enlaces internos, o público PI (fictício, ex.: 203.0.113.0/24), CGNAT (100.64.0.0/16 do /10), IPv6 (/32 fictício → /48 por POP). Garanta contiguidade por POP.\nPasso 3 — onde cada tecnologia vive. Posicione: BGP (core, com trânsito), OSPF (core+distribuição), CGNAT e BNG (distribuição), QoS (distribuição/acesso), HA (VRRP na distribuição, failover no core).\nPasso 4 — gerência OOB. Desenhe a rede de gerência isolada (VLAN/VRF) e o caminho fora de banda (túnel/RoMON) que alcança cada POP sem a produção.\nPasso 5 — documente. Escreva a tabela de endereçamento e um runbook de “como adicionar um POP novo” seguindo o seu desenho.\n\n\n71.5.2 Verificação\n\nAs três camadas estão claras, com papéis e tecnologias definidos;\nO endereçamento é hierárquico e agregável por POP;\nA gerência é isolada e tem caminho fora de banda;\nCada tecnologia dos volumes anteriores tem lugar no desenho;\nExiste documentação mínima (endereçamento + runbook).\n\n\n\n71.5.3 Desafios\n\nUm provedor com 3.000 clientes roda tudo num roteador de borda “tudo-em-um” (BGP, CGNAT, PPPoE, QoS, firewall). Liste três problemas concretos que o modelo de três camadas resolveria e como você migraria sem parar a rede.\nAs rotas internas do provedor são um caos: centenas de /24 específicas na tabela, OSPF pesado, BGP interno enorme. Qual princípio de endereçamento foi violado, e como o redesenho o corrige?\nNuma queda geral da rede de produção às 3h da manhã, o plantonista não conseguiu acessar nenhum POP para diagnosticar. O que faltou no desenho, e descreva duas formas de implementá-lo.\nJustifique por que o core não deve fazer CGNAT/NAT/filtragem pesada e a distribuição não deve falar BGP com o trânsito. Relacione com desempenho e com raio de falha.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Problemas: (a) raio de falha — um reboot/travamento derruba tudo (BGP, clientes, CGNAT) de uma vez; (b) escala/CPU — funções pesadas (CGNAT, QoS, PPPoE) competem pelo mesmo processador e o teto chega junto; (c) manutenção — não dá para mexer numa função sem arriscar as outras. Migração sem parar: introduza a camada de distribuição ao lado (novos roteadores para CGNAT/BNG), mova clientes em lotes para ela, deixe o core só com BGP/roteamento — fatiando as funções gradualmente, com janelas e rollback.\n2. Violou-se a agregação/contiguidade: endereços salpicados impedem resumir, então cada /24 vira uma rota específica. O redesenho aloca blocos contíguos por POP (um agregado por região), permitindo anunciar uma rota resumida no lugar de centenas — OSPF e BGP internos encolhem, a convergência acelera. Exige renumerar/planejar migração, mas é o que sustenta a escala.\n3. Faltou gerência fora de banda: o plantonista dependia da rede de produção, que estava fora. Implementações: (a) um túnel de gerência (WireGuard/Capítulo 53) por um link/4G independente da produção, numa VRF/VLAN isolada; (b) RoMON (Capítulo 74) para alcançar equipamentos em L2 sem depender do roteamento de produção. Idealmente, ambos, com acesso seguro e restrito ao NOC.\n4. O core deve encaminhar rápido: CGNAT/NAT/filtragem pesada consomem CPU e estado (conntrack), o que o tornaria lento e frágil — e uma falha ali afeta toda a rede (raio de falha máximo). Essas funções ficam na distribuição, onde o raio de falha é menor (um POP) e a carga é distribuída. A distribuição não fala BGP com o trânsito porque o peering externo pertence à borda/core (política e segurança centralizadas, uma superfície de ataque menor); espalhar eBGP pela distribuição multiplicaria risco e complexidade. Cada camada, sua função.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>71</span>  <span class='chapter-title'>Desenho de rede do provedor</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#resumo",
+    "href": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#resumo",
+    "title": "71  Desenho de rede do provedor",
+    "section": "71.6 Resumo",
+    "text": "71.6 Resumo\n\nRede de provedor = três camadas: core (encaminha rápido — BGP/MPLS), distribuição (agrega e aplica política — OSPF/CGNAT/ BNG/QoS/HA), acesso (toca o cliente — fibra/rádio/CPE);\nEndereçamento hierárquico e agregável: loopbacks, público PI, CGNAT (100.64/10), IPv6 (/32→/48→/56), gerência isolada — contíguo por POP para resumir rotas;\nGerência fora de banda (VRF/VLAN isolada + túnel/RoMON/4G) sobrevive à queda da produção — acesso quando mais se precisa;\nCada tecnologia dos volumes anteriores tem seu lugar na camada certa; não concentre tudo num “tudo-em-um”;\nDocumente (topologia, endereçamento, runbooks) — desenho que só vive numa cabeça é risco, não arquitetura.\n\nCom a planta baixa pronta, os próximos capítulos a constroem: a topologia de fibra (OLT + BNG) no Capítulo 72 e a de rádio rural no Capítulo 73.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>71</span>  <span class='chapter-title'>Desenho de rede do provedor</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#bibliografia-do-capítulo",
+    "href": "volumes/v15-operacao-isp/01-desenho-rede-provedor.html#bibliografia-do-capítulo",
+    "title": "71  Desenho de rede do provedor",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial e design guides do RouterOS (MikroTik, 2026);\nArquitetura hierárquica de redes: (Tanenbaum; Feamster; Wetherall, 2021);\nDesenho de redes no v7: (Discher, 2016);\nArquitetura de provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>71</span>  <span class='chapter-title'>Desenho de rede do provedor</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/02-fibra-olt-bng.html",
+    "href": "volumes/v15-operacao-isp/02-fibra-olt-bng.html",
+    "title": "72  Topologia fibra: OLT e BNG",
+    "section": "",
+    "text": "72.1 A topologia GPON e onde o MikroTik entra\nO 1 deu a planta baixa; este capítulo constrói a topologia de fibra — hoje a principal tecnologia de acesso de provedores. Um ponto que confunde iniciantes: o MikroTik não é a OLT. A OLT (equipamento GPON dedicado — Huawei, ZTE, Fiberhome, Datacom) faz a camada óptica; o MikroTik entra como o BNG (Broadband Network Gateway) — o cérebro que autentica, endereça, roteia e limita os assinantes que chegam pela fibra. Entender essa divisão é o começo.\nNa fibra GPON (a mais comum), o caminho do sinal é:",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>72</span>  <span class='chapter-title'>Topologia fibra: OLT e BNG</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#a-topologia-gpon-e-onde-o-mikrotik-entra",
+    "href": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#a-topologia-gpon-e-onde-o-mikrotik-entra",
+    "title": "72  Topologia fibra: OLT e BNG",
+    "section": "",
+    "text": "OLT (Optical Line Terminal): no POP, concentra as portas ópticas; cada porta PON serve dezenas de clientes via splitter;\nSplitter: divide o sinal óptico de uma fibra em várias (1:8, 1:16, 1:32…) — passivo, sem energia;\nONU/ONT (Optical Network Unit/Terminal): na casa do cliente, converte óptico ↔︎ Ethernet;\nBNG (MikroTik): atrás da OLT, recebe o tráfego dos assinantes (em VLANs) e faz autenticação, IP, NAT, QoS, roteamento.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nA OLT faz a óptica (concentra PON, splitters, ONUs); o MikroTik BNG faz a inteligência L3 (autenticação, IP, CGNAT, QoS). O tráfego dos assinantes chega ao BNG em VLANs, e daí sobe ao core. Dividir esses papéis é a base da topologia de fibra.\n\n\nFigura 72.1",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>72</span>  <span class='chapter-title'>Topologia fibra: OLT e BNG</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#vlans-de-serviço-por-serviço-ou-por-assinante",
+    "href": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#vlans-de-serviço-por-serviço-ou-por-assinante",
+    "title": "72  Topologia fibra: OLT e BNG",
+    "section": "72.2 VLANs de serviço: por serviço ou por assinante",
+    "text": "72.2 VLANs de serviço: por serviço ou por assinante\nA OLT entrega o tráfego ao BNG marcado em VLANs (Capítulo 23). Dois modelos dominam:\n\nVLAN por serviço (service VLAN, mais comum): uma VLAN para “internet residencial”, outra para “corporativo”, outra para “IPTV”. Todos os assinantes daquele serviço compartilham a VLAN, e o PPPoE individualiza cada um. Simples e escalável;\nVLAN por assinante (VLAN 1:1, N:1): cada cliente numa VLAN própria (a OLT faz VLAN-per-ONU). Isolamento máximo (bom para corporativo), mas milhares de VLANs — pesado e limitado pelo teto de 4094 VLANs.\n\nO padrão residencial: VLAN por serviço + PPPoE — a VLAN carrega o serviço, o PPPoE (Capítulo 34) autentica e individualiza cada assinante. É o casamento que sustenta a maioria dos provedores de fibra.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>72</span>  <span class='chapter-title'>Topologia fibra: OLT e BNG</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#pppoe-sobre-pon-o-bng-na-prática",
+    "href": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#pppoe-sobre-pon-o-bng-na-prática",
+    "title": "72  Topologia fibra: OLT e BNG",
+    "section": "72.3 PPPoE sobre PON: o BNG na prática",
+    "text": "72.3 PPPoE sobre PON: o BNG na prática\nO MikroTik como BNG recebe as sessões PPPoE que vêm pela VLAN de serviço, autentica (RADIUS, Capítulo 35), entrega IP (pool/PD IPv6, Capítulo 50), aplica QoS (Volume 7) e roteia. É a integração de tudo que você aprendeu:\n# a VLAN de serviço vinda da OLT (ex.: VLAN 100 = internet residencial)\n/interface vlan add name=vlan-internet interface=ether1-olt vlan-id=100\n\n# servidor PPPoE nessa VLAN, autenticando via RADIUS\n/interface pppoe-server server\nadd service-name=internet interface=vlan-internet \\\n    default-profile=plano-padrao one-session-per-host=yes\n/radius add service=ppp address=10.99.0.30 secret=\"RadiusForte\"\n/ppp aaa set use-radius=yes\nSobre isso vêm as camadas: CGNAT (Capítulo 47) para os assinantes IPv4, dual stack IPv6 (Capítulo 50), QoS/PCQ (Capítulo 40) por plano, e HA (Capítulo 67/Capítulo 70) para o BNG não ser ponto único. O BNG é onde metade do manual se encontra.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>72</span>  <span class='chapter-title'>Topologia fibra: OLT e BNG</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#dimensionamento-e-posição-no-desenho",
+    "href": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#dimensionamento-e-posição-no-desenho",
+    "title": "72  Topologia fibra: OLT e BNG",
+    "section": "72.4 Dimensionamento e posição no desenho",
+    "text": "72.4 Dimensionamento e posição no desenho\nO BNG vive na camada de distribuição (1) e concentra muitos assinantes — o dimensionamento importa:\n\nSessões PPPoE: quantas o hardware aguenta (CPU, memória) — um CCR para milhares, um hEX só para dezenas;\nThroughput agregado: soma dos planos no horário de pico;\nCGNAT: portas por assinante × assinantes = IPs públicos necessários (Capítulo 47);\nHA: BNG redundante (dois concentradores, Capítulo 36) para não derrubar milhares de clientes numa manutenção.\n\nRegra: um BNG por POP (ou par para HA), dimensionado com folga de pico, e múltiplos BNGs conforme cresce — nunca um só gigante (raio de falha).\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nNa fibra, o MikroTik não é a OLT — ele é o BNG: a OLT faz a óptica (PON, splitters, ONUs), o MikroTik faz a inteligência L3 (autenticação PPPoE/RADIUS, IP, CGNAT, QoS, roteamento). O tráfego chega em VLANs de serviço e o PPPoE individualiza cada assinante — o modelo que escala. O BNG é onde metade do manual converge (PPPoE, RADIUS, CGNAT, IPv6, QoS, HA), vive na distribuição, e deve ser redundante e dimensionado para o pico. Entenda a divisão OLT × BNG e o resto é integrar o que você já sabe.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>72</span>  <span class='chapter-title'>Topologia fibra: OLT e BNG</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#laboratório",
+    "href": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#laboratório",
+    "title": "72  Topologia fibra: OLT e BNG",
+    "section": "72.5 🧪 Laboratório",
+    "text": "72.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nComo não temos OLT real no lab, simule a fibra: lab-bng (o MikroTik BNG), lab-sw (um CHR fazendo o papel da OLT/switch, entregando uma VLAN de serviço), e lab-cpe (cliente PPPoE, a “ONU”). Opcional: lab-radius para autenticação. O foco é o BNG — a parte MikroTik da fibra.\n\n\n\n72.5.1 Comandos passo a passo\nPasso 1 — a VLAN de serviço. No lab-bng, crie a VLAN que “viria da OLT”:\n/interface vlan add name=vlan-internet interface=ether1 vlan-id=100\n/ip address add address=10.100.0.1/24 interface=vlan-internet\nPasso 2 — servidor PPPoE na VLAN.\n/ppp profile add name=plano-100mbps rate-limit=100M/100M \\\n    local-address=10.100.0.1 remote-address=pool-clientes\n/ip pool add name=pool-clientes ranges=100.64.10.2-100.64.10.254\n/interface pppoe-server server add service-name=internet \\\n    interface=vlan-internet default-profile=plano-100mbps\nPasso 3 — cliente conecta. No lab-cpe (PPPoE client na mesma VLAN), conecte e confirme a sessão no lab-bng:\n/interface pppoe-server active print\nPasso 4 — empilhe as camadas. Adicione CGNAT (Capítulo 47) para o 100.64.10.0/24, QoS por plano (Capítulo 40) e, se quiser, dual stack IPv6 (Capítulo 50). Veja o BNG virar o provedor inteiro em miniatura.\nPasso 5 — dimensione (exercício). Estime, para 2.000 assinantes de 100 Mbps com contenção 1:20, o throughput de pico e os IPs públicos de CGNAT necessários (portas/assinante à sua escolha).\nPasso 6 — HA do BNG. Esboce (ou monte) um segundo BNG com VRRP (Capítulo 67) para os clientes não caírem numa manutenção.\n\n\n72.5.2 Verificação\n\nA VLAN de serviço entrega o PPPoE ao BNG;\nO cliente autentica e recebe IP (pool CGNAT);\nAs camadas (CGNAT, QoS, IPv6) se empilham sobre o BNG;\nVocê dimensionou throughput e IPs de CGNAT para a base estimada.\n\n\n\n72.5.3 Desafios\n\nUm provedor novo comprou uma OLT e pergunta “configuro o PPPoE na OLT ou no MikroTik?”. Explique a divisão de papéis e onde cada função (óptica, autenticação, CGNAT, QoS) deve ficar.\nVocê tem 3.000 clientes residenciais. Faz sentido VLAN por assinante (1:1) ou VLAN por serviço + PPPoE? Justifique pelo teto de VLANs e pela operação.\nO BNG único do POP está em 95% de CPU no horário de pico e uma manutenção derruba todos os clientes. Aponte as duas melhorias (dimensionamento e HA) e como implementá-las.\nOnde você faz o CGNAT e o QoS nesta topologia — na OLT, no BNG ou no core? Justifique pela camada e pelo raio de falha (1).\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. A OLT faz a óptica (PON, ONUs, splitters) e entrega o tráfego em VLANs — ela normalmente não faz PPPoE/CGNAT/QoS de provedor. A autenticação (PPPoE/RADIUS), IP, CGNAT e QoS ficam no MikroTik BNG, atrás da OLT. Ou seja: PPPoE no MikroTik, não na OLT. A OLT é o meio óptico; o BNG é o cérebro L3.\n2. VLAN por serviço + PPPoE. Com 3.000 clientes, VLAN 1:1 estouraria facilmente o teto de 4094 VLANs (e viraria um pesadelo operacional de milhares de VLANs para gerenciar). Uma VLAN de serviço carrega todos os residenciais e o PPPoE individualiza cada assinante (sessão, IP, plano, accounting) — escalável e simples. VLAN 1:1 se reserva a casos de isolamento (corporativo específico).\n3. (a) Dimensionamento: o BNG está subdimensionado para o pico — migre para hardware mais capaz (CCR) ou divida a carga em mais de um BNG por POP. (b) HA: monte um segundo BNG com VRRP (Capítulo 67) e config sincronizada, para manutenção/falha não derrubar todos — e distribua os assinantes entre os dois (Capítulo 36).\n4. CGNAT e QoS no BNG (camada de distribuição). A OLT não faz esse trabalho (é óptica) e o core não deve (encaminha rápido, raio de falha máximo — 1). O BNG é o ponto natural: já vê cada assinante (pela sessão PPPoE), tem o estado para NAT e as filas para QoS, e seu raio de falha é um POP, não a rede toda. Concentrar inteligência onde o assinante é individualizado é a regra.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>72</span>  <span class='chapter-title'>Topologia fibra: OLT e BNG</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#resumo",
+    "href": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#resumo",
+    "title": "72  Topologia fibra: OLT e BNG",
+    "section": "72.6 Resumo",
+    "text": "72.6 Resumo\n\nNa fibra, o MikroTik é o BNG, não a OLT: a OLT faz a óptica (PON/splitter/ONU), o BNG faz L3 (PPPoE/RADIUS, IP, CGNAT, QoS, roteamento);\nO tráfego chega em VLANs de serviço e o PPPoE individualiza o assinante — modelo que escala (VLAN 1:1 só para isolamento);\nO BNG integra metade do manual: PPPoE, RADIUS, CGNAT, dual stack IPv6, QoS/PCQ, HA;\nVive na distribuição, dimensionado para o pico e redundante (VRRP/failover) — nunca um BNG gigante único;\nCGNAT e QoS no BNG (onde o assinante é individualizado e o raio de falha é um POP), não na OLT nem no core.\n\nFibra é a principal tecnologia de acesso urbano. Mas o provedor rural vive de rádio — repetidoras, PtMP, POPs solares. O Capítulo 73 constrói essa topologia.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>72</span>  <span class='chapter-title'>Topologia fibra: OLT e BNG</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#bibliografia-do-capítulo",
+    "href": "volumes/v15-operacao-isp/02-fibra-olt-bng.html#bibliografia-do-capítulo",
+    "title": "72  Topologia fibra: OLT e BNG",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: PPPoE, VLAN, BNG do RouterOS (MikroTik, 2026);\nGPON, BNG e arquitetura de acesso: (Tanenbaum; Feamster; Wetherall, 2021);\nFibra e BNG no v7: (Discher, 2016);\nProvedores de fibra na prática: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>72</span>  <span class='chapter-title'>Topologia fibra: OLT e BNG</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/03-radio-topologia-rural.html",
+    "href": "volumes/v15-operacao-isp/03-radio-topologia-rural.html",
+    "title": "73  Topologia rádio rural completa",
+    "section": "",
+    "text": "73.1 A anatomia de uma rede de rádio rural\nA fibra (Capítulo 72) domina a cidade; o rádio domina o campo, onde puxar fibra é caro ou impossível. O provedor rural brasileiro nasceu do rádio e vive dele — e sua topologia é uma arte própria: backhaul de longa distância, repetidoras cruzando morros, POPs solares no meio do nada, e PtMP entregando o cliente. Este capítulo junta o Volume 5 (wireless) com o desenho de rede (Capítulo 71) numa topologia rural completa — o provedor que leva internet onde mais ninguém leva.\nDa saída do trânsito até a casa do sítio, o caminho típico:",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>73</span>  <span class='chapter-title'>Topologia rádio rural completa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#a-anatomia-de-uma-rede-de-rádio-rural",
+    "href": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#a-anatomia-de-uma-rede-de-rádio-rural",
+    "title": "73  Topologia rádio rural completa",
+    "section": "",
+    "text": "POP central (na cidade/sede): onde chega o trânsito/fibra e ficam o core e o BNG;\nBackhaul PtP: enlaces ponto a ponto de alta capacidade (5 GHz licenciado ou não, 60 GHz, ou licenciado) que levam a banda do POP central às torres distantes. É a “espinha” da rede rural (Capítulo 29);\nRepetidoras: torres intermediárias que reencaminham o sinal quando não há visada direta (morro no caminho) — cada salto some latência e é ponto de falha;\nPOP/torre de acesso: onde ficam os setoriais PtMP\n\nque servem os clientes daquela região;\n\nCliente: uma antena (LHG/SXT) apontada para o setorial, e o CPE em casa.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\nA cadeia rural: backhaul PtP de alta capacidade leva a banda do POP central às torres (via repetidoras quando não há visada), e no POP de acesso os setoriais PtMP servem os clientes. Cada salto de rádio é capacidade e ponto de falha a planejar.\n\n\nFigura 73.1",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>73</span>  <span class='chapter-title'>Topologia rádio rural completa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#backhaul-a-espinha-da-rede",
+    "href": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#backhaul-a-espinha-da-rede",
+    "title": "73  Topologia rádio rural completa",
+    "section": "73.2 Backhaul: a espinha da rede",
+    "text": "73.2 Backhaul: a espinha da rede\nO backhaul é o que diferencia um provedor rural que entrega velocidade de um que só “tem sinal”. São enlaces PtP dedicados de alta capacidade (Capítulo 29, Nstreme/NV2 ou 802.11ac/ax), com:\n\nVisada limpa (linha de visão + zona de Fresnel, Capítulo 31) — o fundamento físico do rádio;\nCapacidade dimensionada para agregar todo o tráfego das torres atrás dele — o backhaul carrega a soma dos clientes, não um só;\nRedundância onde crítico: um segundo caminho (outra frequência, outra rota) para a torre não ficar ilhada se o enlace principal cai (HA, Capítulo 70);\nFrequências planejadas para não interferir entre enlaces próximos (reuso, polarização).\n\nA regra: o backhaul nunca pode ser o gargalo. Um setorial cheio se resolve com mais setoriais; um backhaul cheio ilha uma região inteira.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>73</span>  <span class='chapter-title'>Topologia rádio rural completa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#repetidoras-alcance-ao-custo-de-saltos",
+    "href": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#repetidoras-alcance-ao-custo-de-saltos",
+    "title": "73  Topologia rádio rural completa",
+    "section": "73.3 Repetidoras: alcance ao custo de saltos",
+    "text": "73.3 Repetidoras: alcance ao custo de saltos\nQuando um morro bloqueia a visada, a repetidora numa torre intermediária reencaminha o sinal. Cada repetidora estende o alcance, mas cobra:\n\nLatência: cada salto de rádio adiciona atraso;\nCapacidade: se a repetidora usa a mesma frequência para receber e retransmitir no mesmo meio, a banda cai pela metade (meio compartilhado) — use frequências/rádios separados por sentido;\nPonto de falha: cada repetidora é mais um equipamento (e mais uma fonte de energia) que pode falhar e ilhar tudo atrás dela.\n\nMinimize saltos: prefira torres mais altas e visadas diretas a cadeias longas de repetidoras. Cada salto evitado é latência e confiabilidade ganhas.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>73</span>  <span class='chapter-title'>Topologia rádio rural completa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#pops-solares-energia-onde-não-há-rede",
+    "href": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#pops-solares-energia-onde-não-há-rede",
+    "title": "73  Topologia rádio rural completa",
+    "section": "73.4 POPs solares: energia onde não há rede",
+    "text": "73.4 POPs solares: energia onde não há rede\nNo campo, muitas torres ficam longe da rede elétrica (ou com energia péssima). O POP solar resolve — e é um projeto de energia tanto quanto de rede:\n\nPainéis + baterias dimensionados para a carga (rádios, switch, MikroTik) com autonomia para dias nublados (2–4 dias é comum);\nEquipamentos de baixo consumo (MikroTik ajuda: RB/hEX consomem pouco) — cada watt economizado é bateria/painel a menos;\nGerência remota da energia: monitorar tensão da bateria (SNMP, Capítulo 64), alertar antes de desligar; a queda de um POP solar às vezes é bateria, não rádio;\nGerência fora de banda (Capítulo 71): alcançar o POP para diagnosticar mesmo com a produção instável.\n\n\n\n\n\n\n\nAviso\n\n\n\nNo POP solar, energia é o ponto de falha nº 1 — mais que o rádio. Dimensione a autonomia para o pior caso (sequência de dias nublados), monitore a tensão da bateria como métrica de primeira classe, e lembre: bateria degrada com o tempo. Um POP que “cai toda madrugada” com frequência não tem problema de rádio — tem bateria no fim da vida descarregando à noite.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>73</span>  <span class='chapter-title'>Topologia rádio rural completa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#integrando-ao-desenho-geral",
+    "href": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#integrando-ao-desenho-geral",
+    "title": "73  Topologia rádio rural completa",
+    "section": "73.5 Integrando ao desenho geral",
+    "text": "73.5 Integrando ao desenho geral\nA rede de rádio encaixa no desenho de três camadas (Capítulo 71):\n\nAcesso: os setoriais PtMP e os CPEs dos clientes;\nDistribuição/backhaul: as torres e enlaces PtP que agregam e levam ao POP central; é onde pode viver um BNG regional (ou o tráfego sobe ao BNG central);\nRoteamento: OSPF (Capítulo 42) entre POPs/torres, com custos refletindo a capacidade/preferência dos enlaces (fibra &lt; backhaul bom &lt; rádio de contingência) e failover (Capítulo 70) para caminhos alternativos;\nGerência OOB: crítica no rural — um técnico não vai até a torre no morro para um reboot; RoMON (Capítulo 74) e túneis de gerência salvam deslocamentos.\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nA rede rural é uma cadeia de rádio — backhaul PtP (a espinha, que nunca pode ser gargalo), repetidoras (alcance ao custo de latência e saltos), setoriais PtMP (o acesso) — sobre POPs solares onde a energia é o ponto de falha nº 1. Projete de trás para frente: visada e capacidade do backhaul primeiro, saltos minimizados, energia dimensionada para o pior caso e monitorada (tensão de bateria como métrica de primeira classe). Integre ao desenho geral com OSPF por custo, failover e gerência fora de banda — porque no campo, ir até a torre custa caro. Rádio bem projetado leva internet onde a fibra nunca chegará.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>73</span>  <span class='chapter-title'>Topologia rádio rural completa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#laboratório",
+    "href": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#laboratório",
+    "title": "73  Topologia rádio rural completa",
+    "section": "73.6 🧪 Laboratório",
+    "text": "73.6 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nLaboratório de projeto + integração: use CHRs para simular o roteamento da cadeia rural (POP central, repetidora, POP de acesso como roteadores em OSPF) — a parte de RF você já exercitou no Volume 5. lab-central, lab-repet, lab-acesso em linha, com OSPF e custos refletindo os enlaces; um lab-cliente no POP de acesso.\n\n\n\n73.6.1 Comandos passo a passo\nPasso 1 — a cadeia como roteamento. Monte lab-central — lab-repet — lab-acesso com enlaces /30 e OSPF (Capítulo 42), loopbacks por nó. Confirme adjacências Full na cadeia.\nPasso 2 — custos por qualidade de enlace. Ajuste os custos OSPF para refletir a realidade: o backhaul bom com custo baixo, um eventual enlace de contingência com custo alto (Capítulo 42). Um enlace de rádio pior = custo maior.\nPasso 3 — failover de backhaul. Adicione um segundo caminho até o lab-acesso (outra “frequência”/rota) com custo maior e prove o failover (Capítulo 70): derrube o backhaul principal e veja a rede reconvergir pelo alternativo — a torre não fica ilhada.\nPasso 4 — o cliente pela cadeia. Ligue o lab-cliente no lab-acesso e confirme que ele alcança a internet através de toda a cadeia, passando pela repetidora.\nPasso 5 — gerência OOB (conceitual). Esboce como você alcançaria o lab-repet para diagnóstico se o backhaul principal caísse — um túnel de gerência ou RoMON (Capítulo 74) por um caminho independente.\nPasso 6 — dimensione (exercício). Para um POP de acesso com 3 setoriais servindo 150 clientes de 50 Mbps (contenção 1:15), estime a capacidade que o backhaul precisa entregar no pico.\n\n\n73.6.2 Verificação\n\nA cadeia rural forma OSPF Full e o cliente alcança a internet por ela;\nOs custos refletem a qualidade dos enlaces;\nO failover de backhaul evita ilhar a torre;\nVocê tem um plano de gerência OOB e um dimensionamento de backhaul.\n\n\n\n73.6.3 Desafios\n\nUma região atrás de três repetidoras em série sofre com latência alta e queda de banda. Explique por que os saltos degradam os dois, e liste duas mudanças de projeto que reduzem o problema.\nUm POP de acesso “cai toda madrugada” por volta das 3h e volta ao amanhecer. O rádio está perfeito nos testes diurnos. Qual é a causa mais provável e como você confirma e corrige?\nO backhaul de uma torre está em 95% de uso no pico e a região atrás dela vive lenta. Adicionar mais setoriais no POP de acesso resolve? Justifique e diga o que realmente resolve.\nPor que a gerência fora de banda é ainda mais crítica no rádio rural do que na fibra urbana? Dê um cenário concreto de custo evitado.\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Cada salto de rádio adiciona latência (processamento + propagação) e, se repetidoras usam o mesmo meio/frequência para receber e retransmitir, a banda cai (meio compartilhado, metade por salto). Três em série somam os dois efeitos. Mudanças: (a) reduzir saltos com torres mais altas / visada direta ao POP central; (b) usar frequências/rádios separados por sentido em cada repetidora (full duplex efetivo), evitando a divisão de banda.\n2. Energia — bateria do POP solar no fim da vida (ou subdimensionada): à noite, sem sol, a bateria descarrega e o POP desliga na madrugada; ao amanhecer, o painel recarrega e ele volta. Confirme monitorando a tensão da bateria (SNMP, Capítulo 64) — verá a queda noturna. Corrija trocando/aumentando baterias e painéis, e dimensionando a autonomia para o pior caso. O rádio “perfeito de dia” confirma que o problema não é RF.\n3. Não necessariamente — se o backhaul já está em 95%, mais setoriais no acesso só empurram mais tráfego para um backhaul saturado, piorando. Primeiro aumente a capacidade do backhaul (rádio melhor, mais frequência, segundo enlace agregado) — ele é a espinha e o gargalo real. Setoriais adicionais resolvem saturação de acesso (RF cheio no cliente), não de backhaul.\n4. No rural, o equipamento fica em torres remotas (morros, sítios, POPs solares) — ir até lá custa horas de deslocamento e às vezes é inacessível à noite/na chuva. Se a gerência depende da produção e ela cai, você perde o acesso justo quando um técnico teria de viajar. Com OOB (RoMON/túnel por caminho independente), você diagnostica e às vezes resolve (reboot, ajuste) remotamente — evitando uma viagem de 100 km para reiniciar um rádio. Na fibra urbana o equipamento está perto; no rural, cada acesso remoto poupado é dinheiro e tempo reais.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>73</span>  <span class='chapter-title'>Topologia rádio rural completa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#resumo",
+    "href": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#resumo",
+    "title": "73  Topologia rádio rural completa",
+    "section": "73.7 Resumo",
+    "text": "73.7 Resumo\n\nRede rural = cadeia de rádio: backhaul PtP (a espinha — nunca o gargalo), repetidoras (alcance ao custo de latência/saltos/banda), setoriais PtMP (acesso) até o cliente;\nBackhaul dimensionado para agregar toda a região, com visada limpa, frequências planejadas e redundância onde crítico;\nMinimize saltos de repetidora (latência, banda, ponto de falha); frequências/rádios separados por sentido;\nPOPs solares: energia é o ponto de falha nº 1 — autonomia para o pior caso e tensão de bateria monitorada como métrica de primeira classe;\nIntegre com OSPF por custo, failover e gerência OOB (crítica no campo — evita viagens caras).\n\nFibra e rádio construídos, falta manter tudo isso seguro e atualizado em escala de parque — e migrar o legado v6 para o v7. O Capítulo 74 cobre o hardening operacional e a migração.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>73</span>  <span class='chapter-title'>Topologia rádio rural completa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#bibliografia-do-capítulo",
+    "href": "volumes/v15-operacao-isp/03-radio-topologia-rural.html#bibliografia-do-capítulo",
+    "title": "73  Topologia rádio rural completa",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: Wireless, Nstreme/NV2 do RouterOS (MikroTik, 2026);\nEnlaces de rádio, backhaul e propagação: (Tanenbaum; Feamster; Wetherall, 2021);\nRedes de rádio no v7: (Discher, 2016);\nProvedores rurais na prática: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>73</span>  <span class='chapter-title'>Topologia rádio rural completa</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html",
+    "href": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html",
+    "title": "74  Hardening operacional e migração v6 para v7",
+    "section": "",
+    "text": "74.1 Hardening em escala de parque\nOs capítulos anteriores desenharam e construíram a rede. Este a mantém segura e atualizada — em escala. Fazer hardening de um roteador você já sabe (Volume 3, Capítulo 21). O desafio de provedor é outro: centenas de equipamentos, muitos em torres remotas, alguns ainda no v6, todos precisando de senha forte, serviços fechados e patches de segurança — sem que uma atualização derrube o parque. E, pairando sobre tudo, a migração v6 → v7, que reescreveu partes centrais do RouterOS. Este capítulo trata da operação que não aparece no diagrama mas define se o provedor é seguro ou uma bomba-relógio.\nO hardening de um roteador (Capítulo 21) vira, no parque, um problema de consistência e automação:\nA chave é padronizar e automatizar: um template de hardening aplicado por API/script a todos, e um checklist auditável. Segurança inconsistente é insegurança — basta um roteador esquecido com senha fraca.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>74</span>  <span class='chapter-title'>Hardening operacional e migração v6 para v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#hardening-em-escala-de-parque",
+    "href": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#hardening-em-escala-de-parque",
+    "title": "74  Hardening operacional e migração v6 para v7",
+    "section": "",
+    "text": "Senhas e usuários: nunca a mesma senha em todos (um vazamento abre o parque); usuários dedicados por função, admin renomeado/ removido, e credenciais geridas por cofre — aplicadas via provisionamento (Capítulo 62), não à mão;\nServiços: desligar o que não se usa (/ip service), www/telnet off, tudo restrito por allowed-address à rede de gerência;\nFirewall de gerência: só o NOC alcança input; o resto drop (Capítulo 17), padronizado por template;\nNeighbor discovery / MAC-server: restritos à gerência (não exponha descoberta ao cliente);\nAuditoria: quem tem acesso, quem mudou o quê (log centralizado,\n\n— em escala, você precisa saber o estado de segurança do parque, não torcer.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>74</span>  <span class='chapter-title'>Hardening operacional e migração v6 para v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#romon-gerenciar-sem-ip-de-gerência",
+    "href": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#romon-gerenciar-sem-ip-de-gerência",
+    "title": "74  Hardening operacional e migração v6 para v7",
+    "section": "74.2 RoMON: gerenciar sem IP de gerência",
+    "text": "74.2 RoMON: gerenciar sem IP de gerência\nMuitos equipamentos (rádios em torres, switches) não têm IP de gerência roteável — e configurá-lo em todos é trabalhoso e frágil. O RoMON (Router Management Overlay Network) resolve: cria uma rede de gerência em camada 2 sobre os enlaces MikroTik, permitindo alcançar qualquer equipamento RoMON pelo MAC, mesmo sem IP. Você entra num roteador de borda e “salta” para os vizinhos RoMON até o rádio na ponta.\n# habilitar RoMON só nas interfaces internas/gerência (NUNCA voltado ao cliente)\n/tool romon set enabled=yes id=00:00:00:00:00:01\n/tool romon port add interface=ether-backbone\n/tool romon port set [find default=yes] disabled=yes  # não em todas por padrão\n\n\n\n\n\n\nAviso\n\n\n\nRoMON é poderoso — e perigoso se exposto. Habilitado numa interface voltada ao cliente, ele deixa qualquer um na rede tentar alcançar seus equipamentos de gerência. Habilite só nos enlaces internos/de gerência, use senha de RoMON, e trate-o como parte da superfície de ataque de gerência. Poder de alcançar tudo = alvo de quem quer alcançar tudo.\n\n\nRoMON é a base da gerência fora de banda (Capítulo 71) no MikroTik: alcança a torre remota mesmo quando o roteamento de produção está instável — salvando a viagem do Capítulo 73.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>74</span>  <span class='chapter-title'>Hardening operacional e migração v6 para v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#upgrades-de-routeros-com-método",
+    "href": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#upgrades-de-routeros-com-método",
+    "title": "74  Hardening operacional e migração v6 para v7",
+    "section": "74.3 Upgrades de RouterOS com método",
+    "text": "74.3 Upgrades de RouterOS com método\nAtualizar é obrigatório (patches de segurança) e arriscado (uma versão ruim pode derrubar). Faça com método:\n\nCanais: stable para produção; nunca development no parque. long-term para máxima estabilidade onde upgrades são raros;\nTeste antes: valide a versão nova num equipamento de laboratório/ não crítico antes do parque — cada versão tem suas regressões;\nOrdem certa: atualize primeiro os equipamentos menos críticos e de onde você não perde acesso se der errado; deixe o core/borda por último, com janela e plano de rollback;\nRouterBOOT/firmware: lembre de atualizar o firmware (/system routerboard upgrade) além do RouterOS, quando aplicável;\nRollback: o RouterOS guarda a versão anterior (/system package downgrade) — tenha o caminho de volta pronto antes de subir.\n\nUm upgrade de parque é uma operação planejada (janela, ordem, rollback, monitoramento), nunca um “atualiza tudo e reza”.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>74</span>  <span class='chapter-title'>Hardening operacional e migração v6 para v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#migração-v6-v7",
+    "href": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#migração-v6-v7",
+    "title": "74  Hardening operacional e migração v6 para v7",
+    "section": "74.4 Migração v6 → v7",
+    "text": "74.4 Migração v6 → v7\nO v7 reescreveu partes centrais do RouterOS. Migrar não é só “atualizar” — é revalidar o que mudou. As áreas de maior impacto (que você viu ao longo do manual):\n\nRoteamento: OSPF (instance/area/interface-template,\n\ne BGP (connection/template, Capítulo 44) foram reescritos — a config v6 não migra 1:1;\n\nFirewall/roteamento: routing filters (Capítulo 45) e a lógica de tabelas/VRF (Capítulo 46) mudaram;\nWireless: o pacote wifi novo (wave2/ax) convive com o wireless legado — cuidado com qual driver/pacote (Capítulo 32);\nComportamentos sutis: defaults, nomes de parâmetros, ordem — o que “funcionava igual” pode ter mudado.\n\nO método de migração:\n\nInventarie o que usa (OSPF? BGP? que features?) — o esforço é proporcional ao que muda;\nTeste em laboratório (CHR v7) reproduzindo a config crítica antes de tocar produção;\nMigre por partes, começando pelo menos crítico, com backup e rollback prontos (Capítulo 61);\nRevalide cada serviço após migrar (adjacências OSPF, sessões BGP, PPPoE, CGNAT) — não confie, verifique (Volume 13);\nDocumente as diferenças encontradas para os próximos equipamentos.\n\n\n\n\n\n\n\nImportanteO conceito mais importante do capítulo\n\n\n\nHardening e atualização de provedor são operação em escala e contínua, não um evento: padronize e automatize o hardening (senhas únicas, serviços fechados, allowed-address, firewall de gerência) por provisionamento, com auditoria — porque um roteador esquecido abre o parque. RoMON dá gerência fora de banda (só nos enlaces internos, com senha — poder de alcançar tudo é alvo). Upgrades com método (canal stable, teste, ordem do menos crítico ao core, rollback pronto). E a migração v6 → v7 é revalidação, não cópia — OSPF, BGP, filtros e wireless mudaram; teste em lab, migre por partes, verifique cada serviço. Segurança e atualização inconsistentes são insegurança.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>74</span>  <span class='chapter-title'>Hardening operacional e migração v6 para v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#laboratório",
+    "href": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#laboratório",
+    "title": "74  Hardening operacional e migração v6 para v7",
+    "section": "74.5 🧪 Laboratório",
+    "text": "74.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nCHRs (Capítulo 5) representando um mini-parque: lab-borda, lab-dist, lab-torre (sem IP de gerência, para o RoMON). Um lab-noc simulando a estação de gerência. O foco é hardening padronizado, RoMON e um ensaio de upgrade/migração.\n\n\n\n74.5.1 Comandos passo a passo\nPasso 1 — template de hardening. Escreva um script (idempotente, Capítulo 60) que aplica o hardening padrão: desliga serviços não usados, restringe /ip service por allowed-address, garante o firewall de gerência. Aplique nos três roteadores.\n/ip service set telnet disabled=yes\n/ip service set www disabled=yes\n/ip service set winbox address=10.99.0.0/24\n/ip service set ssh address=10.99.0.0/24\nPasso 2 — RoMON até a torre. Habilite RoMON só nos enlaces internos e alcance o lab-torre (sem IP) pelo MAC, a partir do lab-borda:\n/tool romon set enabled=yes\n/tool romon port add interface=&lt;enlace-interno&gt;\n# do lab-noc/lab-borda: descobrir e conectar\n/tool romon discover\nPasso 3 — prove a gerência OOB. Remova o IP de gerência do lab-torre e confirme que você ainda o alcança por RoMON — a gerência fora de banda em ação.\nPasso 4 — ensaio de upgrade. Num equipamento não crítico, faça um upgrade de RouterOS pelo canal stable, confirme o funcionamento e pratique o rollback (/system package downgrade) — tenha o caminho de volta.\nPasso 5 — ensaio de migração. Pegue uma config v6 de OSPF/BGP (conceitual) e reescreva-a no formato v7 (instance/area/template, connection/template) num CHR de lab; valide as adjacências/sessões antes de imaginar isso em produção.\nPasso 6 — auditoria. Verifique, nos três roteadores, que o hardening está consistente (mesmo conjunto de serviços fechados, allowed-address aplicado) — a consistência é o ponto.\n\n\n74.5.2 Verificação\n\nO template de hardening está aplicado e consistente nos três;\nRoMON alcança a torre sem IP de gerência, só nos enlaces internos;\nVocê executou um upgrade e praticou o rollback;\nReescreveu uma config v6 → v7 e validou os serviços.\n\n\n\n74.5.3 Desafios\n\nUm provedor usa a mesma senha de admin em todos os 300 roteadores “para facilitar”. Explique o risco concreto e descreva como migrar para senhas únicas sem perder acesso durante a transição.\nVocê habilitou RoMON em todas as interfaces, inclusive as voltadas ao cliente. Qual é o risco, e qual é a configuração correta?\nUm upgrade “atualiza tudo de uma vez” derrubou metade do parque porque a versão nova tinha uma regressão. Descreva o método que teria evitado o desastre — canal, teste, ordem e rollback.\nAo migrar um concentrador de v6 para v7, as sessões BGP e as adjacências OSPF “sumiram” mesmo com a config aparentemente copiada. Por quê, e qual é o procedimento correto de migração?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Risco: uma credencial vazada (ou um ex-funcionário) abre todos os 300 roteadores — comprometimento total do parque num só segredo. Migração sem perder acesso: use provisionamento (Capítulo 62) para, em lote, adicionar um novo usuário com senha única por equipamento (de um cofre), validar o acesso pelo novo usuário, e só então remover/alterar a credencial antiga. Nunca troque a senha atual antes de confirmar o novo acesso — senão você se tranca para fora.\n2. RoMON em interface voltada ao cliente deixa qualquer um na rede do assinante tentar descobrir e alcançar seus equipamentos de gerência (camada 2) — uma porta de entrada gravíssima. Correto: habilitar RoMON só nos enlaces internos/de gerência (/tool romon port seletivo, com o default desabilitado), proteger com senha de RoMON e tratá-lo como superfície de gerência restrita.\n3. (a) Canal: usar stable (nunca development). (b) Teste: validar a versão nova num equipamento de lab/não crítico antes do parque — teria revelado a regressão. (c) Ordem: atualizar do menos crítico ao core, de onde você não perde acesso se falhar; nunca “tudo de uma vez”. (d) Rollback: ter o downgrade pronto e uma janela de manutenção. Assim, a regressão apareceria no teste (ou no primeiro lote pequeno), não em metade do parque.\n4. No v7, OSPF e BGP foram reescritos — a config v6 (com /routing ospf instance antigo, /routing bgp instance) não migra 1:1 para o novo formato (interface-template, connection/template). Uma cópia literal deixa serviços sem configuração válida no novo modelo. Procedimento correto: reescrever a config no formato v7, testá-la em lab (CHR v7) antes, migrar por partes com backup/ rollback, e revalidar cada serviço (adjacências, sessões) após a migração. Migração v6→v7 é revalidação, não cópia.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>74</span>  <span class='chapter-title'>Hardening operacional e migração v6 para v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#resumo",
+    "href": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#resumo",
+    "title": "74  Hardening operacional e migração v6 para v7",
+    "section": "74.6 Resumo",
+    "text": "74.6 Resumo\n\nHardening de provedor é escala e consistência: senhas únicas, serviços fechados, allowed-address, firewall de gerência — automatizado (provisionamento) e auditável; um roteador esquecido abre o parque;\nRoMON dá gerência sem IP (camada 2 sobre os enlaces MikroTik) — só nos enlaces internos, com senha (base da OOB, Capítulo 71);\nUpgrades com método: canal stable, teste antes, ordem do menos crítico ao core, rollback pronto — nunca “tudo de uma vez”;\nMigração v6 → v7 é revalidação: OSPF, BGP, filtros e wireless mudaram — inventarie, teste em lab, migre por partes, verifique cada serviço;\nSegurança e atualização são contínuas, não um evento único.\n\nChegamos ao fim da construção: rede desenhada, fibra e rádio montados, parque seguro e atualizado. Falta amarrar tudo num único fio — do trânsito ao roteador do cliente. O Capítulo 75 é o estudo de caso integrador que fecha o manual.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>74</span>  <span class='chapter-title'>Hardening operacional e migração v6 para v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#bibliografia-do-capítulo",
+    "href": "volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html#bibliografia-do-capítulo",
+    "title": "74  Hardening operacional e migração v6 para v7",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial: RoMON, Upgrading, Migração v6→v7 do RouterOS (MikroTik, 2026);\nOperação segura e gestão de mudança: (Tanenbaum; Feamster; Wetherall, 2021);\nHardening e migração no v7: (Discher, 2016);\nOperação de parque em provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>74</span>  <span class='chapter-title'>Hardening operacional e migração v6 para v7</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html",
+    "href": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html",
+    "title": "75  Estudo de caso integrador",
+    "section": "",
+    "text": "75.1 O Provedor Serra Azul: o desenho completo\nChegamos ao fim. Os quinze volumes ensinaram cada peça; este capítulo as monta numa máquina só. Vamos projetar o Provedor Serra Azul — fictício, mas realista: fibra na cidade, rádio no campo, dois trânsitos, IPv6, CGNAT, HA, operação profissional. Não há sintaxe nova aqui: o objetivo é ver como tudo se conecta, seguindo um pacote da casa do cliente até a internet e de volta, reconhecendo em cada ponto o volume que o explica. É o mapa que amarra a jornada.\nNosso provedor tem ASN próprio (AS 65000), um bloco IPv4 (203.0.113.0/24) e um IPv6 (2001:db8::/32 fictício). A arquitetura segue as três camadas (Capítulo 71):",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>75</span>  <span class='chapter-title'>Estudo de caso integrador</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#o-provedor-serra-azul-o-desenho-completo",
+    "href": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#o-provedor-serra-azul-o-desenho-completo",
+    "title": "75  Estudo de caso integrador",
+    "section": "",
+    "text": "Core (2 roteadores, HA): trânsito de duas operadoras por BGP (Capítulo 44) com filtros de saída mínimos\n\ne RPKI; OSPF (Capítulo 42) interno sobre loopbacks; MPLS/LDP (Capítulo 57) opcional para VPNs corporativas;\n\nDistribuição: BNG PPPoE (Capítulo 72) com RADIUS (Capítulo 35), CGNAT determinístico (Capítulo 47) com logging legal (Capítulo 48), dual stack IPv6 (Capítulo 50), QoS/PCQ (Capítulo 40) por plano, e VRRP\n\npara não ser ponto único;\n\nAcesso: fibra GPON (OLT + ONUs) na cidade e rádio rural\n\n— backhaul PtP, POPs solares, PtMP — no campo;\n\nOperação: monitoramento (log central Capítulo 63, SNMP Capítulo 64), automação/provisionamento (Capítulo 62), gerência OOB (RoMON, Capítulo 74) e failover multi-link (Capítulo 70).\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n\n \n \n \n \n\n\n\n\n\n \n \n \n \n\n\n\n\n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\nO Provedor Serra Azul de ponta a ponta: trânsito (BGP) → core → BNG (distribuição) → acesso fibra/rádio → cliente, com a operação (monitoramento, automação, OOB) atravessando tudo. Cada bloco é um volume deste manual no seu lugar.\n\n\nFigura 75.1",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>75</span>  <span class='chapter-title'>Estudo de caso integrador</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#o-caminho-de-um-pacote-cliente-internet",
+    "href": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#o-caminho-de-um-pacote-cliente-internet",
+    "title": "75  Estudo de caso integrador",
+    "section": "75.2 O caminho de um pacote: cliente → internet",
+    "text": "75.2 O caminho de um pacote: cliente → internet\nSiga um pacote de um cliente de fibra pedindo uma página, e reconheça cada volume:\n\nCPE do cliente manda o quadro pela ONU → OLT → chega ao BNG na VLAN de serviço (Capítulo 72, Vol. 4/15);\nSessão PPPoE: o pacote está dentro da sessão autenticada por RADIUS (Capítulo 34, Capítulo 35, Vol. 6);\nQoS: a queue/PCQ do plano do cliente aplica o limite de banda (Capítulo 40, Vol. 7);\nFirewall/conntrack: o pacote é avaliado (input/forward, Capítulo 16, Vol. 3) e registrado no connection tracking;\nCGNAT: sendo IPv4, o 100.64.x.x do cliente é traduzido para o público 203.0.113.x numa faixa determinística de portas (Capítulo 47, Vol. 9), com o mapeamento logado (Capítulo 48); — se fosse IPv6, sairia direto, roteável, sem CGNAT (Capítulo 50);\nRoteamento interno: OSPF leva o pacote do BNG ao core pelos loopbacks (Capítulo 42, Vol. 8);\nBGP/saída: no core, a decisão de saída (local-pref) escolhe a operadora, o filtro de saída garante que só o que é nosso é anunciado (1), e o pacote vai ao trânsito (Vol. 8);\nVolta: a resposta entra pela operadora (o prepend/RPKI influenciou a entrada), desfaz o CGNAT (mesma faixa → mesmo cliente), volta pela sessão PPPoE até o CPE.\n\nCada salto é um capítulo. Isso é o manual: não peças soltas, mas uma cadeia onde cada elo tem seu volume.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>75</span>  <span class='chapter-title'>Estudo de caso integrador</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#as-decisões-de-projeto-que-amarram-tudo",
+    "href": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#as-decisões-de-projeto-que-amarram-tudo",
+    "title": "75  Estudo de caso integrador",
+    "section": "75.3 As decisões de projeto que amarram tudo",
+    "text": "75.3 As decisões de projeto que amarram tudo\nUm provedor coerente toma decisões alinhadas entre as camadas:\n\nEndereçamento hierárquico e agregável (Capítulo 71): loopbacks, público por função, CGNAT por POP, IPv6 /48 por POP /56 por cliente, gerência isolada;\nRoteamento: OSPF para infra (loopbacks/enlaces), BGP para internet/clientes — separados, filtrados, com RPKI (1);\nAcesso: fibra onde há densidade, rádio onde não há — cada um dimensionado (backhaul não é gargalo, BNG aguenta o pico);\nResiliência: VRRP no gateway, bonding nos enlaces, ECMP/failover nos trânsitos, BNG redundante — cada falha coberta (Vol. 14);\nSegurança e operação: hardening padronizado e automatizado, monitoramento central, OOB, logging legal — a rede que se opera e se defende (Vols. 12, 13, 15).",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>75</span>  <span class='chapter-title'>Estudo de caso integrador</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#diagnóstico-integrado-um-problema-real",
+    "href": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#diagnóstico-integrado-um-problema-real",
+    "title": "75  Estudo de caso integrador",
+    "section": "75.4 Diagnóstico integrado: um problema real",
+    "text": "75.4 Diagnóstico integrado: um problema real\n“Clientes do POP rural reclamam de lentidão à noite.” O método (Capítulo 66) integrado ao manual:\n\nDelimitar: só o POP rural, só à noite → escopo aponta para aquele POP e um fator temporal;\n“O que mudou / o que é noturno”: pico de tráfego? energia?\nCamadas: física (sinal do backhaul, Capítulo 31 — degradou?), rede (OSPF estável? Capítulo 42), transporte (backhaul saturado no pico? 3), energia (bateria solar caindo à noite? 3);\nFerramentas: SNMP/gráfico (Capítulo 64) mostra o backhaul em 95% às 21h todo dia → não é falha, é capacidade;\nCausa e correção: backhaul subdimensionado para o pico → aumentar a capacidade do backhaul (não adicionar setoriais, 3).\n\nO diagnóstico atravessou cinco volumes naturalmente — porque a rede é uma só, e o manual ensinou a enxergá-la assim.\n\n\n\n\n\n\nImportanteO conceito mais importante do manual\n\n\n\nUm provedor não é uma pilha de tecnologias — é uma máquina onde cada peça tem seu lugar e conversa com as outras. O pacote do cliente atravessa PPPoE, QoS, firewall, CGNAT, OSPF e BGP numa cadeia coerente; o desenho amarra endereçamento, roteamento, acesso, HA e operação em decisões alinhadas; o diagnóstico cruza volumes porque a rede é uma só. Dominar o MikroTik de provedor não é decorar comandos — é ver o todo e saber, em cada ponto, qual peça está agindo e por quê. Este manual levou você do “o que é RouterOS” a projetar, operar e diagnosticar um ISP inteiro. O resto é praticar — no laboratório, e no campo.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>75</span>  <span class='chapter-title'>Estudo de caso integrador</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#laboratório",
+    "href": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#laboratório",
+    "title": "75  Estudo de caso integrador",
+    "section": "75.5 🧪 Laboratório",
+    "text": "75.5 🧪 Laboratório\n\n\n\n\n\n\nNotaAmbiente\n\n\n\nO projeto final: usando tudo o que montou nos labs anteriores, esboce (em CHRs ou em papel) o Provedor Serra Azul completo — ou uma fatia dele ponta a ponta. Não há comando novo; há integração. Reserve tempo: este é o lab que prova que você domina o conjunto.\n\n\n\n75.5.1 Comandos passo a passo\nPasso 1 — o desenho. Desenhe o Serra Azul (three camadas + operação) com endereçamento completo (loopbacks, público, CGNAT, IPv6, gerência), ASN e áreas OSPF. Use o Capítulo 71 como guia.\nPasso 2 — o core. Monte (CHR) o core com BGP para duas “operadoras”, OSPF interno e o filtro de saída mínimo (1). Prove que só o 203.0.113.0/24 é anunciado.\nPasso 3 — o BNG. Monte o BNG com PPPoE, um pool CGNAT determinístico, QoS por plano e dual stack IPv6. Conecte um cliente e prove a cadeia (autentica → IP → CGNAT → sai).\nPasso 4 — o acesso. Represente a fibra (VLAN de serviço) e a cadeia de rádio (OSPF por custo até um POP de acesso). Um cliente em cada.\nPasso 5 — resiliência. Adicione VRRP no BNG e failover de trânsito no core. Derrube peças e prove que o cliente segue online.\nPasso 6 — o caminho do pacote. Com um cliente navegando, use traceroute, Torch e o connection tracking para seguir o pacote por toda a cadeia e identificar cada volume em ação.\n\n\n75.5.2 Verificação\n\nO desenho está completo e coerente (endereçamento, roteamento, acesso, HA, operação);\nCore anuncia só o próprio bloco; BNG autentica, NATeia e limita;\nFibra e rádio entregam o cliente; a resiliência sobrevive a falhas;\nVocê consegue seguir um pacote ponta a ponta e nomear cada volume.\n\n\n\n75.5.3 Desafios\n\nUm cliente novo de fibra precisa de IP público fixo (roda um servidor). Descreva, atravessando as camadas, todas as decisões: onde tirá-lo do CGNAT, o que muda no firewall, e o que você registra.\nO Serra Azul quer vender um link L2 dedicado entre duas filiais de um cliente corporativo, uma na cidade (fibra) e outra no campo (rádio). Que tecnologias você combina, e quais são os riscos?\nUma operadora de trânsito caiu às 22h. Descreva, volume por volume, o que deveria acontecer automaticamente para o cliente não perceber — e o que você monitora para confirmar.\nProjete, em alto nível, o crescimento do Serra Azul de 500 para 5.000 clientes: o que precisa mudar em cada camada (core, distribuição, acesso, operação) e por quê. Onde o “tudo-em-um” quebra?\n\n\n\n\n\n\n\nDicaSolução dos desafios\n\n\n\n\n\n1. Acesso: nada muda (mesma fibra/PPPoE). Distribuição/CGNAT: tirar o cliente do CGNAT — atribuir um IP público dedicado (203.0.113.x) via RADIUS/pool, criando exceção no netmap (Capítulo 47). Firewall: como agora ele é roteável de fora, abrir só as portas do serviço na chain forward (o resto protegido) — e orientar o cliente sobre a exposição; em IPv6 (Capítulo 51) o mesmo, com a exceção accept. Registro: o IP fixo → cliente fica documentado (Capítulo 48 não precisa da faixa CGNAT, mas o cadastro IP↔︎assinante sim). Roteamento: o /32 público roteado até o BNG.\n2. Um link L2 fim a fim: no backbone com MPLS, uma VPLS (Capítulo 58) entre os PEs das duas pontas; sem MPLS, um EoIP+IPsec (Capítulo 55) sobre o roteamento. A ponta de rádio adiciona o desafio de capacidade/latência do backhaul (3). Riscos: estender camada 2 propaga broadcast/loop entre as filiais (STP obrigatório) e a ponta de rádio pode limitar a banda do circuito — avaliar se L3VPN não atenderia melhor (Capítulo 46).\n3. Vol. 14 (failover): o check-gateway/recursive routing detecta a queda fim a fim da operadora A e a rota default cai; o BGP (Vol. 8) retira as rotas aprendidas de A e o tráfego passa a sair pela operadora B (a que sobrou); o local-pref/desenho garante que B assuma. Vol. 13: o netwatch/log registra o evento e o gráfico confirma o tráfego migrando para B. O cliente, atrás de PPPoE/CGNAT, não percebe — sua sessão continua, só o caminho de saída mudou. Você confirma no session print do BGP, na tabela de rotas e no tráfego por interface.\n4. Core: de um roteador para dois em HA com BGP/OSPF; talvez MPLS. Distribuição: de um BNG “tudo-em-um” para BNGs dedicados e redundantes (VRRP), CGNAT dimensionado (mais IPs públicos), QoS por PCQ em escala. Acesso: mais OLTs/torres, backhaul reforçado. Operação: monitoramento central obrigatório, automação/ provisionamento (não dá para configurar 5.000 à mão), OOB, logging legal robusto. O “tudo-em-um” quebra na distribuição: um só roteador fazendo BGP+CGNAT+PPPoE+QoS satura em CPU e vira raio de falha total — a separação em camadas (Capítulo 71) é o que permite os 5.000 sem refazer tudo.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>75</span>  <span class='chapter-title'>Estudo de caso integrador</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#resumo",
+    "href": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#resumo",
+    "title": "75  Estudo de caso integrador",
+    "section": "75.6 Resumo",
+    "text": "75.6 Resumo\n\nUm provedor é uma máquina integrada: o pacote do cliente atravessa PPPoE, QoS, firewall, CGNAT, OSPF e BGP numa cadeia coerente — cada elo é um volume deste manual;\nO desenho (Capítulo 71) amarra endereçamento, roteamento, acesso (fibra/rádio), resiliência e operação em decisões alinhadas;\nO diagnóstico cruza volumes naturalmente porque a rede é uma só — método (Capítulo 66) + as ferramentas certas (Vol. 13);\nCrescer sem refazer exige camadas separadas e operação automatizada — o “tudo-em-um” quebra na escala;\nDominar MikroTik de provedor é ver o todo: saber, em cada ponto, qual peça age e por quê.\n\nEste é o fim do manual — e o começo da sua prática. Você partiu de “o que é o RouterOS” e chegou a projetar, operar e diagnosticar um provedor inteiro, do trânsito ao roteador do cliente. As tecnologias vão evoluir; o método — entender cada peça antes de usá-la, ver como se conectam, diagnosticar com disciplina — é o que permanece. Leve-o ao laboratório, e ao campo. Boa jornada.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>75</span>  <span class='chapter-title'>Estudo de caso integrador</span>"
+    ]
+  },
+  {
+    "objectID": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#bibliografia-do-capítulo",
+    "href": "volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html#bibliografia-do-capítulo",
+    "title": "75  Estudo de caso integrador",
+    "section": "Bibliografia do capítulo",
+    "text": "Bibliografia do capítulo\n\nDocumentação oficial do RouterOS (MikroTik, 2026);\nArquitetura e operação de redes: (Tanenbaum; Feamster; Wetherall, 2021);\nRouterOS v7 de ponta a ponta: (Discher, 2016);\nOperação integrada de provedores: (Burgess, 2011).\n\n\n\n\n\nBURGESS, Dennis. Learn RouterOS. 2. ed. Raleigh: Lulu Press, 2011.\n\n\nDISCHER, Stephen R. W. RouterOS by Example. 2. ed. College Station: ISP Services, Inc., 2016.\n\n\nMIKROTIK. RouterOS Documentation. https://help.mikrotik.com/docs/, 2026.\n\n\nTANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. Redes de Computadores. 6. ed. Porto Alegre: Bookman, 2021.",
+    "crumbs": [
+      "Volume 15 — Operação de ISP de ponta a ponta",
+      "<span class='chapter-number'>75</span>  <span class='chapter-title'>Estudo de caso integrador</span>"
     ]
   },
   {

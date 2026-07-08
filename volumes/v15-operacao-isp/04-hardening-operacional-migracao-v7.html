@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>55&nbsp; GRE, EoIP, L2TP/SSTP e ZeroTier – Manual de MikroTik</title>
+<title>74&nbsp; Hardening operacional e migração v6 para v7 – Manual de MikroTik</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -53,8 +53,8 @@ div.csl-indent {
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<link href="../../volumes/v10-tuneis-vpn/05-interligacao-pops.html" rel="next">
-<link href="../../volumes/v10-tuneis-vpn/03-ipsec.html" rel="prev">
+<link href="../../volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html" rel="next">
+<link href="../../volumes/v15-operacao-isp/03-radio-topologia-rural.html" rel="prev">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/popper.min.js"></script>
@@ -105,7 +105,7 @@ div.csl-indent {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/01-panorama-tuneis.html">Volume 10 — Túneis e VPN</a></li><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v15-operacao-isp/01-desenho-rede-provedor.html">Volume 15 — Operação de ISP de ponta a ponta</a></li><li class="breadcrumb-item"><a href="../../volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html"><span class="chapter-number">74</span>&nbsp; <span class="chapter-title">Hardening operacional e migração v6 para v7</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
@@ -547,13 +547,13 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="true">
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="false">
  <span class="menu-text">Volume 10 — Túneis e VPN</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-10" role="navigation" aria-expanded="false" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-10" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-10" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../volumes/v10-tuneis-vpn/01-panorama-tuneis.html" class="sidebar-item-text sidebar-link">
@@ -574,7 +574,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html" class="sidebar-item-text sidebar-link active">
+  <a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></span></a>
   </div>
 </li>
@@ -716,13 +716,13 @@ div.csl-indent {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-15" role="navigation" aria-expanded="false">
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-15" role="navigation" aria-expanded="true">
  <span class="menu-text">Volume 15 — Operação de ISP de ponta a ponta</span></a>
-          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-15" role="navigation" aria-expanded="false" aria-label="Alternar seção">
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-15" role="navigation" aria-expanded="true" aria-label="Alternar seção">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
-      <ul id="quarto-sidebar-section-15" class="collapse list-unstyled sidebar-section depth1 ">  
+      <ul id="quarto-sidebar-section-15" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../volumes/v15-operacao-isp/01-desenho-rede-provedor.html" class="sidebar-item-text sidebar-link">
@@ -743,7 +743,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html" class="sidebar-item-text sidebar-link">
+  <a href="../../volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">74</span>&nbsp; <span class="chapter-title">Hardening operacional e migração v6 para v7</span></span></a>
   </div>
 </li>
@@ -782,28 +782,27 @@ div.csl-indent {
     <h2 id="toc-title">Índice</h2>
    
   <ul>
-  <li><a href="#gre-a-interface-para-transportar-roteamento" id="toc-gre-a-interface-para-transportar-roteamento" class="nav-link active" data-scroll-target="#gre-a-interface-para-transportar-roteamento"><span class="header-section-number">55.1</span> GRE: a interface para transportar roteamento</a></li>
-  <li><a href="#eoip-esticar-a-camada-2-entre-sites" id="toc-eoip-esticar-a-camada-2-entre-sites" class="nav-link" data-scroll-target="#eoip-esticar-a-camada-2-entre-sites"><span class="header-section-number">55.2</span> EoIP: esticar a camada 2 entre sites</a></li>
-  <li><a href="#l2tp-e-sstp-acesso-remoto" id="toc-l2tp-e-sstp-acesso-remoto" class="nav-link" data-scroll-target="#l2tp-e-sstp-acesso-remoto"><span class="header-section-number">55.3</span> L2TP e SSTP: acesso remoto</a></li>
-  <li><a href="#zerotier-malha-que-atravessa-nat" id="toc-zerotier-malha-que-atravessa-nat" class="nav-link" data-scroll-target="#zerotier-malha-que-atravessa-nat"><span class="header-section-number">55.4</span> ZeroTier: malha que atravessa NAT</a></li>
-  <li><a href="#escolhendo-entre-eles" id="toc-escolhendo-entre-eles" class="nav-link" data-scroll-target="#escolhendo-entre-eles"><span class="header-section-number">55.5</span> Escolhendo entre eles</a></li>
-  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">55.6</span> 🧪 Laboratório</a>
+  <li><a href="#hardening-em-escala-de-parque" id="toc-hardening-em-escala-de-parque" class="nav-link active" data-scroll-target="#hardening-em-escala-de-parque"><span class="header-section-number">74.1</span> Hardening em escala de parque</a></li>
+  <li><a href="#romon-gerenciar-sem-ip-de-gerência" id="toc-romon-gerenciar-sem-ip-de-gerência" class="nav-link" data-scroll-target="#romon-gerenciar-sem-ip-de-gerência"><span class="header-section-number">74.2</span> RoMON: gerenciar sem IP de gerência</a></li>
+  <li><a href="#upgrades-de-routeros-com-método" id="toc-upgrades-de-routeros-com-método" class="nav-link" data-scroll-target="#upgrades-de-routeros-com-método"><span class="header-section-number">74.3</span> Upgrades de RouterOS com método</a></li>
+  <li><a href="#migração-v6-v7" id="toc-migração-v6-v7" class="nav-link" data-scroll-target="#migração-v6-v7"><span class="header-section-number">74.4</span> Migração v6 → v7</a></li>
+  <li><a href="#laboratório" id="toc-laboratório" class="nav-link" data-scroll-target="#laboratório"><span class="header-section-number">74.5</span> 🧪 Laboratório</a>
   <ul class="collapse">
-  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">55.6.1</span> Comandos passo a passo</a></li>
-  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">55.6.2</span> Verificação</a></li>
-  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">55.6.3</span> Desafios</a></li>
+  <li><a href="#comandos-passo-a-passo" id="toc-comandos-passo-a-passo" class="nav-link" data-scroll-target="#comandos-passo-a-passo"><span class="header-section-number">74.5.1</span> Comandos passo a passo</a></li>
+  <li><a href="#verificação" id="toc-verificação" class="nav-link" data-scroll-target="#verificação"><span class="header-section-number">74.5.2</span> Verificação</a></li>
+  <li><a href="#desafios" id="toc-desafios" class="nav-link" data-scroll-target="#desafios"><span class="header-section-number">74.5.3</span> Desafios</a></li>
   </ul></li>
-  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">55.7</span> Resumo</a></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">74.6</span> Resumo</a></li>
   <li><a href="#bibliografia-do-capítulo" id="toc-bibliografia-do-capítulo" class="nav-link" data-scroll-target="#bibliografia-do-capítulo">Bibliografia do capítulo</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/01-panorama-tuneis.html">Volume 10 — Túneis e VPN</a></li><li class="breadcrumb-item"><a href="../../volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.html"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../volumes/v15-operacao-isp/01-desenho-rede-provedor.html">Volume 15 — Operação de ISP de ponta a ponta</a></li><li class="breadcrumb-item"><a href="../../volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.html"><span class="chapter-number">74</span>&nbsp; <span class="chapter-title">Hardening operacional e migração v6 para v7</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span id="sec-gre-eoip" class="quarto-section-identifier"><span class="chapter-number">55</span>&nbsp; <span class="chapter-title">GRE, EoIP, L2TP/SSTP e ZeroTier</span></span></h1>
+<h1 class="title"><span id="sec-hardening-operacional" class="quarto-section-identifier"><span class="chapter-number">74</span>&nbsp; <span class="chapter-title">Hardening operacional e migração v6 para v7</span></span></h1>
 </div>
 
 
@@ -832,34 +831,37 @@ div.csl-indent {
 <div class="callout-body-container callout-body">
 <p>Ao final deste capítulo, você será capaz de:</p>
 <ul>
-<li>Montar <strong>GRE</strong> para transportar roteamento (OSPF/BGP) entre POPs e <strong>cifrá-lo</strong> com IPsec — o desenho recomendado do <a href="03-ipsec.html" class="quarto-xref"><span>Capítulo 54</span></a>;</li>
-<li>Usar <strong>EoIP</strong> para estender <strong>camada 2</strong> (uma bridge/VLAN) entre sites, e saber quando isso é bom (e quando é perigoso);</li>
-<li>Configurar <strong>L2TP/IPsec</strong> e <strong>SSTP</strong> para <strong>acesso remoto</strong> — incluindo o SSTP rodando em TCP/443 para furar firewalls;</li>
-<li>Entender <strong>ZeroTier</strong> como malha gerenciada que atravessa CGNAT/NAT sem IP público em nenhum lado;</li>
-<li>Escolher, entre todos, a ferramenta certa para “transportar roteamento”, “esticar L2” e “acesso remoto” — e respeitar o MTU.</li>
+<li>Aplicar <strong>hardening operacional em escala de parque</strong>: senhas, usuários, serviços, <code>allowed-address</code> e upgrades — não em um roteador, em <strong>centenas</strong>;</li>
+<li>Usar <strong>RoMON</strong> para alcançar e gerenciar equipamentos <strong>sem IP de gerência direto</strong>, com segurança;</li>
+<li>Planejar <strong>upgrades de RouterOS</strong> com método (canais, teste, rollback, ordem) sem derrubar o parque;</li>
+<li>Conduzir a <strong>migração v6 → v7</strong> com segurança: o que muda (OSPF, BGP, wireless, firewall), o que testar, e como reverter;</li>
+<li>Estabelecer uma <strong>rotina de segurança e atualização</strong> contínua, não um evento único.</li>
 </ul>
 </div>
 </div>
-<p>WireGuard (<a href="02-wireguard.html" class="quarto-xref"><span>Capítulo 53</span></a>) e IPsec (<a href="03-ipsec.html" class="quarto-xref"><span>Capítulo 54</span></a>) cifram <strong>camada 3</strong>. Mas o provedor tem necessidades que eles não cobrem sozinhos: <strong>transportar um protocolo de roteamento</strong> por uma interface, <strong>estender uma LAN</strong> de um POP a outro (camada 2), dar <strong>acesso remoto</strong> a quem só tem um cliente VPN comum, ou conectar caixas que <strong>não têm IP público</strong>. Este capítulo reúne os túneis que resolvem esses casos — cada um com seu nicho.</p>
-<section id="gre-a-interface-para-transportar-roteamento" class="level2" data-number="55.1">
-<h2 data-number="55.1" class="anchored" data-anchor-id="gre-a-interface-para-transportar-roteamento"><span class="header-section-number">55.1</span> GRE: a interface para transportar roteamento</h2>
-<p>O <strong>GRE</strong> (<em>Generic Routing Encapsulation</em>) encapsula IP dentro de IP e, crucialmente, <strong>cria uma interface</strong> de túnel ponto a ponto. Isso é o que faltava no IPsec policy-based: com uma interface, você roda <strong>OSPF/BGP por cima</strong> (<a href="../v08-roteamento/02-ospf-conceitos-configuracao.html" class="quarto-xref"><span>Capítulo 42</span></a>). O GRE <strong>não cifra</strong> — então o par de produção é <strong>GRE + IPsec</strong>.</p>
-<pre class="routeros"><code># POP-A: interface GRE ponto a ponto
-/interface gre
-add name=gre-ab remote-address=&lt;publico-B&gt; local-address=&lt;publico-A&gt;
-/ip address add address=10.255.1.1/30 interface=gre-ab
-
-# cifrar o GRE com IPsec (o campo ipsec-secret liga os dois)
-/interface gre set gre-ab ipsec-secret="Ch@ve-GRE-2026"</code></pre>
-<p>O <code>ipsec-secret</code> faz o RouterOS montar <strong>automaticamente</strong> a policy IPsec que protege esse GRE — a forma mais limpa de ter “GRE cifrado”. Com a interface <code>gre-ab</code> de pé, o OSPF a trata como qualquer enlace PtP (<code>type=ptp</code>). É o alicerce do <a href="05-interligacao-pops.html" class="quarto-xref"><span>Capítulo 56</span></a>.</p>
+<p>Os capítulos anteriores desenharam e construíram a rede. Este a mantém <strong>segura e atualizada</strong> — em <strong>escala</strong>. Fazer hardening de um roteador você já sabe (Volume 3, <a href="../v03-firewall/07-hardening-completo.html" class="quarto-xref"><span>Capítulo 21</span></a>). O desafio de provedor é outro: <strong>centenas</strong> de equipamentos, muitos em torres remotas, alguns ainda no <strong>v6</strong>, todos precisando de senha forte, serviços fechados e patches de segurança — sem que uma atualização derrube o parque. E, pairando sobre tudo, a <strong>migração v6 → v7</strong>, que reescreveu partes centrais do RouterOS. Este capítulo trata da operação que não aparece no diagrama mas define se o provedor é seguro ou uma bomba-relógio.</p>
+<section id="hardening-em-escala-de-parque" class="level2" data-number="74.1">
+<h2 data-number="74.1" class="anchored" data-anchor-id="hardening-em-escala-de-parque"><span class="header-section-number">74.1</span> Hardening em escala de parque</h2>
+<p>O hardening de um roteador (<a href="../v03-firewall/07-hardening-completo.html" class="quarto-xref"><span>Capítulo 21</span></a>) vira, no parque, um problema de <strong>consistência e automação</strong>:</p>
+<ul>
+<li><strong>Senhas e usuários</strong>: <strong>nunca</strong> a mesma senha em todos (um vazamento abre o parque); usuários <strong>dedicados</strong> por função, <code>admin</code> renomeado/ removido, e credenciais geridas por cofre — aplicadas via provisionamento (<a href="../v12-scripts/03-api-provisionamento.html" class="quarto-xref"><span>Capítulo 62</span></a>), não à mão;</li>
+<li><strong>Serviços</strong>: desligar o que não se usa (<code>/ip service</code>), <code>www</code>/<code>telnet</code> off, tudo restrito por <strong><code>allowed-address</code></strong> à rede de gerência;</li>
+<li><strong>Firewall de gerência</strong>: só o NOC alcança input; o resto <strong>drop</strong> (<a href="../v03-firewall/03-protegendo-o-roteador.html" class="quarto-xref"><span>Capítulo 17</span></a>), padronizado por template;</li>
+<li><strong>Neighbor discovery / MAC-server</strong>: restritos à gerência (não exponha descoberta ao cliente);</li>
+<li><strong>Auditoria</strong>: quem tem acesso, quem mudou o quê (log centralizado,
+<ol class="example" type="1">
+<li>— em escala, você precisa <strong>saber</strong> o estado de segurança do parque, não torcer.</li>
+</ol></li>
+</ul>
+<p>A chave é <strong>padronizar e automatizar</strong>: um template de hardening aplicado por API/script a todos, e um <strong>checklist auditável</strong>. Segurança inconsistente é insegurança — basta <strong>um</strong> roteador esquecido com senha fraca.</p>
 </section>
-<section id="eoip-esticar-a-camada-2-entre-sites" class="level2" data-number="55.2">
-<h2 data-number="55.2" class="anchored" data-anchor-id="eoip-esticar-a-camada-2-entre-sites"><span class="header-section-number">55.2</span> EoIP: esticar a camada 2 entre sites</h2>
-<p>O <strong>EoIP</strong> (<em>Ethernet over IP</em>, proprietário MikroTik) transporta <strong>quadros Ethernet</strong> — camada 2 — dentro de IP. O resultado: dois sites distantes ficam no <strong>mesmo domínio de broadcast</strong>, como se um cabo ligasse as bridges. Útil para levar uma VLAN de gerência a um POP remoto, ou unir dois pontos que precisam de L2 comum.</p>
-<pre class="routeros"><code># EoIP e adição à bridge (os dois lados na mesma bridge = mesma L2)
-/interface eoip
-add name=eoip-ab remote-address=&lt;publico-B&gt; tunnel-id=100 ipsec-secret="Ch@ve-EoIP"
-/interface bridge port add bridge=br-gerencia interface=eoip-ab</code></pre>
+<section id="romon-gerenciar-sem-ip-de-gerência" class="level2" data-number="74.2">
+<h2 data-number="74.2" class="anchored" data-anchor-id="romon-gerenciar-sem-ip-de-gerência"><span class="header-section-number">74.2</span> RoMON: gerenciar sem IP de gerência</h2>
+<p>Muitos equipamentos (rádios em torres, switches) <strong>não têm IP de gerência roteável</strong> — e configurá-lo em todos é trabalhoso e frágil. O <strong>RoMON</strong> (<em>Router Management Overlay Network</em>) resolve: cria uma <strong>rede de gerência em camada 2</strong> sobre os enlaces MikroTik, permitindo alcançar qualquer equipamento RoMON pelo <strong>MAC</strong>, mesmo sem IP. Você entra num roteador de borda e “salta” para os vizinhos RoMON até o rádio na ponta.</p>
+<pre class="routeros"><code># habilitar RoMON só nas interfaces internas/gerência (NUNCA voltado ao cliente)
+/tool romon set enabled=yes id=00:00:00:00:00:01
+/tool romon port add interface=ether-backbone
+/tool romon port set [find default=yes] disabled=yes  # não em todas por padrão</code></pre>
 <div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -870,71 +872,43 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Estender camada 2 é <strong>poderoso e perigoso</strong>. Você une domínios de broadcast: uma tempestade de broadcast, um loop de STP ou um DHCP rogue em um POP <strong>contamina o outro</strong>. Use EoIP com parcimônia, sempre com <strong>STP</strong> ativo, e prefira <strong>rotear</strong> (L3) a <strong>esticar</strong> (L2) sempre que possível. L2 estendido é a última opção, não a primeira.</p>
+<p>RoMON é poderoso — e <strong>perigoso se exposto</strong>. Habilitado numa interface voltada ao cliente, ele deixa qualquer um na rede tentar alcançar seus equipamentos de gerência. Habilite <strong>só</strong> nos enlaces internos/de gerência, use <strong>senha de RoMON</strong>, e trate-o como parte da superfície de ataque de gerência. Poder de alcançar tudo = alvo de quem quer alcançar tudo.</p>
 </div>
 </div>
+<p>RoMON é a base da <strong>gerência fora de banda</strong> (<a href="01-desenho-rede-provedor.html" class="quarto-xref"><span>Capítulo 71</span></a>) no MikroTik: alcança a torre remota mesmo quando o roteamento de produção está instável — salvando a viagem do <a href="03-radio-topologia-rural.html" class="quarto-xref"><span>Capítulo 73</span></a>.</p>
 </section>
-<section id="l2tp-e-sstp-acesso-remoto" class="level2" data-number="55.3">
-<h2 data-number="55.3" class="anchored" data-anchor-id="l2tp-e-sstp-acesso-remoto"><span class="header-section-number">55.3</span> L2TP e SSTP: acesso remoto</h2>
-<p>Para dar <strong>acesso remoto</strong> a um técnico ou a um cliente com cliente VPN padrão (Windows, celular), dois protocolos servem:</p>
+<section id="upgrades-de-routeros-com-método" class="level2" data-number="74.3">
+<h2 data-number="74.3" class="anchored" data-anchor-id="upgrades-de-routeros-com-método"><span class="header-section-number">74.3</span> Upgrades de RouterOS com método</h2>
+<p>Atualizar é obrigatório (patches de segurança) e arriscado (uma versão ruim pode derrubar). Faça com <strong>método</strong>:</p>
 <ul>
-<li><strong>L2TP/IPsec</strong>: L2TP puro <strong>não cifra</strong>; na prática usa-se sempre <strong>L2TP sobre IPsec</strong>. Amplamente suportado por sistemas operacionais, bom para “VPN de acesso” clássica;</li>
-<li><strong>SSTP</strong>: roda sobre <strong>TLS em TCP/443</strong> — logo, <strong>atravessa quase qualquer firewall/proxy</strong> (parece HTTPS). É a escolha quando o técnico está numa rede hostil que bloqueia UDP e portas de VPN. Precisa de <strong>certificado</strong> no servidor.</li>
+<li><strong>Canais</strong>: <code>stable</code> para produção; <strong>nunca</strong> <code>development</code> no parque. <code>long-term</code> para máxima estabilidade onde upgrades são raros;</li>
+<li><strong>Teste antes</strong>: valide a versão nova num equipamento <strong>de laboratório/ não crítico</strong> antes do parque — cada versão tem suas regressões;</li>
+<li><strong>Ordem certa</strong>: atualize primeiro os equipamentos <strong>menos críticos</strong> e de onde você <strong>não perde acesso</strong> se der errado; deixe o core/borda por último, com janela e plano de rollback;</li>
+<li><strong>RouterBOOT/firmware</strong>: lembre de atualizar o <strong>firmware</strong> (<code>/system routerboard upgrade</code>) além do RouterOS, quando aplicável;</li>
+<li><strong>Rollback</strong>: o RouterOS guarda a versão anterior (<code>/system package downgrade</code>) — tenha o caminho de volta pronto <strong>antes</strong> de subir.</li>
 </ul>
-<pre class="routeros"><code># servidor L2TP com IPsec (use-ipsec) e pool para os clientes
-/interface l2tp-server server set enabled=yes use-ipsec=yes ipsec-secret="Ch@ve-L2TP"
-/ppp secret add name=tecnico1 service=l2tp password="senha-forte" profile=default
-
-# servidor SSTP (TCP/443) — exige certificado
-/interface sstp-server server set enabled=yes certificate=cert-sstp port=443</code></pre>
-<p>Note o reuso do que você já sabe: L2TP e SSTP são <strong>serviços PPP</strong> (<a href="../v06-pppoe/02-pppoe-server-profiles-pools.html" class="quarto-xref"><span>Capítulo 34</span></a>) — usam <code>ppp secret</code>/profiles/pools exatamente como o PPPoE, e podem autenticar por <strong>RADIUS</strong> (<a href="../v06-pppoe/03-radius-user-manager-gestao.html" class="quarto-xref"><span>Capítulo 35</span></a>). Acesso remoto é PPPoE “pela internet”.</p>
+<p>Um upgrade de parque é uma <strong>operação planejada</strong> (janela, ordem, rollback, monitoramento), nunca um “atualiza tudo e reza”.</p>
 </section>
-<section id="zerotier-malha-que-atravessa-nat" class="level2" data-number="55.4">
-<h2 data-number="55.4" class="anchored" data-anchor-id="zerotier-malha-que-atravessa-nat"><span class="header-section-number">55.4</span> ZeroTier: malha que atravessa NAT</h2>
-<p>E quando <strong>nenhum</strong> dos lados tem IP público — os dois atrás de CGNAT? Os túneis anteriores precisam de alguém “alcançável” para iniciar. O <strong>ZeroTier</strong> resolve com uma <strong>malha gerenciada na nuvem</strong>: os nós se registram num controlador (ZeroTier Central), que os ajuda a <strong>furar o NAT</strong> dos dois lados (hole punching) e a formar uma rede virtual L2/L3. Ideal para gerência de CPEs e roteadores sem IP público.</p>
-<pre class="routeros"><code># habilitar ZeroTier e juntar-se a uma rede (ID vem do painel ZeroTier)
-/zerotier set zt1 comment="malha de gerencia"
-/zerotier interface add network=&lt;network-id&gt; instance=zt1</code></pre>
-<p>O trade-off: você depende de um <strong>serviço externo</strong> (o controlador na nuvem) e de uma conta ZeroTier. Para gerência, costuma valer; para tráfego crítico de produção, prefira túneis que você controla ponta a ponta.</p>
-</section>
-<section id="escolhendo-entre-eles" class="level2" data-number="55.5">
-<h2 data-number="55.5" class="anchored" data-anchor-id="escolhendo-entre-eles"><span class="header-section-number">55.5</span> Escolhendo entre eles</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Necessidade</th>
-<th>Escolha</th>
-<th>Por quê</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Rodar OSPF/BGP cifrado entre POPs</td>
-<td><strong>GRE + IPsec</strong></td>
-<td>Interface + criptografia</td>
-</tr>
-<tr class="even">
-<td>Esticar VLAN/L2 entre sites</td>
-<td><strong>EoIP (+IPsec)</strong></td>
-<td>Transporta Ethernet</td>
-</tr>
-<tr class="odd">
-<td>Acesso remoto de técnico/cliente</td>
-<td><strong>L2TP/IPsec</strong> ou <strong>SSTP</strong></td>
-<td>Cliente VPN padrão; SSTP fura firewall</td>
-</tr>
-<tr class="even">
-<td>Ambos os lados atrás de CGNAT</td>
-<td><strong>ZeroTier</strong></td>
-<td>Malha na nuvem fura o NAT</td>
-</tr>
-</tbody>
-</table>
+<section id="migração-v6-v7" class="level2" data-number="74.4">
+<h2 data-number="74.4" class="anchored" data-anchor-id="migração-v6-v7"><span class="header-section-number">74.4</span> Migração v6 → v7</h2>
+<p>O <strong>v7</strong> reescreveu partes centrais do RouterOS. Migrar não é só “atualizar” — é <strong>revalidar</strong> o que mudou. As áreas de maior impacto (que você viu ao longo do manual):</p>
+<ul>
+<li><strong>Roteamento</strong>: OSPF (instance/area/<strong>interface-template</strong>,
+<ol start="2" class="example" type="1">
+<li>e BGP (<strong>connection/template</strong>, <a href="../v08-roteamento/04-bgp-conceitos-peering.html" class="quarto-xref"><span>Capítulo 44</span></a>) foram <strong>reescritos</strong> — a config v6 <strong>não</strong> migra 1:1;</li>
+</ol></li>
+<li><strong>Firewall/roteamento</strong>: <strong>routing filters</strong> (<a href="../v08-roteamento/05-bgp-filtros-communities.html" class="quarto-xref"><span>Capítulo 45</span></a>) e a lógica de tabelas/VRF (<a href="../v08-roteamento/06-vrf-boas-praticas-v7.html" class="quarto-xref"><span>Capítulo 46</span></a>) mudaram;</li>
+<li><strong>Wireless</strong>: o pacote <strong>wifi</strong> novo (wave2/ax) convive com o wireless legado — cuidado com qual driver/pacote (<a href="../v05-wireless/06-capsman-wifi-moderno.html" class="quarto-xref"><span>Capítulo 32</span></a>);</li>
+<li><strong>Comportamentos sutis</strong>: defaults, nomes de parâmetros, ordem — o que “funcionava igual” pode ter mudado.</li>
+</ul>
+<p>O método de migração:</p>
+<ol type="1">
+<li><strong>Inventarie</strong> o que usa (OSPF? BGP? que features?) — o esforço é proporcional ao que muda;</li>
+<li><strong>Teste em laboratório</strong> (CHR v7) reproduzindo a config crítica antes de tocar produção;</li>
+<li><strong>Migre por partes</strong>, começando pelo menos crítico, com <strong>backup e rollback</strong> prontos (<a href="../v12-scripts/02-scheduler-netwatch-backups.html" class="quarto-xref"><span>Capítulo 61</span></a>);</li>
+<li><strong>Revalide</strong> cada serviço após migrar (adjacências OSPF, sessões BGP, PPPoE, CGNAT) — não confie, <strong>verifique</strong> (Volume 13);</li>
+<li><strong>Documente</strong> as diferenças encontradas para os próximos equipamentos.</li>
+</ol>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -945,12 +919,12 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Estes túneis preenchem os nichos que WireGuard/IPsec sozinhos não cobrem: <strong>GRE</strong> dá a <strong>interface</strong> para roteamento dinâmico (cifre com IPsec); <strong>EoIP</strong> estende <strong>camada 2</strong> (com o risco de unir domínios de broadcast — use com cuidado); <strong>L2TP/SSTP</strong> dão <strong>acesso remoto</strong> com cliente padrão (SSTP fura firewall em 443); <strong>ZeroTier</strong> conecta quem <strong>não tem IP público</strong>. A regra de escolha é sempre a mesma do <a href="01-panorama-tuneis.html" class="quarto-xref"><span>Capítulo 52</span></a>: <strong>que camada</strong> e <strong>cifra ou não</strong> — e, em todos, respeite o <strong>MTU/MSS</strong>.</p>
+<p>Hardening e atualização de provedor são <strong>operação em escala e contínua</strong>, não um evento: padronize e <strong>automatize</strong> o hardening (senhas únicas, serviços fechados, <code>allowed-address</code>, firewall de gerência) por provisionamento, com auditoria — porque <strong>um</strong> roteador esquecido abre o parque. <strong>RoMON</strong> dá gerência fora de banda (só nos enlaces internos, com senha — poder de alcançar tudo é alvo). Upgrades com <strong>método</strong> (canal stable, teste, ordem do menos crítico ao core, rollback pronto). E a <strong>migração v6 → v7</strong> é <strong>revalidação</strong>, não cópia — OSPF, BGP, filtros e wireless mudaram; teste em lab, migre por partes, verifique cada serviço. Segurança e atualização inconsistentes são insegurança.</p>
 </div>
 </div>
 </section>
-<section id="laboratório" class="level2" data-number="55.6">
-<h2 data-number="55.6" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">55.6</span> 🧪 Laboratório</h2>
+<section id="laboratório" class="level2" data-number="74.5">
+<h2 data-number="74.5" class="anchored" data-anchor-id="laboratório"><span class="header-section-number">74.5</span> 🧪 Laboratório</h2>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -961,41 +935,42 @@ Aviso
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Dois CHRs (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>) como POPs (<strong>lab-a</strong>, <strong>lab-b</strong>) com IPs “públicos” alcançáveis e uma LAN interna cada. Um terceiro CHR <strong>lab-tec</strong> simula o “técnico remoto” para o acesso L2TP/SSTP. O foco é GRE+IPsec (transportar roteamento) e um serviço de acesso remoto.</p>
+<p>CHRs (<a href="../v01-primeiros-passos/05-laboratorio-chr.html" class="quarto-xref"><span>Capítulo 5</span></a>) representando um mini-parque: <strong>lab-borda</strong>, <strong>lab-dist</strong>, <strong>lab-torre</strong> (sem IP de gerência, para o RoMON). Um <strong>lab-noc</strong> simulando a estação de gerência. O foco é hardening padronizado, RoMON e um ensaio de upgrade/migração.</p>
 </div>
 </div>
-<section id="comandos-passo-a-passo" class="level3" data-number="55.6.1">
-<h3 data-number="55.6.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">55.6.1</span> Comandos passo a passo</h3>
-<p><strong>Passo 1 — GRE cifrado entre os POPs.</strong> No lab-a (e espelho no lab-b):</p>
-<pre class="routeros"><code>/interface gre add name=gre-ab remote-address=&lt;publico-b&gt; ipsec-secret="lab-gre"
-/ip address add address=10.255.1.1/30 interface=gre-ab</code></pre>
-<p>No lab-b: <code>10.255.1.2/30</code> e <code>remote-address=&lt;publico-a&gt;</code>.</p>
-<p><strong>Passo 2 — OSPF sobre o GRE.</strong> Rode OSPF (<a href="../v08-roteamento/02-ospf-conceitos-configuracao.html" class="quarto-xref"><span>Capítulo 42</span></a>) na interface <code>gre-ab</code> dos dois lados (<code>type=ptp</code>) e confirme a adjacência <code>Full</code> — o roteamento dinâmico viajando cifrado.</p>
-<pre class="routeros"><code>/routing ospf interface-template add interfaces=gre-ab area=backbone type=ptp
-/routing ospf neighbor print</code></pre>
-<p><strong>Passo 3 — prove que está cifrado.</strong> Verifique que o IPsec subiu automaticamente com o GRE:</p>
-<pre class="routeros"><code>/ip ipsec active-peers print</code></pre>
-<p><strong>Passo 4 — acesso remoto SSTP.</strong> No lab-a, habilite o SSTP-server (com um certificado autoassinado para o lab) e crie um usuário; no lab-tec, conecte como cliente SSTP e alcance a LAN do POP.</p>
-<pre class="routeros"><code>/interface sstp-server server set enabled=yes certificate=cert-lab
-/ppp secret add name=tecnico service=sstp password="lab-forte"</code></pre>
-<p><strong>Passo 5 — MSS clamp.</strong> Aplique o clamp (<a href="01-panorama-tuneis.html" class="quarto-xref"><span>Capítulo 52</span></a>) nas interfaces de túnel e teste uma transferência maior entre as LANs.</p>
+<section id="comandos-passo-a-passo" class="level3" data-number="74.5.1">
+<h3 data-number="74.5.1" class="anchored" data-anchor-id="comandos-passo-a-passo"><span class="header-section-number">74.5.1</span> Comandos passo a passo</h3>
+<p><strong>Passo 1 — template de hardening.</strong> Escreva um script (idempotente, <a href="../v12-scripts/01-linguagem-script.html" class="quarto-xref"><span>Capítulo 60</span></a>) que aplica o hardening padrão: desliga serviços não usados, restringe <code>/ip service</code> por <code>allowed-address</code>, garante o firewall de gerência. Aplique nos três roteadores.</p>
+<pre class="routeros"><code>/ip service set telnet disabled=yes
+/ip service set www disabled=yes
+/ip service set winbox address=10.99.0.0/24
+/ip service set ssh address=10.99.0.0/24</code></pre>
+<p><strong>Passo 2 — RoMON até a torre.</strong> Habilite RoMON <strong>só</strong> nos enlaces internos e alcance o lab-torre (sem IP) pelo MAC, a partir do lab-borda:</p>
+<pre class="routeros"><code>/tool romon set enabled=yes
+/tool romon port add interface=&lt;enlace-interno&gt;
+# do lab-noc/lab-borda: descobrir e conectar
+/tool romon discover</code></pre>
+<p><strong>Passo 3 — prove a gerência OOB.</strong> Remova o IP de gerência do lab-torre e confirme que você <strong>ainda</strong> o alcança por RoMON — a gerência fora de banda em ação.</p>
+<p><strong>Passo 4 — ensaio de upgrade.</strong> Num equipamento não crítico, faça um upgrade de RouterOS pelo canal <code>stable</code>, confirme o funcionamento e <strong>pratique o rollback</strong> (<code>/system package downgrade</code>) — tenha o caminho de volta.</p>
+<p><strong>Passo 5 — ensaio de migração.</strong> Pegue uma config v6 de OSPF/BGP (conceitual) e reescreva-a no formato v7 (instance/area/template, connection/template) num CHR de lab; valide as adjacências/sessões antes de imaginar isso em produção.</p>
+<p><strong>Passo 6 — auditoria.</strong> Verifique, nos três roteadores, que o hardening está <strong>consistente</strong> (mesmo conjunto de serviços fechados, <code>allowed-address</code> aplicado) — a consistência é o ponto.</p>
 </section>
-<section id="verificação" class="level3" data-number="55.6.2">
-<h3 data-number="55.6.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">55.6.2</span> Verificação</h3>
+<section id="verificação" class="level3" data-number="74.5.2">
+<h3 data-number="74.5.2" class="anchored" data-anchor-id="verificação"><span class="header-section-number">74.5.2</span> Verificação</h3>
 <ol type="1">
-<li>GRE de pé, com <strong>IPsec ativo</strong> (cifrado) — <code>active-peers</code> mostra a SA;</li>
-<li>OSPF forma adjacência <code>Full</code> <strong>sobre</strong> o GRE (roteamento dinâmico cifrado);</li>
-<li>O técnico remoto conecta por SSTP e alcança a LAN do POP;</li>
-<li>Com MSS clamp, transferências grandes não travam.</li>
+<li>O template de hardening está aplicado e <strong>consistente</strong> nos três;</li>
+<li>RoMON alcança a torre <strong>sem IP de gerência</strong>, só nos enlaces internos;</li>
+<li>Você executou um upgrade e <strong>praticou o rollback</strong>;</li>
+<li>Reescreveu uma config v6 → v7 e validou os serviços.</li>
 </ol>
 </section>
-<section id="desafios" class="level3" data-number="55.6.3">
-<h3 data-number="55.6.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">55.6.3</span> Desafios</h3>
+<section id="desafios" class="level3" data-number="74.5.3">
+<h3 data-number="74.5.3" class="anchored" data-anchor-id="desafios"><span class="header-section-number">74.5.3</span> Desafios</h3>
 <ol type="1">
-<li>Você montou o GRE e o OSPF formou adjacência, mas quer garantir que ninguém no caminho leia o tráfego. Como confirma que o GRE está <strong>realmente</strong> cifrado, e o que aconteceria sem o <code>ipsec-secret</code>?</li>
-<li>Um técnico esticou por <strong>EoIP</strong> a VLAN de gerência de dois POPs e, dias depois, um loop em um POP derrubou a gerência <strong>dos dois</strong>. Explique o mecanismo e duas medidas que teriam contido o estrago.</li>
-<li>Um cliente corporativo em viagem precisa de VPN, mas a rede do hotel bloqueia UDP e portas de VPN — só deixa passar navegação web. Qual protocolo deste capítulo funciona, e por quê?</li>
-<li>Você precisa gerenciar 200 CPEs, <strong>todos</strong> atrás de CGNAT, sem IP público em nenhum. Qual solução do capítulo se aplica, qual é o trade-off que você aceita, e por que os túneis “clássicos” não servem aqui?</li>
+<li>Um provedor usa a <strong>mesma senha de admin</strong> em todos os 300 roteadores “para facilitar”. Explique o risco concreto e descreva como migrar para senhas únicas <strong>sem</strong> perder acesso durante a transição.</li>
+<li>Você habilitou RoMON em <strong>todas</strong> as interfaces, inclusive as voltadas ao cliente. Qual é o risco, e qual é a configuração correta?</li>
+<li>Um upgrade “atualiza tudo de uma vez” derrubou metade do parque porque a versão nova tinha uma regressão. Descreva o método que teria evitado o desastre — canal, teste, ordem e rollback.</li>
+<li>Ao migrar um concentrador de v6 para v7, as sessões BGP e as adjacências OSPF “sumiram” mesmo com a config aparentemente copiada. Por quê, e qual é o procedimento correto de migração?</li>
 </ol>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
@@ -1009,33 +984,33 @@ Aviso
 </div>
 <div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p><strong>1.</strong> Confirme com <code>/ip ipsec active-peers print</code> e <code>installed-sa</code> — se há SA ativa para os endpoints do GRE e os contadores sobem, o tráfego vai cifrado. <strong>Sem</strong> o <code>ipsec-secret</code>, o GRE transporta tudo <strong>em claro</strong>: qualquer um no caminho (a operadora de trânsito, um atacante no meio) lê o conteúdo, incluindo os pacotes OSPF. GRE puro <strong>não</strong> protege nada.</p>
-<p><strong>2.</strong> EoIP uniu os <strong>domínios de broadcast</strong> dos dois POPs; um loop de camada 2 num POP gera tempestade de broadcast que atravessa o túnel e satura a gerência <strong>do outro</strong> também. Contenção: (a) <strong>STP</strong> ativo na bridge (detecta e bloqueia o loop); (b) limitar/segmentar o que trafega no L2 estendido (ou, melhor, <strong>rotear</strong> em vez de esticar). L2 estendido propaga falhas — por isso é a última opção.</p>
-<p><strong>3.</strong> <strong>SSTP</strong>: roda sobre <strong>TLS em TCP/443</strong>, indistinguível de HTTPS. Como o hotel libera navegação web (443), o SSTP passa onde L2TP/IPsec (UDP 500/4500) e WireGuard (UDP) são bloqueados. É a razão de existir do SSTP: atravessar firewalls restritivos.</p>
-<p><strong>4.</strong> <strong>ZeroTier</strong>: forma uma malha gerenciada na nuvem que <strong>fura o NAT</strong> dos dois lados via hole punching, então funciona mesmo com todos os CPEs atrás de CGNAT sem IP público. Trade-off aceito: <strong>dependência de um serviço externo</strong> (o controlador ZeroTier) e de uma conta. Os túneis clássicos (WireGuard peer fixo, IPsec, GRE, SSTP) precisam que <strong>um</strong> lado seja alcançável de fora — o que não existe quando ambos estão atrás de CGNAT.</p>
+<p><strong>1.</strong> Risco: <strong>uma</strong> credencial vazada (ou um ex-funcionário) abre <strong>todos</strong> os 300 roteadores — comprometimento total do parque num só segredo. Migração sem perder acesso: use <strong>provisionamento</strong> (<a href="../v12-scripts/03-api-provisionamento.html" class="quarto-xref"><span>Capítulo 62</span></a>) para, em lote, <strong>adicionar</strong> um novo usuário com senha única por equipamento (de um cofre), <strong>validar</strong> o acesso pelo novo usuário, e só então <strong>remover/alterar</strong> a credencial antiga. Nunca troque a senha atual antes de confirmar o novo acesso — senão você se tranca para fora.</p>
+<p><strong>2.</strong> RoMON em interface voltada ao <strong>cliente</strong> deixa qualquer um na rede do assinante tentar <strong>descobrir e alcançar</strong> seus equipamentos de gerência (camada 2) — uma porta de entrada gravíssima. Correto: habilitar RoMON <strong>só</strong> nos enlaces <strong>internos/de gerência</strong> (<code>/tool romon port</code> seletivo, com o default desabilitado), proteger com <strong>senha de RoMON</strong> e tratá-lo como superfície de gerência restrita.</p>
+<p><strong>3.</strong> (a) <strong>Canal</strong>: usar <code>stable</code> (nunca <code>development</code>). (b) <strong>Teste</strong>: validar a versão nova num equipamento <strong>de lab/não crítico</strong> antes do parque — teria revelado a regressão. (c) <strong>Ordem</strong>: atualizar do <strong>menos crítico</strong> ao core, de onde você não perde acesso se falhar; nunca “tudo de uma vez”. (d) <strong>Rollback</strong>: ter o <code>downgrade</code> pronto e uma janela de manutenção. Assim, a regressão apareceria no teste (ou no primeiro lote pequeno), não em metade do parque.</p>
+<p><strong>4.</strong> No <strong>v7</strong>, OSPF e BGP foram <strong>reescritos</strong> — a config v6 (com <code>/routing ospf instance</code> antigo, <code>/routing bgp instance</code>) <strong>não migra 1:1</strong> para o novo formato (interface-template, connection/template). Uma cópia literal deixa serviços <strong>sem configuração válida</strong> no novo modelo. Procedimento correto: <strong>reescrever</strong> a config no formato v7, <strong>testá-la em lab</strong> (CHR v7) antes, migrar por partes com <strong>backup/ rollback</strong>, e <strong>revalidar</strong> cada serviço (adjacências, sessões) após a migração. Migração v6→v7 é revalidação, não cópia.</p>
 </div>
 </div>
 </div>
 </section>
 </section>
-<section id="resumo" class="level2" data-number="55.7">
-<h2 data-number="55.7" class="anchored" data-anchor-id="resumo"><span class="header-section-number">55.7</span> Resumo</h2>
+<section id="resumo" class="level2" data-number="74.6">
+<h2 data-number="74.6" class="anchored" data-anchor-id="resumo"><span class="header-section-number">74.6</span> Resumo</h2>
 <ul>
-<li><strong>GRE</strong> cria <strong>interface</strong> para roteamento dinâmico entre POPs; <strong>não cifra</strong> — use <strong>GRE + IPsec</strong> (<code>ipsec-secret</code>), o desenho recomendado;</li>
-<li><strong>EoIP</strong> estende <strong>camada 2</strong> (mesmo domínio de broadcast) — poderoso e <strong>perigoso</strong>: STP obrigatório, prefira rotear a esticar;</li>
-<li><strong>L2TP/IPsec</strong> e <strong>SSTP</strong> dão <strong>acesso remoto</strong> com cliente VPN padrão (reusam PPP/RADIUS); <strong>SSTP</strong> em TCP/443 <strong>fura firewalls</strong>;</li>
-<li><strong>ZeroTier</strong> conecta caixas <strong>sem IP público</strong> (ambos atrás de CGNAT), ao custo de depender de um controlador na nuvem;</li>
-<li>Escolha por camada + criptografia, e <strong>respeite o MTU/MSS</strong> em todos.</li>
+<li>Hardening de provedor é <strong>escala e consistência</strong>: senhas <strong>únicas</strong>, serviços fechados, <code>allowed-address</code>, firewall de gerência — <strong>automatizado</strong> (provisionamento) e <strong>auditável</strong>; um roteador esquecido abre o parque;</li>
+<li><strong>RoMON</strong> dá gerência <strong>sem IP</strong> (camada 2 sobre os enlaces MikroTik) — só nos enlaces <strong>internos</strong>, com senha (base da OOB, <a href="01-desenho-rede-provedor.html" class="quarto-xref"><span>Capítulo 71</span></a>);</li>
+<li><strong>Upgrades com método</strong>: canal <code>stable</code>, <strong>teste</strong> antes, <strong>ordem</strong> do menos crítico ao core, <strong>rollback</strong> pronto — nunca “tudo de uma vez”;</li>
+<li><strong>Migração v6 → v7</strong> é <strong>revalidação</strong>: OSPF, BGP, filtros e wireless <strong>mudaram</strong> — inventarie, teste em lab, migre por partes, <strong>verifique</strong> cada serviço;</li>
+<li>Segurança e atualização são <strong>contínuas</strong>, não um evento único.</li>
 </ul>
-<p>Com o arsenal completo de túneis, o volume fecha aplicando tudo ao problema real do provedor: <strong>interligar POPs</strong> de forma resiliente e cifrada, com roteamento dinâmico por cima. É o <a href="05-interligacao-pops.html" class="quarto-xref"><span>Capítulo 56</span></a>.</p>
+<p>Chegamos ao fim da construção: rede desenhada, fibra e rádio montados, parque seguro e atualizado. Falta <strong>amarrar tudo</strong> num único fio — do trânsito ao roteador do cliente. O <a href="05-estudo-de-caso-integrador.html" class="quarto-xref"><span>Capítulo 75</span></a> é o estudo de caso integrador que fecha o manual.</p>
 </section>
 <section id="bibliografia-do-capítulo" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="bibliografia-do-capítulo">Bibliografia do capítulo</h2>
 <ul>
-<li>Documentação oficial: <em>GRE, EoIP, L2TP, SSTP, ZeroTier</em> do RouterOS <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
-<li>Encapsulamento L2/L3 e VPN de acesso: <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
-<li>Túneis no v7 na prática: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
-<li>Interligação e acesso remoto em provedores: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
+<li>Documentação oficial: <em>RoMON</em>, <em>Upgrading</em>, <em>Migração v6→v7</em> do RouterOS <span class="citation" data-cites="mikrotik-docs">(<a href="../../referencias.html#ref-mikrotik-docs" role="doc-biblioref">MikroTik, 2026</a>)</span>;</li>
+<li>Operação segura e gestão de mudança: <span class="citation" data-cites="tanenbaum-redes">(<a href="../../referencias.html#ref-tanenbaum-redes" role="doc-biblioref">Tanenbaum; Feamster; Wetherall, 2021</a>)</span>;</li>
+<li>Hardening e migração no v7: <span class="citation" data-cites="discher-rosv7">(<a href="../../referencias.html#ref-discher-rosv7" role="doc-biblioref">Discher, 2016</a>)</span>;</li>
+<li>Operação de parque em provedores: <span class="citation" data-cites="burgess-mikrotik">(<a href="../../referencias.html#ref-burgess-mikrotik" role="doc-biblioref">Burgess, 2011</a>)</span>.</li>
 </ul>
 
 
@@ -1458,13 +1433,13 @@ TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Compu
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../../volumes/v10-tuneis-vpn/03-ipsec.html" class="pagination-link" aria-label="IPsec">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">54</span>&nbsp; <span class="chapter-title">IPsec</span></span>
+      <a href="../../volumes/v15-operacao-isp/03-radio-topologia-rural.html" class="pagination-link" aria-label="Topologia rádio rural completa">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">73</span>&nbsp; <span class="chapter-title">Topologia rádio rural completa</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../../volumes/v10-tuneis-vpn/05-interligacao-pops.html" class="pagination-link" aria-label="Interligação de POPs por túnel">
-        <span class="nav-page-text"><span class="chapter-number">56</span>&nbsp; <span class="chapter-title">Interligação de POPs por túnel</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../volumes/v15-operacao-isp/05-estudo-de-caso-integrador.html" class="pagination-link" aria-label="Estudo de caso integrador">
+        <span class="nav-page-text"><span class="chapter-number">75</span>&nbsp; <span class="chapter-title">Estudo de caso integrador</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
@@ -1473,4 +1448,4 @@ TANENBAUM, Andrew S.; FEAMSTER, Nick; WETHERALL, David J. <strong>Redes de Compu
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v10-tuneis-vpn/04-gre-eoip-l2tp-sstp-zerotier.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/edit/main/volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/VitorMattosDev/manual-mikrotik/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div></div></footer></body></html>
