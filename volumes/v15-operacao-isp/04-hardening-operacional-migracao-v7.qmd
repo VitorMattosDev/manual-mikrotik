@@ -1,7 +1,285 @@
-# Hardening operacional e migração v6 para v7
+# Hardening operacional e migração v6 para v7 {#sec-hardening-operacional}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Aplicar **hardening operacional em escala de parque**: senhas,
+  usuários, serviços, `allowed-address` e upgrades — não em um roteador,
+  em **centenas**;
+- Usar **RoMON** para alcançar e gerenciar equipamentos **sem IP de
+  gerência direto**, com segurança;
+- Planejar **upgrades de RouterOS** com método (canais, teste, rollback,
+  ordem) sem derrubar o parque;
+- Conduzir a **migração v6 → v7** com segurança: o que muda (OSPF, BGP,
+  wireless, firewall), o que testar, e como reverter;
+- Estabelecer uma **rotina de segurança e atualização** contínua, não um
+  evento único.
 :::
+
+Os capítulos anteriores desenharam e construíram a rede. Este a mantém
+**segura e atualizada** — em **escala**. Fazer hardening de um roteador
+você já sabe (Volume 3, @sec-hardening). O desafio de provedor é outro:
+**centenas** de equipamentos, muitos em torres remotas, alguns ainda no
+**v6**, todos precisando de senha forte, serviços fechados e patches de
+segurança — sem que uma atualização derrube o parque. E, pairando sobre
+tudo, a **migração v6 → v7**, que reescreveu partes centrais do RouterOS.
+Este capítulo trata da operação que não aparece no diagrama mas define se
+o provedor é seguro ou uma bomba-relógio.
+
+## Hardening em escala de parque
+
+O hardening de um roteador (@sec-hardening) vira, no parque, um problema
+de **consistência e automação**:
+
+- **Senhas e usuários**: **nunca** a mesma senha em todos (um vazamento
+  abre o parque); usuários **dedicados** por função, `admin` renomeado/
+  removido, e credenciais geridas por cofre — aplicadas via
+  provisionamento (@sec-api-provisionamento), não à mão;
+- **Serviços**: desligar o que não se usa (`/ip service`), `www`/`telnet`
+  off, tudo restrito por **`allowed-address`** à rede de gerência;
+- **Firewall de gerência**: só o NOC alcança input; o resto **drop**
+  (@sec-protegendo-roteador), padronizado por template;
+- **Neighbor discovery / MAC-server**: restritos à gerência (não exponha
+  descoberta ao cliente);
+- **Auditoria**: quem tem acesso, quem mudou o quê (log centralizado,
+  @sec-logs) — em escala, você precisa **saber** o estado de segurança do
+  parque, não torcer.
+
+A chave é **padronizar e automatizar**: um template de hardening aplicado
+por API/script a todos, e um **checklist auditável**. Segurança
+inconsistente é insegurança — basta **um** roteador esquecido com senha
+fraca.
+
+## RoMON: gerenciar sem IP de gerência
+
+Muitos equipamentos (rádios em torres, switches) **não têm IP de gerência
+roteável** — e configurá-lo em todos é trabalhoso e frágil. O **RoMON**
+(*Router Management Overlay Network*) resolve: cria uma **rede de gerência
+em camada 2** sobre os enlaces MikroTik, permitindo alcançar qualquer
+equipamento RoMON pelo **MAC**, mesmo sem IP. Você entra num roteador de
+borda e "salta" para os vizinhos RoMON até o rádio na ponta.
+
+```routeros
+# habilitar RoMON só nas interfaces internas/gerência (NUNCA voltado ao cliente)
+/tool romon set enabled=yes id=00:00:00:00:00:01
+/tool romon port add interface=ether-backbone
+/tool romon port set [find default=yes] disabled=yes  # não em todas por padrão
+```
+
+::: {.callout-warning}
+RoMON é poderoso — e **perigoso se exposto**. Habilitado numa interface
+voltada ao cliente, ele deixa qualquer um na rede tentar alcançar seus
+equipamentos de gerência. Habilite **só** nos enlaces internos/de
+gerência, use **senha de RoMON**, e trate-o como parte da superfície de
+ataque de gerência. Poder de alcançar tudo = alvo de quem quer alcançar
+tudo.
+:::
+
+RoMON é a base da **gerência fora de banda** (@sec-desenho-rede) no
+MikroTik: alcança a torre remota mesmo quando o roteamento de produção
+está instável — salvando a viagem do @sec-radio-rural.
+
+## Upgrades de RouterOS com método
+
+Atualizar é obrigatório (patches de segurança) e arriscado (uma versão
+ruim pode derrubar). Faça com **método**:
+
+- **Canais**: `stable` para produção; **nunca** `development` no parque.
+  `long-term` para máxima estabilidade onde upgrades são raros;
+- **Teste antes**: valide a versão nova num equipamento **de laboratório/
+  não crítico** antes do parque — cada versão tem suas regressões;
+- **Ordem certa**: atualize primeiro os equipamentos **menos críticos** e
+  de onde você **não perde acesso** se der errado; deixe o core/borda por
+  último, com janela e plano de rollback;
+- **RouterBOOT/firmware**: lembre de atualizar o **firmware** (`/system
+  routerboard upgrade`) além do RouterOS, quando aplicável;
+- **Rollback**: o RouterOS guarda a versão anterior (`/system package
+  downgrade`) — tenha o caminho de volta pronto **antes** de subir.
+
+Um upgrade de parque é uma **operação planejada** (janela, ordem,
+rollback, monitoramento), nunca um "atualiza tudo e reza".
+
+## Migração v6 → v7
+
+O **v7** reescreveu partes centrais do RouterOS. Migrar não é só
+"atualizar" — é **revalidar** o que mudou. As áreas de maior impacto (que
+você viu ao longo do manual):
+
+- **Roteamento**: OSPF (instance/area/**interface-template**,
+  @sec-ospf-basico) e BGP (**connection/template**, @sec-bgp-peering)
+  foram **reescritos** — a config v6 **não** migra 1:1;
+- **Firewall/roteamento**: **routing filters** (@sec-bgp-filtros) e a
+  lógica de tabelas/VRF (@sec-vrf) mudaram;
+- **Wireless**: o pacote **wifi** novo (wave2/ax) convive com o wireless
+  legado — cuidado com qual driver/pacote (@sec-capsman);
+- **Comportamentos sutis**: defaults, nomes de parâmetros, ordem — o que
+  "funcionava igual" pode ter mudado.
+
+O método de migração:
+
+1. **Inventarie** o que usa (OSPF? BGP? que features?) — o esforço é
+   proporcional ao que muda;
+2. **Teste em laboratório** (CHR v7) reproduzindo a config crítica antes
+   de tocar produção;
+3. **Migre por partes**, começando pelo menos crítico, com **backup e
+   rollback** prontos (@sec-scheduler);
+4. **Revalide** cada serviço após migrar (adjacências OSPF, sessões BGP,
+   PPPoE, CGNAT) — não confie, **verifique** (Volume 13);
+5. **Documente** as diferenças encontradas para os próximos equipamentos.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Hardening e atualização de provedor são **operação em escala e
+contínua**, não um evento: padronize e **automatize** o hardening
+(senhas únicas, serviços fechados, `allowed-address`, firewall de
+gerência) por provisionamento, com auditoria — porque **um** roteador
+esquecido abre o parque. **RoMON** dá gerência fora de banda (só nos
+enlaces internos, com senha — poder de alcançar tudo é alvo). Upgrades
+com **método** (canal stable, teste, ordem do menos crítico ao core,
+rollback pronto). E a **migração v6 → v7** é **revalidação**, não cópia —
+OSPF, BGP, filtros e wireless mudaram; teste em lab, migre por partes,
+verifique cada serviço. Segurança e atualização inconsistentes são
+insegurança.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+CHRs (@sec-lab-chr) representando um mini-parque: **lab-borda**,
+**lab-dist**, **lab-torre** (sem IP de gerência, para o RoMON). Um
+**lab-noc** simulando a estação de gerência. O foco é hardening
+padronizado, RoMON e um ensaio de upgrade/migração.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — template de hardening.** Escreva um script (idempotente,
+@sec-linguagem-script) que aplica o hardening padrão: desliga serviços
+não usados, restringe `/ip service` por `allowed-address`, garante o
+firewall de gerência. Aplique nos três roteadores.
+
+```routeros
+/ip service set telnet disabled=yes
+/ip service set www disabled=yes
+/ip service set winbox address=10.99.0.0/24
+/ip service set ssh address=10.99.0.0/24
+```
+
+**Passo 2 — RoMON até a torre.** Habilite RoMON **só** nos enlaces
+internos e alcance o lab-torre (sem IP) pelo MAC, a partir do lab-borda:
+
+```routeros
+/tool romon set enabled=yes
+/tool romon port add interface=<enlace-interno>
+# do lab-noc/lab-borda: descobrir e conectar
+/tool romon discover
+```
+
+**Passo 3 — prove a gerência OOB.** Remova o IP de gerência do lab-torre
+e confirme que você **ainda** o alcança por RoMON — a gerência fora de
+banda em ação.
+
+**Passo 4 — ensaio de upgrade.** Num equipamento não crítico, faça um
+upgrade de RouterOS pelo canal `stable`, confirme o funcionamento e
+**pratique o rollback** (`/system package downgrade`) — tenha o caminho
+de volta.
+
+**Passo 5 — ensaio de migração.** Pegue uma config v6 de OSPF/BGP
+(conceitual) e reescreva-a no formato v7 (instance/area/template,
+connection/template) num CHR de lab; valide as adjacências/sessões antes
+de imaginar isso em produção.
+
+**Passo 6 — auditoria.** Verifique, nos três roteadores, que o hardening
+está **consistente** (mesmo conjunto de serviços fechados,
+`allowed-address` aplicado) — a consistência é o ponto.
+
+### Verificação
+
+1. O template de hardening está aplicado e **consistente** nos três;
+2. RoMON alcança a torre **sem IP de gerência**, só nos enlaces internos;
+3. Você executou um upgrade e **praticou o rollback**;
+4. Reescreveu uma config v6 → v7 e validou os serviços.
+
+### Desafios
+
+1. Um provedor usa a **mesma senha de admin** em todos os 300 roteadores
+   "para facilitar". Explique o risco concreto e descreva como migrar
+   para senhas únicas **sem** perder acesso durante a transição.
+2. Você habilitou RoMON em **todas** as interfaces, inclusive as voltadas
+   ao cliente. Qual é o risco, e qual é a configuração correta?
+3. Um upgrade "atualiza tudo de uma vez" derrubou metade do parque porque
+   a versão nova tinha uma regressão. Descreva o método que teria evitado
+   o desastre — canal, teste, ordem e rollback.
+4. Ao migrar um concentrador de v6 para v7, as sessões BGP e as
+   adjacências OSPF "sumiram" mesmo com a config aparentemente copiada.
+   Por quê, e qual é o procedimento correto de migração?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Risco: **uma** credencial vazada (ou um ex-funcionário) abre
+**todos** os 300 roteadores — comprometimento total do parque num só
+segredo. Migração sem perder acesso: use **provisionamento**
+(@sec-api-provisionamento) para, em lote, **adicionar** um novo usuário
+com senha única por equipamento (de um cofre), **validar** o acesso pelo
+novo usuário, e só então **remover/alterar** a credencial antiga. Nunca
+troque a senha atual antes de confirmar o novo acesso — senão você se
+tranca para fora.
+
+**2.** RoMON em interface voltada ao **cliente** deixa qualquer um na
+rede do assinante tentar **descobrir e alcançar** seus equipamentos de
+gerência (camada 2) — uma porta de entrada gravíssima. Correto: habilitar
+RoMON **só** nos enlaces **internos/de gerência** (`/tool romon port`
+seletivo, com o default desabilitado), proteger com **senha de RoMON** e
+tratá-lo como superfície de gerência restrita.
+
+**3.** (a) **Canal**: usar `stable` (nunca `development`). (b) **Teste**:
+validar a versão nova num equipamento **de lab/não crítico** antes do
+parque — teria revelado a regressão. (c) **Ordem**: atualizar do **menos
+crítico** ao core, de onde você não perde acesso se falhar; nunca "tudo
+de uma vez". (d) **Rollback**: ter o `downgrade` pronto e uma janela de
+manutenção. Assim, a regressão apareceria no teste (ou no primeiro lote
+pequeno), não em metade do parque.
+
+**4.** No **v7**, OSPF e BGP foram **reescritos** — a config v6 (com
+`/routing ospf instance` antigo, `/routing bgp instance`) **não migra
+1:1** para o novo formato (interface-template, connection/template). Uma
+cópia literal deixa serviços **sem configuração válida** no novo modelo.
+Procedimento correto: **reescrever** a config no formato v7,
+**testá-la em lab** (CHR v7) antes, migrar por partes com **backup/
+rollback**, e **revalidar** cada serviço (adjacências, sessões) após a
+migração. Migração v6→v7 é revalidação, não cópia.
+:::
+
+## Resumo
+
+- Hardening de provedor é **escala e consistência**: senhas **únicas**,
+  serviços fechados, `allowed-address`, firewall de gerência —
+  **automatizado** (provisionamento) e **auditável**; um roteador
+  esquecido abre o parque;
+- **RoMON** dá gerência **sem IP** (camada 2 sobre os enlaces MikroTik) —
+  só nos enlaces **internos**, com senha (base da OOB, @sec-desenho-rede);
+- **Upgrades com método**: canal `stable`, **teste** antes, **ordem** do
+  menos crítico ao core, **rollback** pronto — nunca "tudo de uma vez";
+- **Migração v6 → v7** é **revalidação**: OSPF, BGP, filtros e wireless
+  **mudaram** — inventarie, teste em lab, migre por partes, **verifique**
+  cada serviço;
+- Segurança e atualização são **contínuas**, não um evento único.
+
+Chegamos ao fim da construção: rede desenhada, fibra e rádio montados,
+parque seguro e atualizado. Falta **amarrar tudo** num único fio — do
+trânsito ao roteador do cliente. O @sec-estudo-caso é o estudo de caso
+integrador que fecha o manual.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *RoMON*, *Upgrading*, *Migração v6→v7* do
+  RouterOS [@mikrotik-docs];
+- Operação segura e gestão de mudança: [@tanenbaum-redes];
+- Hardening e migração no v7: [@discher-rosv7];
+- Operação de parque em provedores: [@burgess-mikrotik].
