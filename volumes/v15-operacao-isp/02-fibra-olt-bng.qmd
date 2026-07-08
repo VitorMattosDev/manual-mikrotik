@@ -1,7 +1,267 @@
-# Topologia fibra: OLT e BNG
+# Topologia fibra: OLT e BNG {#sec-fibra-bng}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Entender a topologia **GPON/EPON**: OLT, splitters, ONU/ONT e como o
+  MikroTik entra como **BNG** (não como OLT);
+- Desenhar as **VLANs de serviço** (por serviço ou por assinante) entre a
+  OLT e o BNG e o modelo **PPPoE sobre PON**;
+- Configurar o MikroTik como **concentrador (BNG)** da rede de fibra,
+  integrando PPPoE (@sec-pppoe-server), RADIUS, CGNAT e QoS;
+- Posicionar a fibra na camada de **acesso/distribuição** do desenho
+  (@sec-desenho-rede) e dimensionar o BNG;
+- Reconhecer as decisões-chave: VLAN por serviço vs. por cliente, onde
+  fazer NAT/QoS, e a divisão de papéis OLT × MikroTik.
 :::
+
+O @sec-desenho-rede deu a planta baixa; este capítulo constrói a
+**topologia de fibra** — hoje a principal tecnologia de acesso de
+provedores. Um ponto que confunde iniciantes: o **MikroTik não é a OLT**.
+A OLT (equipamento GPON dedicado — Huawei, ZTE, Fiberhome, Datacom) faz a
+camada óptica; o MikroTik entra como o **BNG** (*Broadband Network
+Gateway*) — o cérebro que **autentica, endereça, roteia e limita** os
+assinantes que chegam pela fibra. Entender essa divisão é o começo.
+
+## A topologia GPON e onde o MikroTik entra
+
+Na fibra **GPON** (a mais comum), o caminho do sinal é:
+
+- **OLT** (*Optical Line Terminal*): no POP, concentra as portas ópticas;
+  cada porta PON serve dezenas de clientes via splitter;
+- **Splitter**: divide o sinal óptico de uma fibra em várias (1:8, 1:16,
+  1:32...) — passivo, sem energia;
+- **ONU/ONT** (*Optical Network Unit/Terminal*): na casa do cliente,
+  converte óptico ↔ Ethernet;
+- **BNG (MikroTik)**: atrás da OLT, recebe o tráfego dos assinantes (em
+  VLANs) e faz **autenticação, IP, NAT, QoS, roteamento**.
+
+```{.tikz}
+%%| filename: fig-fibra-topo
+%%| alt: Topologia de fibra GPON com MikroTik como BNG. Da esquerda para a direita: casas de clientes com ONU, ligadas por fibra a um splitter óptico passivo, que conecta à OLT no POP. A OLT entrega o tráfego em VLANs a um switch/uplink e daí ao MikroTik BNG, que faz PPPoE/RADIUS, CGNAT e QoS, e sobe para o core/trânsito. Destaque de que a OLT faz a óptica e o MikroTik faz a inteligência L3.
+\begin{tikzpicture}[
+  font=\small,
+  b/.style={draw, rounded corners, align=center, minimum height=9mm, font=\scriptsize, inner sep=3pt},
+]
+\node[b, fill=manualgreen!15] (onu) at (0,0) {ONU\\\scriptsize casa};
+\node[b, fill=manualgray!20] (sp) at (2.3,0) {splitter\\\scriptsize 1:32};
+\node[b, fill=manualyellow!22] (olt) at (4.6,0) {OLT\\\scriptsize óptica};
+\node[b, fill=manualblue!18, minimum height=13mm] (bng) at (7.4,0) {MikroTik\\\scriptsize \textbf{BNG}\\\scriptsize PPPoE/RADIUS\\\scriptsize CGNAT/QoS};
+\node[b, fill=manualblue!25] (core) at (10.2,0) {core};
+\draw[-{Stealth}, thick] (onu) -- (sp); \draw[-{Stealth}, thick] (sp) -- (olt);
+\draw[-{Stealth}, thick] (olt) -- node[above]{\scriptsize VLANs} (bng);
+\draw[-{Stealth}, thick] (bng) -- (core);
+\node[align=center] at (2.3,-1.1) {\scriptsize óptica (passiva)};
+\node[align=center, manualblue!60!black] at (7.4,-1.6) {\scriptsize inteligência L3};
+\end{tikzpicture}
+```
+
+::: {#fig-fibra-topo}
+A OLT faz a **óptica** (concentra PON, splitters, ONUs); o **MikroTik
+BNG** faz a **inteligência L3** (autenticação, IP, CGNAT, QoS). O tráfego
+dos assinantes chega ao BNG em **VLANs**, e daí sobe ao core. Dividir
+esses papéis é a base da topologia de fibra.
+:::
+
+## VLANs de serviço: por serviço ou por assinante
+
+A OLT entrega o tráfego ao BNG marcado em **VLANs** (@sec-vlans-8021q). Dois
+modelos dominam:
+
+- **VLAN por serviço** (*service VLAN*, mais comum): uma VLAN para
+  "internet residencial", outra para "corporativo", outra para "IPTV".
+  Todos os assinantes daquele serviço compartilham a VLAN, e o
+  **PPPoE** individualiza cada um. Simples e escalável;
+- **VLAN por assinante** (*VLAN 1:1*, *N:1*): cada cliente numa VLAN
+  própria (a OLT faz *VLAN-per-ONU*). Isolamento máximo (bom para
+  corporativo), mas **milhares de VLANs** — pesado e limitado pelo teto
+  de 4094 VLANs.
+
+O padrão residencial: **VLAN por serviço + PPPoE** — a VLAN carrega o
+serviço, o PPPoE (@sec-pppoe-server) autentica e individualiza cada
+assinante. É o casamento que sustenta a maioria dos provedores de fibra.
+
+## PPPoE sobre PON: o BNG na prática
+
+O MikroTik como BNG recebe as sessões PPPoE que vêm pela VLAN de serviço,
+autentica (RADIUS, @sec-radius-userman), entrega IP (pool/PD IPv6,
+@sec-dhcpv6-pd), aplica QoS (Volume 7) e roteia. É a integração de tudo
+que você aprendeu:
+
+```routeros
+# a VLAN de serviço vinda da OLT (ex.: VLAN 100 = internet residencial)
+/interface vlan add name=vlan-internet interface=ether1-olt vlan-id=100
+
+# servidor PPPoE nessa VLAN, autenticando via RADIUS
+/interface pppoe-server server
+add service-name=internet interface=vlan-internet \
+    default-profile=plano-padrao one-session-per-host=yes
+/radius add service=ppp address=10.99.0.30 secret="RadiusForte"
+/ppp aaa set use-radius=yes
+```
+
+Sobre isso vêm as camadas: **CGNAT** (@sec-cgnat) para os assinantes
+IPv4, **dual stack IPv6** (@sec-dhcpv6-pd), **QoS/PCQ** (@sec-pcq-escala) por
+plano, e **HA** (@sec-vrrp/@sec-failover) para o BNG não ser ponto único.
+O BNG é onde **metade do manual** se encontra.
+
+## Dimensionamento e posição no desenho
+
+O BNG vive na camada de **distribuição** (@sec-desenho-rede) e concentra
+**muitos** assinantes — o dimensionamento importa:
+
+- **Sessões PPPoE**: quantas o hardware aguenta (CPU, memória) — um CCR
+  para milhares, um hEX só para dezenas;
+- **Throughput agregado**: soma dos planos no horário de pico;
+- **CGNAT**: portas por assinante × assinantes = IPs públicos
+  necessários (@sec-cgnat);
+- **HA**: BNG redundante (dois concentradores, @sec-concentrador-bng)
+  para não derrubar milhares de clientes numa manutenção.
+
+Regra: **um BNG por POP** (ou par para HA), dimensionado com folga de
+pico, e **múltiplos BNGs** conforme cresce — nunca um só gigante (raio de
+falha).
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Na fibra, o **MikroTik não é a OLT** — ele é o **BNG**: a OLT faz a
+óptica (PON, splitters, ONUs), o MikroTik faz a **inteligência L3**
+(autenticação PPPoE/RADIUS, IP, CGNAT, QoS, roteamento). O tráfego chega
+em **VLANs de serviço** e o **PPPoE individualiza** cada assinante — o
+modelo que escala. O BNG é onde **metade do manual converge** (PPPoE,
+RADIUS, CGNAT, IPv6, QoS, HA), vive na **distribuição**, e deve ser
+**redundante e dimensionado para o pico**. Entenda a divisão OLT × BNG e
+o resto é integrar o que você já sabe.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Como não temos OLT real no lab, **simule** a fibra: **lab-bng** (o
+MikroTik BNG), **lab-sw** (um CHR fazendo o papel da OLT/switch,
+entregando uma VLAN de serviço), e **lab-cpe** (cliente PPPoE, a "ONU").
+Opcional: **lab-radius** para autenticação. O foco é o BNG — a parte
+MikroTik da fibra.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — a VLAN de serviço.** No lab-bng, crie a VLAN que "viria da
+OLT":
+
+```routeros
+/interface vlan add name=vlan-internet interface=ether1 vlan-id=100
+/ip address add address=10.100.0.1/24 interface=vlan-internet
+```
+
+**Passo 2 — servidor PPPoE na VLAN.**
+
+```routeros
+/ppp profile add name=plano-100mbps rate-limit=100M/100M \
+    local-address=10.100.0.1 remote-address=pool-clientes
+/ip pool add name=pool-clientes ranges=100.64.10.2-100.64.10.254
+/interface pppoe-server server add service-name=internet \
+    interface=vlan-internet default-profile=plano-100mbps
+```
+
+**Passo 3 — cliente conecta.** No lab-cpe (PPPoE client na mesma VLAN),
+conecte e confirme a sessão no lab-bng:
+
+```routeros
+/interface pppoe-server active print
+```
+
+**Passo 4 — empilhe as camadas.** Adicione **CGNAT** (@sec-cgnat) para o
+`100.64.10.0/24`, **QoS** por plano (@sec-pcq-escala) e, se quiser, **dual
+stack IPv6** (@sec-dhcpv6-pd). Veja o BNG virar o provedor inteiro em
+miniatura.
+
+**Passo 5 — dimensione (exercício).** Estime, para 2.000 assinantes de
+100 Mbps com contenção 1:20, o throughput de pico e os IPs públicos de
+CGNAT necessários (portas/assinante à sua escolha).
+
+**Passo 6 — HA do BNG.** Esboce (ou monte) um segundo BNG com VRRP
+(@sec-vrrp) para os clientes não caírem numa manutenção.
+
+### Verificação
+
+1. A VLAN de serviço entrega o PPPoE ao BNG;
+2. O cliente autentica e recebe IP (pool CGNAT);
+3. As camadas (CGNAT, QoS, IPv6) se empilham sobre o BNG;
+4. Você dimensionou throughput e IPs de CGNAT para a base estimada.
+
+### Desafios
+
+1. Um provedor novo comprou uma OLT e pergunta "configuro o PPPoE **na
+   OLT** ou no MikroTik?". Explique a divisão de papéis e onde cada
+   função (óptica, autenticação, CGNAT, QoS) deve ficar.
+2. Você tem 3.000 clientes residenciais. Faz sentido **VLAN por
+   assinante** (1:1) ou **VLAN por serviço** + PPPoE? Justifique pelo
+   teto de VLANs e pela operação.
+3. O BNG único do POP está em 95% de CPU no horário de pico e uma
+   manutenção derruba **todos** os clientes. Aponte as duas melhorias
+   (dimensionamento e HA) e como implementá-las.
+4. Onde você faz o **CGNAT** e o **QoS** nesta topologia — na OLT, no BNG
+   ou no core? Justifique pela camada e pelo raio de falha
+   (@sec-desenho-rede).
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** A **OLT** faz a **óptica** (PON, ONUs, splitters) e entrega o
+tráfego em **VLANs** — ela normalmente **não** faz PPPoE/CGNAT/QoS de
+provedor. A **autenticação (PPPoE/RADIUS), IP, CGNAT e QoS** ficam no
+**MikroTik BNG**, atrás da OLT. Ou seja: PPPoE no MikroTik, não na OLT. A
+OLT é o meio óptico; o BNG é o cérebro L3.
+
+**2.** **VLAN por serviço + PPPoE**. Com 3.000 clientes, VLAN 1:1
+estouraria facilmente o teto de **4094 VLANs** (e viraria um pesadelo
+operacional de milhares de VLANs para gerenciar). Uma VLAN de serviço
+carrega todos os residenciais e o **PPPoE individualiza** cada assinante
+(sessão, IP, plano, accounting) — escalável e simples. VLAN 1:1 se
+reserva a casos de **isolamento** (corporativo específico).
+
+**3.** (a) **Dimensionamento**: o BNG está subdimensionado para o pico —
+migre para hardware mais capaz (CCR) ou **divida a carga** em mais de um
+BNG por POP. (b) **HA**: monte um **segundo BNG** com **VRRP**
+(@sec-vrrp) e config sincronizada, para manutenção/falha não derrubar
+todos — e distribua os assinantes entre os dois (@sec-concentrador-bng).
+
+**4.** **CGNAT e QoS no BNG** (camada de **distribuição**). A OLT não faz
+esse trabalho (é óptica) e o **core não deve** (encaminha rápido, raio de
+falha máximo — @sec-desenho-rede). O BNG é o ponto natural: já vê cada
+assinante (pela sessão PPPoE), tem o estado para NAT e as filas para QoS,
+e seu raio de falha é **um POP**, não a rede toda. Concentrar
+inteligência onde o assinante é individualizado é a regra.
+:::
+
+## Resumo
+
+- Na fibra, o **MikroTik é o BNG**, não a OLT: a **OLT faz a óptica**
+  (PON/splitter/ONU), o **BNG faz L3** (PPPoE/RADIUS, IP, CGNAT, QoS,
+  roteamento);
+- O tráfego chega em **VLANs de serviço** e o **PPPoE individualiza** o
+  assinante — modelo que escala (VLAN 1:1 só para isolamento);
+- O BNG **integra metade do manual**: PPPoE, RADIUS, CGNAT, dual stack
+  IPv6, QoS/PCQ, HA;
+- Vive na **distribuição**, **dimensionado para o pico** e **redundante**
+  (VRRP/failover) — nunca um BNG gigante único;
+- **CGNAT e QoS no BNG** (onde o assinante é individualizado e o raio de
+  falha é um POP), não na OLT nem no core.
+
+Fibra é a principal tecnologia de acesso urbano. Mas o provedor rural
+vive de **rádio** — repetidoras, PtMP, POPs solares. O @sec-radio-rural
+constrói essa topologia.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *PPPoE*, *VLAN*, *BNG* do RouterOS
+  [@mikrotik-docs];
+- GPON, BNG e arquitetura de acesso: [@tanenbaum-redes];
+- Fibra e BNG no v7: [@discher-rosv7];
+- Provedores de fibra na prática: [@burgess-mikrotik].
