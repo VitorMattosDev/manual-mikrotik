@@ -1,7 +1,289 @@
-# Topologia rádio rural completa
+# Topologia rádio rural completa {#sec-radio-rural}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Desenhar a topologia de um provedor **rádio rural**: backhaul PtP,
+  repetidoras, torres/POPs de acesso PtMP e o cliente;
+- Planejar **backhaul** (enlaces PtP de alta capacidade) e **cadeias de
+  repetidoras** para levar a rede além do alcance da fibra;
+- Projetar **POPs solares** (energia, autonomia, gerência remota) para
+  locais sem rede elétrica confiável;
+- Integrar a rede de rádio ao desenho geral (@sec-desenho-rede): onde
+  entram BNG, roteamento, HA e gerência OOB;
+- Reconhecer as restrições do rádio (banda compartilhada, meteorologia,
+  energia) e projetá-las desde o início.
 :::
+
+A fibra (@sec-fibra-bng) domina a cidade; o **rádio** domina o **campo**,
+onde puxar fibra é caro ou impossível. O provedor rural brasileiro
+nasceu do rádio e vive dele — e sua topologia é uma arte própria:
+**backhaul** de longa distância, **repetidoras** cruzando morros, **POPs
+solares** no meio do nada, e **PtMP** entregando o cliente. Este capítulo
+junta o Volume 5 (wireless) com o desenho de rede (@sec-desenho-rede)
+numa topologia rural completa — o provedor que leva internet onde mais
+ninguém leva.
+
+## A anatomia de uma rede de rádio rural
+
+Da saída do trânsito até a casa do sítio, o caminho típico:
+
+- **POP central** (na cidade/sede): onde chega o trânsito/fibra e ficam o
+  core e o BNG;
+- **Backhaul PtP**: enlaces ponto a ponto de **alta capacidade** (5 GHz
+  licenciado ou não, 60 GHz, ou licenciado) que levam a banda do POP
+  central às torres distantes. É a "espinha" da rede rural
+  (@sec-ptp-nstreme-nv2);
+- **Repetidoras**: torres intermediárias que **reencaminham** o sinal
+  quando não há visada direta (morro no caminho) — cada salto some
+  latência e é ponto de falha;
+- **POP/torre de acesso**: onde ficam os setoriais **PtMP**
+  (@sec-ptmp-rural) que servem os clientes daquela região;
+- **Cliente**: uma antena (LHG/SXT) apontada para o setorial, e o CPE em
+  casa.
+
+```{.tikz}
+%%| filename: fig-radio-rural
+%%| alt: Topologia de rádio rural. À esquerda, o POP central na cidade com trânsito, core e BNG. Um enlace backhaul PtP de longa distância vai até uma repetidora numa torre; dela, outro backhaul segue a um POP de acesso rural (torre solar). No POP de acesso, setoriais PtMP servem vários clientes com antenas (sítios). Setas mostram a cadeia POP central, repetidora, POP de acesso, clientes.
+\begin{tikzpicture}[
+  font=\small,
+  b/.style={draw, rounded corners, align=center, minimum height=9mm, font=\scriptsize, inner sep=3pt},
+  cli/.style={draw, align=center, font=\scriptsize, minimum height=6mm, fill=manualgreen!15},
+]
+\node[b, fill=manualblue!18, minimum height=13mm] (pop) at (0,0) {POP central\\\scriptsize trânsito\\\scriptsize core+BNG};
+\node[b, fill=manualyellow!22] (rep) at (3.4,0.8) {repetidora};
+\node[b, fill=manualyellow!25, minimum height=12mm] (acc) at (7,0) {POP acesso\\\scriptsize (solar)\\\scriptsize setoriais PtMP};
+\draw[-{Stealth}, thick, manualblue!60!black] (pop) -- node[above, sloped]{\scriptsize backhaul PtP} (rep);
+\draw[-{Stealth}, thick, manualblue!60!black] (rep) -- node[above, sloped]{\scriptsize backhaul PtP} (acc);
+\node[cli] (c1) at (10,1) {sítio 1}; \node[cli] (c2) at (10.2,0) {sítio 2}; \node[cli] (c3) at (10,-1) {sítio 3};
+\draw[-{Stealth}] (acc) -- (c1); \draw[-{Stealth}] (acc) -- (c2); \draw[-{Stealth}] (acc) -- (c3);
+\end{tikzpicture}
+```
+
+::: {#fig-radio-rural}
+A cadeia rural: **backhaul PtP** de alta capacidade leva a banda do POP
+central às torres (via **repetidoras** quando não há visada), e no POP de
+acesso os **setoriais PtMP** servem os clientes. Cada salto de rádio é
+capacidade e ponto de falha a planejar.
+:::
+
+## Backhaul: a espinha da rede
+
+O **backhaul** é o que diferencia um provedor rural que **entrega
+velocidade** de um que só "tem sinal". São enlaces **PtP dedicados** de
+alta capacidade (@sec-ptp-nstreme-nv2, Nstreme/NV2 ou 802.11ac/ax), com:
+
+- **Visada limpa** (linha de visão + zona de Fresnel, @sec-alinhamento) —
+  o fundamento físico do rádio;
+- **Capacidade dimensionada** para **agregar** todo o tráfego das torres
+  atrás dele — o backhaul carrega a soma dos clientes, não um só;
+- **Redundância** onde crítico: um segundo caminho (outra frequência,
+  outra rota) para a torre não ficar ilhada se o enlace principal cai
+  (HA, @sec-failover);
+- **Frequências planejadas** para não interferir entre enlaces próximos
+  (reuso, polarização).
+
+A regra: **o backhaul nunca pode ser o gargalo**. Um setorial cheio se
+resolve com mais setoriais; um backhaul cheio **ilha** uma região
+inteira.
+
+## Repetidoras: alcance ao custo de saltos
+
+Quando um morro bloqueia a visada, a **repetidora** numa torre
+intermediária reencaminha o sinal. Cada repetidora **estende o alcance**,
+mas cobra:
+
+- **Latência**: cada salto de rádio adiciona atraso;
+- **Capacidade**: se a repetidora usa a **mesma frequência** para receber
+  e retransmitir no mesmo meio, a banda **cai pela metade** (meio
+  compartilhado) — use **frequências/rádios separados** por sentido;
+- **Ponto de falha**: cada repetidora é mais um equipamento (e mais uma
+  fonte de energia) que pode falhar e **ilhar** tudo atrás dela.
+
+Minimize saltos: prefira **torres mais altas** e **visadas diretas** a
+cadeias longas de repetidoras. Cada salto evitado é latência e
+confiabilidade ganhas.
+
+## POPs solares: energia onde não há rede
+
+No campo, muitas torres ficam **longe da rede elétrica** (ou com energia
+péssima). O **POP solar** resolve — e é um projeto de **energia** tanto
+quanto de rede:
+
+- **Painéis + baterias** dimensionados para a carga (rádios, switch,
+  MikroTik) com **autonomia** para dias nublados (2–4 dias é comum);
+- **Equipamentos de baixo consumo** (MikroTik ajuda: RB/hEX consomem
+  pouco) — cada watt economizado é bateria/painel a menos;
+- **Gerência remota da energia**: monitorar tensão da bateria (SNMP,
+  @sec-snmp-dude), alertar antes de desligar; a queda de um POP solar às
+  vezes é **bateria**, não rádio;
+- **Gerência fora de banda** (@sec-desenho-rede): alcançar o POP para
+  diagnosticar mesmo com a produção instável.
+
+::: {.callout-warning}
+No POP solar, **energia é o ponto de falha nº 1** — mais que o rádio.
+Dimensione a autonomia para o pior caso (sequência de dias nublados),
+monitore a **tensão da bateria** como métrica de primeira classe, e
+lembre: bateria degrada com o tempo. Um POP que "cai toda madrugada" com
+frequência não tem problema de rádio — tem bateria no fim da vida
+descarregando à noite.
+:::
+
+## Integrando ao desenho geral
+
+A rede de rádio encaixa no desenho de três camadas (@sec-desenho-rede):
+
+- **Acesso**: os setoriais PtMP e os CPEs dos clientes;
+- **Distribuição/backhaul**: as torres e enlaces PtP que agregam e levam
+  ao POP central; é onde pode viver um **BNG** regional (ou o tráfego
+  sobe ao BNG central);
+- **Roteamento**: **OSPF** (@sec-ospf-basico) entre POPs/torres, com
+  **custos** refletindo a capacidade/preferência dos enlaces (fibra <
+  backhaul bom < rádio de contingência) e **failover** (@sec-failover)
+  para caminhos alternativos;
+- **Gerência OOB**: crítica no rural — um técnico não vai até a torre no
+  morro para um reboot; RoMON (@sec-hardening-operacional) e túneis de
+  gerência salvam deslocamentos.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+A rede rural é uma **cadeia de rádio** — backhaul PtP (a espinha, que
+**nunca** pode ser gargalo), repetidoras (alcance ao custo de latência e
+saltos), setoriais PtMP (o acesso) — sobre **POPs solares** onde a
+**energia é o ponto de falha nº 1**. Projete de trás para frente: visada
+e capacidade do backhaul primeiro, saltos minimizados, energia
+dimensionada para o pior caso e **monitorada** (tensão de bateria como
+métrica de primeira classe). Integre ao desenho geral com **OSPF por
+custo**, **failover** e **gerência fora de banda** — porque no campo, ir
+até a torre custa caro. Rádio bem projetado leva internet onde a fibra
+nunca chegará.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Laboratório de **projeto + integração**: use CHRs para simular o
+**roteamento** da cadeia rural (POP central, repetidora, POP de acesso
+como roteadores em OSPF) — a parte de RF você já exercitou no Volume 5.
+**lab-central**, **lab-repet**, **lab-acesso** em linha, com OSPF e
+custos refletindo os enlaces; um **lab-cliente** no POP de acesso.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — a cadeia como roteamento.** Monte lab-central — lab-repet —
+lab-acesso com enlaces `/30` e OSPF (@sec-ospf-basico), loopbacks por nó.
+Confirme adjacências `Full` na cadeia.
+
+**Passo 2 — custos por qualidade de enlace.** Ajuste os custos OSPF para
+refletir a realidade: o backhaul bom com custo baixo, um eventual enlace
+de contingência com custo alto (@sec-ospf-basico). Um enlace de rádio
+pior = custo maior.
+
+**Passo 3 — failover de backhaul.** Adicione um segundo caminho até o
+lab-acesso (outra "frequência"/rota) com custo maior e prove o
+**failover** (@sec-failover): derrube o backhaul principal e veja a rede
+reconvergir pelo alternativo — a torre não fica ilhada.
+
+**Passo 4 — o cliente pela cadeia.** Ligue o lab-cliente no lab-acesso e
+confirme que ele alcança a internet **através** de toda a cadeia,
+passando pela repetidora.
+
+**Passo 5 — gerência OOB (conceitual).** Esboce como você alcançaria o
+lab-repet para diagnóstico **se** o backhaul principal caísse — um túnel
+de gerência ou RoMON (@sec-hardening-operacional) por um caminho
+independente.
+
+**Passo 6 — dimensione (exercício).** Para um POP de acesso com 3
+setoriais servindo 150 clientes de 50 Mbps (contenção 1:15), estime a
+capacidade que o **backhaul** precisa entregar no pico.
+
+### Verificação
+
+1. A cadeia rural forma OSPF `Full` e o cliente alcança a internet por
+   ela;
+2. Os custos refletem a qualidade dos enlaces;
+3. O failover de backhaul evita ilhar a torre;
+4. Você tem um plano de gerência OOB e um dimensionamento de backhaul.
+
+### Desafios
+
+1. Uma região atrás de **três repetidoras em série** sofre com latência
+   alta e queda de banda. Explique por que os saltos degradam os dois, e
+   liste duas mudanças de projeto que reduzem o problema.
+2. Um POP de acesso "cai toda madrugada" por volta das 3h e volta ao
+   amanhecer. O rádio está perfeito nos testes diurnos. Qual é a causa
+   mais provável e como você **confirma** e **corrige**?
+3. O backhaul de uma torre está em 95% de uso no pico e a região atrás
+   dela vive lenta. Adicionar mais setoriais no POP de acesso **resolve**?
+   Justifique e diga o que realmente resolve.
+4. Por que a **gerência fora de banda** é ainda mais crítica no rádio
+   rural do que na fibra urbana? Dê um cenário concreto de custo evitado.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Cada **salto** de rádio adiciona **latência** (processamento +
+propagação) e, se repetidoras usam o mesmo meio/frequência para receber e
+retransmitir, a **banda cai** (meio compartilhado, metade por salto). Três
+em série somam os dois efeitos. Mudanças: (a) **reduzir saltos** com
+torres mais altas / visada direta ao POP central; (b) usar
+**frequências/rádios separados** por sentido em cada repetidora (full
+duplex efetivo), evitando a divisão de banda.
+
+**2.** **Energia** — bateria do POP solar no fim da vida (ou
+subdimensionada): à noite, sem sol, a bateria descarrega e o POP desliga
+na madrugada; ao amanhecer, o painel recarrega e ele volta. Confirme
+**monitorando a tensão da bateria** (SNMP, @sec-snmp-dude) — verá a queda
+noturna. Corrija trocando/aumentando baterias e painéis, e dimensionando
+a autonomia para o pior caso. O rádio "perfeito de dia" confirma que o
+problema não é RF.
+
+**3.** **Não** necessariamente — se o **backhaul** já está em 95%, mais
+setoriais no acesso só empurram **mais tráfego** para um backhaul
+saturado, piorando. Primeiro **aumente a capacidade do backhaul** (rádio
+melhor, mais frequência, segundo enlace agregado) — ele é a espinha e o
+gargalo real. Setoriais adicionais resolvem saturação **de acesso** (RF
+cheio no cliente), não de backhaul.
+
+**4.** No rural, o equipamento fica em **torres remotas** (morros, sítios,
+POPs solares) — ir até lá custa **horas de deslocamento** e às vezes é
+inacessível à noite/na chuva. Se a gerência depende da produção e ela
+cai, você **perde o acesso justo quando um técnico teria de viajar**. Com
+**OOB** (RoMON/túnel por caminho independente), você diagnostica e às
+vezes resolve (reboot, ajuste) **remotamente** — evitando uma viagem de
+100 km para reiniciar um rádio. Na fibra urbana o equipamento está perto;
+no rural, cada acesso remoto poupado é dinheiro e tempo reais.
+:::
+
+## Resumo
+
+- Rede rural = **cadeia de rádio**: **backhaul PtP** (a espinha — nunca o
+  gargalo), **repetidoras** (alcance ao custo de latência/saltos/banda),
+  **setoriais PtMP** (acesso) até o cliente;
+- **Backhaul** dimensionado para **agregar** toda a região, com visada
+  limpa, frequências planejadas e **redundância** onde crítico;
+- **Minimize saltos** de repetidora (latência, banda, ponto de falha);
+  frequências/rádios separados por sentido;
+- **POPs solares**: **energia é o ponto de falha nº 1** — autonomia para
+  o pior caso e **tensão de bateria monitorada** como métrica de primeira
+  classe;
+- Integre com **OSPF por custo**, **failover** e **gerência OOB**
+  (crítica no campo — evita viagens caras).
+
+Fibra e rádio construídos, falta manter tudo isso **seguro e atualizado**
+em escala de parque — e migrar o legado v6 para o v7. O
+@sec-hardening-operacional cobre o hardening operacional e a migração.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial: *Wireless*, *Nstreme/NV2* do RouterOS
+  [@mikrotik-docs];
+- Enlaces de rádio, backhaul e propagação: [@tanenbaum-redes];
+- Redes de rádio no v7: [@discher-rosv7];
+- Provedores rurais na prática: [@burgess-mikrotik].
