@@ -1,7 +1,288 @@
-# Estudo de caso integrador
+# Estudo de caso integrador {#sec-estudo-caso}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- **Integrar** todo o manual num único projeto: do trânsito ao roteador
+  do cliente, um provedor real do zero;
+- Seguir o **caminho de um pacote** por toda a rede, reconhecendo cada
+  tecnologia dos quinze volumes no lugar certo;
+- Tomar as **decisões de projeto** de ponta a ponta de forma coerente
+  (endereçamento, roteamento, acesso, HA, segurança, operação);
+- Usar este capítulo como **mapa mental** e checklist para projetar,
+  operar e diagnosticar seu próprio provedor;
+- Concluir a jornada com uma visão de **como tudo se conecta** — o
+  objetivo do manual inteiro.
 :::
+
+Chegamos ao fim. Os quinze volumes ensinaram cada peça; este capítulo as
+**monta numa máquina só**. Vamos projetar o **Provedor Serra Azul** —
+fictício, mas realista: fibra na cidade, rádio no campo, dois trânsitos,
+IPv6, CGNAT, HA, operação profissional. Não há sintaxe nova aqui: o
+objetivo é ver **como tudo se conecta**, seguindo um pacote da casa do
+cliente até a internet e de volta, reconhecendo em cada ponto o volume
+que o explica. É o mapa que amarra a jornada.
+
+## O Provedor Serra Azul: o desenho completo
+
+Nosso provedor tem ASN próprio (**AS 65000**), um bloco IPv4
+(`203.0.113.0/24`) e um IPv6 (`2001:db8::/32` fictício). A arquitetura
+segue as três camadas (@sec-desenho-rede):
+
+- **Core** (2 roteadores, HA): trânsito de **duas operadoras** por
+  **BGP** (@sec-bgp-peering) com filtros de saída mínimos
+  (@sec-bgp-filtros) e RPKI; **OSPF** (@sec-ospf-basico) interno sobre
+  loopbacks; **MPLS/LDP** (@sec-mpls-ldp) opcional para VPNs corporativas;
+- **Distribuição**: **BNG** PPPoE (@sec-fibra-bng) com **RADIUS**
+  (@sec-radius-userman), **CGNAT** determinístico (@sec-cgnat) com
+  **logging legal** (@sec-cgnat-logging), **dual stack IPv6**
+  (@sec-dhcpv6-pd), **QoS/PCQ** (@sec-pcq-escala) por plano, e **VRRP**
+  (@sec-vrrp) para não ser ponto único;
+- **Acesso**: **fibra GPON** (OLT + ONUs) na cidade e **rádio rural**
+  (@sec-radio-rural) — backhaul PtP, POPs solares, PtMP — no campo;
+- **Operação**: **monitoramento** (log central @sec-logs, SNMP
+  @sec-snmp-dude), **automação/provisionamento** (@sec-api-provisionamento),
+  **gerência OOB** (RoMON, @sec-hardening-operacional) e **failover**
+  multi-link (@sec-failover).
+
+```{.tikz}
+%%| filename: fig-serra-azul
+%%| alt: Desenho completo do Provedor Serra Azul. No topo, duas operadoras de trânsito conectadas por BGP ao core redundante (AS 65000). O core desce à distribuição, onde ficam o BNG PPPoE com RADIUS, CGNAT, IPv6 e QoS, protegido por VRRP. Da distribuição saem dois ramos de acesso: fibra GPON (OLT, ONU, cliente urbano) e rádio rural (backhaul PtP, repetidora, POP solar PtMP, cliente rural). Ao lado, blocos de operação: monitoramento, automação e gerência OOB, ligados a toda a rede.
+\begin{tikzpicture}[
+  font=\small,
+  b/.style={draw, rounded corners, align=center, font=\scriptsize, inner sep=3pt, minimum height=8mm},
+]
+\node[b, fill=manualgray!20] (op1) at (-1.6,3.2) {operadora A};
+\node[b, fill=manualgray!20] (op2) at (1.6,3.2) {operadora B};
+\node[b, fill=manualblue!20, minimum width=34mm] (core) at (0,2) {\textbf{CORE} (AS 65000)\\\scriptsize BGP · OSPF · MPLS · HA};
+\node[b, fill=manualyellow!22, minimum width=44mm] (dist) at (0,0.5) {\textbf{DISTRIBUIÇÃO} — BNG\\\scriptsize PPPoE/RADIUS · CGNAT · IPv6 · QoS · VRRP};
+\node[b, fill=manualgreen!16] (fib) at (-2.6,-1.2) {ACESSO fibra\\\scriptsize OLT · ONU};
+\node[b, fill=manualgreen!16] (rad) at (2.6,-1.2) {ACESSO rádio\\\scriptsize backhaul · PtMP · solar};
+\node[b, fill=manualgreen!22] (cu) at (-2.6,-2.5) {cliente urbano};
+\node[b, fill=manualgreen!22] (cr) at (2.6,-2.5) {cliente rural};
+\node[b, fill=manualred!12, minimum height=18mm] (ops) at (5.4,0.8) {OPERAÇÃO\\\scriptsize log/SNMP\\\scriptsize automação\\\scriptsize RoMON/OOB};
+\draw[-{Stealth}] (op1) -- (core); \draw[-{Stealth}] (op2) -- (core);
+\draw[-{Stealth}, thick] (core) -- (dist);
+\draw[-{Stealth}, thick] (dist) -- (fib); \draw[-{Stealth}, thick] (dist) -- (rad);
+\draw[-{Stealth}] (fib) -- (cu); \draw[-{Stealth}] (rad) -- (cr);
+\draw[dashed, manualred] (ops) -- (dist);
+\end{tikzpicture}
+```
+
+::: {#fig-serra-azul}
+O Provedor Serra Azul de ponta a ponta: trânsito (BGP) → core → BNG
+(distribuição) → acesso fibra/rádio → cliente, com a operação
+(monitoramento, automação, OOB) atravessando tudo. Cada bloco é um
+volume deste manual no seu lugar.
+:::
+
+## O caminho de um pacote: cliente → internet
+
+Siga um pacote de um cliente de fibra pedindo uma página, e reconheça
+cada volume:
+
+1. **CPE do cliente** manda o quadro pela **ONU** → **OLT** → chega ao
+   BNG na **VLAN de serviço** (@sec-fibra-bng, Vol. 4/15);
+2. **Sessão PPPoE**: o pacote está dentro da sessão autenticada por
+   **RADIUS** (@sec-pppoe-server, @sec-radius-userman, Vol. 6);
+3. **QoS**: a **queue/PCQ** do plano do cliente aplica o limite de banda
+   (@sec-pcq-escala, Vol. 7);
+4. **Firewall/conntrack**: o pacote é avaliado (input/forward,
+   @sec-chains-firewall, Vol. 3) e registrado no connection tracking;
+5. **CGNAT**: sendo IPv4, o `100.64.x.x` do cliente é traduzido para o
+   público `203.0.113.x` numa faixa **determinística** de portas
+   (@sec-cgnat, Vol. 9), com o mapeamento **logado** (@sec-cgnat-logging);
+   *— se fosse IPv6, sairia direto, roteável, sem CGNAT (@sec-dhcpv6-pd)*;
+6. **Roteamento interno**: **OSPF** leva o pacote do BNG ao core pelos
+   loopbacks (@sec-ospf-basico, Vol. 8);
+7. **BGP/saída**: no core, a **decisão de saída** (`local-pref`) escolhe a
+   operadora, o **filtro de saída** garante que só o que é nosso é
+   anunciado (@sec-bgp-filtros), e o pacote vai ao **trânsito** (Vol. 8);
+8. **Volta**: a resposta entra pela operadora (o **prepend/RPKI**
+   influenciou a entrada), desfaz o CGNAT (mesma faixa → mesmo cliente),
+   volta pela sessão PPPoE até o CPE.
+
+Cada salto é um capítulo. **Isso** é o manual: não peças soltas, mas uma
+cadeia onde cada elo tem seu volume.
+
+## As decisões de projeto que amarram tudo
+
+Um provedor coerente toma decisões **alinhadas** entre as camadas:
+
+- **Endereçamento** hierárquico e agregável (@sec-desenho-rede):
+  loopbacks, público por função, CGNAT por POP, IPv6 `/48` por POP `/56`
+  por cliente, gerência isolada;
+- **Roteamento**: OSPF para infra (loopbacks/enlaces), BGP para
+  internet/clientes — separados, filtrados, com RPKI (@sec-bgp-filtros);
+- **Acesso**: fibra onde há densidade, rádio onde não há — cada um
+  dimensionado (backhaul não é gargalo, BNG aguenta o pico);
+- **Resiliência**: VRRP no gateway, bonding nos enlaces, ECMP/failover
+  nos trânsitos, BNG redundante — cada falha coberta (Vol. 14);
+- **Segurança e operação**: hardening padronizado e automatizado,
+  monitoramento central, OOB, logging legal — a rede que se **opera** e
+  se **defende** (Vols. 12, 13, 15).
+
+## Diagnóstico integrado: um problema real
+
+"Clientes do POP rural reclamam de lentidão à noite." O método
+(@sec-troubleshooting) integrado ao manual:
+
+- **Delimitar**: só o POP rural, só à noite → escopo aponta para
+  **aquele** POP e um fator **temporal**;
+- **"O que mudou / o que é noturno"**: pico de tráfego? energia?
+- **Camadas**: física (sinal do backhaul, @sec-alinhamento — degradou?),
+  rede (OSPF estável? @sec-ospf-basico), transporte (backhaul saturado no
+  pico? @sec-radio-rural), energia (bateria solar caindo à noite?
+  @sec-radio-rural);
+- **Ferramentas**: **SNMP/gráfico** (@sec-snmp-dude) mostra o backhaul em
+  95% às 21h **todo dia** → não é falha, é **capacidade**;
+- **Causa e correção**: backhaul subdimensionado para o pico → aumentar a
+  capacidade do backhaul (não adicionar setoriais, @sec-radio-rural).
+
+O diagnóstico atravessou **cinco volumes** naturalmente — porque a rede é
+uma só, e o manual ensinou a enxergá-la assim.
+
+::: {.callout-important}
+## O conceito mais importante do manual
+
+Um provedor não é uma pilha de tecnologias — é **uma máquina onde cada
+peça tem seu lugar e conversa com as outras**. O pacote do cliente
+atravessa PPPoE, QoS, firewall, CGNAT, OSPF e BGP numa cadeia coerente; o
+desenho amarra endereçamento, roteamento, acesso, HA e operação em
+decisões alinhadas; o diagnóstico cruza volumes porque a rede é uma só.
+Dominar o MikroTik de provedor não é decorar comandos — é **ver o todo**
+e saber, em cada ponto, qual peça está agindo e por quê. Este manual
+levou você do "o que é RouterOS" a projetar, operar e diagnosticar um ISP
+inteiro. O resto é praticar — no laboratório, e no campo.
+:::
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+O **projeto final**: usando tudo o que montou nos labs anteriores,
+esboce (em CHRs ou em papel) o **Provedor Serra Azul** completo — ou uma
+fatia dele ponta a ponta. Não há comando novo; há **integração**. Reserve
+tempo: este é o lab que prova que você domina o conjunto.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — o desenho.** Desenhe o Serra Azul (three camadas + operação)
+com endereçamento completo (loopbacks, público, CGNAT, IPv6, gerência),
+ASN e áreas OSPF. Use o @sec-desenho-rede como guia.
+
+**Passo 2 — o core.** Monte (CHR) o core com **BGP** para duas
+"operadoras", **OSPF** interno e o **filtro de saída mínimo**
+(@sec-bgp-filtros). Prove que só o `203.0.113.0/24` é anunciado.
+
+**Passo 3 — o BNG.** Monte o BNG com **PPPoE**, um pool CGNAT
+determinístico, **QoS** por plano e **dual stack IPv6**. Conecte um
+cliente e prove a cadeia (autentica → IP → CGNAT → sai).
+
+**Passo 4 — o acesso.** Represente a fibra (VLAN de serviço) e a cadeia
+de rádio (OSPF por custo até um POP de acesso). Um cliente em cada.
+
+**Passo 5 — resiliência.** Adicione **VRRP** no BNG e **failover** de
+trânsito no core. Derrube peças e prove que o cliente segue online.
+
+**Passo 6 — o caminho do pacote.** Com um cliente navegando, use
+**traceroute**, **Torch** e o **connection tracking** para **seguir** o
+pacote por toda a cadeia e identificar cada volume em ação.
+
+### Verificação
+
+1. O desenho está completo e coerente (endereçamento, roteamento,
+   acesso, HA, operação);
+2. Core anuncia só o próprio bloco; BNG autentica, NATeia e limita;
+3. Fibra e rádio entregam o cliente; a resiliência sobrevive a falhas;
+4. Você consegue **seguir um pacote** ponta a ponta e nomear cada volume.
+
+### Desafios
+
+1. Um cliente novo de fibra precisa de **IP público fixo** (roda um
+   servidor). Descreva, atravessando as camadas, todas as decisões: onde
+   tirá-lo do CGNAT, o que muda no firewall, e o que você registra.
+2. O Serra Azul quer vender um **link L2 dedicado** entre duas filiais de
+   um cliente corporativo, uma na cidade (fibra) e outra no campo
+   (rádio). Que tecnologias você combina, e quais são os riscos?
+3. Uma operadora de trânsito caiu às 22h. Descreva, volume por volume, o
+   que **deveria** acontecer automaticamente para o cliente não perceber
+   — e o que você monitora para confirmar.
+4. Projete, em alto nível, o **crescimento** do Serra Azul de 500 para
+   5.000 clientes: o que precisa mudar em cada camada (core,
+   distribuição, acesso, operação) e por quê. Onde o "tudo-em-um" quebra?
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** **Acesso**: nada muda (mesma fibra/PPPoE). **Distribuição/CGNAT**:
+tirar o cliente do CGNAT — atribuir um **IP público dedicado**
+(`203.0.113.x`) via RADIUS/pool, criando exceção no netmap (@sec-cgnat).
+**Firewall**: como agora ele é roteável de fora, **abrir só** as portas
+do serviço na chain forward (o resto protegido) — e orientar o cliente
+sobre a exposição; em IPv6 (@sec-firewall-ipv6) o mesmo, com a exceção
+`accept`. **Registro**: o IP fixo → cliente fica documentado
+(@sec-cgnat-logging não precisa da faixa CGNAT, mas o cadastro
+IP↔assinante sim). **Roteamento**: o `/32` público roteado até o BNG.
+
+**2.** Um **link L2 fim a fim**: no backbone com MPLS, uma **VPLS**
+(@sec-vpls) entre os PEs das duas pontas; sem MPLS, um **EoIP+IPsec**
+(@sec-gre-eoip) sobre o roteamento. A ponta de rádio adiciona o desafio
+de **capacidade/latência do backhaul** (@sec-radio-rural). Riscos:
+estender **camada 2** propaga broadcast/loop entre as filiais (STP
+obrigatório) e a ponta de rádio pode limitar a banda do circuito —
+avaliar se **L3VPN** não atenderia melhor (@sec-vrf).
+
+**3.** **Vol. 14 (failover)**: o `check-gateway`/recursive routing
+detecta a queda **fim a fim** da operadora A e a rota default cai; o
+**BGP** (Vol. 8) retira as rotas aprendidas de A e o tráfego passa a sair
+pela **operadora B** (a que sobrou); o **local-pref**/desenho garante que
+B assuma. **Vol. 13**: o **netwatch/log** registra o evento e o
+**gráfico** confirma o tráfego migrando para B. O cliente, atrás de
+PPPoE/CGNAT, **não percebe** — sua sessão continua, só o caminho de saída
+mudou. Você confirma no `session print` do BGP, na tabela de rotas e no
+tráfego por interface.
+
+**4.** **Core**: de um roteador para **dois em HA** com BGP/OSPF; talvez
+MPLS. **Distribuição**: de um BNG "tudo-em-um" para **BNGs dedicados e
+redundantes** (VRRP), CGNAT dimensionado (mais IPs públicos), QoS por
+PCQ em escala. **Acesso**: mais OLTs/torres, backhaul reforçado.
+**Operação**: monitoramento central obrigatório, **automação/
+provisionamento** (não dá para configurar 5.000 à mão), OOB, logging
+legal robusto. O **"tudo-em-um" quebra** na distribuição: um só roteador
+fazendo BGP+CGNAT+PPPoE+QoS satura em CPU e vira **raio de falha total** —
+a separação em camadas (@sec-desenho-rede) é o que permite os 5.000 sem
+refazer tudo.
+:::
+
+## Resumo
+
+- Um provedor é **uma máquina integrada**: o pacote do cliente atravessa
+  PPPoE, QoS, firewall, CGNAT, OSPF e BGP numa **cadeia coerente** — cada
+  elo é um volume deste manual;
+- O **desenho** (@sec-desenho-rede) amarra endereçamento, roteamento,
+  acesso (fibra/rádio), resiliência e operação em decisões **alinhadas**;
+- O **diagnóstico** cruza volumes naturalmente porque a rede é **uma só**
+  — método (@sec-troubleshooting) + as ferramentas certas (Vol. 13);
+- Crescer sem refazer exige **camadas separadas** e **operação
+  automatizada** — o "tudo-em-um" quebra na escala;
+- Dominar MikroTik de provedor é **ver o todo**: saber, em cada ponto,
+  qual peça age e por quê.
+
+Este é o fim do manual — e o começo da sua prática. Você partiu de "o que
+é o RouterOS" e chegou a **projetar, operar e diagnosticar um provedor
+inteiro**, do trânsito ao roteador do cliente. As tecnologias vão evoluir;
+o **método** — entender cada peça antes de usá-la, ver como se conectam,
+diagnosticar com disciplina — é o que permanece. Leve-o ao laboratório, e
+ao campo. Boa jornada.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial do RouterOS [@mikrotik-docs];
+- Arquitetura e operação de redes: [@tanenbaum-redes];
+- RouterOS v7 de ponta a ponta: [@discher-rosv7];
+- Operação integrada de provedores: [@burgess-mikrotik].

@@ -181,8 +181,8 @@ Pré-requisitos: Vol. 8.*
 *Objetivo: integrar tudo no desenho e na operação de um provedor real.
 Pré-requisitos: Vols. 5, 7, 9, 11, 13 e 14.*
 
-- [ ] `volumes/v15-operacao-isp/01-desenho-rede-provedor.qmd` — Desenho de rede do provedor: core/distribuição/acesso, endereçamento, gerência fora de banda.
-- [ ] `volumes/v15-operacao-isp/02-fibra-olt-bng.qmd` — Topologia fibra: OLT + MikroTik como BNG (VLANs de serviço, PPPoE sobre PON).
-- [ ] `volumes/v15-operacao-isp/03-radio-topologia-rural.qmd` — Topologia rádio rural completa: repetidoras, POPs solares, backhaul.
-- [ ] `volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.qmd` — Hardening operacional (RoMON, upgrades, senhas de parque) e migração v6→v7.
-- [ ] `volumes/v15-operacao-isp/05-estudo-de-caso-integrador.qmd` — Estudo de caso integrador: o provedor completo, do trânsito ao roteador do cliente.
+- [x] `volumes/v15-operacao-isp/01-desenho-rede-provedor.qmd` — Desenho de rede do provedor: core/distribuição/acesso, endereçamento, gerência fora de banda.
+- [x] `volumes/v15-operacao-isp/02-fibra-olt-bng.qmd` — Topologia fibra: OLT + MikroTik como BNG (VLANs de serviço, PPPoE sobre PON).
+- [x] `volumes/v15-operacao-isp/03-radio-topologia-rural.qmd` — Topologia rádio rural completa: repetidoras, POPs solares, backhaul.
+- [x] `volumes/v15-operacao-isp/04-hardening-operacional-migracao-v7.qmd` — Hardening operacional (RoMON, upgrades, senhas de parque) e migração v6→v7.
+- [x] `volumes/v15-operacao-isp/05-estudo-de-caso-integrador.qmd` — Estudo de caso integrador: o provedor completo, do trânsito ao roteador do cliente.
