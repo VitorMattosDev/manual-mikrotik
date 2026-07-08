@@ -1,7 +1,262 @@
-# Desenho de rede do provedor
+# Desenho de rede do provedor {#sec-desenho-rede}
 
 ::: {.callout-note}
-## Em construção
-Este capítulo ainda não foi escrito. Consulte o `ROADMAP.md` para
-acompanhar o progresso.
+## Objetivos de aprendizagem
+
+Ao final deste capítulo, você será capaz de:
+
+- Estruturar a rede do provedor em **camadas** — **core**,
+  **distribuição** e **acesso** — e saber o papel de cada uma;
+- Projetar o **plano de endereçamento** (IPv4 público/CGNAT, IPv6,
+  loopbacks, gerência) de forma hierárquica e agregável;
+- Desenhar a **gerência fora de banda** (*out-of-band*) e por que ela
+  salva quando a rede "de produção" cai;
+- Posicionar cada tecnologia dos volumes anteriores (BGP, OSPF, MPLS,
+  CGNAT, PPPoE, HA) na camada certa do desenho;
+- Documentar o projeto de forma que **outra pessoa** consiga operar e
+  crescer a rede sem adivinhação.
 :::
+
+Os catorze volumes anteriores ensinaram **tecnologias**. Este volume
+final ensina a **juntá-las** no desenho e na operação de um provedor
+real. E tudo começa pelo **desenho**: sem uma arquitetura pensada, o
+provedor vira uma colcha de retalhos que ninguém entende, ninguém
+documenta, e que desmorona a cada crescimento. Um bom desenho é o que
+permite **crescer sem refazer** — adicionar um POP, um trânsito, mil
+clientes, sem quebrar o que já existe. Este capítulo é a planta baixa
+sobre a qual os próximos constroem fibra, rádio e a operação.
+
+## As três camadas: core, distribuição, acesso
+
+Redes de provedor bem-feitas seguem um modelo **hierárquico de três
+camadas**, cada uma com um papel claro:
+
+- **Core** (núcleo): o backbone de alta capacidade que interliga os POPs
+  e leva ao **trânsito/IX**. Prioridade: **velocidade e estabilidade** —
+  aqui roda o **BGP** (@sec-bgp-peering) com as operadoras e o **MPLS**
+  (@sec-mpls-ldp) se houver. O core **não** faz trabalho "sujo" (NAT,
+  filtragem pesada); ele **encaminha rápido**;
+- **Distribuição**: a camada intermediária que **agrega** o acesso e
+  aplica **política** — roteamento interno (**OSPF**, @sec-ospf-basico),
+  **CGNAT** (@sec-cgnat), concentração **PPPoE/BNG** (@sec-pppoe-server),
+  **QoS** (Volume 7). É onde o "inteligente" acontece;
+- **Acesso**: o que toca o cliente — OLTs de fibra (@sec-fibra-bng),
+  rádios PtMP (@sec-radio-rural), CPEs. Prioridade: **densidade e custo**.
+
+```{.tikz}
+%%| filename: fig-tres-camadas
+%%| alt: Pirâmide de três camadas da rede do provedor. No topo, o core conectado ao trânsito e ao IX, rodando BGP e MPLS. No meio, a distribuição com OSPF, CGNAT, BNG PPPoE e QoS, agregando o acesso. Na base, a camada de acesso com OLTs de fibra, rádios PtMP e CPEs de clientes. Setas verticais mostram o tráfego subindo do cliente ao trânsito.
+\begin{tikzpicture}[
+  font=\small,
+  lay/.style={draw, align=center, font=\scriptsize, minimum height=11mm},
+]
+\node[lay, fill=manualblue!20, minimum width=40mm] (core) at (0,2) {\textbf{CORE} — backbone\\BGP (trânsito/IX) · MPLS};
+\node[lay, fill=manualyellow!22, minimum width=64mm] (dist) at (0,0.6) {\textbf{DISTRIBUIÇÃO} — agrega e aplica política\\OSPF · CGNAT · BNG/PPPoE · QoS · HA};
+\node[lay, fill=manualgreen!18, minimum width=84mm] (acc) at (0,-0.8) {\textbf{ACESSO} — toca o cliente\\OLT (fibra) · rádio PtMP · CPE};
+\draw[-{Stealth}, thick] (acc) -- (dist); \draw[-{Stealth}, thick] (dist) -- (core);
+\node[align=center] at (0,3) {\scriptsize trânsito / IX};
+\draw[-{Stealth}] (core) -- (0,2.75);
+\end{tikzpicture}
+```
+
+::: {#fig-tres-camadas}
+Cada camada tem um papel: o **core** encaminha rápido (BGP/MPLS), a
+**distribuição** agrega e aplica política (OSPF/CGNAT/BNG/QoS), o
+**acesso** toca o cliente (fibra/rádio). Separar responsabilidades é o
+que deixa a rede crescer sem virar caos.
+:::
+
+A vantagem da separação: cada camada cresce e falha **independentemente**,
+e você sabe **onde** cada função vive. Misturar tudo num roteador só
+(o "tudo-em-um" que funciona com 50 clientes) é a dívida técnica que
+cobra caro aos 5.000.
+
+## Plano de endereçamento hierárquico
+
+Endereçamento é a espinha dorsal — mal planejado, vira um pesadelo de
+rotas específicas e exceções. Os princípios:
+
+- **Loopbacks** (`/32`): um bloco dedicado (ex.: `10.255.0.0/24`) para
+  router-id de OSPF/BGP e sessões (@sec-vrf) — estáveis, agregáveis;
+- **Enlaces internos** (`/30` ou `/31`): um bloco por região, agregável
+  por POP;
+- **IPv4 público**: o bloco PI, anunciado por BGP; sub-alocado por
+  função (servidores, CGNAT, clientes dedicados);
+- **CGNAT**: `100.64.0.0/10` (@sec-cgnat), fatiado por concentrador/POP;
+- **IPv6**: o `/32`, delegado hierarquicamente — `/48` por POP, `/56`
+  por cliente (@sec-ipv6-fundamentos);
+- **Gerência**: um bloco RFC1918 **isolado** (ex.: `10.99.0.0/16`),
+  **nunca** roteado para clientes.
+
+A regra de ouro: **agregação**. Endereços contíguos por POP permitem
+anunciar **uma** rota resumida em vez de mil específicas — menos LSA,
+menos entrada de BGP, menos tudo. Endereçamento "salpicado" é o que
+entope tabelas e derruba a escala.
+
+## Gerência fora de banda
+
+O erro que cega o provedor num incidente: gerenciar os equipamentos
+**pela mesma rede que caiu**. Se você acessa o roteador do POP pela rede
+de produção e ela cai, você **perde o acesso justo quando mais precisa**.
+A solução é a **gerência fora de banda** (*out-of-band*, OOB): um
+**caminho de gerência independente** — um link dedicado, um túnel
+(WireGuard, @sec-wireguard), 4G de backup, ou **RoMON**
+(@sec-hardening-operacional) — que alcança os equipamentos **mesmo com a
+produção fora**.
+
+Elementos de uma boa gerência:
+
+- **Rede de gerência isolada** (VLAN/VRF própria, @sec-vrf), com firewall
+  restrito (só o NOC alcança);
+- **Caminho OOB**: túnel/4G/RoMON que não depende da produção;
+- **Acesso seguro**: usuários dedicados, chaves, `allowed-address`
+  (@sec-hardening) — a gerência é o alvo nº 1 de ataque;
+- **Monitoramento e log** (Volume 13) apontando para o coletor pela rede
+  de gerência.
+
+::: {.callout-important}
+## O conceito mais importante do capítulo
+
+Um provedor que escala tem um **desenho**, não um amontoado: **três
+camadas** com papéis claros (core encaminha, distribuição aplica política,
+acesso toca o cliente), um **endereçamento hierárquico e agregável**
+(loopbacks, público, CGNAT, IPv6, gerência isolada — contíguos por POP,
+para anunciar rotas resumidas) e uma **gerência fora de banda** que
+sobrevive à queda da produção. Cada tecnologia dos volumes anteriores tem
+seu **lugar** nesse desenho. E o que amarra tudo: **documentação** — um
+desenho que só vive na cabeça de uma pessoa não é um desenho, é um risco.
+:::
+
+## Documentar: o desenho que outros operam
+
+Um desenho não documentado não escala além de quem o criou. O mínimo:
+
+- **Diagrama de topologia** (core/distribuição/acesso, POPs, enlaces);
+- **Plano de endereçamento** (quem usa o quê, por POP e função);
+- **Tabela de ASN/blocos/áreas OSPF/VLANs de serviço**;
+- **Runbooks**: como adicionar um POP, um cliente, um trânsito; como
+  fazer failover manual; a quem escalar.
+
+Documentação é o que transforma "a rede do fulano" em "a rede da
+empresa" — e o que os próximos capítulos assumem existir ao construir
+fibra, rádio e operação.
+
+## 🧪 Laboratório
+
+::: {.callout-note}
+## Ambiente
+
+Este laboratório é de **projeto**, não de comandos: papel, um editor de
+diagrama, ou CHRs para esboçar. Você vai **desenhar** o provedor que os
+próximos capítulos implementam — a planta baixa. Reaproveite o que
+aprendeu em todos os volumes para posicionar cada peça.
+:::
+
+### Comandos passo a passo
+
+**Passo 1 — as três camadas.** Desenhe um provedor fictício com: 1 core
+(2 roteadores para HA), 3 POPs de distribuição, e acesso misto (fibra +
+rádio). Marque, em cada camada, **qual tecnologia** roda ali.
+
+**Passo 2 — endereçamento.** Defina os blocos: loopbacks
+(`10.255.0.0/24`), gerência (`10.99.0.0/16`), enlaces internos, o público
+PI (fictício, ex.: `203.0.113.0/24`), CGNAT (`100.64.0.0/16` do
+`/10`), IPv6 (`/32` fictício → `/48` por POP). Garanta **contiguidade por
+POP**.
+
+**Passo 3 — onde cada tecnologia vive.** Posicione: BGP (core, com
+trânsito), OSPF (core+distribuição), CGNAT e BNG (distribuição), QoS
+(distribuição/acesso), HA (VRRP na distribuição, failover no core).
+
+**Passo 4 — gerência OOB.** Desenhe a rede de gerência isolada (VLAN/VRF)
+e o caminho fora de banda (túnel/RoMON) que alcança cada POP **sem** a
+produção.
+
+**Passo 5 — documente.** Escreva a tabela de endereçamento e um runbook
+de "como adicionar um POP novo" seguindo o seu desenho.
+
+### Verificação
+
+1. As três camadas estão claras, com papéis e tecnologias definidos;
+2. O endereçamento é hierárquico e **agregável por POP**;
+3. A gerência é **isolada** e tem caminho **fora de banda**;
+4. Cada tecnologia dos volumes anteriores tem lugar no desenho;
+5. Existe documentação mínima (endereçamento + runbook).
+
+### Desafios
+
+1. Um provedor com 3.000 clientes roda **tudo** num roteador de borda
+   "tudo-em-um" (BGP, CGNAT, PPPoE, QoS, firewall). Liste três problemas
+   concretos que o modelo de três camadas resolveria e como você migraria
+   sem parar a rede.
+2. As rotas internas do provedor são um caos: centenas de `/24`
+   específicas na tabela, OSPF pesado, BGP interno enorme. Qual princípio
+   de endereçamento foi violado, e como o redesenho o corrige?
+3. Numa queda geral da rede de produção às 3h da manhã, o plantonista não
+   conseguiu acessar **nenhum** POP para diagnosticar. O que faltou no
+   desenho, e descreva duas formas de implementá-lo.
+4. Justifique por que o **core não deve fazer CGNAT/NAT/filtragem
+   pesada** e a **distribuição não deve falar BGP com o trânsito**.
+   Relacione com desempenho e com raio de falha.
+
+::: {.callout-tip collapse="true"}
+## Solução dos desafios
+
+**1.** Problemas: (a) **raio de falha** — um reboot/travamento derruba
+**tudo** (BGP, clientes, CGNAT) de uma vez; (b) **escala/CPU** — funções
+pesadas (CGNAT, QoS, PPPoE) competem pelo mesmo processador e o teto
+chega junto; (c) **manutenção** — não dá para mexer numa função sem
+arriscar as outras. Migração sem parar: introduza a camada de
+**distribuição** ao lado (novos roteadores para CGNAT/BNG), mova clientes
+**em lotes** para ela, deixe o core só com BGP/roteamento — fatiando as
+funções gradualmente, com janelas e rollback.
+
+**2.** Violou-se a **agregação/contiguidade**: endereços salpicados
+impedem resumir, então cada `/24` vira uma rota específica. O redesenho
+aloca blocos **contíguos por POP** (um agregado por região), permitindo
+anunciar **uma** rota resumida no lugar de centenas — OSPF e BGP internos
+encolhem, a convergência acelera. Exige renumerar/planejar migração, mas
+é o que sustenta a escala.
+
+**3.** Faltou **gerência fora de banda**: o plantonista dependia da rede
+de **produção**, que estava fora. Implementações: (a) um **túnel de
+gerência** (WireGuard/@sec-wireguard) por um link/4G **independente** da
+produção, numa VRF/VLAN isolada; (b) **RoMON** (@sec-hardening-operacional)
+para alcançar equipamentos em L2 sem depender do roteamento de produção.
+Idealmente, ambos, com acesso seguro e restrito ao NOC.
+
+**4.** O **core** deve **encaminhar rápido**: CGNAT/NAT/filtragem pesada
+consomem CPU e estado (conntrack), o que o tornaria lento e frágil — e
+uma falha ali afeta **toda** a rede (raio de falha máximo). Essas funções
+ficam na **distribuição**, onde o raio de falha é menor (um POP) e a
+carga é distribuída. A **distribuição** não fala BGP com o trânsito
+porque o peering externo pertence à borda/core (política e segurança
+centralizadas, uma superfície de ataque menor); espalhar eBGP pela
+distribuição multiplicaria risco e complexidade. Cada camada, sua função.
+:::
+
+## Resumo
+
+- Rede de provedor = **três camadas**: **core** (encaminha rápido —
+  BGP/MPLS), **distribuição** (agrega e aplica política — OSPF/CGNAT/
+  BNG/QoS/HA), **acesso** (toca o cliente — fibra/rádio/CPE);
+- **Endereçamento hierárquico e agregável**: loopbacks, público PI,
+  CGNAT (`100.64/10`), IPv6 (`/32→/48→/56`), gerência isolada — contíguo
+  por POP para **resumir** rotas;
+- **Gerência fora de banda** (VRF/VLAN isolada + túnel/RoMON/4G) sobrevive
+  à queda da produção — acesso quando mais se precisa;
+- Cada tecnologia dos volumes anteriores tem seu **lugar** na camada
+  certa; **não** concentre tudo num "tudo-em-um";
+- **Documente** (topologia, endereçamento, runbooks) — desenho que só
+  vive numa cabeça é risco, não arquitetura.
+
+Com a planta baixa pronta, os próximos capítulos a **constroem**: a
+topologia de **fibra** (OLT + BNG) no @sec-fibra-bng e a de **rádio
+rural** no @sec-radio-rural.
+
+## Bibliografia do capítulo {.unnumbered}
+
+- Documentação oficial e design guides do RouterOS [@mikrotik-docs];
+- Arquitetura hierárquica de redes: [@tanenbaum-redes];
+- Desenho de redes no v7: [@discher-rosv7];
+- Arquitetura de provedores: [@burgess-mikrotik].
