@@ -14,3 +14,12 @@
 
 # kit-fonte da extensão TikZ (já extraído em _extensions/)
 tikz.zip
+
+# Arquivos de trabalho com o Claude Code (mantidos só localmente)
+/CLAUDE.md
+/CLAUDE.local.md
+/PROMPT*.md
+/LICOES-MANUAIS.md
+/auto-manual.sh
+/auto-volumes.sh
+.claude/
